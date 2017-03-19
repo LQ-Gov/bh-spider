@@ -5,4 +5,5 @@ package com.charles.scheduler.options;
  */
 public class Options {
     public static final String INIT_MASTER_PORT="init.master.port";
+    public static final String PROCESSER_THREADS_COUNT="init.processer.threads.count";
 }

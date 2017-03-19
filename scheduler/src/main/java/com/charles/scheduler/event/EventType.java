@@ -8,8 +8,9 @@ public enum EventType {
     SUBMIT_MOUDLE(1),//提交处理模块
     ALIVE(2),
     TASK(3),
-
-    GET_MOUDLE(4);
+    GET_MOUDLE(4),
+    PROCESS(5),
+    REPORT(6);
 
 
     int key =0;

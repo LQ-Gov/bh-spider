@@ -9,7 +9,7 @@ import java.util.Map;
  * Created by lq on 17-3-17.
  */
 public class Task {
-
+    private String id;
     private String name;
     private String url;
     private String timer;
@@ -93,5 +93,13 @@ public class Task {
 
     public void setInterval(int interval) {
         this.interval = interval;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

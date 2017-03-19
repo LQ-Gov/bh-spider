@@ -49,9 +49,18 @@ public class BasicScheduler implements IEvent {
 
             case TASK:
                 TASK_HANDLER();
+                break;
+
+            case REPORT:
+                TASK_REPORT_HANDLER();
+                break;
         }
 
         return null;
+    }
+
+    public void report(String id,int process){
+        this.process(EventType.PROCESS,id,process);
     }
 
 
@@ -70,7 +79,7 @@ public class BasicScheduler implements IEvent {
     protected void SUBMIT_MOUDLE_HANDLER(){}
     protected void SUBMIT_TASK_HANDLER(){}
     protected void TASK_HANDLER(){
-
-
     }
+
+    protected void TASK_REPORT_HANDLER(){}
 }
