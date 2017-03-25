@@ -1,8 +1,6 @@
 package com.charles.scheduler.fetcher;
 
-import com.charles.scheduler.task.Task;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import com.charles.common.task.Task;
 import org.apache.http.client.methods.HttpRequestBase;
 
 /**

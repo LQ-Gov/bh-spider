@@ -1,6 +1,8 @@
 package com.charles.scheduler.event;
 
-import java.util.Queue;
+import com.charles.common.spider.command.Commands;
+
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -10,7 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class EventLoop extends Thread {
 
     private IEvent parent =null;
-    private Queue<String> tasks = new LinkedBlockingQueue<String>();
+    private BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
 
     public EventLoop(){}
 
@@ -18,7 +20,7 @@ public class EventLoop extends Thread {
         this.parent=parent;
     }
 
-    public Future execute(EventType type,Object... params){
+    public Future execute(Commands type, Object... params){
 
         return null;
 
@@ -27,7 +29,11 @@ public class EventLoop extends Thread {
     @Override
     public void run() {
         while (!this.parent.isClosed()){
-            this.parent.process(EventType.ALIVE);
+            try {
+                String  t = queue.take();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

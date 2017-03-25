@@ -1,7 +1,6 @@
-package com.charles.scheduler.task;
+package com.charles.common.task;
 
-import io.netty.handler.codec.http.HttpMethod;
-
+import com.charles.common.HttpMethod;
 import java.util.List;
 import java.util.Map;
 

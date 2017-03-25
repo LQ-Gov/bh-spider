@@ -1,6 +1,7 @@
 package com.charles.scheduler.event;
 
 import com.charles.common.Pair;
+import com.charles.common.spider.command.Commands;
 
 import java.util.Queue;
 import java.util.concurrent.Future;
@@ -15,7 +16,7 @@ public class MultiEventLoop extends Thread {
 
     }
 
-    protected Future execute(IEvent o, EventType type) {
+    protected Future execute(IEvent o, Commands type) {
         return null;
     }
 }

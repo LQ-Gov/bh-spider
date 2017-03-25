@@ -1,31 +1,29 @@
 package com.charles.scheduler.fetcher;
 
+import com.charles.common.HttpMethod;
+import com.charles.common.task.Task;
 import com.charles.scheduler.BasicScheduler;
 import com.charles.scheduler.data.moudle.Moudle;
 import com.charles.scheduler.event.EventLoop;
-import com.charles.scheduler.event.EventType;
+import com.charles.common.spider.command.Commands;
 import com.charles.scheduler.event.IEvent;
-import com.charles.scheduler.options.Options;
-import com.charles.scheduler.task.Task;
-import io.netty.handler.codec.http.HttpMethod;
+import com.charles.scheduler.processor.ProcessGroup;
 import org.apache.http.client.methods.*;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
  * Created by lq on 17-3-17.
  */
 public class Fetcher implements IEvent {
-    private Object o = Executors.newFixedThreadPool(Integer.getInteger(Options.PROCESSER_THREADS_COUNT, Runtime.getRuntime().availableProcessors()));
-
     private EventLoop loop = new EventLoop(this);
     private BasicScheduler scheduler = null;
     private CloseableHttpAsyncClient client = HttpAsyncClientBuilder.create().build();
+    private ProcessGroup processGroup = new ProcessGroup();
 
 
     public Fetcher(BasicScheduler scheduler) {
@@ -34,7 +32,7 @@ public class Fetcher implements IEvent {
 
 
     @Override
-    public Future process(EventType event, Object... params) {
+    public Future process(Commands event, Object... params) {
         if (Thread.currentThread() != loop)
             return loop.execute(event, params);
         switch (event) {
@@ -94,7 +92,7 @@ public class Fetcher implements IEvent {
         if (prepare != null && prepare.size() > 0) {
             prepare.forEach(x -> {
                 try {
-                    Moudle moudle = (Moudle) this.scheduler.process(EventType.GET_MOUDLE).get();
+                    Moudle moudle = (Moudle) this.scheduler.process(Commands.GET_MOUDLE).get();
                     //此次需执行moudle
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
@@ -107,5 +105,9 @@ public class Fetcher implements IEvent {
     protected void TASK_PROCESS_HANDLE(FetcherContext context) {
         Task task = context.getTask();
         this.scheduler.report(task.getId(), 0);
+        processGroup.execute(() -> new Processor(task, context).exec(), () -> this.scheduler.report(task.getId(), 1));
     }
+
+
+    public void close(){}
 }
