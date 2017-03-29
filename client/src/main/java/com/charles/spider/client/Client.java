@@ -29,7 +29,7 @@ public class Client {
         Integer n = c.get();
         if (n == null)
             c.set(n = -1);
-        c.set(n = (n + 1 % servers.size()));
+        c.set(n = ((n + 1) % servers.size()));
         return n;
     }
 
@@ -52,6 +52,7 @@ public class Client {
             out.writeShort(type);
             out.writeInt(data.length());
             out.writeBytes(data);
+            out.flush();
 
             DataInputStream in = new DataInputStream(socket.get().getInputStream());
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+
+<rules>
+    <timers>
+        <timer pattern="www.sina.com*" interval="30000"/>
+    </timers>
+
+
+    <chains>
+        <chain pattern="www.sina.com*" scope="soft,hard">
+            <item key="200" scope="hard,soft">m1,m2,m3</item>
+            <item key="404" moudles="m1,m2,m3"/>
+        </chain>
+
+        <chain pattern="www.baidu.com*" scope="soft" moudles="m1.m2.m3"/>
+    </chains>
+
+</rules>

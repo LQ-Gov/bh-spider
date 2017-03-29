@@ -11,7 +11,7 @@ public class Task {
     private String id;
     private String name;
     private String url;
-    private String timer;
+    private Integer priority;
     private Map<String, String> headers;
     private Map<Object, List<String>> handlers;
 
@@ -44,14 +44,6 @@ public class Task {
 
     public void setUrl(String url) {
         this.url = url;
-    }
-
-    public String getTimer() {
-        return timer;
-    }
-
-    public void setTimer(String timer) {
-        this.timer = timer;
     }
 
     public Map<String, String> getHeaders() {
@@ -100,5 +92,13 @@ public class Task {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
     }
 }
