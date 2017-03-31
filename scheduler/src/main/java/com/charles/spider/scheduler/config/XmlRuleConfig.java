@@ -1,12 +1,16 @@
 package com.charles.spider.scheduler.config;
 
+import org.apache.http.HttpStatus;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by lq on 17-3-28.
@@ -28,20 +32,52 @@ public class XmlRuleConfig {
         if (root == null || !"rules".equals(root.getName()))
             throw new DocumentException("not find root element with rules");
 
-        List chains = root.elements("chains");
-        if (chains != null)
-            chainsParser(chains);
-        List timers = root.elements("timers");
-        if (timers != null)
-            timersParser(timers);
+        chainsParser(root.element("chains"));
+        timersParser(root.element("timers"));
         List proxies = root.elements("proxies");
         if (proxies != null)
-            proxysParser(proxies);
+            proxiesParser(proxies);
     }
 
-    private void chainsParser(List<Element> list){}
+    private void chainsParser(Element el) {
+        if (el == null) return;
 
-    private void timersParser(List<Element> list){}
+        for (Element it : (List<Element>)el.elements("chain")) {
+            String pattern = it.attributeValue("pattern");
+            String scope = it.attributeValue("scope");
+            Chain.Value prepare = null, finished = null;
+            Map<Integer, Chain.Value> handlers = new HashMap<>();
+            if (it.attributeValue("modules") != null)
+                handlers.put(HttpStatus.SC_OK, new Chain.Value(scope, it.attributeValue("modules")));
 
-    private void proxysParser(List<Element> list){}
+            List<Element> items = it.elements("item");
+            if (items != null) {
+                for (Element item : items) {
+                    Chain.Value val = new Chain.Value(item.attributeValue("scope", "soft"), item.attributeValue("value", item.getText()));
+                    if ("prepare".equals(item.getName()))
+                        prepare = val;
+                    else if ("finished".equals(item.getName()))
+                        finished = val;
+                    else
+                        handlers.put(Integer.parseInt(item.attributeValue("key")), val);
+                }
+            }
+            Config.defaultChains.put(pattern, new Chain(pattern, scope, handlers, prepare, finished));
+        }
+    }
+
+
+
+    private void timersParser(Element el){
+        if(el==null) return;
+
+        for (Element it : (List<Element>)el.elements("timer")) {
+            String pattern = it.attributeValue("pattern");
+            long interval = Long.parseLong(it.attributeValue("interval"));
+
+            Config.defaultTimers.put(pattern, new Timer(pattern, interval));
+        }
+    }
+
+    private void proxiesParser(List<Element> list){}
 }

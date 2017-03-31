@@ -13,7 +13,7 @@
             <item key="404" moudles="m1,m2,m3"/>
         </chain>
 
-        <chain pattern="www.baidu.com*" scope="soft" moudles="m1.m2.m3"/>
+        <chain pattern="www.baidu.com*" scope="soft" moudles="m1,m2,m3"/>
     </chains>
 
 </rules>

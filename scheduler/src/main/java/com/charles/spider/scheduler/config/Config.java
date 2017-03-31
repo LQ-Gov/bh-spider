@@ -1,6 +1,9 @@
 package com.charles.spider.scheduler.config;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by lq on 17-3-29.
@@ -13,7 +16,7 @@ public class Config {
     public static final String CONFIG_RULES_PATH = "config.rules.path";
 
 
-    private List<Chain> defaultChains = null;
-    private List<Timer> defaultTimers = null;
+    public static Map<String, Chain> defaultChains = new ConcurrentHashMap<>();
+    public static Map<String, Timer> defaultTimers = new ConcurrentHashMap<>();
     private List<Proxy> proxies = null;
 }

@@ -6,6 +6,7 @@ import com.charles.common.spider.command.Commands;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.config.Options;
+import com.charles.spider.scheduler.task.TaskSheduler;
 import com.charles.store.base.Field;
 import com.charles.store.base.Store;
 import com.charles.store.base.Target;
@@ -35,10 +36,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
 
-
     private EventLoop loop =null;
-    private Fetcher fetcher = null;
     private NioEventLoopGroup nettyGroup = null;
+    private Fetcher fetcher = null;
+    private TaskSheduler taskSheduler = null;
     private volatile boolean closed = true;
     private static Map<Integer,Queue<Task>> tasks = new HashMap<>();
 
@@ -58,6 +59,7 @@ public class BasicScheduler implements IEvent {
         init_event_loop();
         init_fetcher();
         init_store();
+        init_task_schedluer();
         init_local_listen();
     }
 
@@ -94,6 +96,12 @@ public class BasicScheduler implements IEvent {
         }
 
         return null;
+    }
+
+
+    public void process(Context ctx,Commands cmd,Object...params){
+
+
     }
 
     public void report(String id,int process){
@@ -148,6 +156,9 @@ public class BasicScheduler implements IEvent {
         loop = new EventLoop(this);
         loop.start();
     }
+
+
+    protected void init_task_schedluer(){}
 
 
     protected void SUBMIT_MODULE_HANDLER(){}
