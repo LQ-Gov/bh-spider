@@ -1,65 +1,60 @@
 package com.charles.spider.scheduler;
 
 import com.charles.common.task.Task;
+import com.charles.spider.common.moudle.Description;
 import com.charles.spider.scheduler.event.EventLoop;
 import com.charles.common.spider.command.Commands;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.config.Options;
-import com.charles.spider.scheduler.task.TaskSheduler;
-import com.charles.store.base.Field;
-import com.charles.store.base.Store;
-import com.charles.store.base.Target;
-import com.charles.store.filter.Filter;
+import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
+import com.charles.spider.scheduler.task.TaskCoreFactory;
+import com.charles.spider.store.base.Field;
+import com.charles.spider.store.base.Store;
+import com.charles.spider.store.base.Target;
+import com.charles.spider.store.filter.Filter;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.lang.reflect.Method;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by lq on 17-3-16.
  */
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
-
-    private EventLoop loop =null;
-    private NioEventLoopGroup nettyGroup = null;
-    private Fetcher fetcher = null;
-    private TaskSheduler taskSheduler = null;
     private volatile boolean closed = true;
-    private static Map<Integer,Queue<Task>> tasks = new HashMap<>();
-
-    static {
-        for (int i = 0; i < 10; i++)
-            tasks.put(i + 1, new LinkedList<>());
-    }
+    private EventLoop loop =null;
+    private Fetcher fetcher = null;
+    private TaskCoreFactory taskFactory = null;
+    private ModuleCoreFactory moduleFactory = null;
 
     public BasicScheduler() {
     }
 
 
-    public synchronized void exec() throws InterruptedException {
+    public synchronized void exec() throws InterruptedException, SchedulerException {
         if(!closed) return;
         closed=false;
         //init_system_signal_handles();
         init_event_loop();
         init_fetcher();
         init_store();
-        init_task_schedluer();
+        init_module_factory();
+        init_task_factory();
         init_local_listen();
     }
 
@@ -74,10 +69,12 @@ public class BasicScheduler implements IEvent {
 
 
         logger.info("execute command {}",event);
+
+        //MethodUtils.invokeMethod()
         switch (event) {
-//            case SUBMIT_MOUDLE:
-//                SUBMIT_MODULE_HANDLER();
-//                break;
+            case SUBMIT_MOUDLE:
+                SUBMIT_MODULE_HANDLER((byte[]) params[0],(Description) params[1]);
+                break;
 //
             case SUBMIT_TASK:
                 SUBMIT_TASK_HANDLER((Task) params[0]);
@@ -91,8 +88,8 @@ public class BasicScheduler implements IEvent {
 //                TASK_REPORT_HANDLER();
 //                break;
 //
-//            case CLOSE:
-//                SCHEDULER_CLOSE_HANDLER();break;
+            case CLOSE:
+                SCHEDULER_CLOSE_HANDLER();break;
         }
 
         return null;
@@ -128,10 +125,10 @@ public class BasicScheduler implements IEvent {
 
     protected void init_local_listen() throws InterruptedException {
 
-        nettyGroup = new NioEventLoopGroup(1);
+        EventLoopGroup group = new NioEventLoopGroup(1);
         BasicScheduler me = this;
         try {
-            ServerBootstrap server = new ServerBootstrap().group(nettyGroup, nettyGroup)
+            ServerBootstrap server = new ServerBootstrap().group(group, group)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
@@ -148,7 +145,7 @@ public class BasicScheduler implements IEvent {
             ChannelFuture local = server.bind(Integer.getInteger(Options.INIT_LISTEN_PORT, 8033)).sync();
             local.channel().closeFuture().sync();
         } finally {
-            nettyGroup.shutdownGracefully();
+            group.shutdownGracefully();
         }
     }
 
@@ -158,32 +155,44 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    protected void init_task_schedluer(){}
+    protected void init_task_factory() throws SchedulerException {
+        taskFactory = TaskCoreFactory.instance();
+        taskFactory.start();
+    }
 
 
-    protected void SUBMIT_MODULE_HANDLER(){}
+    protected void init_module_factory() {
+        moduleFactory = new ModuleCoreFactory();
+    }
+
+
+    protected void SUBMIT_MODULE_HANDLER(byte[] data, Description desc){
+
+
+    }
     protected void SUBMIT_TASK_HANDLER(Task task) {
         //存储到数据库，此处未完成
         Store.get().insert(Target.TASK, new Field()).where(Filter.not()).exec();
-        tasks.get(task.getPriority()).offer(task);
+        taskFactory.submit(task);
     }
+
     protected void TASK_HANDLER(){
-        for(int i =10;i>0;i++) {
-            Task task = tasks.get(i).peek();
-            if(task!=null)
-                return;
-        }
+        Task task = taskFactory.get();
     }
 
     protected void TASK_REPORT_HANDLER(){}
 
     protected synchronized void SCHEDULER_CLOSE_HANDLER() {
         if (isClosed()) return;
-        if (nettyGroup != null)
-            nettyGroup.shutdownGracefully();
 
         if (fetcher != null)
             fetcher.close();
+
+        try {
+            TaskCoreFactory.instance().close();
+        } catch (SchedulerException e) {
+            e.printStackTrace();
+        }
 
         closed = true;
     }

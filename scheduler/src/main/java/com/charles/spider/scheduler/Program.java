@@ -1,5 +1,7 @@
 package com.charles.spider.scheduler;
 
+import org.quartz.SchedulerException;
+
 import java.io.*;
 import java.sql.SQLException;
 
@@ -9,7 +11,7 @@ import java.sql.SQLException;
 public class Program {
 
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, IllegalAccessException, InstantiationException, InterruptedException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, IllegalAccessException, InstantiationException, InterruptedException, SchedulerException {
 //        Class.forName("org.sqlite.JDBC");
 //
 //

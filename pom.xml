@@ -10,10 +10,10 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>scheduler</module>
-        <module>monitor</module>
         <module>common</module>
         <module>store</module>
         <module>client</module>
+        <module>monitor</module>
     </modules>
 
     <properties>
@@ -22,6 +22,8 @@
         <fastjson.version>1.2.29</fastjson.version>
         <commons-lang3.version>3.5</commons-lang3.version>
         <junit.version>4.12</junit.version>
+        <spring.version>4.3.7.RELEASE</spring.version>
+        <jetty.version>9.4.2.v20170220</jetty.version>
     </properties>
 
 
@@ -69,8 +71,6 @@
                 <scope>test</scope>
                 <version>${junit.version}</version>
             </dependency>
-
-
 
         </dependencies>
 

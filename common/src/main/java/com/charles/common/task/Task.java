@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Created by lq on 17-3-17.
  */
-public class Task {
+public class Task implements Cloneable {
     private String id;
     private String name;
     private String url;
@@ -100,5 +100,15 @@ public class Task {
 
     public void setPriority(Integer priority) {
         this.priority = priority;
+    }
+
+
+    public Task clone() {
+        try {
+            return (Task) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

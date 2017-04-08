@@ -64,6 +64,14 @@
             <version>2.2.3</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz-jobs -->
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz-jobs</artifactId>
+            <version>2.2.3</version>
+        </dependency>
+
+
         <!-- https://mvnrepository.com/artifact/dom4j/dom4j -->
         <dependency>
             <groupId>dom4j</groupId>
@@ -83,6 +91,14 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+
+
+
+
+
+
+
+
 
     </dependencies>
 

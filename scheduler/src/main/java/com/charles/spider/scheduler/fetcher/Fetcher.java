@@ -3,7 +3,7 @@ package com.charles.spider.scheduler.fetcher;
 import com.charles.common.HttpMethod;
 import com.charles.common.task.Task;
 import com.charles.spider.scheduler.BasicScheduler;
-import com.charles.spider.scheduler.data.moudle.Moudle;
+import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
 import com.charles.spider.scheduler.event.EventLoop;
 import com.charles.common.spider.command.Commands;
 import com.charles.spider.scheduler.event.IEvent;
@@ -92,7 +92,7 @@ public class Fetcher implements IEvent {
         if (prepare != null && prepare.size() > 0) {
             prepare.forEach(x -> {
                 try {
-                    Moudle moudle = (Moudle) this.scheduler.process(Commands.GET_MOUDLE).get();
+                    ModuleCoreFactory moudle = (ModuleCoreFactory) this.scheduler.process(Commands.GET_MOUDLE).get();
                     //此次需执行moudle
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
@@ -104,7 +104,6 @@ public class Fetcher implements IEvent {
 
     protected void TASK_PROCESS_HANDLE(FetcherContext context) {
         Task task = context.getTask();
-        this.scheduler.report(task.getId(), 0);
         processGroup.execute(() -> new Processor(task, context).exec(), () -> this.scheduler.report(task.getId(), 1));
     }
 
