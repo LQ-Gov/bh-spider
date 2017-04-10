@@ -92,7 +92,7 @@ public class Fetcher implements IEvent {
         if (prepare != null && prepare.size() > 0) {
             prepare.forEach(x -> {
                 try {
-                    ModuleCoreFactory moudle = (ModuleCoreFactory) this.scheduler.process(Commands.GET_MOUDLE).get();
+                    ModuleCoreFactory moudle = (ModuleCoreFactory) this.scheduler.process(Commands.GET_MODULE).get();
                     //此次需执行moudle
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();

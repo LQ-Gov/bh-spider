@@ -8,8 +8,8 @@ import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.config.Options;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
+import com.charles.spider.scheduler.task.StoreUtils;
 import com.charles.spider.scheduler.task.TaskCoreFactory;
-import com.charles.spider.store.base.Field;
 import com.charles.spider.store.base.Store;
 import com.charles.spider.store.base.Target;
 import com.charles.spider.store.filter.Filter;
@@ -22,13 +22,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 
 /**
@@ -72,7 +70,7 @@ public class BasicScheduler implements IEvent {
 
         //MethodUtils.invokeMethod()
         switch (event) {
-            case SUBMIT_MOUDLE:
+            case SUBMIT_MODULE:
                 SUBMIT_MODULE_HANDLER((byte[]) params[0],(Description) params[1]);
                 break;
 //
@@ -172,7 +170,7 @@ public class BasicScheduler implements IEvent {
     }
     protected void SUBMIT_TASK_HANDLER(Task task) {
         //存储到数据库，此处未完成
-        Store.get().insert(Target.TASK, new Field()).where(Filter.not()).exec();
+        Store.get().insert(Target.TASK, StoreUtils.build(task)).where(Filter.not()).exec();
         taskFactory.submit(task);
     }
 

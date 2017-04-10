@@ -11,4 +11,11 @@ public class Field {
     public static final String PROCESS = "process";
     public static final String STATUS = "status";
     public static final String LOG = "log";
+
+    private String key;
+    private String value;
+
+    public Field(String key,Object value){
+
+    }
 }
