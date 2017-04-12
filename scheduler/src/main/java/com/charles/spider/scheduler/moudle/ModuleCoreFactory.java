@@ -17,15 +17,18 @@ import java.util.Map;
  */
 public class ModuleCoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(ModuleCoreFactory.class);
-    private static final Map<ModuleType,ModuleManager> managers = new HashMap<>();
+    private Map<ModuleType,ModuleManager> managers = new HashMap<>();
+    private static volatile ModuleCoreFactory obj = null;
 
-    static {
+    private ModuleCoreFactory() throws IOException {
         managers.put(ModuleType.HANDLE,new ModuleManager(Paths.get(Config.INIT_DATA_PATH,"handler")));
         managers.put(ModuleType.CONFIG,new ModuleManager(Paths.get(Config.INIT_DATA_PATH,"config")));
         managers.put(ModuleType.EXTEND,new ModuleManager(Paths.get(Config.INIT_DATA_PATH,"extend")));
     }
 
-    public static void save(byte[] data,Description desc,boolean override) throws IOException {
+
+
+    public void save(byte[] data,Description desc,boolean override) throws IOException {
         ModuleManager manager = managers.get(desc.getType());
 
         int len = ByteBuffer.wrap(data, 0, 4).getInt();
@@ -38,6 +41,16 @@ public class ModuleCoreFactory {
             desc = module.getDescription();
             logger.info("write module {} to path:{};override:{}", desc.getName(), desc.getPath(), override);
         }
+    }
+
+    public static ModuleCoreFactory instance() throws IOException {
+        if (obj == null) {
+            synchronized (ModuleCoreFactory.class) {
+                if (obj == null)
+                    obj = new ModuleCoreFactory();
+            }
+        }
+        return obj;
     }
 
 

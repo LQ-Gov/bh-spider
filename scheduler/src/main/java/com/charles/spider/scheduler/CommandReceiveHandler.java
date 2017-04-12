@@ -32,7 +32,7 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
         Command cmd = (Command) msg;
 
         Context context = new ClientContext(ctx);
-        scheduler.process(context, cmd.getType(), cmd.getParams());
+        //scheduler.process(context, cmd.getType(), cmd.getParams());
     }
 
 

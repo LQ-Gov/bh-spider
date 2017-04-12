@@ -18,12 +18,16 @@ public class ModuleManager {
 
     private Path basePath = null;
 
-    public ModuleManager(String basePath) {
+    public ModuleManager(String basePath) throws IOException {
         this(Paths.get(basePath));
     }
 
-    public ModuleManager(Path path) {
+    public ModuleManager(Path path) throws IOException {
         this.basePath = path;
+        if(!Files.exists(this.basePath))
+            Files.createDirectory(this.basePath);
+
+
     }
 
 

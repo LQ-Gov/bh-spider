@@ -1,9 +1,9 @@
 package com.charles.spider.scheduler.config;
 
-import org.apache.commons.lang3.ClassPathUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,10 +31,20 @@ public class Config {
 
     static {
         INIT_DATA_PATH = System.getProperty(Field.INIT_DATA_PATH, "data/");
-        INIT_DATA_PATH = INIT_DATA_PATH.endsWith("/") ? INIT_DATA_PATH : INIT_DATA_PATH + "/";
-
         INIT_RULE_PATH = System.getProperty(Field.INIT_RULE_PATH, "conf/spider-rule.xml");
+        try {
+            init();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
+
+    static void init() throws IOException {
+        if (!Files.exists(Paths.get(INIT_DATA_PATH)))
+            Files.createDirectory(Paths.get(INIT_DATA_PATH));
+    }
+
 }
 
 

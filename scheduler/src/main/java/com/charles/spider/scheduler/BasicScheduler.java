@@ -1,9 +1,11 @@
 package com.charles.spider.scheduler;
 
+import com.alibaba.fastjson.JSON;
 import com.charles.common.task.Task;
 import com.charles.spider.common.moudle.Description;
 import com.charles.spider.scheduler.event.EventLoop;
 import com.charles.common.spider.command.Commands;
+import com.charles.spider.scheduler.event.EventMapping;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.config.Options;
@@ -27,6 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -38,13 +45,13 @@ public class BasicScheduler implements IEvent {
     private EventLoop loop =null;
     private Fetcher fetcher = null;
     private TaskCoreFactory taskFactory = null;
-    private ModuleCoreFactory moduleFactory = null;
+    private ModuleCoreFactory modFactory = null;
 
     public BasicScheduler() {
     }
 
 
-    public synchronized void exec() throws InterruptedException, SchedulerException {
+    public synchronized void exec() throws InterruptedException, SchedulerException, IOException {
         if(!closed) return;
         closed=false;
         //init_system_signal_handles();
@@ -61,43 +68,11 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Future process(Commands event, Object... params) {
-        if (Thread.currentThread() != loop)
-            return loop.execute(event, params);
-
-
-        logger.info("execute command {}",event);
-
-        //MethodUtils.invokeMethod()
-        switch (event) {
-            case SUBMIT_MODULE:
-                SUBMIT_MODULE_HANDLER((byte[]) params[0],(Description) params[1]);
-                break;
-//
-            case SUBMIT_TASK:
-                SUBMIT_TASK_HANDLER((Task) params[0]);
-                break;
-//
-            case TASK:
-                TASK_HANDLER();
-                break;
-//
-//            case REPORT:
-//                TASK_REPORT_HANDLER();
-//                break;
-//
-            case CLOSE:
-                SCHEDULER_CLOSE_HANDLER();break;
-        }
-
-        return null;
+    public Future process(Commands event, Object... inputs) {
+        return loop.execute(event, inputs);
     }
 
 
-    public void process(Context ctx,Commands cmd,Object...params){
-
-
-    }
 
     public void report(String id,int process){
         this.process(Commands.PROCESS,id,process);
@@ -113,10 +88,14 @@ public class BasicScheduler implements IEvent {
         logger.info("init moudle of handle system signal");
     }
 
+
+
     protected void init_fetcher(){
         fetcher = new Fetcher(this);
         logger.info("init moudle of fetcher");
     }
+
+
 
     //初始化数据库数据
     protected void init_store(){}
@@ -152,6 +131,10 @@ public class BasicScheduler implements IEvent {
         loop.start();
     }
 
+    protected void init_module_factory() throws IOException {
+        this.modFactory = ModuleCoreFactory.instance();
+    }
+
 
     protected void init_task_factory() throws SchedulerException {
         taskFactory = TaskCoreFactory.instance();
@@ -159,27 +142,34 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    protected void init_module_factory() {
-        moduleFactory = new ModuleCoreFactory();
+    @EventMapping
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc,boolean override) {
+        try {
+            modFactory.save(data, desc, override);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
-
-    protected void SUBMIT_MODULE_HANDLER(byte[] data, Description desc){
-
-
-    }
+    @EventMapping
     protected void SUBMIT_TASK_HANDLER(Task task) {
         //存储到数据库，此处未完成
         Store.get().insert(Target.TASK, StoreUtils.build(task)).where(Filter.not()).exec();
         taskFactory.submit(task);
     }
 
+
+    @EventMapping
     protected void TASK_HANDLER(){
         Task task = taskFactory.get();
     }
 
+    @EventMapping
     protected void TASK_REPORT_HANDLER(){}
 
+    @EventMapping
     protected synchronized void SCHEDULER_CLOSE_HANDLER() {
         if (isClosed()) return;
 
