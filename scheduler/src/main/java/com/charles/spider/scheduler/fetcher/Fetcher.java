@@ -31,7 +31,6 @@ public class Fetcher implements IEvent {
     }
 
 
-    @Override
     public Future process(Commands event, Object... params) {
         if (Thread.currentThread() != loop)
             return loop.execute(event, params);
