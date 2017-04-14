@@ -10,6 +10,7 @@ import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.config.Options;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
+import com.charles.spider.scheduler.moudle.ModuleNoChangeException;
 import com.charles.spider.scheduler.task.StoreUtils;
 import com.charles.spider.scheduler.task.TaskCoreFactory;
 import com.charles.spider.store.base.Store;
@@ -29,9 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.DigestException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -42,7 +45,7 @@ import java.util.concurrent.Future;
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
     private volatile boolean closed = true;
-    private EventLoop loop =null;
+    private EventLoop loop = null;
     private Fetcher fetcher = null;
     private TaskCoreFactory taskFactory = null;
     private ModuleCoreFactory modFactory = null;
@@ -52,8 +55,8 @@ public class BasicScheduler implements IEvent {
 
 
     public synchronized void exec() throws InterruptedException, SchedulerException, IOException {
-        if(!closed) return;
-        closed=false;
+        if (!closed) return;
+        closed = false;
         //init_system_signal_handles();
         init_event_loop();
         init_fetcher();
@@ -63,7 +66,7 @@ public class BasicScheduler implements IEvent {
         init_local_listen();
     }
 
-    public boolean isClosed(){
+    public boolean isClosed() {
         return closed;
     }
 
@@ -73,32 +76,30 @@ public class BasicScheduler implements IEvent {
     }
 
 
-
-    public void report(String id,int process){
-        this.process(Commands.PROCESS,id,process);
+    public void report(String id, int process) {
+        this.process(Commands.PROCESS, id, process);
     }
 
-    public void close(){process(Commands.CLOSE); }
+    public void close() {
+        process(Commands.CLOSE);
+    }
 
 
-
-
-    protected void init_system_signal_handles(){
-        Signal.handle(new Signal("INT"),(Signal sig)-> this.close());
+    protected void init_system_signal_handles() {
+        Signal.handle(new Signal("INT"), (Signal sig) -> this.close());
         logger.info("init moudle of handle system signal");
     }
 
 
-
-    protected void init_fetcher(){
+    protected void init_fetcher() {
         fetcher = new Fetcher(this);
         logger.info("init moudle of fetcher");
     }
 
 
-
     //初始化数据库数据
-    protected void init_store(){}
+    protected void init_store() {
+    }
 
     protected void init_local_listen() throws InterruptedException {
 
@@ -126,7 +127,7 @@ public class BasicScheduler implements IEvent {
         }
     }
 
-    protected void init_event_loop(){
+    protected void init_event_loop() {
         loop = new EventLoop(this);
         loop.start();
     }
@@ -143,14 +144,14 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc,boolean override) {
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc, boolean override) {
         try {
             modFactory.save(data, desc, override);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | DigestException e) {
+            ctx.write("the file write error");
+        } catch (ModuleNoChangeException e) {
+            ctx.write("the file is same for last version");
         }
-
-
     }
 
     @EventMapping
@@ -162,12 +163,13 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void TASK_HANDLER(){
+    protected void TASK_HANDLER() {
         Task task = taskFactory.get();
     }
 
     @EventMapping
-    protected void TASK_REPORT_HANDLER(){}
+    protected void TASK_REPORT_HANDLER() {
+    }
 
     @EventMapping
     protected synchronized void SCHEDULER_CLOSE_HANDLER() {

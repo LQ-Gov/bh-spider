@@ -2,9 +2,11 @@ package com.charles.spider.scheduler.moudle;
 
 import com.alibaba.fastjson.JSON;
 import com.charles.spider.common.moudle.Description;
+import sun.security.krb5.internal.crypto.Des;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -43,8 +45,24 @@ public class ModuleManager {
     }
 
 
-    public Module save(byte[] data,Description desc){
-        return null;
+    public Module save(String name, byte[] data,Description desc) throws IOException {
+        return save(name,data,0,data.length,desc);
+    }
+
+
+    public Module save (String name, byte[] data, int offset, int len, Description desc) throws IOException {
+        Path path = Paths.get(basePath.toString(), name);
+        if (!Files.exists(path))
+            Files.createDirectory(path);
+        FileOutputStream s1 = new FileOutputStream(new File(path.toString(), name));
+        s1.write(data, offset, len);
+        s1.flush();
+
+        FileOutputStream s2 = new FileOutputStream(new File(path.toString(), "description"));
+        s2.write(JSON.toJSONString(desc).getBytes());
+        s2.flush();
+
+        return new Module(desc);
     }
 
 

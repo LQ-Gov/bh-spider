@@ -8,6 +8,7 @@ public class Description {
     private String path;
     private ModuleType type = ModuleType.HANDLE;
     private String info;
+    private String hash;
 
     public Description(String name) {
         this(name, null, ModuleType.HANDLE, null);
@@ -59,5 +60,13 @@ public class Description {
 
     public void setInfo(String info) {
         this.info = info;
+    }
+
+    public String getHash() {
+        return hash;
+    }
+
+    public void setHash(String hash) {
+        this.hash = hash;
     }
 }
