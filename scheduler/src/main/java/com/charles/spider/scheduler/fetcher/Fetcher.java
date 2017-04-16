@@ -35,9 +35,9 @@ public class Fetcher implements IEvent {
         if (Thread.currentThread() != loop)
             return loop.execute(event, params);
         switch (event) {
-            case TASK:
-                return this.scheduler.process(event, params);
-            case PROCESS:
+//            case TASK:
+//                return this.scheduler.process(event, params);
+//            case PROCESS:
 
 
         }
@@ -89,14 +89,14 @@ public class Fetcher implements IEvent {
     protected void exec_request_prepare_moudles(Task task, HttpRequestBase request, FetcherContext context) {
         List<String> prepare = task.getHandlers().get("prepare");
         if (prepare != null && prepare.size() > 0) {
-            prepare.forEach(x -> {
-                try {
-                    ModuleCoreFactory moudle = (ModuleCoreFactory) this.scheduler.process(Commands.GET_MODULE).get();
-                    //此次需执行moudle
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                }
-            });
+//            prepare.forEach(x -> {
+//                try {
+//                    ModuleCoreFactory moudle = (ModuleCoreFactory) this.scheduler.process(Commands.GET_MODULE).get();
+//                    //此次需执行moudle
+//                } catch (InterruptedException | ExecutionException e) {
+//                    e.printStackTrace();
+//                }
+//            });
         }
     }
 

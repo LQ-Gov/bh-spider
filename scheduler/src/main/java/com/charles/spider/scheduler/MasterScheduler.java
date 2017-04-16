@@ -8,4 +8,7 @@ import java.util.Properties;
 public class MasterScheduler extends BasicScheduler {
     public MasterScheduler(Properties properties) {
     }
+
+
+
 }

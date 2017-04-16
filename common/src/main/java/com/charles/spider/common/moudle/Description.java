@@ -10,6 +10,10 @@ public class Description {
     private String info;
     private String hash;
 
+    public Description(ModuleType type){
+        this(null,null,type,null);
+    }
+
     public Description(String name) {
         this(name, null, ModuleType.HANDLE, null);
     }

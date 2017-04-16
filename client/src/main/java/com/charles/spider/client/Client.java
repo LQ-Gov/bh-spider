@@ -26,6 +26,9 @@ public class Client {
     private List<String> servers = null;
     private ThreadLocal<Integer> c = new ThreadLocal<>();
     private ThreadLocal<Socket> socket = new ThreadLocal<>();
+
+    public Client(){}
+
     public Client(String servers) throws IOException, URISyntaxException {
         this.servers = Arrays.asList(servers.split(","));
         open(next());
@@ -52,12 +55,12 @@ public class Client {
     }
     protected <T> T write(Commands cmd, Class<T> cls, T... params) {
         short type = (short) cmd.ordinal();
-        String data = JSON.toJSONString(params);
         try {
+            byte[] data = JSON.toJSONBytes(params);
             DataOutputStream out = new DataOutputStream(socket.get().getOutputStream());
             out.writeShort(type);
-            out.writeInt(data.length());
-            out.writeBytes(data);
+            out.writeInt(data.length);
+            out.write(data);
             out.flush();
 
             DataInputStream in = new DataInputStream(socket.get().getInputStream());
@@ -127,11 +130,15 @@ public class Client {
      * @param path
      * @param desc
      */
-    public void submit(Path path, Description desc) throws IOException {
+
+    public void submit(Path path, Description desc,boolean override) throws IOException {
         byte[] data = Files.readAllBytes(path);
 
-        write(Commands.SUBMIT_TIMER, null, data, desc);
+        write(Commands.SUBMIT_MODULE, null, data, desc,override);
     }
+
+
+
 
 
     /**
@@ -139,8 +146,8 @@ public class Client {
      * @param path
      * @param desc
      */
-    public void submit(String path,Description desc) throws IOException {
-        submit(Paths.get(path), desc);
+    public void submit(String path,Description desc,boolean override) throws IOException {
+        submit(Paths.get(path), desc,override);
     }
 
 

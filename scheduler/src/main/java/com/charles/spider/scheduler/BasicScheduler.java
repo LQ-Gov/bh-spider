@@ -16,6 +16,9 @@ import com.charles.spider.scheduler.task.TaskCoreFactory;
 import com.charles.spider.store.base.Store;
 import com.charles.spider.store.base.Target;
 import com.charles.spider.store.filter.Filter;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JacksonStdImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -25,6 +28,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import org.apache.commons.lang3.ArrayUtils;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,17 +75,17 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Future process(Commands event, Object... inputs) {
-        return loop.execute(event, inputs);
+    public Future process(Commands event, Context ctx, Object... inputs) {
+        return loop.execute(event, ArrayUtils.add(inputs, 0, ctx));
     }
 
 
     public void report(String id, int process) {
-        this.process(Commands.PROCESS, id, process);
+        //this.process(Commands.PROCESS, id, process);
     }
 
     public void close() {
-        process(Commands.CLOSE);
+        //process(Commands.CLOSE);
     }
 
 

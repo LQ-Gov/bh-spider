@@ -1,14 +1,17 @@
 package com.charles.spider.scheduler.event;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.parser.Feature;
 import com.charles.common.Pair;
 import com.charles.common.spider.command.Commands;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -44,6 +47,7 @@ public class EventLoop extends Thread {
         while (!this.parent.isClosed()) {
             try {
                 Pair<Commands, Object[]> cmd = queue.take();
+                logger.debug("get one cmd");
                 if (cmd == null) continue;
 
                 logger.info("execute command {}", cmd.getFirst());
@@ -67,12 +71,13 @@ public class EventLoop extends Thread {
                     for (int i = 0; i < parameters.length; i++) {
                         Class<?> p = parameters[i];
                         Object arg = cmd.getSecond()[i];
-
-                        if (arg.getClass().isAssignableFrom(p) || p.isPrimitive() || p.isAssignableFrom(String.class))
+                        if (p.isAssignableFrom(arg.getClass()))
                             args[i] = arg;
-                        else {
-                            String base = JSON.toJSONString(arg);
-                            args[i] = JSON.parseObject(base, p);
+                        else if(arg.getClass().isArray()&&arg.getClass().getComponentType().equals(byte.class))
+                            continue;
+                        else{
+                            logger.error("parameter type error:{}",cmd.getFirst());
+                            continue;
                         }
                     }
                 }
@@ -90,7 +95,7 @@ public class EventLoop extends Thread {
 
 
     protected void init_process_methods(Object o) {
-        Method[] methods = o.getClass().getMethods();
+        Method[] methods = o.getClass().getDeclaredMethods();
 
         for (Method method : methods) {
             EventMapping mapping = method.getDeclaredAnnotation(EventMapping.class);
