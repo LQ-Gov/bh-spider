@@ -16,14 +16,7 @@ public class ProtocolTest {
     }
 
     @Test
-    public void pack() throws Exception {
-        int input = 101;
-        Integer input2 = 122;
-        Object input3 = new Integer(133);
-        protocol.pack(10);
-        protocol.pack(input);
-        protocol.pack(input2);
-        protocol.pack(input3);
+    public void pack_init() throws Exception {
     }
 
 }

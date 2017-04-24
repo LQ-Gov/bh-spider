@@ -21,6 +21,8 @@ public interface Protocol {
 
     byte[] pack(byte data);
 
+    byte[] pack(String data) throws Exception;
+
     byte[] pack(String data, Charset charset) throws Exception;
 
     <T> byte[] pack(T data) throws Exception;

@@ -1,10 +1,6 @@
 package com.charles.spider.common.protocol.simple;
 
-import com.charles.spider.common.protocol.DataTypes;
-import com.charles.spider.common.protocol.ProtocolObject;
-import com.charles.spider.common.protocol.Token;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.reflect.TypeUtils;
+import com.charles.spider.common.protocol.*;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -75,67 +71,69 @@ public class SimpleToken implements Token {
     @Override
     public String toString(Charset charset) throws Exception {
         ByteBuffer buffer = safe_build_buffer(DataTypes.STRING);
-        return new String(buffer.put(data, pos + 1, buffer.limit()).array(), charset);
+        return new String(buffer.put(data, pos + 5, buffer.limit()).array(), charset);
     }
 
     @Override
     public <T> T toClass(Class<T> cls) throws Exception {
-        if(type==null) throw new Exception("error type");
-        if(type==DataTypes.NULL) return null;
+        DataTypes t = DataTypes.type(cls);
+        if(t==null) type = t;
+        else if(t!=type) throw new Exception("error type");
 
-        if(cls.isPrimitive()) {
-            if (Integer.class.equals(cls))
-                return (T) Integer.valueOf(toInt());
-            if(Byte.class.equals(cls))
+        switch (t) {
+            case BYTE:
                 return (T) Byte.valueOf(toByte());
-            if(Float.class.equals(cls))
-                return (T) Float.valueOf(toFloat());
-            if(Double.class.equals(cls))
-                return (T) Double.valueOf(toDouble());
-            if(Character.class.equals(cls))
-                return (T) Character.valueOf(toChar());
-            if(Long.class.equals(cls))
-                return (T) Long.valueOf(toLong());
-            if(Boolean.class.equals(cls))
+            case BOOL:
                 return (T) Boolean.valueOf(toBoolean());
+            case CHAR:
+                return (T) Character.valueOf(toChar());
+            case INT:
+                return (T) Integer.valueOf(toInt());
+            case LONG:
+                return (T) Long.valueOf(toLong());
+            case FLOAT:
+                return (T) Float.valueOf(toFloat());
+            case DOUBLE:
+                return (T) Double.valueOf(toDouble());
+            case STRING:
+                return (T) toString(Charset.defaultCharset());
+            case ARRAY:
+                return (T) toArray(cls);
+            case CLASS: {
+                if (cls == null || cls == Object.class) return (T) this;
+                T o = null;
+                if (ProtocolObject.class.isAssignableFrom(cls)) {
+                    o = cls.getConstructor(byte[].class, int.class, int.class).newInstance(data, pos + 5, len - 5);
+                    ProtocolObject obj = (ProtocolObject) o;
+
+                    return o;
+                }
+                o = cls.newInstance();
+                int start = pos + 5, end = start + length();
+                for (int i = start; i < end; ) {
+                    Token token = new SimpleToken(data, i);
+                    Field field = o.getClass().getField(token.toString(Charset.defaultCharset()));
+                    token = new SimpleToken(data, i += token.length());
+                    field.set(o, token.toClass(field.getType()));
+                    i += token.length();
+                }
+                return o;
+            }
+            default:
+                throw new Exception("error type");
         }
-        if(String.class.equals(cls))
-            return (T) toString(Charset.defaultCharset());
-
-        T o = cls.newInstance();
-        if(ProtocolObject.class.isAssignableFrom(cls)) {
-            ProtocolObject obj = (ProtocolObject) o;
-            obj.fromBytes(data, pos+1);
-            return o;
-        }
-
-        int start = pos+5,end = start+length();
-
-        for(int i=start;i<end;) {
-            Token token = new SimpleToken(data, i);
-            Field field = o.getClass().getField(token.toString(Charset.defaultCharset()));
-            token = new SimpleToken(data, i += token.length());
-            field.set(o, token.toClass(field.getType()));
-            i += token.length();
-        }
-
-        return o;
     }
+
 
     @Override
     public <T> T[] toArray(Class<T> cls) throws Exception {
+        if (type != DataTypes.ARRAY) throw new Exception("error type");
+        DataTypes t = DataTypes.type(cls);
+        DataTypes at = DataTypes.type(data[pos + 6]);
+        if (t == null) t = at;
+        if (t != at) throw new Exception("error type");
 
-        List<T> list = new ArrayList<>();
-        int start = pos + 5, end = pos + length();
-        for (int i = start; i < end; ) {
-            Token token = new SimpleToken(data, i);
-            list.add(token.toClass(cls));
-            i += token.length();
-        }
-
-        T[] result = (T[]) Array.newInstance(cls, list.size());
-        list.toArray(result);
-        return result;
+        return (T[]) ArrayObjectFactory.get(t).write(cls, data, pos + 6, length() - 6).toObject();
     }
 
     @Override

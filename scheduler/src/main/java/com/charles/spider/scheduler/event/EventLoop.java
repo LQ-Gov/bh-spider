@@ -1,17 +1,14 @@
 package com.charles.spider.scheduler.event;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.parser.Feature;
-import com.charles.common.Pair;
 import com.charles.common.spider.command.Commands;
-import org.apache.commons.lang3.ArrayUtils;
+import com.charles.spider.common.protocol.Token;
+import com.charles.spider.scheduler.Command;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -26,8 +23,8 @@ public class EventLoop extends Thread {
     private Logger logger = LoggerFactory.getLogger(EventLoop.class);
 
     private IEvent parent = null;
-    private BlockingQueue<Pair<Commands, Object[]>> queue = new LinkedBlockingQueue<>();
-    private Map<String, MethodResolver> resolvers = new HashMap<>();
+    private BlockingQueue<Command> queue = new LinkedBlockingQueue<>();
+    private Map<String, MethodExecutor> resolvers = new HashMap<>();
 
     public EventLoop(IEvent parent) {
         this.parent = parent;
@@ -36,7 +33,7 @@ public class EventLoop extends Thread {
     }
 
     public Future execute(Commands type, Object... params) {
-        queue.offer(new Pair<>(type, params));
+        queue.offer(new Command(type,params));
 
         return null;
 
@@ -46,51 +43,43 @@ public class EventLoop extends Thread {
     public void run() {
         while (!this.parent.isClosed()) {
             try {
-                Pair<Commands, Object[]> cmd = queue.take();
-                logger.debug("get one cmd");
+                Command cmd = queue.take();
+                if (this.parent.isClosed()) break;
                 if (cmd == null) continue;
 
-                logger.info("execute command {}", cmd.getFirst());
+                logger.info("execute command {}", cmd.key());
 
-                MethodResolver resolver = resolvers.get(cmd.getFirst().toString());
+                MethodExecutor executor = resolvers.get(cmd.key().toString());
 
-                if (resolver == null) {
-                    logger.error("no handler about {}", cmd.getFirst());
-                    continue;
-                }
 
-                Class<?>[] parameters = resolver.getParameters();
+                Class<?>[] parameters = executor.getParameters();
 
-                if (parameters.length < cmd.getSecond().length) {
-                    logger.error("{}:input params sum error", cmd.getFirst());
-                    continue;
-                }
-                Object[] args = new Object[parameters.length];
-                if (parameters.length > 0) {
+                Object[] args = check_and_build_args(parameters, cmd.params());
 
-                    for (int i = 0; i < parameters.length; i++) {
-                        Class<?> p = parameters[i];
-                        Object arg = cmd.getSecond()[i];
-                        if (p.isAssignableFrom(arg.getClass()))
-                            args[i] = arg;
-                        else if(arg.getClass().isArray()&&arg.getClass().getComponentType().equals(byte.class))
-                            continue;
-                        else{
-                            logger.error("parameter type error:{}",cmd.getFirst());
-                            continue;
-                        }
-                    }
-                }
-                try {
-                    resolver.invoke(args);
-                } catch (InvocationTargetException | IllegalAccessException e) {
-                    logger.error("{}:invoke function error", cmd.getFirst());
-                    e.printStackTrace();
-                }
-            } catch (InterruptedException e) {
+                executor.invoke(args);
+            } catch (InterruptedException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    protected Object[] check_and_build_args(Class<?>[] parameters,Object[] inputs) throws Exception {
+        if(parameters.length!=inputs.length) throw new Exception("error input length");
+        if(parameters.length==0) return null;
+
+        Object[] args = new Object[parameters.length];
+
+        for(int i=0;i<parameters.length;i++) {
+            if (parameters[i].getClass().isAssignableFrom(inputs[i].getClass()))
+                args[i] = inputs[i];
+            else if (inputs[i].getClass() == Token.class)
+                args[i] = ((Token) inputs[i]).toClass(parameters[i].getClass());
+            else throw new Exception("error input type");
+        }
+        return args;
+
     }
 
 
@@ -106,7 +95,7 @@ public class EventLoop extends Thread {
                     if (key.endsWith("_HANDLER"))
                         key = key.substring(0, key.length() - "_HANDLER".length());
                 }
-                resolvers.put(key, new MethodResolver(o, method));
+                resolvers.put(key, new MethodExecutor(o, method));
             }
         }
     }

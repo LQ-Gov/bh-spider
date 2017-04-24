@@ -6,20 +6,19 @@ import com.charles.common.spider.command.Commands;
  * Created by lq on 17-3-26.
  */
 public class Command {
-    private Commands type;
-    private Object[] params;
+    private Commands k;
+    private Object[] p;
 
-    public Command(Commands type,Object[] params){
-        this.type = type;
-        this.params = params;
+    public Command(Commands key,Object[] params){
+        this.k = key;
+        this.p = params;
     }
 
-
-    public Commands getType() {
-        return type;
+    public Commands key() {
+        return k;
     }
 
-    public Object[] getParams() {
-        return params;
+    public Object[] params() {
+        return p;
     }
 }

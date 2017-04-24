@@ -5,6 +5,7 @@ import com.charles.common.spider.command.Commands;
 import com.charles.common.task.Task;
 import com.charles.common.task.TimerTask;
 import com.charles.spider.common.moudle.Description;
+import com.charles.spider.common.protocol.SerializeFactory;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -56,7 +57,7 @@ public class Client {
     protected <T> T write(Commands cmd, Class<T> cls, T... params) {
         short type = (short) cmd.ordinal();
         try {
-            byte[] data = JSON.toJSONBytes(params);
+            byte[] data = SerializeFactory.serialize(params);
             DataOutputStream out = new DataOutputStream(socket.get().getOutputStream());
             out.writeShort(type);
             out.writeInt(data.length);
@@ -83,6 +84,8 @@ public class Client {
             return o;
         } catch (IOException e) {
             e.fillInStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }

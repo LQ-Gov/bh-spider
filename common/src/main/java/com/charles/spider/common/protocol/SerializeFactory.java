@@ -13,7 +13,7 @@ public class SerializeFactory {
         return serializer.cast(inputs);
     }
 
-    public static <T> T deserialize(byte[] data,Class<T> cls){
+    public static <T> T deserialize(byte[] data,Class<T> cls) throws Exception {
         return deserializer.cast(data,cls);
     }
 }

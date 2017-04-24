@@ -1,14 +1,13 @@
 package com.charles.spider.scheduler;
 
-import com.alibaba.fastjson.JSON;
+import com.charles.common.spider.command.Commands;
 import com.charles.common.task.Task;
 import com.charles.spider.common.moudle.Description;
+import com.charles.spider.scheduler.config.Options;
 import com.charles.spider.scheduler.event.EventLoop;
-import com.charles.common.spider.command.Commands;
 import com.charles.spider.scheduler.event.EventMapping;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
-import com.charles.spider.scheduler.config.Options;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
 import com.charles.spider.scheduler.moudle.ModuleNoChangeException;
 import com.charles.spider.scheduler.task.StoreUtils;
@@ -16,9 +15,6 @@ import com.charles.spider.scheduler.task.TaskCoreFactory;
 import com.charles.spider.store.base.Store;
 import com.charles.spider.store.base.Target;
 import com.charles.spider.store.filter.Filter;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JacksonStdImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -34,13 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.DigestException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -75,8 +66,10 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Future process(Commands event, Context ctx, Object... inputs) {
-        return loop.execute(event, ArrayUtils.add(inputs, 0, ctx));
+    public Future process(Context ctx, Command event) {
+
+        return loop.execute(event.key(), ArrayUtils.add(event.params(), 0, ctx));
+        //return loop.execute(event, ArrayUtils.add(inputs, 0, ctx));
     }
 
 

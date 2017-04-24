@@ -14,4 +14,8 @@ public class Deserializer {
         Token token = protocol.assemble(data, 0, data.length).next();
         return token.toClass(cls);
     }
+
+    public Object cast(byte[] data) throws Exception {
+        return cast(data,null);
+    }
 }

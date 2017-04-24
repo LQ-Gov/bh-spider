@@ -42,6 +42,9 @@ public class ProtocolBase implements Protocol {
     }
 
     @Override
+    public byte[] pack(String data) throws Exception {return new byte[0];}
+
+    @Override
     public byte[] pack(String data, Charset charset) throws Exception {
         return new byte[0];
     }

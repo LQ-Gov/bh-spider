@@ -22,7 +22,7 @@ public class CommandDecoder extends ByteToMessageDecoder {
         Object[] params = null;
         if (len > 2) {
             byte[] data = ByteBufUtil.getBytes(byteBuf);
-            params = SerializeFactory.deserialize(data,Object[].class);
+            params = SerializeFactory.deserialize(data,null);
         }
         list.add(new Command(type, params));
     }

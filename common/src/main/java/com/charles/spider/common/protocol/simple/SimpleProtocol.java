@@ -3,9 +3,11 @@ package com.charles.spider.common.protocol.simple;
 import com.charles.spider.common.protocol.*;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -13,6 +15,12 @@ import java.util.List;
  */
 public final class SimpleProtocol extends ProtocolBase {
     private final static int MAX_LEN = (Integer.MAX_VALUE - 5);
+
+    private volatile static SimpleProtocol ins = new SimpleProtocol();
+    public static SimpleProtocol instance(){
+        return ins;
+    }
+
 
     @Override
     public byte[] pack(int data) {
@@ -78,19 +86,24 @@ public final class SimpleProtocol extends ProtocolBase {
         return result;
     }
 
+    @Override
+    public byte[] pack(String input) throws Exception {
+        return pack(input, Charset.defaultCharset());
+    }
+
     //数据最大长度为 65531
     @Override
     public byte[] pack(String input, Charset charset) throws Exception {
-        if (input!=null&& input.length() > MAX_LEN)
+        if (input != null && input.length() > MAX_LEN)
             throw new Exception("the string length must between 0 and " + MAX_LEN);
 
 
-        if(input==null)
-            return new byte[]{DataTypes.STRING.value(),1,0,0,0,0};
+        if (input == null)
+            return new byte[]{DataTypes.STRING.value(), 1, 0, 0, 0, 0};
 
         byte[] result = new byte[input.length() + 6];
 
-        ByteBuffer buffer = ByteBuffer.allocate(input.length()+5).put(DataTypes.STRING.value())
+        ByteBuffer buffer = ByteBuffer.allocate(input.length() + 5).put(DataTypes.STRING.value())
                 .putInt(input.length())
                 .put(input.getBytes(charset));
 
@@ -105,18 +118,15 @@ public final class SimpleProtocol extends ProtocolBase {
      */
     @Override
     public <T> byte[] pack(T o) throws Exception {
-        if(o==null) return null;
+        if (o == null) return new byte[]{DataTypes.NULL.value()};
         if (o instanceof ProtocolObject) {
 
             ProtocolObject base = (ProtocolObject) o;
             byte[] data = base.toBytes();
-            if (base.isAutoPrefix()) {
-                data = ByteBuffer.allocate(5 + data.length)
-                        .put(DataTypes.CLASS.value())
-                        .putInt(data.length)
-                        .put(data).array();
-
-            }
+            data = ByteBuffer.allocate(5 + data.length)
+                    .put(DataTypes.CLASS.value())
+                    .putInt(data.length)
+                    .put(data).array();
             return data;
         } else {
             if (o instanceof Integer) //Integer
@@ -139,15 +149,18 @@ public final class SimpleProtocol extends ProtocolBase {
                 List<byte[]> list = new ArrayList<>();
                 for (Field field : fields) {
                     byte[] name = pack(field.getName());
-                    byte[] value = pack(field.get(o));
-                    len +=name.length+value.length;
-                    if(len>MAX_LEN)
-                        throw new Exception("the struct size must less "+MAX_LEN+" bytes");
+
+                    Method get = o.getClass().getMethod(get_method_name(field.getName()));
+                    if (get == null) continue;
+                    byte[] value = pack(get.invoke(o));
+                    len += name.length + value.length;
+                    if (len > MAX_LEN)
+                        throw new Exception("the struct size must less " + MAX_LEN + " bytes");
                     list.add(name);
                     list.add(value);
                 }
 
-                ByteBuffer buffer = ByteBuffer.allocate(5+len).put(DataTypes.CLASS.value())
+                ByteBuffer buffer = ByteBuffer.allocate(5 + len).put(DataTypes.CLASS.value())
                         .putInt(len);
 
                 list.forEach(buffer::put);
@@ -157,35 +170,31 @@ public final class SimpleProtocol extends ProtocolBase {
     }
 
     /**
-     * @param data
+     * @param input
      * @param <T>
      * @return
      * @throws Exception
      */
     @Override
-    public <T> byte[] pack(T[] data) throws Exception {
+    public <T> byte[] pack(T[] input) throws Exception {
 
-        List<byte[]> list = new ArrayList<>();
-        int len = 0;
-        for (T i : data) {
-            byte[] t = pack(i);
-            len += t.length;
-            list.add(t);
-        }
-        if (len > MAX_LEN)
-            throw new Exception("数组长度不能超过" + (MAX_LEN));
+        DataTypes t = DataTypes.type(input.getClass().getComponentType());
 
-        ByteBuffer buffer = ByteBuffer.allocate(5 + len).put(DataTypes.ARRAY.value());
-        for (byte[] it : list)
-            buffer.put(it);
+        byte[] bytes = ArrayObjectFactory.get(t).write(input).toBytes();
+
+        ByteBuffer buffer = ByteBuffer.allocate(1 + 4 + 1 + bytes.length)
+                .put(DataTypes.ARRAY.value())
+                .putInt(1 + bytes.length)
+                .put(t.value())
+                .put(bytes);
 
         return buffer.array();
     }
 
-    private static String getMethodName(String filedName) throws Exception {
+    private static String get_method_name(String filedName) throws Exception {
         byte[] items = filedName.getBytes();
         items[0] = (byte) ((char) items[0] - 'a' + 'A');
-        return new String(items);
+        return "get" + new String(items);
     }
 
 

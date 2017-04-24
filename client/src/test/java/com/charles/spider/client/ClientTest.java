@@ -27,8 +27,8 @@ public class ClientTest {
 
     @Test
     public void submit() throws Exception {
-//        Description desc = new Description(ModuleType.HANDLE);
-//        client.submit("target/client-1.0-SNAPSHOT.jar",desc,true);
+        Description desc = new Description(ModuleType.HANDLE);
+        client.submit("target/client-1.0-SNAPSHOT.jar",desc,true);
 
 
     }

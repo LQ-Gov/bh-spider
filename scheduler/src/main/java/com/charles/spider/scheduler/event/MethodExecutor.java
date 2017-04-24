@@ -6,11 +6,11 @@ import java.lang.reflect.Method;
 /**
  * Created by lq on 17-4-11.
  */
-public class MethodResolver {
+public class MethodExecutor {
     private Object bean;
     private Method method;
     private Class<?>[] parameters;
-    public MethodResolver(Object bean,Method method) {
+    public MethodExecutor(Object bean, Method method) {
         this.bean=bean;
         this.method = method;
         this.parameters = this.method.getParameterTypes();
