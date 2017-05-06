@@ -1,5 +1,6 @@
 package com.charles.spider.common.protocol.simple;
 
+import com.charles.spider.common.protocol.DataTypes;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.nio.ByteBuffer;
@@ -13,37 +14,35 @@ import java.util.List;
  */
 public class StringInterpreter extends UniqueInterpreter<String> {
     @Override
-    public boolean support(Object o) {
-        return support(o, String.class);
+    public boolean support(Class cls) {
+        return support(cls, String.class);
     }
 
     @Override
     protected byte[] fromArray(String[] input) {
-        int len = 0;
-        for (String str : input) len += str.length();
-
-        ByteBuffer buffer = ByteBuffer.allocate(len + input.length * 4);
-
-        Arrays.stream(input).forEach(x -> buffer.put(fromObject(x)));
-
-        return buffer.array();
+        return fromCollection(Arrays.asList(input));
     }
 
     @Override
     protected byte[] fromCollection(Collection<String> collection) {
         int len = 0;
-        for (String str : collection) len += str.length();
+        for (String str : collection) {
+            len += str == null ? 1 : str.length()+5;
+        }
 
-        ByteBuffer buffer = ByteBuffer.allocate(len + collection.size() * 4);
+        ByteBuffer buffer = ByteBuffer.allocate(len);
 
-        collection.forEach(x -> buffer.put(fromObject(x)));
+        collection.forEach(x ->buffer.put(fromObject(x)));
 
         return buffer.array();
     }
 
     @Override
     protected byte[] fromObject(String o) {
-        return ByteBuffer.allocate(4+o.length()).putInt(o.length()).put(o.getBytes()).array();
+        if (o == null) return new byte[]{DataTypes.NULL.value()};
+        return ByteBuffer.allocate(1 + 4 + o.length())
+                .put(DataTypes.STRING.value())
+                .putInt(o.length()).put(o.getBytes()).array();
     }
 
     @Override
@@ -62,20 +61,20 @@ public class StringInterpreter extends UniqueInterpreter<String> {
         int end = pos + len;
 
         while (pos < end) {
-            String str = toObject(data, pos, len);
+            String str = toObject(data, pos, end - pos);
             collection.add(str);
-            pos = pos + str.length() + 4;
-            len = len - str.length() - 4;
+            if (str == null) pos++;
+            else pos = pos + str.length() + 5;
         }
-
     }
 
     @Override
     protected String toObject(byte[] data, int pos, int len) throws Exception {
-        int size = ByteBuffer.wrap(data, pos, 4).getInt();
+        if (data[pos] == DataTypes.NULL.value()) return null;
+        int size = ByteBuffer.wrap(data, pos + 1, 4).getInt();
 
-        if (size > len - 4) throw new Exception("error len");
+        if (size > len - 5) throw new Exception("error len");
 
-        return new String(data, pos + 4, size);
+        return new String(data, pos + 5, size);
     }
 }

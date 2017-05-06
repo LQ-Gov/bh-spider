@@ -10,8 +10,9 @@ import java.util.Collection;
  */
 public class ByteInterpreter extends UniqueInterpreter<Byte> {
     @Override
-    public boolean support(Object o) {
-        return o != null && (o.getClass() == Byte.class || o.getClass()==byte.class);
+    public boolean support(Class cls)
+    {
+        return support(cls,Byte.class,byte.class);
     }
 
     @Override
@@ -47,7 +48,7 @@ public class ByteInterpreter extends UniqueInterpreter<Byte> {
     @Override
     protected void toCollection(Collection<Byte> collection, byte[] data, int pos, int len) {
         for(int i = pos;i<pos+len;i++)
-            collection.add(data[pos]);
+            collection.add(data[i]);
 
     }
 

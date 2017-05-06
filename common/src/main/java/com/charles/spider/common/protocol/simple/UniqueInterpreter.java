@@ -11,7 +11,7 @@ public abstract class UniqueInterpreter<T> extends AbstractInterpreter<T>  {
 
     protected abstract T[] toArray(byte[] data,int pos,int len) throws  Exception;
 
-    protected abstract void toCollection(Collection<T> collection, byte[] data, int pos, int len);
+    protected abstract void toCollection(Collection<T> collection, byte[] data, int pos, int len) throws Exception;
 
     @Override
     protected  T toObject(Class<T> cls, byte[] data, int pos, int len) throws Exception {

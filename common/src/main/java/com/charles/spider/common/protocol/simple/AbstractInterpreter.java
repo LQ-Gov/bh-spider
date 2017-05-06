@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
     protected boolean support(Class c, Class... cls) {
-        return c != null && ArrayUtils.indexOf(cls, c) > 0;
+        return c != null && ArrayUtils.contains(cls, c);
     }
 
 

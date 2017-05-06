@@ -3,6 +3,7 @@ package com.charles.spider.common.protocol.simple;
 import com.charles.spider.common.protocol.DataTypes;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 
@@ -17,10 +18,8 @@ public class BoolInterpreter extends UniqueInterpreter<Boolean> {
 
     @Override
     protected byte[] fromArray(Boolean[] input) {
-        BitSet bits = new BitSet(input.length);
-        for (int i = 0; i < input.length; i++) bits.set(i, input[i]);
-        byte[] data = bits.toByteArray();
-        return ByteBuffer.allocate(1 + data.length).put((byte) (input.length % 8)).put(data).array();
+
+        return fromCollection(Arrays.asList(input));
     }
 
     @Override
@@ -29,7 +28,10 @@ public class BoolInterpreter extends UniqueInterpreter<Boolean> {
         int pos = 0;
 
         for(Boolean it:collection) bits.set(pos++,it);
-        return bits.toByteArray();
+        byte[] data = bits.toByteArray();
+        byte last = (byte) (collection.size()%8);
+        last = last==0&&collection.size()>0?8:last;
+        return ByteBuffer.allocate(1 + data.length).put(last).put(data).array();
     }
 
     @Override
@@ -43,41 +45,43 @@ public class BoolInterpreter extends UniqueInterpreter<Boolean> {
     @Override
     protected Boolean[] toArray(byte[] data, int pos, int len) {
         byte last = data[pos];
-        Boolean[] result = new Boolean[(len-2)*8+last];
-        int index =0;
-        for(byte b = data[++pos];pos<pos+len;b = data[pos++]) {
-            while (index==0||index%8!=0) {
-                result[index++] = (b & 0xf0) > 0;
-                b = (byte) (b << 1);
+        if (last == 0) return new Boolean[0];
+        Boolean[] result = new Boolean[(len - 2) * 8 + last];
+        int index = 0, end = pos + len - 1;
+        for (byte b = data[++pos]; pos < end; b = data[pos++]) {
+            while (index == 0 || index % 8 != 0) {
+                result[index++] = (b & 0x01) > 0;
+                b = (byte) (b >> 1);
             }
         }
 
-        byte b = data[pos+len];
-        while (index<result.length) {
-            result[index++] = (b & 0xf0) > 0;
-            b = (byte) (b << 1);
+        byte b = data[end];
+        while (index < result.length) {
+            result[index++] = (b & 0x01) > 0;
+            b = (byte) (b >> 1);
         }
 
         return result;
-
-
     }
 
     @Override
     protected void toCollection(Collection<Boolean> collection, byte[] data, int pos, int len) {
-        int count = (len - 2) * 8 + data[pos], index = 0;
-        for (byte b = data[++pos]; pos < pos + len; b = data[pos++]) {
+        byte last = data[pos];
+        if (last == 0) return;
+        int index = 0, end = pos + len - 1;
+        for (byte b = data[++pos]; pos < end; b = data[pos++]) {
             while (index == 0 || index % 8 != 0) {
-                collection.add((b & 0xf0) > 0);
-                b = (byte) (b << 1);
+                collection.add((b & 0x01) > 0);
+                b = (byte) (b >> 1);
                 index++;
             }
         }
 
-        byte b = data[pos + len];
-        while (index < count) {
-            collection.add((b & 0xf0) > 0);
-            b = (byte) (b << 1);
+        byte b = data[end];
+        index = 0;
+        while (index < last) {
+            collection.add((b & 0x01) > 0);
+            b = (byte) (b >> 1);
             index++;
         }
     }

@@ -59,6 +59,6 @@ public class IntInterpreter extends UniqueInterpreter<Integer> {
 
     @Override
     protected Integer toObject(byte[] data, int pos, int len) {
-        return ByteBuffer.wrap(data,pos,len).getInt();
+        return ByteBuffer.wrap(data,pos+1,len-1).getInt();
     }
 }
