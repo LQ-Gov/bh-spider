@@ -14,6 +14,8 @@ import java.util.List;
  * Update by LQ on 2017/4/17
  */
 public class SimpleToken implements Token {
+    private final static InterpreterFactory INTERPRETER_FACTORY = new InterpreterFactory(SimpleProtocol.instance());
+
     private byte[] data = null;
     private int pos = 0;
     private DataTypes type= null;
@@ -77,51 +79,8 @@ public class SimpleToken implements Token {
     @Override
     public <T> T toClass(Class<T> cls) throws Exception {
         DataTypes t = DataTypes.type(cls);
-        if(t==null) type = t;
-        else if(t!=type) throw new Exception("error type");
 
-        switch (t) {
-            case BYTE:
-                return (T) Byte.valueOf(toByte());
-            case BOOL:
-                return (T) Boolean.valueOf(toBoolean());
-            case CHAR:
-                return (T) Character.valueOf(toChar());
-            case INT:
-                return (T) Integer.valueOf(toInt());
-            case LONG:
-                return (T) Long.valueOf(toLong());
-            case FLOAT:
-                return (T) Float.valueOf(toFloat());
-            case DOUBLE:
-                return (T) Double.valueOf(toDouble());
-            case STRING:
-                return (T) toString(Charset.defaultCharset());
-            case ARRAY:
-                return (T) toArray(cls);
-            case CLASS: {
-                if (cls == null || cls == Object.class) return (T) this;
-                T o = null;
-                if (ProtocolObject.class.isAssignableFrom(cls)) {
-                    o = cls.getConstructor(byte[].class, int.class, int.class).newInstance(data, pos + 5, len - 5);
-                    ProtocolObject obj = (ProtocolObject) o;
-
-                    return o;
-                }
-                o = cls.newInstance();
-                int start = pos + 5, end = start + length();
-                for (int i = start; i < end; ) {
-                    Token token = new SimpleToken(data, i);
-                    Field field = o.getClass().getField(token.toString(Charset.defaultCharset()));
-                    token = new SimpleToken(data, i += token.length());
-                    field.set(o, token.toClass(field.getType()));
-                    i += token.length();
-                }
-                return o;
-            }
-            default:
-                throw new Exception("error type");
-        }
+        return (T) INTERPRETER_FACTORY.get(t).unpack(cls, data, pos, length());
     }
 
 
@@ -133,7 +92,7 @@ public class SimpleToken implements Token {
         if (t == null) t = at;
         if (t != at) throw new Exception("error type");
 
-        return (T[]) ArrayObjectFactory.get(t).write(cls, data, pos + 6, length() - 6).toObject();
+        return null;
     }
 
     @Override

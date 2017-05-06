@@ -10,6 +10,11 @@ import org.junit.Test;
 public class ProtocolTest {
     private Protocol protocol = null;
 
+    public <T> void cast(T o){}
+
+    public  void cast(Object[] o){}
+   // public void cast(byte[] o){}
+
     @Before
     public void init(){
         protocol = new SimpleProtocol();
@@ -17,6 +22,12 @@ public class ProtocolTest {
 
     @Test
     public void pack_init() throws Exception {
+        Byte[] data = new Byte[3];
+        Object o = data;
+
+        String s ;
+        //protocol.pack(s);
+        cast(o);
     }
 
 }

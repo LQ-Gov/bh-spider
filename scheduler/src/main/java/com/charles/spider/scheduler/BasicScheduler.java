@@ -85,6 +85,7 @@ public class BasicScheduler implements IEvent {
     protected void init_system_signal_handles() {
         Signal.handle(new Signal("INT"), (Signal sig) -> this.close());
         logger.info("init moudle of handle system signal");
+
     }
 
 

@@ -57,7 +57,7 @@ public class ProtocolBase implements Protocol {
     }
 
     @Override
-    public <T> byte[] pack(T[] data) throws Exception {
+    public <T> byte[] packArray(T[] data) throws Exception {
         return new byte[0];
     }
 
