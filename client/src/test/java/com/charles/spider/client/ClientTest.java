@@ -29,8 +29,15 @@ public class ClientTest {
     public void submit() throws Exception {
         Description desc = new Description(ModuleType.HANDLE);
         client.submit("target/client-1.0-SNAPSHOT.jar",desc,true);
+    }
 
+    @Test
+    public void temp(){
+        Byte[] data = new Byte[]{1,2,3};
 
+        Object o = data;
+
+        Object[] o2 = (Object[]) o;
     }
 
 }

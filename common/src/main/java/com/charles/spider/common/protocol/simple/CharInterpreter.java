@@ -16,7 +16,7 @@ public class CharInterpreter extends UniqueInterpreter<Character> {
     }
 
     @Override
-    protected byte[] fromArray(Character[] input) {
+    protected byte[] fromArray(Character... input) {
         ByteBuffer buffer = ByteBuffer.allocate(input.length * 2);
         Arrays.stream(input).forEach(buffer::putChar);
         return buffer.array();

@@ -57,8 +57,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
         DataTypes type = DataTypes.type(cls);
         if (type == DataTypes.CLASS) {
 
-            Field[] fields = cls.getFields();
-
+            Field[] fields = cls.getDeclaredFields();
             List<byte[]> list = new LinkedList<>();
             int len = 0;
             for (Field field : fields) {
@@ -66,7 +65,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
                 Method get = cls.getMethod(get_method_name(field.getName()));
 
                 if (get != null) {
-                    byte[] value = protocol.pack(get.invoke(o));
+                    byte[] value = protocol.pack(get.invoke(o), field.getType());
                     len += key.length + value.length;
                     list.add(key);
                     list.add(value);
@@ -74,7 +73,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
             }
             return toBytes(DataTypes.CLASS,list,len);
 
-        } else return protocol.pack(o);
+        } else return protocol.pack(o,cls);
     }
 
     @Override

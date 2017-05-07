@@ -3,6 +3,7 @@ package com.charles.spider.common.protocol.simple;
 import com.charles.spider.common.protocol.DataTypes;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -17,7 +18,14 @@ import java.util.List;
 public abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
     protected boolean support(Class c, Class... cls) {
-        return c != null && ArrayUtils.contains(cls, c);
+        if (c != null && cls != null) {
+            for (Class it : cls) {
+                if (it.isAssignableFrom(c))
+                    return true;
+            }
+
+        }
+        return false;
     }
 
 
@@ -28,6 +36,7 @@ public abstract class AbstractInterpreter<T> implements Interpreter<T> {
     }
 
     protected abstract byte[] fromArray(T[] input) throws Exception;
+
 
     protected abstract byte[] fromCollection(Collection<T> collection) throws Exception;
 
@@ -45,17 +54,31 @@ public abstract class AbstractInterpreter<T> implements Interpreter<T> {
     public byte[] pack(Object input) throws Exception {
         Class<?> cls = input.getClass();
 
-        if (support(cls)) return fromObject((T) input);
 
+        if (cls.isArray() && support(cls.getComponentType())) {
+            if (cls.getComponentType().isPrimitive()) {
+                int len = Array.getLength(input);
 
-        if (cls.isArray() && support(cls.getComponentType())) return fromArray((T[]) input);
+                Class refCls = (Class) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+
+                T[] reference = (T[]) Array.newInstance(refCls, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(reference, i, Array.get(input, i));
+                return fromArray(reference);
+            }
+            return fromArray((T[]) input);
+        }
 
         if (Collection.class.isInstance(input)) {
             Type t = cls.getGenericSuperclass();
             Class componentType = (Class) ((ParameterizedType) t).getActualTypeArguments()[0];
             if (support(componentType))
                 return fromCollection((Collection) input);
+            else throw new Exception("not support type");
         }
+
+        if (support(cls)) return fromObject((T) input);
 
         throw new Exception("type error");
     }

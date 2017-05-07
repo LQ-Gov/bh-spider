@@ -1,6 +1,7 @@
 package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.*;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,7 +13,7 @@ import java.util.*;
 /**
  * Created by LQ on 2015/10/20.
  */
-public final class SimpleProtocol extends ProtocolBase {
+public final class SimpleProtocol implements Protocol {
     private final static int MAX_LEN = (Integer.MAX_VALUE - 5);
 
     private volatile static SimpleProtocol ins = new SimpleProtocol();
@@ -120,16 +121,33 @@ public final class SimpleProtocol extends ProtocolBase {
      * @throws Exception
      */
     @Override
-    public <T> byte[] pack(T o) throws Exception {
-        Class cls = o.getClass();
-        if (o.getClass().isArray()) cls = o.getClass().getComponentType();
-        else if (Collection.class.isAssignableFrom(cls)) {
+    public <T> byte[] pack(T o, Class<?> cls) throws Exception {
+        assert cls != null;
+
+
+        boolean isArray = false;
+        if (cls.isArray()) {
+            cls = o.getClass().getComponentType();
+            isArray = true;
+        } else if (Collection.class.isAssignableFrom(cls)) {
             ParameterizedType parameterizedType = (ParameterizedType) o.getClass().getGenericSuperclass();
             cls = (Class) parameterizedType.getActualTypeArguments()[0];
+            isArray = true;
         }
 
         DataTypes t = DataTypes.type(cls);
-        return interpreterFactory.get(t).pack(o);
+
+        byte[] data = interpreterFactory.get(t).pack(o);
+        if (isArray) {
+            byte[] header = ByteBuffer.allocate(6).put(DataTypes.ARRAY.value()).putInt(data.length).put(t.value()).array();
+            data = ArrayUtils.addAll(header, data);
+        }
+        return data;
+    }
+
+
+    public <T> byte[] pack(T o) throws Exception {
+        return pack(o, o == null ? null : (Class<T>) o.getClass());
     }
 
 

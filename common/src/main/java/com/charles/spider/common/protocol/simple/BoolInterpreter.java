@@ -18,9 +18,14 @@ public class BoolInterpreter extends UniqueInterpreter<Boolean> {
 
     @Override
     protected byte[] fromArray(Boolean[] input) {
-
         return fromCollection(Arrays.asList(input));
     }
+
+//    @Override
+//    protected byte[] fromPrimitiveArray(Object input) {
+//        boolean[] data = (boolean[]) input;
+//
+//    }
 
     @Override
     protected byte[] fromCollection(Collection<Boolean> collection) {

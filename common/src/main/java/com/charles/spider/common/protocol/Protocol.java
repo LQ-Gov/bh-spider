@@ -27,6 +27,9 @@ public interface Protocol {
 
     <T> byte[] pack(T data) throws Exception;
 
+    <T> byte[] pack(T data,Class<?> cls) throws Exception;
+
+
 //    <T> byte[] packArray(T[] data) throws Exception;
 
     Assemble assemble(byte[] data,int pos,int len) throws Exception;
