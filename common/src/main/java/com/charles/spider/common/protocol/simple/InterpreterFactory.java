@@ -22,7 +22,8 @@ public class InterpreterFactory {
         INTERPRETERS.put(DataTypes.DOUBLE, new DoubleInterpreter());
         INTERPRETERS.put(DataTypes.STRING, new StringInterpreter());
         INTERPRETERS.put(DataTypes.CLASS, new ClassInterpreter(protocol));
-        INTERPRETERS.put(DataTypes.ARRAY, new ArrayInterpreter(protocol));
+        INTERPRETERS.put(DataTypes.ARRAY, new ArrayInterpreter(protocol,this));
+        INTERPRETERS.put(DataTypes.ENUM, new EnumInterpreter());
     }
 
     public Interpreter get(DataTypes type){

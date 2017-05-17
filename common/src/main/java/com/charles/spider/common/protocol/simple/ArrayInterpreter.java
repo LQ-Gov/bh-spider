@@ -17,9 +17,12 @@ import java.util.List;
  */
 public class ArrayInterpreter extends AbstractInterpreter<Object> {
     private Protocol protocol = null;
+    private InterpreterFactory interpreterFactory = null;
 
-    public ArrayInterpreter(Protocol protocol){
+    public ArrayInterpreter(Protocol protocol,InterpreterFactory factory){
+
         this.protocol = protocol;
+        this.interpreterFactory = factory;
     }
 
     @Override
@@ -87,30 +90,32 @@ public class ArrayInterpreter extends AbstractInterpreter<Object> {
 
     @Override
     protected Object toObject(Class<Object> cls, byte[] data, int pos, int len) throws Exception {
-        int real_len = ByteBuffer.wrap(data,pos+1,4).getInt();
-        if(real_len+5>len) throw new Exception("error len");
-        Assemble assemble = protocol.assemble(data,pos+5,real_len);
+        int real_len = ByteBuffer.wrap(data, pos + 1, 4).getInt();
+        if (real_len + 5 > len) throw new Exception("error len");
+
+        DataTypes t = DataTypes.type(data[pos + 5]);
+        if (t != DataTypes.ARRAY)
+            return interpreterFactory.get(t).unpack(Object[].class, data, pos + 6, real_len - 1);
+
+
+        Assemble assemble = protocol.assemble(data, pos + 5, real_len);
 
 
         List list = new LinkedList();
 
         Token token;
 
-        while ((token=assemble.next())!=null) {
+        while ((token = assemble.next()) != null) {
             list.add(token.toClass(Object.class));
         }
 
-        Object result = Array.newInstance(cls,list.size());
+        Object result = Array.newInstance(cls, list.size());
 
-        for(int i=0;i<list.size();i++) {
+        for (int i = 0; i < list.size(); i++) {
             Array.set(result, i, list.get(i));
         }
 
         return result;
-
-
-
-
     }
 
 

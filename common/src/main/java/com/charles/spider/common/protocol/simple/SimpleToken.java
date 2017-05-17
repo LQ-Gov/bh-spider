@@ -78,6 +78,8 @@ public class SimpleToken implements Token {
 
     @Override
     public <T> T toClass(Class<T> cls) throws Exception {
+        if (cls == null || cls == Object.class)
+            return (T) INTERPRETER_FACTORY.get(type()).unpack(cls, data, pos, length());
         DataTypes t = DataTypes.type(cls);
 
         return (T) INTERPRETER_FACTORY.get(t).unpack(cls, data, pos, length());
@@ -104,9 +106,9 @@ public class SimpleToken implements Token {
     public int length() {
         if (type.size() > -1) return type.size()+1;
 
-        if (data.length - pos < 5) return 0;
+        if (data.length - pos < 5) return -1;
 
-        return ByteBuffer.wrap(data, pos + 1, 4).getInt()+1;
+        return ByteBuffer.wrap(data, pos + 1, 4).getInt()+5;
     }
 
     private ByteBuffer safe_build_buffer(DataTypes t) throws Exception {

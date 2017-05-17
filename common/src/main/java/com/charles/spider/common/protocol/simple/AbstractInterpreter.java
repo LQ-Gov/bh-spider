@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * Created by lq on 17-4-27.
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
     protected boolean support(Class c, Class... cls) {
@@ -51,6 +52,7 @@ public abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
     protected  abstract T toObject(Class<T> cls,byte[] data,int pos,int len) throws Exception;
 
+
     public byte[] pack(Object input) throws Exception {
         Class<?> cls = input.getClass();
 
@@ -84,16 +86,16 @@ public abstract class AbstractInterpreter<T> implements Interpreter<T> {
     }
 
     public  T unpack(Class<T> cls, byte[] data, int pos, int len) throws Exception {
-        if (support(cls)) return toObject(cls, data, pos, len);
+        if (cls==null|| cls == Object.class|| support(cls)) return toObject(cls, data, pos, len);
 
-        if (cls.isArray() && support(cls.getComponentType())) return (T) toArray(cls,data, pos, len);
+        if (cls.isArray() && support(cls.getComponentType())) return (T) toArray(cls, data, pos, len);
 
         if (Collection.class.isAssignableFrom(cls)) {
             Collection<T> collection;
             if (Modifier.isAbstract(cls.getModifiers()) || Modifier.isInterface(cls.getModifiers()))
                 collection = new ArrayList<T>();
             else collection = (Collection<T>) cls.newInstance();
-            toCollection(cls,collection, data, pos, len);
+            toCollection(cls, collection, data, pos, len);
             return (T) collection;
         }
 

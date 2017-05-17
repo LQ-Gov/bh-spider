@@ -5,30 +5,25 @@ package com.charles.spider.common.moudle;
  */
 public class Description {
     private String name;
-    private String path;
     private ModuleType type = ModuleType.HANDLE;
     private String info;
     private String hash;
 
     public Description(ModuleType type){
-        this(null,null,type,null);
+        this(null,type,null);
     }
 
     public Description(String name) {
-        this(name, null, ModuleType.HANDLE, null);
+        this(name,null);
     }
 
     public Description(String name,String info){
-        this(name,null,ModuleType.HANDLE,info);
+        this(name,ModuleType.HANDLE,info);
     }
 
-    public Description(String name,ModuleType type,String info){
-        this(name,null,type,info);
-    }
 
-    public Description(String name,String path,ModuleType type,String info) {
+    public Description(String name,ModuleType type,String info) {
         this.name = name;
-        this.path = path;
         this.type = type;
         this.info = info;
     }
@@ -40,14 +35,6 @@ public class Description {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public ModuleType getType() {

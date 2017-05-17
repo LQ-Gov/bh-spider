@@ -19,8 +19,8 @@ public class ClientTest {
 
     @Before
     public void init() throws IOException, URISyntaxException {
-        //client = new Client("127.0.0.1:8033");
-        client = new Client();
+        client = new Client("127.0.0.1:8033");
+        //client = new Client();
 
     }
 

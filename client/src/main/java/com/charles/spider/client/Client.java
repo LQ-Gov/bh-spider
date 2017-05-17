@@ -28,8 +28,6 @@ public class Client {
     private ThreadLocal<Integer> c = new ThreadLocal<>();
     private ThreadLocal<Socket> socket = new ThreadLocal<>();
 
-    public Client(){}
-
     public Client(String servers) throws IOException, URISyntaxException {
         this.servers = Arrays.asList(servers.split(","));
         open(next());

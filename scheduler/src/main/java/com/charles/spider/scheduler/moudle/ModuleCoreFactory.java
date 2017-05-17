@@ -54,7 +54,7 @@ public class ModuleCoreFactory {
             module = manager.save(name,data, pos, data.length - pos, desc);
         }
 
-        logger.info("write module {} to path:{};override:{}", desc.getName(), desc.getPath(), override);
+        logger.info("write module {} to path:{};override:{}", desc.getName(), override);
     }
 
 

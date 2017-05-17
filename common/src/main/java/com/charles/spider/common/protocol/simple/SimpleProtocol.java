@@ -120,10 +120,11 @@ public final class SimpleProtocol implements Protocol {
      * @return
      * @throws Exception
      */
-    @Override
-    public <T> byte[] pack(T o, Class<?> cls) throws Exception {
-        assert cls != null;
+    public <T> byte[] pack(T o) throws Exception {
+        if(o==null) return new byte[]{DataTypes.NULL.value()};
 
+
+        Class<?> cls = o.getClass();
 
         boolean isArray = false;
         if (cls.isArray()) {
@@ -139,15 +140,10 @@ public final class SimpleProtocol implements Protocol {
 
         byte[] data = interpreterFactory.get(t).pack(o);
         if (isArray) {
-            byte[] header = ByteBuffer.allocate(6).put(DataTypes.ARRAY.value()).putInt(data.length).put(t.value()).array();
+            byte[] header = ByteBuffer.allocate(6).put(DataTypes.ARRAY.value()).putInt(data.length+1).put(t.value()).array();
             data = ArrayUtils.addAll(header, data);
         }
         return data;
-    }
-
-
-    public <T> byte[] pack(T o) throws Exception {
-        return pack(o, o == null ? null : (Class<T>) o.getClass());
     }
 
 

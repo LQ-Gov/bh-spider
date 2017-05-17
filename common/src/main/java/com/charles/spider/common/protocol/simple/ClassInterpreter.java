@@ -65,7 +65,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
                 Method get = cls.getMethod(get_method_name(field.getName()));
 
                 if (get != null) {
-                    byte[] value = protocol.pack(get.invoke(o), field.getType());
+                    byte[] value = protocol.pack(get.invoke(o));
                     len += key.length + value.length;
                     list.add(key);
                     list.add(value);
@@ -73,7 +73,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
             }
             return toBytes(DataTypes.CLASS,list,len);
 
-        } else return protocol.pack(o,cls);
+        } else return protocol.pack(o);
     }
 
     @Override
@@ -95,8 +95,12 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
 
     @Override
     protected Object toObject(Class<Object> cls, byte[] data, int pos, int len) throws Exception {
-        DataTypes type = DataTypes.type(cls);
-        if (type == DataTypes.CLASS) {
+        DataTypes type =  DataTypes.NULL;
+        if(cls==null) type =null;
+        //DataTypes.type(cls);
+
+
+        if (cls!=null&&cls!=Object.class&&type == DataTypes.CLASS&&cls!=Object.class) {
             Object o = cls.newInstance();
             Token token = new SimpleToken(data, pos);
             int start = pos + 4, end = pos + token.length();
