@@ -17,14 +17,16 @@ public class LongInterpreter extends UniqueInterpreter<Long> {
 
     @Override
     protected byte[] fromArray(Long[] input) {
-        ByteBuffer buffer = ByteBuffer.allocate(input.length*8);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+input.length*8);
+        buffer.put(DataTypes.LONG.value()).putInt(input.length*8);
         Arrays.stream(input).forEach(buffer::putLong);
         return buffer.array();
     }
 
     @Override
     protected byte[] fromCollection(Collection<Long> collection) {
-        ByteBuffer buffer = ByteBuffer.allocate(collection.size()*8);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ collection.size()*8);
+        buffer.put(DataTypes.LONG.value()).putInt(collection.size()*8);
         collection.forEach(buffer::putLong);
         return buffer.array();
     }

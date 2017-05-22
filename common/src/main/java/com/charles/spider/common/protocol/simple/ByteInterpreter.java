@@ -1,8 +1,9 @@
 package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
-import org.apache.commons.lang3.ArrayUtils;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -17,15 +18,22 @@ public class ByteInterpreter extends UniqueInterpreter<Byte> {
 
     @Override
     protected byte[] fromArray(Byte[] input) {
-        return ArrayUtils.toPrimitive(input);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + input.length)
+                .put(DataTypes.BYTE.value())
+                .putInt(input.length);
+        Arrays.stream(input).forEach(buffer::put);
+
+        return buffer.array();
     }
 
     @Override
     protected byte[] fromCollection(Collection<Byte> collection) {
-        byte[] result = new byte[collection.size()];
+        byte[] result = new byte[ARRAY_HEAD_LEN + collection.size()];
 
-        int index = 0;
+        result[0] = DataTypes.BYTE.value();
+        System.arraycopy(ByteBuffer.allocate(4).putInt(collection.size()).array(), 0, result, 1, 4);
 
+        int index = ARRAY_HEAD_LEN;
         for (Byte it : collection) result[index++] = it;
 
         return result;
@@ -42,12 +50,15 @@ public class ByteInterpreter extends UniqueInterpreter<Byte> {
 
     @Override
     protected Byte[] toArray(byte[] data, int pos, int len) {
-        return ArrayUtils.toObject(data);
+        Byte[] result = new Byte[len];
+        for (int i = pos; i < pos + len; i++)
+            result[i-pos] = data[i];
+        return result;
     }
 
     @Override
     protected void toCollection(Collection<Byte> collection, byte[] data, int pos, int len) {
-        for(int i = pos;i<pos+len;i++)
+        for (int i = pos; i < pos + len; i++)
             collection.add(data[i]);
 
     }

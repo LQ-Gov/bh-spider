@@ -121,29 +121,19 @@ public final class SimpleProtocol implements Protocol {
      * @throws Exception
      */
     public <T> byte[] pack(T o) throws Exception {
-        if(o==null) return new byte[]{DataTypes.NULL.value()};
-
-
+        if (o == null) return new byte[]{DataTypes.NULL.value()};
         Class<?> cls = o.getClass();
+        if (cls.isArray()) cls = cls.getComponentType();
 
-        boolean isArray = false;
-        if (cls.isArray()) {
-            cls = o.getClass().getComponentType();
-            isArray = true;
-        } else if (Collection.class.isAssignableFrom(cls)) {
+        else if (Collection.class.isAssignableFrom(cls)) {
             ParameterizedType parameterizedType = (ParameterizedType) o.getClass().getGenericSuperclass();
             cls = (Class) parameterizedType.getActualTypeArguments()[0];
-            isArray = true;
         }
+
 
         DataTypes t = DataTypes.type(cls);
 
-        byte[] data = interpreterFactory.get(t).pack(o);
-        if (isArray) {
-            byte[] header = ByteBuffer.allocate(6).put(DataTypes.ARRAY.value()).putInt(data.length+1).put(t.value()).array();
-            data = ArrayUtils.addAll(header, data);
-        }
-        return data;
+        return interpreterFactory.get(t).pack(o);
     }
 
 

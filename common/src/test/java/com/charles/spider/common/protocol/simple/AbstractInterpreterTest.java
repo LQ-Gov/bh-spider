@@ -31,7 +31,7 @@ public class AbstractInterpreterTest<T extends UniqueInterpreter> {
     public <C> void fromArray(C[] input) throws Exception {
         byte[] bytes = interpreter().fromArray(input);
 
-        Assert.assertArrayEquals(interpreter().toArray(bytes,0,bytes.length),input);
+        Assert.assertArrayEquals(interpreter().toArray(bytes,AbstractInterpreter.ARRAY_HEAD_LEN,bytes.length-AbstractInterpreter.ARRAY_HEAD_LEN),input);
     }
 
 
@@ -39,7 +39,7 @@ public class AbstractInterpreterTest<T extends UniqueInterpreter> {
         byte[] bytes = interpreter().fromCollection(base);
 
         List<Integer> data = new ArrayList<>();
-        interpreter().toCollection(data,bytes,0,bytes.length);
+        interpreter().toCollection(data,bytes,AbstractInterpreter.ARRAY_HEAD_LEN,bytes.length-AbstractInterpreter.ARRAY_HEAD_LEN);
 
         Assert.assertEquals(base,data);
     }

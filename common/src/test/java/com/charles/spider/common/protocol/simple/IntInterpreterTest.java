@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 /**
  * Created by lq on 17-5-6.
  */
-public class IntInterpreterTest {
+public class IntInterpreterTest extends AbstractInterpreterTest<IntInterpreter> {
     private IntInterpreter interpreter = new IntInterpreter();
 
 
@@ -26,23 +26,12 @@ public class IntInterpreterTest {
 
     @Test
     public void fromArray() throws Exception {
-        Integer[] base = new Integer[]{1,2,3};
-        byte[] bytes = interpreter.fromArray(base);
-
-        Assert.assertArrayEquals(interpreter.toArray(bytes,0,bytes.length),base);
+        super.fromArray(new Integer[]{1,2,3});
     }
 
     @Test
     public void fromCollection() throws Exception {
-
-        List<Integer> base = Arrays.asList(1,2,3);
-
-        byte[] bytes = interpreter.fromCollection(base);
-
-        List<Integer> data = new ArrayList<>();
-        interpreter.toCollection(data,bytes,0,bytes.length);
-
-        Assert.assertEquals(base,data);
+        fromCollection(Arrays.asList(1,2,3));
     }
 
     @Test

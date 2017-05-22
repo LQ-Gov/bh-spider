@@ -20,14 +20,14 @@ import java.util.List;
 public class ClassInterpreter extends AbstractInterpreter<Object> {
     private Protocol protocol = null;
 
-    public ClassInterpreter(Protocol protocol){
+    public ClassInterpreter(Protocol protocol) {
         this.protocol = protocol;
     }
 
 
     @Override
     public boolean support(Class cls) {
-        return support(cls,Object.class);
+        return support(cls, Object.class);
     }
 
     @Override
@@ -56,7 +56,6 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
 
         DataTypes type = DataTypes.type(cls);
         if (type == DataTypes.CLASS) {
-
             Field[] fields = cls.getDeclaredFields();
             List<byte[]> list = new LinkedList<>();
             int len = 0;
@@ -71,7 +70,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
                     list.add(value);
                 }
             }
-            return toBytes(DataTypes.CLASS,list,len);
+            return toBytes(DataTypes.CLASS, list, len);
 
         } else return protocol.pack(o);
     }
@@ -85,37 +84,38 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
 
     @Override
     protected void toCollection(Class<Object> cls, Collection<Object> collection, byte[] data, int pos, int len) throws Exception {
-        Assemble assemble = protocol.assemble(data,pos,len);
+        Assemble assemble = protocol.assemble(data, pos, len);
 
         Token token;
-        while ((token =assemble.next())!=null) {
+        while ((token = assemble.next()) != null) {
             collection.add(token.toClass(cls));
         }
     }
 
     @Override
     protected Object toObject(Class<Object> cls, byte[] data, int pos, int len) throws Exception {
-        DataTypes type =  DataTypes.NULL;
-        if(cls==null) type =null;
-        //DataTypes.type(cls);
+        DataTypes type = (cls == null || cls == Object.class) ?
+                DataTypes.type(data[pos])
+                : DataTypes.type(cls);
 
+        if (type == DataTypes.CLASS) {
+            if (cls == null || cls == Object.class) return new SimpleToken(data, pos);
+            else {
+                Object o = cls.newInstance();
+                Token token = new SimpleToken(data, pos);
+                int start = pos + 4, end = pos + token.length();
+                for (int i = start; i < end; ) {
+                    token = new SimpleToken(data, i);
+                    Field field = cls.getField(token.toString(Charset.defaultCharset()));
+                    token = new SimpleToken(data, i += token.length());
+                    field.set(o, token.toClass(field.getType()));
+                    i += token.length();
+                }
 
-        if (cls!=null&&cls!=Object.class&&type == DataTypes.CLASS&&cls!=Object.class) {
-            Object o = cls.newInstance();
-            Token token = new SimpleToken(data, pos);
-            int start = pos + 4, end = pos + token.length();
-            for (int i = start; i < end; ) {
-                token = new SimpleToken(data, i);
-                Field field = cls.getField(token.toString(Charset.defaultCharset()));
-                token = new SimpleToken(data, i += token.length());
-                field.set(o, token.toClass(field.getType()));
-                i += token.length();
+                return o;
             }
-
-            return o;
         } else return protocol.assemble(data, pos, len).next().toClass(cls);
     }
-
 
 
     private static String get_method_name(String filedName) throws Exception {

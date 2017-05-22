@@ -24,7 +24,9 @@ public class FloatInterpreter extends UniqueInterpreter<Float> {
 
     @Override
     protected byte[] fromCollection(Collection<Float> collection) {
-        ByteBuffer buffer = ByteBuffer.allocate(collection.size()*4);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ collection.size()*4);
+        buffer.put(DataTypes.FLOAT.value());
+        buffer.putInt(collection.size()*4);
         collection.forEach(buffer::putFloat);
         return buffer.array();
     }
@@ -44,8 +46,8 @@ public class FloatInterpreter extends UniqueInterpreter<Float> {
 
     @Override
     protected void toCollection(Collection<Float> collection, byte[] data, int pos, int len) {
-        ByteBuffer buffer = ByteBuffer.wrap(data,pos,len);
-        for(int i=0;i<len/4;i++) collection.add(buffer.getFloat());
+        ByteBuffer buffer = ByteBuffer.wrap(data, pos, len);
+        for (int i = 0; i < len / 4; i++) collection.add(buffer.getFloat());
 
     }
 

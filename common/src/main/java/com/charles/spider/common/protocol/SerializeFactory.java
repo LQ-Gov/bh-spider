@@ -1,7 +1,5 @@
 package com.charles.spider.common.protocol;
 
-import com.charles.spider.common.protocol.simple.SimpleProtocol;
-
 /**
  * Created by lq on 17-4-16.
  */

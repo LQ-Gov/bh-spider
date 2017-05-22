@@ -17,14 +17,16 @@ import java.util.Collection;
 
     @Override
     protected byte[] fromArray(Double[] input) {
-        ByteBuffer buffer = ByteBuffer.allocate(8*input.length);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + 8 * input.length);
+        buffer.put(DataTypes.DOUBLE.value()).putInt(8 * input.length);
         Arrays.stream(input).forEach(buffer::putDouble);
         return buffer.array();
     }
 
     @Override
     protected byte[] fromCollection(Collection<Double> collection) {
-        ByteBuffer buffer = ByteBuffer.allocate(collection.size()*8);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ collection.size()*8);
+        buffer.put(DataTypes.DOUBLE.value()).putInt(collection.size()*8);
         collection.forEach(buffer::putDouble);
         return buffer.array();
     }
@@ -36,9 +38,9 @@ import java.util.Collection;
 
     @Override
     protected Double[] toArray(byte[] data, int pos, int len) {
-        ByteBuffer buffer = ByteBuffer.wrap(data,pos,len);
-        Double[] result = new Double[len/8];
-        for(int i=0;i<result.length;i++) result[i]=buffer.getDouble();
+        ByteBuffer buffer = ByteBuffer.wrap(data, pos, len);
+        Double[] result = new Double[len / 8];
+        for (int i = 0; i < result.length; i++) result[i] = buffer.getDouble();
         return result;
     }
 

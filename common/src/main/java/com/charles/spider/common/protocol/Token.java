@@ -16,7 +16,7 @@ public interface Token {
     long toLong() throws Exception;
     boolean toBoolean() throws Exception;
     String toString(Charset charset) throws Exception;
-    <T> T toClass(Class<T> cls) throws Exception;
+    <T> T toClass(Class<?> cls) throws Exception;
     <T> T[] toArray(Class<T> cls) throws Exception;
 
     boolean isVaild();

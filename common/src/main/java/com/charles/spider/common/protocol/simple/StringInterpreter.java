@@ -27,12 +27,13 @@ public class StringInterpreter extends UniqueInterpreter<String> {
     protected byte[] fromCollection(Collection<String> collection) {
         int len = 0;
         for (String str : collection) {
-            len += str == null ? 1 : str.length()+5;
+            len += str == null ? 1 : str.length() + 5;
         }
 
-        ByteBuffer buffer = ByteBuffer.allocate(len);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + len);
+        buffer.put(DataTypes.STRING.value()).putInt(len);
 
-        collection.forEach(x ->buffer.put(fromObject(x)));
+        collection.forEach(x -> buffer.put(fromObject(x)));
 
         return buffer.array();
     }

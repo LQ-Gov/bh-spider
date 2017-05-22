@@ -15,11 +15,11 @@ import java.util.List;
 /**
  * Created by lq on 17-5-6.
  */
-public class ArrayInterpreter extends AbstractInterpreter<Object> {
+class ArrayInterpreter extends AbstractInterpreter<Object> {
     private Protocol protocol = null;
     private InterpreterFactory interpreterFactory = null;
 
-    public ArrayInterpreter(Protocol protocol,InterpreterFactory factory){
+    public ArrayInterpreter(Protocol protocol, InterpreterFactory factory) {
 
         this.protocol = protocol;
         this.interpreterFactory = factory;
@@ -27,7 +27,7 @@ public class ArrayInterpreter extends AbstractInterpreter<Object> {
 
     @Override
     public boolean support(Class cls) {
-        return cls != null && cls.isArray();
+        return cls != null && (cls.isArray() || cls == Object.class);
     }
 
     @Override
@@ -38,16 +38,6 @@ public class ArrayInterpreter extends AbstractInterpreter<Object> {
 
     @Override
     protected byte[] fromCollection(Collection<Object> collection) throws Exception {
-//        List<byte[]> list = new LinkedList<>();
-//        int len =0;
-//
-//        for (Object it:collection) {
-//            byte[] bytes = fromObject(it);
-//            len += bytes.length;
-//            list.add(bytes);
-//        }
-//
-//        ByteBuffer buffer = ByteBuffer.allocate()
 
         throw new Exception("not support");
     }
@@ -85,20 +75,30 @@ public class ArrayInterpreter extends AbstractInterpreter<Object> {
 
     @Override
     protected void toCollection(Class<Object> cls, Collection<Object> collection, byte[] data, int pos, int len) throws Exception {
-        throw  new Exception("not support");
+        throw new Exception("not support");
     }
 
     @Override
     protected Object toObject(Class<Object> cls, byte[] data, int pos, int len) throws Exception {
-        int real_len = ByteBuffer.wrap(data, pos + 1, 4).getInt();
-        if (real_len + 5 > len) throw new Exception("error len");
+
+        if(cls==null||cls == Object.class) cls = Object.class;
+
+        int size = ByteBuffer.wrap(data, pos + 1, 4).getInt();
+        if (size + 5 > len) throw new Exception("error len");
 
         DataTypes t = DataTypes.type(data[pos + 5]);
-        if (t != DataTypes.ARRAY)
-            return interpreterFactory.get(t).unpack(Object[].class, data, pos + 6, real_len - 1);
+
+        if (cls != Object.class && DataTypes.type(cls.getComponentType()) != t)
+            throw new Exception("error type");
+
+        if (t != DataTypes.ARRAY){
+            //执行 解析代码
+        }
+        else
+            return interpreterFactory.get(t).unpack(cls, data, pos + 6, size - 1);
 
 
-        Assemble assemble = protocol.assemble(data, pos + 5, real_len);
+        Assemble assemble = protocol.assemble(data, pos + 5, size);
 
 
         List list = new LinkedList();

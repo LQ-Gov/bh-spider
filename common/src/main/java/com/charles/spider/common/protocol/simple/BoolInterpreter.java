@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * Created by lq on 17-5-3.
  */
-public class BoolInterpreter extends UniqueInterpreter<Boolean> {
+class BoolInterpreter extends UniqueInterpreter<Boolean> {
     @Override
     public boolean support(Class cls) {
         return support(cls,Boolean.class,boolean.class);
@@ -21,22 +21,22 @@ public class BoolInterpreter extends UniqueInterpreter<Boolean> {
         return fromCollection(Arrays.asList(input));
     }
 
-//    @Override
-//    protected byte[] fromPrimitiveArray(Object input) {
-//        boolean[] data = (boolean[]) input;
-//
-//    }
 
     @Override
     protected byte[] fromCollection(Collection<Boolean> collection) {
         BitSet bits = new BitSet(collection.size());
         int pos = 0;
 
-        for(Boolean it:collection) bits.set(pos++,it);
+        for (Boolean it : collection) bits.set(pos++, it);
         byte[] data = bits.toByteArray();
-        byte last = (byte) (collection.size()%8);
-        last = last==0&&collection.size()>0?8:last;
-        return ByteBuffer.allocate(1 + data.length).put(last).put(data).array();
+        byte last = (byte) (collection.size() % 8);
+        last = last == 0 && collection.size() > 0 ? 8 : last;
+        return ByteBuffer.allocate(ARRAY_HEAD_LEN + 1 + data.length)
+                .put(DataTypes.BOOL.value())
+                .putInt(1 + data.length)
+                .put(last)
+                .put(data)
+                .array();
     }
 
     @Override
@@ -48,12 +48,13 @@ public class BoolInterpreter extends UniqueInterpreter<Boolean> {
     }
 
     @Override
-    protected Boolean[] toArray(byte[] data, int pos, int len) {
+    protected Boolean[] toArray(byte[] data, int pos, int len) throws Exception {
         byte last = data[pos];
+
         if (last == 0) return new Boolean[0];
         Boolean[] result = new Boolean[(len - 2) * 8 + last];
         int index = 0, end = pos + len - 1;
-        for (byte b = data[++pos]; pos < end; b = data[pos++]) {
+        for (byte b = data[++pos]; pos < end; b = data[++pos]) {
             while (index == 0 || index % 8 != 0) {
                 result[index++] = (b & 0x01) > 0;
                 b = (byte) (b >> 1);
@@ -74,7 +75,7 @@ public class BoolInterpreter extends UniqueInterpreter<Boolean> {
         byte last = data[pos];
         if (last == 0) return;
         int index = 0, end = pos + len - 1;
-        for (byte b = data[++pos]; pos < end; b = data[pos++]) {
+        for (byte b = data[++pos]; pos < end; b = data[++pos]) {
             while (index == 0 || index % 8 != 0) {
                 collection.add((b & 0x01) > 0);
                 b = (byte) (b >> 1);

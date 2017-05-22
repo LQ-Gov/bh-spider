@@ -20,14 +20,16 @@ public class IntInterpreter extends UniqueInterpreter<Integer> {
 
     @Override
     protected byte[] fromArray(Integer[] input) {
-        ByteBuffer buffer = ByteBuffer.allocate(input.length * 4);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ input.length * 4);
+        buffer.put(DataTypes.INT.value()).putInt(input.length*4);
         Arrays.stream(input).forEach(buffer::putInt);
         return buffer.array();
     }
 
     @Override
     protected byte[] fromCollection(Collection<Integer> collection) {
-        ByteBuffer buffer = ByteBuffer.allocate(collection.size()*4);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ collection.size()*4);
+        buffer.put(DataTypes.INT.value()).putInt(collection.size()*4);
         collection.forEach(buffer::putInt);
         return buffer.array();
     }

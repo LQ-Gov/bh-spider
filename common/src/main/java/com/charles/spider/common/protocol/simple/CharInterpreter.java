@@ -17,14 +17,13 @@ public class CharInterpreter extends UniqueInterpreter<Character> {
 
     @Override
     protected byte[] fromArray(Character... input) {
-        ByteBuffer buffer = ByteBuffer.allocate(input.length * 2);
-        Arrays.stream(input).forEach(buffer::putChar);
-        return buffer.array();
+        return fromCollection(Arrays.asList(input));
     }
 
     @Override
     protected byte[] fromCollection(Collection<Character> collection) {
-        ByteBuffer buffer = ByteBuffer.allocate(collection.size() * 2);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + collection.size() * 2);
+        buffer.put(DataTypes.CHAR.value()).putInt(collection.size()*2);
         collection.forEach(buffer::putChar);
         return buffer.array();
     }
@@ -36,12 +35,12 @@ public class CharInterpreter extends UniqueInterpreter<Character> {
 
     @Override
     protected Character[] toArray(byte[] data, int pos, int len) {
-        ByteBuffer buffer = ByteBuffer.wrap(data,pos,len);
+        ByteBuffer buffer = ByteBuffer.wrap(data, pos, len);
 
 
-        int sum = len/2;
+        int sum = (len) / 2;
         Character[] result = new Character[sum];
-        for(int i=0;i<sum;i++) result[i] = buffer.getChar();
+        for (int i = 0; i < sum; i++) result[i] = buffer.getChar();
         return result;
     }
 
@@ -49,7 +48,7 @@ public class CharInterpreter extends UniqueInterpreter<Character> {
     protected void toCollection(Collection<Character> collection, byte[] data, int pos, int len) {
         ByteBuffer buffer = ByteBuffer.wrap(data,pos,len);
 
-        int sum = len/2;
+        int sum = (len)/2;
 
         for(int i=0;i<sum;i++) collection.add(buffer.getChar());
 

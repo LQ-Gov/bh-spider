@@ -20,7 +20,7 @@ public abstract class UniqueInterpreter<T> extends AbstractInterpreter<T>  {
 
     @Override
     protected T[] toArray(Class<T> cls, byte[] data, int pos, int len) throws Exception {
-        return toArray(data,pos,len);
+        return toArray(data, pos, len);
     }
 
 
@@ -35,7 +35,7 @@ public abstract class UniqueInterpreter<T> extends AbstractInterpreter<T>  {
  * if (cls.isArray() && support(cls.getComponentType())) {
  *   return fromArray((T[]) input);
  * }
- * 这部分代码异常,无法强制转换,如不重写以下部分，需要对数组进行一次便利，浪费资源,此时注释掉是为了根据实际情况考虑
+ * 这部分代码异常,无法强制转换,如不重写以下部分，需要对数组进行一次遍历，浪费资源,此时注释掉是为了根据实际情况考虑
  * update time:2017-5-6
  *
  *

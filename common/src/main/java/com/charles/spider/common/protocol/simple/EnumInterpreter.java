@@ -16,7 +16,7 @@ public class EnumInterpreter extends AbstractInterpreter<Enum> {
 
     @Override
     public boolean support(Class cls) {
-        return support(cls,Enum.class);
+        return support(cls, Enum.class);
     }
 
     @Override
@@ -31,9 +31,10 @@ public class EnumInterpreter extends AbstractInterpreter<Enum> {
             len += e == null ? 1 : e.name().length() + 5;
         }
 
-        ByteBuffer buffer = ByteBuffer.allocate(len);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + len);
+        buffer.put(DataTypes.ENUM.value()).putInt(len);
 
-        collection.forEach(x ->buffer.put(fromObject(x)));
+        collection.forEach(x -> buffer.put(fromObject(x)));
 
         return buffer.array();
     }
@@ -49,7 +50,7 @@ public class EnumInterpreter extends AbstractInterpreter<Enum> {
     @Override
     protected Enum[] toArray(Class<Enum> cls, byte[] data, int pos, int len) throws Exception {
         List<Enum> list = new ArrayList<>();
-        toCollection(cls,list,data,pos,len);
+        toCollection(cls, list, data, pos, len);
         return (Enum[]) list.toArray();
     }
 
