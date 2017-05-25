@@ -1,9 +1,6 @@
 package com.charles.spider.common.protocol.simple;
 
-import com.charles.spider.common.protocol.Assemble;
-import com.charles.spider.common.protocol.DataTypes;
-import com.charles.spider.common.protocol.Protocol;
-import com.charles.spider.common.protocol.Token;
+import com.charles.spider.common.protocol.*;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
@@ -89,7 +86,7 @@ class ArrayInterpreter extends AbstractInterpreter<Object> {
         DataTypes t = DataTypes.type(data[pos + 5]);
 
         if (cls != Object.class && DataTypes.type(cls.getComponentType()) != t)
-            throw new Exception("error type");
+            throw new UnSupportTypeException(cls);
 
         if (t != DataTypes.ARRAY){
             //执行 解析代码

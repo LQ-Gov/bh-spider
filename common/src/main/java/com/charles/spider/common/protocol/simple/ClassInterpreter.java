@@ -52,6 +52,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
 
     @Override
     protected byte[] fromObject(Object o) throws Exception {
+        if(o==null) return protocol.pack(null);
         Class cls = o.getClass();
 
         DataTypes type = DataTypes.type(cls);

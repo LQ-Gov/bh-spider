@@ -10,7 +10,7 @@ import java.util.Map;
 public enum DataTypes {
     NULL((byte)0,0),
     INT((byte) 32,4,Integer.class,int.class),
-    CHAR((byte)16,3,Character.class,char.class),
+    CHAR((byte)16,2,Character.class,char.class),
     BOOL((byte)'B',1,Boolean.class,boolean.class),
     FLOAT((byte)'F',4,Float.class,float.class),
     DOUBLE((byte)'D',8,Double.class,double.class),

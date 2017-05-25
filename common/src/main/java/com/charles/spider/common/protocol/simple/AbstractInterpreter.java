@@ -1,7 +1,7 @@
 package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
-import org.apache.commons.lang3.ArrayUtils;
+import com.charles.spider.common.protocol.UnSupportTypeException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
@@ -32,7 +32,7 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
 
     protected byte[] toBytes(DataTypes type, List<byte[]> data, int len) {
-        ByteBuffer buffer = ByteBuffer.allocate(len + 5).put(type.value()).putInt(len);
+        ByteBuffer buffer = ByteBuffer.allocate(len + ARRAY_HEAD_LEN).put(type.value()).putInt(len);
         data.forEach(buffer::put);
         return buffer.array();
     }
@@ -67,9 +67,11 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
 
     public byte[] pack(Object input) throws Exception {
-        if(input==null) return fromObject((T) input);
+        if(input==null) return fromObject(null);
 
         Class<?> cls = input.getClass();
+
+        byte[] data;
 
         if (cls.isArray() && support(cls.getComponentType())) {
             if (cls.getComponentType().isPrimitive()) {
@@ -81,22 +83,29 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
                 for (int i = 0; i < len; i++)
                     Array.set(reference, i, Array.get(input, i));
-                return fromArray(reference);
-            }
-            return fromArray((T[]) input);
+                data = fromArray(reference);
+            } else
+                data = fromArray((T[]) input);
+
+            data[0] = (byte) (data[0] | 0x80);
+
+            return data;
         }
 
         if (Collection.class.isInstance(input)) {
             Type t = cls.getGenericSuperclass();
             Class componentType = (Class) ((ParameterizedType) t).getActualTypeArguments()[0];
-            if (support(componentType))
-                return fromCollection((Collection) input);
-            else throw new Exception("not support type");
+            if (support(componentType)) {
+                data = fromCollection((Collection) input);
+                data[0] = (byte) (data[0] | 0x80);
+                return data;
+            }
+            else throw new UnSupportTypeException(cls);
         }
 
         if (support(cls)) return fromObject((T) input);
 
-        throw new Exception("type error");
+        throw new UnSupportTypeException(cls);
     }
 
     public T unpack(Class<T> cls, byte[] data, int pos, int len) throws Exception {
@@ -105,8 +114,16 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
         if ((cls==Object.class|| support(cls))&& (data[pos]&0x80)==0)
             return toObject(cls, data, pos, len);//如果直接支持，则进行toObject
 
-        if((cls.isArray()||cls==Object.class)&&(data[pos]&0x80)>0&&support(cls.getComponentType()))
+        //第一种为数组的情况
+        if((data[pos]&0x80)>0&&cls.isArray()&&support(cls.getComponentType()))
             return (T) toArray(cls,data,pos+ARRAY_HEAD_LEN,len-ARRAY_HEAD_LEN);
+
+        //第二种为数组的情况
+        if((data[pos]&0x80)>0&&cls == Object.class)
+            return (T) toArray(cls,data,pos+ARRAY_HEAD_LEN,len-ARRAY_HEAD_LEN);
+
+        if((cls.isArray()||cls==Object.class)&&(data[pos]&0x80)>0&&support(cls.getComponentType()))
+
 
         if (Collection.class.isAssignableFrom(cls)&&(data[pos]&0x80)>0) {
             Collection<T> collection;
@@ -117,7 +134,7 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
             return (T) collection;
         }
 
-        throw new Exception("type error");
+        throw new UnSupportTypeException(cls);
     }
 
 

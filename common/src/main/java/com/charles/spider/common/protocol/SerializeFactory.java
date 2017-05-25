@@ -7,7 +7,7 @@ public class SerializeFactory {
     private static Serializer serializer = new Serializer(ProtocolFactory.get());
     private static Deserializer deserializer = new Deserializer(ProtocolFactory.get());
 
-    public static <T> byte[] serialize(T... inputs) throws Exception {
+    public static byte[] serialize(Object... inputs) throws Exception {
         return serializer.cast(inputs);
     }
 

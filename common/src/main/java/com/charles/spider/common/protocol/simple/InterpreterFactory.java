@@ -13,6 +13,7 @@ public class InterpreterFactory {
     private final Map<DataTypes,Interpreter> INTERPRETERS = new HashMap<>();
 
     public InterpreterFactory(Protocol protocol) {
+        INTERPRETERS.put(DataTypes.NULL,new NullInterpreter());
         INTERPRETERS.put(DataTypes.INT, new IntInterpreter());
         INTERPRETERS.put(DataTypes.BYTE, new ByteInterpreter());
         INTERPRETERS.put(DataTypes.BOOL, new BoolInterpreter());

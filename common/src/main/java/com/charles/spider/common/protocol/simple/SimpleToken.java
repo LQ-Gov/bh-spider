@@ -26,11 +26,11 @@ public class SimpleToken implements Token {
 
 
 
-    private boolean isArray(){ return (data[0]&0x80)>0;}
+    private boolean isArray(){ return (data[pos]&0x80)>0;}
 
 
     @Override
-    public DataTypes type() { return DataTypes.type((byte) (data[0]&0x7F)); }
+    public DataTypes type() { return DataTypes.type((byte) (data[pos]&0x7F)); }
 
     @Override
     public int toInt() throws Exception {
@@ -77,10 +77,10 @@ public class SimpleToken implements Token {
     public <T> T toClass(Class<?> cls) throws Exception {
 
         if (cls == null) cls = Object.class;
-        if (cls.isArray() != isArray()) throw new Exception("error type");
+        if (cls != Object.class && cls.isArray() != isArray()) throw new Exception("error type");
 
-        Interpreter interpreter = null;
-        if (cls != Object.class)
+        Interpreter interpreter;
+        if (cls == Object.class)
             interpreter = INTERPRETER_FACTORY.get(type());
         else if (DataTypes.type(cls) != type())
             throw new Exception("error type");
@@ -110,7 +110,8 @@ public class SimpleToken implements Token {
 
     @Override
     public int length() {
-        if (type().size() > -1) return type().size()+1;
+
+        if (!isArray()&&type().size() > -1) return type().size()+1;
 
         if (data.length - pos < 5) return -1;
 
