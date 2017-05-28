@@ -62,7 +62,7 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
             int len = 0;
             for (Field field : fields) {
                 byte[] key = protocol.pack(field.getName());
-                Method get = cls.getMethod(get_method_name(field.getName()));
+                Method get = cls.getDeclaredMethod(get_method_name(field.getName()));
 
                 if (get != null) {
                     byte[] value = protocol.pack(get.invoke(o));
@@ -103,13 +103,20 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
             if (cls == null || cls == Object.class) return new SimpleToken(data, pos);
             else {
                 Object o = cls.newInstance();
-                Token token = new SimpleToken(data, pos);
-                int start = pos + 4, end = pos + token.length();
+                int start = pos + 5, end = pos + len;
                 for (int i = start; i < end; ) {
-                    token = new SimpleToken(data, i);
-                    Field field = cls.getField(token.toString(Charset.defaultCharset()));
+                    Token token = new SimpleToken(data, i);
+                    Field field = cls.getDeclaredField(token.toString(Charset.defaultCharset()));
+
                     token = new SimpleToken(data, i += token.length());
-                    field.set(o, token.toClass(field.getType()));
+
+                    try {
+                        Method set = cls.getDeclaredMethod(set_method_name(field.getName()));
+                        if (set != null) {
+                            set.invoke(o, token.toClass(field.getType()));
+                        }
+                    } catch (NoSuchMethodException ignored) {
+                    }
                     i += token.length();
                 }
 
@@ -120,8 +127,21 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
 
 
     private static String get_method_name(String filedName) throws Exception {
-        byte[] items = filedName.getBytes();
-        items[0] = (byte) ((char) items[0] - 'a' + 'A');
-        return "get" + new String(items);
+        return build_method_name("get",filedName);
+    }
+
+    private static String set_method_name(String filedName){
+        return build_method_name("set",filedName);
+    }
+
+    private static String build_method_name(String prefix,String filedName) {
+        assert filedName != null;
+        if (prefix != null || !"".equals(prefix.trim())) {
+            byte[] items = filedName.getBytes();
+            items[0] = (byte) ((char) items[0] - 'a' + 'A');
+            return prefix + new String(items);
+        }
+
+        return filedName;
     }
 }

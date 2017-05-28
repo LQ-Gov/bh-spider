@@ -6,6 +6,9 @@ package com.charles.spider.client;
 public class TestHandler {
 
     void exec(){
-        System.out.println("module test");
+        Integer a = 12;
+
+        System.out.println((a instanceof Integer));
+        //System.out.println("module test");
     }
 }

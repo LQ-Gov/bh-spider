@@ -9,6 +9,9 @@ public class Description {
     private String info;
     private String hash;
 
+
+    public Description(){}
+
     public Description(ModuleType type){
         this(null,type,null);
     }

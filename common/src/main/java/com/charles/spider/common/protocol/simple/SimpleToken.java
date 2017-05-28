@@ -34,47 +34,49 @@ public class SimpleToken implements Token {
 
     @Override
     public int toInt() throws Exception {
-        return safe_build_buffer(DataTypes.INT).put(data,pos+1,type().size()).getInt();
+        return (int) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public byte toByte() throws Exception {
-        return safe_build_buffer(DataTypes.BYTE).put(data,pos+1,type().size()).get();
+        return (byte) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public float toFloat() throws Exception {
-        return safe_build_buffer(DataTypes.FLOAT).put(data,pos+1,type().size()).getFloat();
+        return (float) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public double toDouble() throws Exception {
-        return safe_build_buffer(DataTypes.DOUBLE).put(data,pos+1,type().size()).getDouble();
+        return (double) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public char toChar() throws Exception {
-        return safe_build_buffer(DataTypes.CHAR).put(data,pos+1,type().size()).getChar();
+        return (char) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public long toLong() throws Exception {
-        return safe_build_buffer(DataTypes.LONG).put(data,pos+1,type().size()).getLong();
+        return (long) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public boolean toBoolean() throws Exception {
-        return safe_build_buffer(DataTypes.BOOL).put(data, pos + 1, type().size()).get() > 0;
+        return (boolean) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public String toString(Charset charset) throws Exception {
-        ByteBuffer buffer = safe_build_buffer(DataTypes.STRING);
-        return new String(buffer.put(data, pos + 5, buffer.limit()).array(), charset);
+        return (String) safe_interpreter_factory(String.class).unpack(String.class,data,pos,length());
     }
 
     @Override
     public <T> T toClass(Class<?> cls) throws Exception {
+
+        if(type()==DataTypes.NULL) return (T) INTERPRETER_FACTORY.get(DataTypes.NULL).unpack(cls,data,pos,length());
+
 
         if (cls == null) cls = Object.class;
         if (cls != Object.class && cls.isArray() != isArray()) throw new Exception("error type");
@@ -118,14 +120,15 @@ public class SimpleToken implements Token {
         return ByteBuffer.wrap(data, pos + 1, 4).getInt()+5;
     }
 
-    private ByteBuffer safe_build_buffer(DataTypes t) throws Exception {
-        if (t != type()||t==DataTypes.NULL)
-            throw new Exception("not a valid " + t.toString() + " data");
-        if (t.size() > 0)
-            return ByteBuffer.allocate(t.size());
-        if (data.length - pos < 5)
+    private Interpreter safe_interpreter_factory(Class<?> cls) throws Exception {
+        DataTypes t = DataTypes.type(cls);
+        if (cls==null ||t != type()) {
+            throw new UnSupportTypeException(cls);
+        }
+        if (length()<0)
             throw new Exception("length not enough");
-        return ByteBuffer.allocate(length()-1);
+
+        return INTERPRETER_FACTORY.get(t);
     }
 
 

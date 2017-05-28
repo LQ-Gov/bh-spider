@@ -2,6 +2,8 @@ package com.charles.spider.client;
 
 import com.charles.spider.common.moudle.Description;
 import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.common.protocol.ProtocolFactory;
+import com.charles.spider.common.protocol.Token;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,12 +19,7 @@ public class ClientTest {
 
     private Client client = null;
 
-    @Before
-    public void init() throws IOException, URISyntaxException {
-        client = new Client("127.0.0.1:8033");
-        //client = new Client();
-
-    }
+//IllegalArgumentException
 
 
     @Test
@@ -32,12 +29,17 @@ public class ClientTest {
     }
 
     @Test
-    public void temp(){
-        Byte[] data = new Byte[]{1,2,3};
+    public void test() throws Exception {
+        Description dest = new Description(ModuleType.HANDLE);
+        dest.setName("ABC");
+        byte[] data = ProtocolFactory.get().pack(dest);
 
-        Object o = data;
+        Token token = ProtocolFactory.get().assemble(data,0,data.length).next();
 
-        Object[] o2 = (Object[]) o;
+        Description result = token.toClass(Description.class);
+
+        System.out.println( result.getName());
+
     }
 
 }
