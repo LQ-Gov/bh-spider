@@ -143,13 +143,15 @@ public class BasicScheduler implements IEvent {
 
     @EventMapping
     protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc, boolean override) {
-        try {
-            modFactory.save(data, desc, override);
-        } catch (IOException | DigestException e) {
-            ctx.write("the file write error");
-        } catch (ModuleNoChangeException e) {
-            ctx.write("the file is same for last version");
-        }
+//        try {
+//            modFactory.save(data, desc, override);
+//        } catch (IOException | DigestException e) {
+//            ctx.write("the file write error");
+//        } catch (ModuleNoChangeException e) {
+//            ctx.write("the file is same for last version");
+//        }
+
+        System.out.println("trigger SUBMIT_MODULE_HANDLER");
     }
 
     @EventMapping

@@ -21,6 +21,11 @@ public class MethodExecutor {
 
 
     public void invoke(Object[] args) throws InvocationTargetException, IllegalAccessException {
-        method.invoke(bean, args);
+        try {
+            method.setAccessible(true);
+            method.invoke(bean, args);
+        } finally {
+            method.setAccessible(false);
+        }
     }
 }

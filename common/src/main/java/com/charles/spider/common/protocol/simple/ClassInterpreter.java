@@ -111,9 +111,9 @@ public class ClassInterpreter extends AbstractInterpreter<Object> {
                     token = new SimpleToken(data, i += token.length());
 
                     try {
-                        Method set = cls.getDeclaredMethod(set_method_name(field.getName()));
+                        Method set = cls.getDeclaredMethod(set_method_name(field.getName()),field.getType());
                         if (set != null) {
-                            set.invoke(o, token.toClass(field.getType()));
+                            set.invoke(o,(Object) token.toClass(field.getType()));
                         }
                     } catch (NoSuchMethodException ignored) {
                     }

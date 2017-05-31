@@ -16,14 +16,21 @@ import java.util.List;
 public class CommandDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) throws Exception {
-        Commands type = Commands.values()[byteBuf.readShort()];
-        int len = byteBuf.readInt();
 
-        Object[] params = null;
-        if (len > 2) {
-            byte[] data = ByteBufUtil.getBytes(byteBuf);
-            params = SerializeFactory.deserialize(data,null);
+        if(byteBuf.isReadable()) {
+            System.out.println(byteBuf.readableBytes());
+
+            Commands type = Commands.values()[byteBuf.readShort()];
+
+            int len = byteBuf.readInt();
+
+            Object[] params = null;
+            if (len > 2) {
+                byte[] data = new byte[len];
+                byteBuf.readBytes(data);
+                params = SerializeFactory.deserialize(data, null);
+            }
+            list.add(new Command(type, params));
         }
-        list.add(new Command(type, params));
     }
 }

@@ -66,20 +66,21 @@ public class Client {
 
             boolean quit;
 
-            T o = null;
-            while (socket.get().isConnected()) {
-                quit = !in.readBoolean();
-                if (quit) break;
-                byte[] result = new byte[in.readInt()];
-                if (result.length <= 0) continue;
-
-                in.readFully(result);
-                if (cls == null)
-                    System.out.println(new String(result));
-                else
-                    o = JSON.parseObject(result, cls);
-            }
-            return o;
+//            T o = null;
+//            while (socket.get().isConnected()) {
+//                quit = !in.readBoolean();
+//                if (quit) break;
+//                byte[] result = new byte[in.readInt()];
+//                if (result.length <= 0) continue;
+//
+//                in.readFully(result);
+//                if (cls == null)
+//                    System.out.println(new String(result));
+//                else
+//                    o = JSON.parseObject(result, cls);
+//            }
+//            return o;
+            return null;
         } catch (IOException e) {
             e.fillInStackTrace();
         } catch (Exception e) {

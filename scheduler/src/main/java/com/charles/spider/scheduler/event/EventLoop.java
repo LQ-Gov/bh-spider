@@ -1,10 +1,11 @@
 package com.charles.spider.scheduler.event;
 
 import com.charles.common.spider.command.Commands;
+import com.charles.common.utils.ArrayUtils;
 import com.charles.spider.common.protocol.Token;
 import com.charles.spider.scheduler.Command;
 import com.charles.spider.scheduler.Context;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,11 +78,18 @@ public class EventLoop extends Thread {
 
             if (Context.class.isAssignableFrom(parameters[i]))
                 args[i] = null;//赋值给其context
-            else if (parameters[i].getClass().isAssignableFrom(inputs[i].getClass()))
+            else if (parameters[i].isAssignableFrom(inputs[i].getClass()))
                 args[i] = inputs[i];
 
+            else if(parameters[i].isPrimitive()&&parameters[i]== ClassUtils.wrapperToPrimitive(inputs[i].getClass()))
+                args[i]= inputs[i];
+
             else if (parameters[i].isArray() && inputs[i].getClass().isArray()) {
-                if (parameters[i].isPrimitive()) args[i] = ArrayUtils.toPrimitive(inputs[i]);
+                Class<?> componentType = parameters[i].getComponentType();
+                if(componentType.isPrimitive()
+                        &&ClassUtils.wrapperToPrimitive(inputs[i].getClass().getComponentType())==componentType)
+                    args[i] = ArrayUtils.toPrimitive(inputs[i]);
+
                 else {
                     //如果不是基本类型,就依次进行转化
                 }

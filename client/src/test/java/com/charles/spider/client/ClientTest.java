@@ -19,13 +19,16 @@ public class ClientTest {
 
     private Client client = null;
 
-//IllegalArgumentException
+    @Before
+    public void before() throws IOException, URISyntaxException {
+        client = new Client("127.0.0.1:8033");
+    }
 
 
     @Test
     public void submit() throws Exception {
         Description desc = new Description(ModuleType.HANDLE);
-        client.submit("target/client-1.0-SNAPSHOT.jar",desc,true);
+        client.submit("target/client-1.0-SNAPSHOT.jar", desc, true);
     }
 
     @Test
@@ -34,11 +37,11 @@ public class ClientTest {
         dest.setName("ABC");
         byte[] data = ProtocolFactory.get().pack(dest);
 
-        Token token = ProtocolFactory.get().assemble(data,0,data.length).next();
+        Token token = ProtocolFactory.get().assemble(data, 0, data.length).next();
 
         Description result = token.toClass(Description.class);
 
-        System.out.println( result.getName());
+        System.out.println(result.getName());
 
     }
 
