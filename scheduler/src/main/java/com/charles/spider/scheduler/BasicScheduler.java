@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler;
 
-import com.charles.common.spider.command.Commands;
+import com.charles.common.http.Request;
 import com.charles.common.task.Task;
 import com.charles.spider.common.moudle.Description;
 import com.charles.spider.scheduler.config.Options;
@@ -9,12 +9,14 @@ import com.charles.spider.scheduler.event.EventMapping;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
+import com.charles.spider.scheduler.moudle.ModuleEntity;
 import com.charles.spider.scheduler.moudle.ModuleNoChangeException;
-import com.charles.spider.scheduler.task.StoreUtils;
+import com.charles.spider.scheduler.rule.Domain;
+import com.charles.spider.scheduler.rule.RootDomain;
+import com.charles.spider.scheduler.rule.Rule;
+import com.charles.spider.scheduler.rule.RuleDecorator;
+import com.charles.spider.scheduler.task.RuleExecuteObject;
 import com.charles.spider.scheduler.task.TaskCoreFactory;
-import com.charles.spider.store.base.Store;
-import com.charles.spider.store.base.Target;
-import com.charles.spider.store.filter.Filter;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -25,13 +27,16 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import org.apache.commons.lang3.ArrayUtils;
+import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
+import javax.transaction.NotSupportedException;
 import java.io.IOException;
 import java.security.DigestException;
+import java.sql.SQLException;
 import java.util.concurrent.Future;
 
 /**
@@ -45,11 +50,14 @@ public class BasicScheduler implements IEvent {
     private TaskCoreFactory taskFactory = null;
     private ModuleCoreFactory modFactory = null;
 
+    private Domain domain = new RootDomain();
+
+
     public BasicScheduler() {
     }
 
 
-    public synchronized void exec() throws InterruptedException, SchedulerException, IOException {
+    public synchronized void exec() throws InterruptedException, SchedulerException, IOException, NotSupportedException, SQLException, ClassNotFoundException {
         if (!closed) return;
         closed = false;
         //init_system_signal_handles();
@@ -130,7 +138,7 @@ public class BasicScheduler implements IEvent {
         loop.start();
     }
 
-    protected void init_module_factory() throws IOException {
+    protected void init_module_factory() throws IOException, NotSupportedException, SQLException, ClassNotFoundException {
         this.modFactory = ModuleCoreFactory.instance();
     }
 
@@ -142,24 +150,55 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc, boolean override) {
-//        try {
-//            modFactory.save(data, desc, override);
-//        } catch (IOException | DigestException e) {
-//            ctx.write("the file write error");
-//        } catch (ModuleNoChangeException e) {
-//            ctx.write("the file is same for last version");
-//        }
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc, boolean override) throws ModuleNoChangeException, IOException, DigestException {
+        ModuleEntity entity = modFactory.entity(data,desc);
+
+
+        entity.save(override);
 
         System.out.println("trigger SUBMIT_MODULE_HANDLER");
+    }
+
+
+    @EventMapping
+    protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws SchedulerException {
+        String host = rule.getHost();
+        Domain matcher = domain.match(host);
+
+        if (matcher == null)
+            matcher = domain.add(host);
+
+
+        JobDetail job = taskFactory.scheduler(rule, RuleExecuteObject.class);
+
+        RuleDecorator decorator = new RuleDecorator(rule, job);
+
+        matcher.addRule(decorator);
+
+    }
+
+
+    @EventMapping
+    protected void SUBMIT_REQUEST_HANDLER(Context ctx, Request request){
+
+        String host = request.uri().getHost();
+        Domain matcher = domain.match(host);
+        if(matcher==null)
+        {
+
+        }
+
+
     }
 
     @EventMapping
     protected void SUBMIT_TASK_HANDLER(Task task) {
         //存储到数据库，此处未完成
-        Store.get().insert(Target.TASK, StoreUtils.build(task)).where(Filter.not()).exec();
-        taskFactory.submit(task);
+
     }
+
+
+
 
 
     @EventMapping

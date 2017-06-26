@@ -6,5 +6,5 @@ package com.charles.spider.store.base;
 public enum  Target {
     TASK,
     TIMER,
-    MOUDLE
+    MODULE
 }

@@ -25,6 +25,7 @@
         <spring.version>4.3.7.RELEASE</spring.version>
         <jetty.version>9.4.2.v20170220</jetty.version>
         <jackson.version>2.8.8</jackson.version>
+        <google.guava>22.0</google.guava>
     </properties>
 
 
@@ -71,6 +72,13 @@
                 <artifactId>junit</artifactId>
                 <scope>test</scope>
                 <version>${junit.version}</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${google.guava}</version>
             </dependency>
 
         </dependencies>

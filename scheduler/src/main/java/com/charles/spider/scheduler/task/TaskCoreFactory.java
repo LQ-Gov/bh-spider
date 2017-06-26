@@ -1,12 +1,12 @@
 package com.charles.spider.scheduler.task;
 
 import com.charles.common.task.Task;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
+import com.charles.spider.scheduler.rule.Rule;
+import org.quartz.*;
+import org.quartz.impl.JobDetailImpl;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import org.quartz.spi.JobFactory;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -66,10 +66,17 @@ public class TaskCoreFactory {
         quartz.scheduleJob(job, trigger);
     }
 
-    public void submit(Task task){
+    public JobDetail scheduler(Rule rule,Class<? extends Job> job) throws SchedulerException {
+        JobDetail detail = newJob(job).withIdentity(rule.getName(), "RULE").build();
+        detail.getJobDataMap().put("rule", rule);
 
+        CronTriggerImpl trigger = (CronTriggerImpl) newTrigger().withIdentity(rule.getName())
+                .withSchedule(cronSchedule(rule.getCron())).build();
+
+        quartz.scheduleJob(detail, trigger);
+
+        return detail;
     }
-
 
     public synchronized void start() throws SchedulerException {
         if (!quartz.isStarted())

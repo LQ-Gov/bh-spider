@@ -27,13 +27,13 @@ public class ClientTest {
 
     @Test
     public void submit() throws Exception {
-        Description desc = new Description(ModuleType.HANDLE);
+        Description desc = new Description(ModuleType.JAR);
         client.submit("target/client-1.0-SNAPSHOT.jar", desc, true);
     }
 
     @Test
     public void test() throws Exception {
-        Description dest = new Description(ModuleType.HANDLE);
+        Description dest = new Description(ModuleType.JAR);
         dest.setName("ABC");
         byte[] data = ProtocolFactory.get().pack(dest);
 

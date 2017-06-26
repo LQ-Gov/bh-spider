@@ -1,8 +1,14 @@
 package com.charles.spider.scheduler;
 
 import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import javax.transaction.NotSupportedException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 
 /**
@@ -10,8 +16,24 @@ import java.sql.SQLException;
  */
 public class Program {
 
+    private final static Logger logger = LoggerFactory.getLogger(Program.class);
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, IllegalAccessException, InstantiationException, InterruptedException, SchedulerException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, SchedulerException, InterruptedException, SQLException, NotSupportedException {
+
+
+        String file = args.length > 0 ? args[0] : "spider.properties";
+
+        if(Files.exists(Paths.get(file))) {
+            logger.info("load config from {}",file);
+
+            InputStream stream = Program.class.getClassLoader().getResourceAsStream(file);
+            System.getProperties().load(stream);
+        }
+        else
+            logger.warn("the config file {} not exists,program start with default config",file);
+
+
+
 //        Class.forName("org.sqlite.JDBC");
 //
 //
@@ -24,7 +46,7 @@ public class Program {
 //        conn.commit();
 
 
-        BasicScheduler scheduler = (BasicScheduler)Class.forName(BasicScheduler.class.getName()).newInstance();
+        BasicScheduler scheduler = (BasicScheduler) Class.forName(BasicScheduler.class.getName()).newInstance();
 
         scheduler.exec();
 

@@ -5,14 +5,20 @@ import com.charles.common.spider.command.Commands;
 import com.charles.common.task.Task;
 import com.charles.common.task.TimerTask;
 import com.charles.spider.common.moudle.Description;
+import com.charles.spider.common.moudle.ModuleType;
 import com.charles.spider.common.protocol.SerializeFactory;
+import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,6 +58,7 @@ public class Client {
         if (socket != null && socket.get().isConnected()) socket.get().close();
 
     }
+
     protected <T> T write(Commands cmd, Class<T> cls, T... params) {
         short type = (short) cmd.ordinal();
         try {
@@ -89,69 +96,80 @@ public class Client {
         return null;
     }
 
-    public void submit() {
-        write(Commands.SUBMIT_TASK, null);
+
+
+    public void submit(Class<?> cls) {
+        submit(cls, false);
     }
 
-    /**
-     * 提交一次性任务
-     * @param task
-     */
-    public void submit(Task task){write(Commands.SUBMIT_TASK,null);}
+    public void submit(Class<?> cls, boolean override) {
+        submit(cls,override);
+    }
 
-    /**
-     * 提交定时任务（产生相同任务)
-     * @param task
-     */
-    public void submit(TimerTask task){write(Commands.SUBMIT_TIMER,null);}
-
-    /**
-     * 提交定时任务(动态产生任务)
-     * @param cron
-     * @param path
-     * @param cls
-     */
-    public void submit(String cron, Path path, String cls) throws IOException {
-
-        write(Commands.SUBMIT_TIMER,null,Files.readAllBytes(path),cron,cls);
+    public void submit(Class<?> cls, Description desc, boolean override) throws IOException {
+        URL url = cls.getResource("");
+        submit(url.getPath(), desc, override);
     }
 
 
-    /**
-     * 提交定时任务(动态产生任务)
-     * @param cron
-     * @param path
-     * @param cls
-     */
-    public void submit(String cron,String path,String cls) throws IOException {
-        submit(cron,Paths.get(path),cls);
+    public void submit(String path) {
+        submit(path, false);
+    }
+
+    public void submit(String path, boolean override) {
+        submit(Paths.get(path), override);
+    }
+
+
+    public void submit(Path path) {
+        submit(path, false);
+    }
+
+    public void submit(Path path, boolean override) {
     }
 
     /**
      * 提交module
+     *
+     * @param path
+     * @param desc
+     */
+    public void submit(String path, Description desc, boolean override) throws IOException {
+        submit(Paths.get(path), desc, override);
+    }
+
+    /**
+     * 提交module
+     *
      * @param path
      * @param desc
      */
 
-    public void submit(Path path, Description desc,boolean override) throws IOException {
+    public void submit(Path path, Description desc, boolean override) throws IOException {
+        assert desc != null;
+
+        Preconditions.checkNotNull(desc, "the parameter of desc can't null");
+        Preconditions.checkArgument(Files.exists(path), "the file isn't exist");
+
+
+        if (StringUtils.isBlank(desc.getName()))
+            desc.setName(path.getFileName().toString());
+
+        if (desc.getType() == ModuleType.UNKNOWN) {
+            int index = desc.getName().lastIndexOf('.');
+            Preconditions.checkArgument(index > 0 && index < desc.getName().length(),
+                    "can't analysis module type");
+
+            String type = desc.getName().substring(index);
+            desc.setType(ModuleType.valueOf(type));
+        }
+
+
         byte[] data = Files.readAllBytes(path);
 
-        write(Commands.SUBMIT_MODULE, null, data, desc,override);
+
+        write(Commands.SUBMIT_MODULE, null, data, desc, override);
     }
-
-
-
-
-
-    /**
-     * 提交module
-     * @param path
-     * @param desc
-     */
-    public void submit(String path,Description desc,boolean override) throws IOException {
-        submit(Paths.get(path), desc,override);
-    }
-
 
 
 }

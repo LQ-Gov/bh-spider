@@ -2,18 +2,17 @@
 
 
 <rules>
-    <timers>
-        <timer pattern="www.sina.com*" interval="30000"/>
-    </timers>
+    <rule pattern="www.baidu.com*" host="www.baidu.com" scope="soft" extractor="m1,m2,m3" pipeline=""/>
 
+    <rule pattern="wwww.sina.com" host="www.sina.com">
 
-    <chains>
-        <chain pattern="www.sina.com*" scope="soft,hard">
-            <item key="200" scope="hard,soft">m1,m2,m3</item>
-            <item key="404" moudles="m1,m2,m3"/>
-        </chain>
+        <pipeline>cis_public_data</pipeline>
 
-        <chain pattern="www.baidu.com*" scope="soft" moudles="m1,m2,m3"/>
-    </chains>
+        <extractor key="200" module="m1,m2,m3"/>
+
+        <extractor key="200">m1,m2,m3</extractor>
+
+    </rule>
+
 
 </rules>
