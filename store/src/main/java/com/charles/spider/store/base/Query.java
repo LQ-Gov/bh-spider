@@ -13,7 +13,7 @@ public class Query {
     private long skip;
     private long limit;
 
-    private LinkedHashSet<Condition> chain;
+    private LinkedHashSet<Condition> chain = new LinkedHashSet<>();
 
     public Query() {}
 

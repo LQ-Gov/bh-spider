@@ -25,5 +25,7 @@ public interface Store {
 
     }
 
+    void init() throws Exception;
+
     Service<Module> module();
 }

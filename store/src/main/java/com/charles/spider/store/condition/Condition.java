@@ -2,6 +2,7 @@ package com.charles.spider.store.condition;
 
 import com.charles.spider.store.base.Criteria;
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
 import sun.invoke.util.VerifyAccess;
 
 import java.util.List;
@@ -20,38 +21,45 @@ public class Condition {
 
     private List<Condition> conditions;
 
-    private Condition(String key){
+    private Condition(String key) {
         this.key = key;
     }
 
 
-
     public static Condition where(String key) {
+        Preconditions.checkArgument(!StringUtils.isBlank(key),"the parameter %s can't empty",key);
         return new Condition(key);
     }
 
 
-    public String key(){return key;}
+    public String key() {
+        return key;
+    }
 
-    public Operator operator(){return operator;}
+    public Operator operator() {
+        return operator;
+    }
 
-    public Object value(){return value; }
-
+    public Object value() {
+        return value;
+    }
 
 
     public Condition is(Object value) {
 
-        Preconditions.checkArgument(!this.value.equals(NOT_SET)
+        Preconditions.checkArgument(this.value.equals(NOT_SET)
                 , "Multiple 'is' values declared. You need to use 'and' with multiple criteria");
 
-        Preconditions.checkArgument(lastOperatorWasNot(), "Invalid query: 'not' can't be used with 'is' - use 'ne' instead.");
+        Preconditions.checkArgument(!lastOperatorWasNot(), "Invalid query: 'not' can't be used with 'is' - use 'ne' instead.");
 
         this.value = value;
         return this;
     }
 
     private boolean lastOperatorWasNot() {
-        return !this.conditions.isEmpty() && conditions.get(conditions.size() - 1).operator == Operator.NOT;
+        return this.conditions != null
+                && !this.conditions.isEmpty()
+                && conditions.get(conditions.size() - 1).operator == Operator.NOT;
     }
 
 
