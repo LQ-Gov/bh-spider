@@ -2,11 +2,8 @@ package com.charles.spider.store.base;
 
 import com.charles.spider.store.entity.Module;
 import com.charles.spider.store.service.Service;
-import com.charles.spider.store.sqlite.SQLiteStore;
 import com.charles.spider.store.sqlite.SQLiteStoreFactory;
 
-import javax.transaction.NotSupportedException;
-import java.sql.SQLException;
 import java.util.Properties;
 
 /**
@@ -14,13 +11,13 @@ import java.util.Properties;
  */
 public interface Store {
 
-    static Store  get(String type, Properties properties) throws SQLException, ClassNotFoundException, NotSupportedException {
+    static Store  get(String type, Properties properties) throws Exception {
         switch (type){
             case "SQLite":
                 return new SQLiteStoreFactory(properties).build();
 
                 default:
-                    throw new NotSupportedException("not support the "+type+" database");
+                    throw new Exception("not support the "+type+" database");
         }
 
     }

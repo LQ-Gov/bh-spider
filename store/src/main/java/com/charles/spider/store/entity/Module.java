@@ -16,6 +16,7 @@ public class Module {
     private ModuleType type;
     private String detail;
     private Date updateTime;
+    private boolean valid;
 
     public long getId() {
         return id;
@@ -71,5 +72,14 @@ public class Module {
 
     public void setDetail(String detail) {
         this.detail = detail;
+    }
+
+
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void setValid(boolean valid) {
+        this.valid = valid;
     }
 }

@@ -3,20 +3,21 @@ package com.charles.spider.scheduler;
 import com.charles.common.http.Request;
 import com.charles.common.task.Task;
 import com.charles.spider.common.moudle.Description;
-import com.charles.spider.scheduler.config.Options;
+import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.scheduler.event.EventLoop;
 import com.charles.spider.scheduler.event.EventMapping;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
+import com.charles.spider.scheduler.moudle.ModuleAgent;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
-import com.charles.spider.scheduler.moudle.ModuleEntity;
-import com.charles.spider.scheduler.moudle.ModuleNoChangeException;
 import com.charles.spider.scheduler.rule.Domain;
 import com.charles.spider.scheduler.rule.RootDomain;
 import com.charles.spider.scheduler.rule.Rule;
 import com.charles.spider.scheduler.rule.RuleDecorator;
 import com.charles.spider.scheduler.task.RuleExecuteObject;
 import com.charles.spider.scheduler.task.TaskCoreFactory;
+import com.charles.spider.store.base.Store;
+import com.google.common.base.Preconditions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -33,10 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
-import javax.transaction.NotSupportedException;
-import java.io.IOException;
-import java.security.DigestException;
-import java.sql.SQLException;
 import java.util.concurrent.Future;
 
 /**
@@ -48,7 +45,9 @@ public class BasicScheduler implements IEvent {
     private EventLoop loop = null;
     private Fetcher fetcher = null;
     private TaskCoreFactory taskFactory = null;
-    private ModuleCoreFactory modFactory = null;
+    private ModuleCoreFactory moduleCoreFactory = null;
+    private Store store = null;
+
 
     private Domain domain = new RootDomain();
 
@@ -57,12 +56,14 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public synchronized void exec() throws InterruptedException, SchedulerException, IOException, NotSupportedException, SQLException, ClassNotFoundException {
+    public synchronized void exec() throws Exception {
         if (!closed) return;
         closed = false;
         //init_system_signal_handles();
         init_event_loop();
         init_fetcher();
+
+        //先初始化存储，其他模块依赖存储
         init_store();
         init_module_factory();
         init_task_factory();
@@ -104,7 +105,10 @@ public class BasicScheduler implements IEvent {
 
 
     //初始化数据库数据
-    protected void init_store() {
+    protected void init_store() throws Exception {
+        store = Store.get(Config.INIT_STORE_DATABASE, Config.getStoreProperties());
+        store.init();
+
     }
 
     protected void init_local_listen() throws InterruptedException {
@@ -124,9 +128,9 @@ public class BasicScheduler implements IEvent {
                     })
                     .option(ChannelOption.SO_REUSEADDR, true);
 
-            logger.info("init command listen server:{}", Integer.getInteger(Options.INIT_LISTEN_PORT, 8033));
+            logger.info("init command listen server:{}", Config.INIT_LISTEN_PORT);
 
-            ChannelFuture local = server.bind(Integer.getInteger(Options.INIT_LISTEN_PORT, 8033)).sync();
+            ChannelFuture local = server.bind(Config.INIT_LISTEN_PORT).sync();
             local.channel().closeFuture().sync();
         } finally {
             group.shutdownGracefully();
@@ -138,8 +142,11 @@ public class BasicScheduler implements IEvent {
         loop.start();
     }
 
-    protected void init_module_factory() throws IOException, NotSupportedException, SQLException, ClassNotFoundException {
-        this.modFactory = ModuleCoreFactory.instance();
+    protected void init_module_factory() throws Exception {
+
+        Preconditions.checkNotNull(store, "the data store not init");
+
+        this.moduleCoreFactory = new ModuleCoreFactory(store.module());
     }
 
 
@@ -150,11 +157,17 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc, boolean override) throws ModuleNoChangeException, IOException, DigestException {
-        ModuleEntity entity = modFactory.entity(data,desc);
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc, boolean override) {
 
+        ModuleAgent agent = moduleCoreFactory.agent(desc.getType());
 
-        entity.save(override);
+        try {
+            if (agent == null)
+                throw new Exception("unknown module type");
+            agent.save(data, desc, override);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         System.out.println("trigger SUBMIT_MODULE_HANDLER");
     }
@@ -179,12 +192,11 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_REQUEST_HANDLER(Context ctx, Request request){
+    protected void SUBMIT_REQUEST_HANDLER(Context ctx, Request request) {
 
         String host = request.uri().getHost();
         Domain matcher = domain.match(host);
-        if(matcher==null)
-        {
+        if (matcher == null) {
 
         }
 
@@ -196,9 +208,6 @@ public class BasicScheduler implements IEvent {
         //存储到数据库，此处未完成
 
     }
-
-
-
 
 
     @EventMapping

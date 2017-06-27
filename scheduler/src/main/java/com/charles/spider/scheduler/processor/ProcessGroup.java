@@ -1,7 +1,6 @@
 package com.charles.spider.scheduler.processor;
 
 import com.charles.common.Action;
-import com.charles.spider.scheduler.config.Options;
 
 import java.util.concurrent.*;
 
@@ -12,11 +11,11 @@ public class ProcessGroup {
     private volatile ExecutorService s = null;
 
 
-    private int threadCount=Integer.getInteger(Options.PROCESSER_THREADS_COUNT,Runtime.getRuntime().availableProcessors());
+    private int threadCount=Runtime.getRuntime().availableProcessors();
     public ProcessGroup(int count) {
         threadCount = count;
     }
-    public ProcessGroup(){
+    public ProcessGroup() {
 
     }
 

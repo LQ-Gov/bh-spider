@@ -17,9 +17,9 @@ public class SQLiteStore implements Store {
     private Connection connection;
     private SQLiteConditionInterpreter interpreter;
     private SQLiteModuleService moduleService = null;
-    public SQLiteStore(Connection connection) {
+    public SQLiteStore(Connection connection,Connection moduleConnection) {
         this.connection = connection;
-        moduleService = new SQLiteModuleService(this);
+        moduleService = new SQLiteModuleService(this,moduleConnection);
 
         interpreter = new SQLiteConditionInterpreter();
 

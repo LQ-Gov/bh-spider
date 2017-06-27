@@ -11,7 +11,7 @@ import java.util.List;
  * Created by lq on 17-6-23.
  */
 public class Condition {
-    private final static Object NOT_SET = new Object();
+    protected final static Object NOT_SET = new Object();
 
     private String key;
 
@@ -21,7 +21,11 @@ public class Condition {
 
     private List<Condition> conditions;
 
-    private Condition(String key) {
+    private Condition next;
+
+    Condition(){}
+
+    Condition(String key) {
         this.key = key;
     }
 
@@ -29,6 +33,17 @@ public class Condition {
     public static Condition where(String key) {
         Preconditions.checkArgument(!StringUtils.isBlank(key),"the parameter %s can't empty",key);
         return new Condition(key);
+    }
+
+    public Condition and(Condition condition){
+
+        this.next = new AndCondition(condition);
+        return this.next;
+
+    }
+
+    public Condition or(Condition conds){
+        return null;
     }
 
 
@@ -70,5 +85,7 @@ public class Condition {
         this.value = value;
         return this;
     }
+
+    public Condition next(){return next;}
 
 }

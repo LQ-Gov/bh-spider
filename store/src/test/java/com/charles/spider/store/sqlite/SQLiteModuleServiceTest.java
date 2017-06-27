@@ -25,7 +25,7 @@ public class SQLiteModuleServiceTest {
         entity.setPath("/data/mod");
         entity.setName("test");
 
-        SQLiteBuilder.build().module().save(entity);
+        //SQLiteBuilder.build().module().save(entity);
         System.out.println(entity.getId());
 
 
@@ -36,8 +36,8 @@ public class SQLiteModuleServiceTest {
 
         Query query = new Query();
         query.addCondition(Condition.where("id").is(2));
-        List<Module> list = SQLiteBuilder.build().module().select(query);
-        list.forEach(x->System.out.println(x.getId()));
+//        List<Module> list = SQLiteBuilder.build().module().select(query);
+//        list.forEach(x->System.out.println(x.getId()));
     }
 
     @Test

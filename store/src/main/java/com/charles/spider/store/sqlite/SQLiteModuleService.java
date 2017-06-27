@@ -20,9 +20,9 @@ public class SQLiteModuleService implements Service<Module> {
     private SQLiteStore store = null;
     private Connection connection;
 
-    public SQLiteModuleService(SQLiteStore store) {
+    public SQLiteModuleService(SQLiteStore store,Connection connection) {
         this.store = store;
-        this.connection = store.getConnection();
+        this.connection = connection;
 
     }
 
@@ -35,16 +35,17 @@ public class SQLiteModuleService implements Service<Module> {
                 "hash TEXT," +
                 "type TEXT," +
                 "detail TEXT," +
+                "valid INTEGER,"+
                 "update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)";
         connection.prepareStatement(sql).execute();
 
     }
 
     @Override
-    public Module save(Module entity) {
+    public Module insert(Module entity) {
         try {
 
-            String sql = "INSERT INTO " + MODULE_TABLE_NAME + "(name,path,hash,type,detail) VALUES(?,?,?,?,?)";
+            String sql = "INSERT INTO " + MODULE_TABLE_NAME + "(name,path,hash,type,detail,valid,update_time) VALUES(?,?,?,?,?,?,?)";
 
             PreparedStatement stat = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
@@ -53,13 +54,15 @@ public class SQLiteModuleService implements Service<Module> {
             stat.setObject(3, entity.getHash());
             stat.setObject(4, entity.getType());
             stat.setObject(5, entity.getDetail());
+            stat.setObject(6,entity.isValid());
+            entity.setUpdateTime(new Date());
+            stat.setObject(7,entity.getUpdateTime());
 
             stat.execute();
 
             ResultSet rs = stat.getGeneratedKeys();
             if (rs.next()) {
                 entity.setId(rs.getLong(1));
-                entity.setUpdateTime(new Date());
             }
 
         } catch (SQLException e) {
@@ -86,7 +89,10 @@ public class SQLiteModuleService implements Service<Module> {
             }
 
             if (where.startsWith(" AND ")) where = where.replaceFirst(" AND ", " WHERE ");
+
             if (!StringUtils.isBlank(where)) sql += where;
+
+            sql += String.format(" LIMIT %s,%s", query.skip(), query.limit());
         }
 
         try {
@@ -103,6 +109,7 @@ public class SQLiteModuleService implements Service<Module> {
                 module.setType(ModuleType.valueOf(rs.getString("type")));
                 module.setDetail(rs.getString("detail"));
                 module.setId(rs.getLong("id"));
+                module.setValid(rs.getBoolean("valid"));
                 result.add(module);
             }
             return result;
@@ -113,14 +120,59 @@ public class SQLiteModuleService implements Service<Module> {
         return null;
     }
 
+
+
+    @Override
+    public Module single(Query query) {
+        query = query == null ? new Query() : query;
+
+        query.limit(1);
+        List<Module> result = select(query);
+
+        return result!=null&&result.size() == 1 ? result.get(0) : null;
+    }
+
     @Override
     public void delete(Module entity) {
 
     }
 
     @Override
-    public void update(Module entity) {
+    public int update(Module entity, Condition condition) {
 
+        String sql = "UPDATE " + MODULE_TABLE_NAME + " SET name=?,path=?,hash=?,type=?,detail=?,valid=? ";
+
+
+        String where = store.explain(condition);
+
+        if (!StringUtils.isBlank(where)) sql += "WHERE " + where;
+
+        System.out.println(sql);
+
+        try {
+            PreparedStatement stat = connection.prepareStatement(sql);
+            stat.setObject(1, entity.getName());
+            stat.setObject(2, entity.getPath());
+            stat.setObject(3, entity.getHash());
+            stat.setObject(4, entity.getType().name());
+            stat.setObject(5, entity.getDetail());
+            stat.setObject(6, entity.isValid());
+
+
+            int count = stat.executeUpdate();
+            entity.setUpdateTime(new Date());
+
+            return count;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+
+    }
+
+    @Override
+    public void upsert(Query query, Module entity) {
+        //String sql = "REPLACE "
     }
 
 

@@ -33,7 +33,6 @@ public class XmlRuleConfig {
             throw new DocumentException("not find root element with rules");
 
         chainsParser(root.element("chains"));
-        timersParser(root.element("timers"));
         List proxies = root.elements("proxies");
         if (proxies != null)
             proxiesParser(proxies);
@@ -63,19 +62,6 @@ public class XmlRuleConfig {
                 }
             }
             Config.defaultChains.put(pattern, new Chain(pattern, scope, handlers, prepare, finished));
-        }
-    }
-
-
-
-    private void timersParser(Element el){
-        if(el==null) return;
-
-        for (Element it : (List<Element>)el.elements("timer")) {
-            String pattern = it.attributeValue("pattern");
-            long interval = Long.parseLong(it.attributeValue("interval"));
-
-            Config.defaultTimers.put(pattern, new Timer(pattern, interval));
         }
     }
 

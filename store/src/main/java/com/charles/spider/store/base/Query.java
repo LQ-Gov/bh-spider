@@ -18,9 +18,16 @@ public class Query {
     public Query() {}
 
 
-    public Query addCondition(Condition... condition) {
-        chain.addAll(Arrays.asList(condition));
+    public Query addCondition(Condition... conditions) {
+        chain.addAll(Arrays.asList(conditions));
         return this;
+    }
+
+
+    public static Query Condition(Condition... conditions){
+        Query query = new Query();
+        query.addCondition(conditions);
+        return query;
     }
 
 
