@@ -1,0 +1,40 @@
+var webpack = require('webpack');
+
+var html_webpack_plugin = require('html-webpack-plugin');
+
+var webpack_dev_middleware = require("webpack-dev-middleware");
+
+
+//var extract_text_webpack_plugin = require('extract-text-webpack-plugin');
+
+
+module.exports = {
+    entry: {
+        index: ["webpack-hot-middleware/client","./app/index.jsx"]
+    },
+    output: {
+        path: __dirname,
+        filename: "public/[name].js"
+    },
+
+    resolve: {
+        extensions: ['.js', '.jsx']
+    },
+
+    module: {
+        loaders: [{
+            test: /\.jsx$/,
+            loader: 'babel-loader'
+        }]
+    },
+
+    plugins: [
+        new html_webpack_plugin({title:"TEST SPIDER APP"}),
+        // new webpack.optimize.OccurenceOrderPlugin(),
+         new webpack.HotModuleReplacementPlugin(),
+        // new webpack.NoErrorsPlugin()
+    ]
+}
+
+
+

@@ -1,0 +1,24 @@
+
+var webpack_dev_middleware = require("webpack-dev-middleware");
+
+var webpack_hot_middleware = require('webpack-hot-middleware');
+
+var config = require("./webpack.config.js");
+
+var webpack = require("webpack");
+
+var compiler = webpack(config);
+
+var app = require("express")()
+
+app.use(webpack_dev_middleware(compiler));
+
+app.use(webpack_hot_middleware(compiler));
+
+app.listen(3000, '127.0.0.1', function(err) {
+    if (err) {
+        console.log(err);
+        return;
+    }
+    console.log('server runing, listening at http://127.0.0.1:3000');
+});
