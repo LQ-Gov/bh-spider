@@ -15,10 +15,12 @@ public interface Service<T> {
 
     T single(Query query);
 
-    void delete(T entity);
+    void delete(Query query);
 
 
     int update(T entity, Condition condition);
 
     void upsert(Query query,T entity);
+
+    long count(Query query);
 }

@@ -1,5 +1,6 @@
 package com.charles.spider.monitor.server;
 
+import com.charles.spider.client.Client;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -16,13 +17,10 @@ public class Program {
     private static final String DEFAULT_WEBAPP_PATH = "monitor/src/main/webapp";
 
     public static void main(String[] args) throws Exception {
-//        System.setProperty("org.apache.jasper.compiler.disablejsr199", "false");
-//        System.getProperties().setProperty("port","8080");
-//
-//
-//        int port =Integer.parseInt(System.getProperty("port"));
 
-        Server server = new Server();
+
+
+        Server server = new org.eclipse.jetty.server.Server();
 
         //这是http的连接器
         ServerConnector connector = new ServerConnector(server);

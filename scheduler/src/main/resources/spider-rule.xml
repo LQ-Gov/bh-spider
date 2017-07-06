@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 
+
 <rules>
-    <rule pattern="www.baidu.com*" host="www.baidu.com" scope="soft" extractor="m1,m2,m3" pipeline=""/>
 
-    <rule pattern="wwww.sina.com" host="www.sina.com">
+    <rule pattern="www.baidu.com*" host="www.baidu.com" scope="soft" extractor="m1,m2,m3" pipeline="" cron="* */1 * * * *?"/>
 
-        <pipeline>cis_public_data</pipeline>
+    <rule pattern="wwww.sina.com" host="www.sina.com" cron="* */1 * * * *?">
+        <pipelines>
+            <pipeline>cis_public_data</pipeline>
+        </pipelines>
 
-        <extractor key="200" module="m1,m2,m3"/>
-
-        <extractor key="200">m1,m2,m3</extractor>
-
+        <extractors>
+            <extractor key="200" module="m1,m2,m3"/>
+            <extractor key="200">m1,m2,m3</extractor>
+        </extractors>
     </rule>
+
+    <rule pattern="**" host="**" extractor="m1,m2,m3"></rule>
 
 
 </rules>

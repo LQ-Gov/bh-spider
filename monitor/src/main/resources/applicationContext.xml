@@ -6,4 +6,8 @@
 
     <!--<context:component-scan base-package="com.charles.spider.monitor.controller"/>-->
 
+    <bean id="spider-client" class="com.charles.spider.client.Client">
+        <constructor-arg value="127.0.0.1:8080"/>
+    </bean>
+
 </beans>

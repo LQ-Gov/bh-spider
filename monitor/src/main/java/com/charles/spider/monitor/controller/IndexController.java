@@ -1,5 +1,7 @@
 package com.charles.spider.monitor.controller;
 
+import com.charles.spider.client.Client;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -10,6 +12,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequestMapping("/")
 @Controller
 public class IndexController {
+
+    @Autowired
+    private Client client;
+
 
     @RequestMapping("index")
     @ResponseBody

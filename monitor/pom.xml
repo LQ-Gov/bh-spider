@@ -17,6 +17,20 @@
 
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.charles</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.charles</groupId>
+            <artifactId>client</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -85,6 +99,9 @@
             <artifactId>jetty-jsp</artifactId>
             <version>9.2.21.v20170120</version>
         </dependency>
+
+
+
 
 
 

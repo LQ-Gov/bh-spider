@@ -7,6 +7,7 @@ import com.charles.common.task.TimerTask;
 import com.charles.spider.common.moudle.Description;
 import com.charles.spider.common.moudle.ModuleType;
 import com.charles.spider.common.protocol.SerializeFactory;
+import com.charles.spider.store.base.Store;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
@@ -170,6 +171,17 @@ public class Client {
 
         write(Commands.SUBMIT_MODULE, null, data, desc, override);
     }
+
+
+    public List<Description> modules(int skip,int size){
+        return null;
+    }
+
+
+    public Store store(){
+        return null;
+    }
+
 
 
 }

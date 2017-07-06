@@ -1,0 +1,20 @@
+[
+  {
+    "template": "base-template",
+    "cron": "* */1 * * * *?",
+    "host": "www.baidu.com",
+    "pattern": "www.baidu.com"
+  },
+  {
+    "template": "base-template",
+    "cron": "* */1 * * * *?",
+    "host": "www.baidu.com",
+    "pattern": "www.baidu.com"
+  },
+  {
+    "template": "base-template",
+    "cron": "* */1 * * * *?",
+    "host": "www.baidu.com",
+    "pattern": "www.baidu.com"
+  }
+]

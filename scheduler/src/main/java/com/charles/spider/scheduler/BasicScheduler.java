@@ -111,6 +111,11 @@ public class BasicScheduler implements IEvent {
 
     }
 
+
+    protected void init_monitor_platform(){
+
+    }
+
     protected void init_local_listen() throws InterruptedException {
 
         EventLoopGroup group = new NioEventLoopGroup(1);
