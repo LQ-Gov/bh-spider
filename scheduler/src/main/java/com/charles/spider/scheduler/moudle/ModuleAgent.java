@@ -2,11 +2,11 @@ package com.charles.spider.scheduler.moudle;
 
 import com.alibaba.fastjson.JSON;
 import com.charles.spider.common.moudle.Description;
-import com.charles.spider.store.base.Query;
-import com.charles.spider.store.condition.Condition;
+import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.query.Query;
+import com.charles.spider.query.condition.Condition;
 import com.charles.spider.store.entity.Module;
 import com.charles.spider.store.service.Service;
-import com.google.common.base.Preconditions;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.*;
@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,14 +27,17 @@ public class ModuleAgent {
 
     private Path base = null;
 
+    private ModuleType type = null;
+
     private Service<Module> service;
 
 
-    public ModuleAgent(String basePath, Service<Module> service) throws IOException {
-        this(Paths.get(basePath), service);
+    public ModuleAgent(ModuleType type, String basePath, Service<Module> service) throws IOException {
+        this(type, Paths.get(basePath), service);
     }
 
-    public ModuleAgent(Path path, Service<Module> service) {
+    public ModuleAgent(ModuleType type, Path path, Service<Module> service) {
+        this.type = type;
         this.base = path;
         this.service = service;
     }
@@ -43,6 +47,16 @@ public class ModuleAgent {
         if (!Files.exists(this.base))
             Files.createDirectory(this.base);
         return base;
+    }
+
+
+    protected Service<Module> service(){
+        return this.service;
+    }
+
+
+    public ModuleType type(){
+        return this.type;
     }
 
 
@@ -98,6 +112,15 @@ public class ModuleAgent {
 
 
         return module;
+    }
+
+
+
+    public List<Module> select(int skip,int size) {
+        Query query = Query.Condition(Condition.where("type").is(type().toString()));
+        query.skip(skip).limit(size);
+
+        return service.select(query);
     }
 
     private Module toStoreEntity(Description desc, Path path, String hash) {

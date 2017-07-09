@@ -32,7 +32,7 @@ public final class SimpleProtocol implements Protocol {
      * @return
      * @throws Exception
      */
-    public <T> byte[] pack(T o) throws Exception {
+    public byte[] pack(Object o) throws Exception {
         if (o == null) return interpreterFactory.get(DataTypes.NULL).pack(o);
         Class<?> cls = o.getClass();
         if (cls.isArray()) cls = cls.getComponentType();

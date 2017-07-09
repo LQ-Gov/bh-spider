@@ -1,12 +1,14 @@
-package com.charles.spider.scheduler;
+package com.charles.spider.scheduler.context;
 
 /**
  * Created by lq on 17-3-30.
  */
 public interface Context {
-    void write(String data);
+    void write(Object data);
 
     void finish();
+
+    void stream();
 
     boolean IsWriteEnable();
 }

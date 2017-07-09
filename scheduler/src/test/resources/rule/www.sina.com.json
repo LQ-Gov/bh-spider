@@ -1,0 +1,7 @@
+[ {
+  "name" : "save-test",
+  "extractors" : null,
+  "cron" : "*******",
+  "host" : "www.sina.com",
+  "pattern" : "pattern-demo"
+} ]

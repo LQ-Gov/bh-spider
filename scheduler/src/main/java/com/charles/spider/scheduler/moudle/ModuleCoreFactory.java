@@ -16,26 +16,34 @@ import java.security.DigestException;
 import java.security.MessageDigest;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Created by lq on 17-3-16.
  */
 public class ModuleCoreFactory {
+    private static final String ALL_KEY="ALL";
+
     private static final Logger logger = LoggerFactory.getLogger(ModuleCoreFactory.class);
+
+
 
     private Map<ModuleType, ModuleAgent> agents = new HashMap<>();
     private static volatile ModuleCoreFactory obj = null;
 
     public ModuleCoreFactory(Service<Module> service) throws IOException {
-        agents.put(ModuleType.JAR, new ModuleAgent(Paths.get(Config.INIT_DATA_PATH, "handler"), service));
-        agents.put(ModuleType.CONFIG, new ModuleAgent(Paths.get(Config.INIT_DATA_PATH, "config"), service));
+
+        agents.put(ModuleType.JAR, new ModuleAgent(ModuleType.JAR, Paths.get(Config.INIT_DATA_PATH, "handler"), service));
+        agents.put(ModuleType.CONFIG, new ModuleAgent(ModuleType.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
+        //agents.put(ALL_KEY,new ModuleAgent())
     }
 
 
     public ModuleAgent agent(ModuleType type) {
         return agents.get(type);
     }
+    public ModuleAgent agent(){ return agents.get(ALL_KEY); }
 
 
     public static ModuleCoreFactory instance() throws Exception {

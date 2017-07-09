@@ -1,9 +1,7 @@
-package com.charles.spider.store.condition;
+package com.charles.spider.query.condition;
 
-import com.charles.spider.store.base.Criteria;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
-import sun.invoke.util.VerifyAccess;
 
 import java.util.List;
 

@@ -2,15 +2,12 @@ package com.charles.spider.monitor.controller;
 
 import com.charles.spider.client.Client;
 import com.charles.spider.common.moudle.Description;
-import com.charles.spider.store.base.Query;
-import com.charles.spider.store.condition.Condition;
-import com.charles.spider.store.entity.Module;
-import com.charles.spider.store.service.Service;
+import com.charles.spider.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -19,7 +16,7 @@ import java.util.List;
  */
 
 @RequestMapping("/module")
-@Controller
+@RestController
 public class ModuleController {
 
     @Autowired
@@ -29,26 +26,22 @@ public class ModuleController {
     @RequestMapping(value = "",method = RequestMethod.GET)
     public List<Description> list(int skip, int size){
 
-        Service<Module> service = client.store().module();
+        Query query = new Query();
+        query.skip(skip).limit(size);
 
-        long count = service.count(null);
-
-        List<Module> data = service.select(new Query().skip(skip).limit(size));
-
+        List<Description> list = client.module().select(query);
 
 
-
-        return null;
+        return list;
     }
 
 
     @RequestMapping(value = "/{id}",method = RequestMethod.DELETE)
-    public String delete(@PathVariable("id") String id) {
+    public String delete(@PathVariable("id") int id) {
 
 
-        client.store().module().delete(Query.Condition(Condition.where("id").is(id)));
-
-        return null;
+        client.module().delete(id);
+        return "123";
     }
 
 

@@ -1,4 +1,4 @@
-package com.charles.spider.store.base;
+package com.charles.spider.query;
 
 /**
  * Created by lq on 17-6-23.

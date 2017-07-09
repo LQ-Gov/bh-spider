@@ -75,7 +75,7 @@ public class Config {
         INIT_PROCESSOR_THREADS_COUNT = (int) properties.getOrDefault(Field.INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors());
         INIT_LISTEN_PORT = (int) properties.getOrDefault(Field.INIT_LISTEN_PORT, 8033);
         INIT_DATA_PATH = properties.getProperty(Field.INIT_DATA_PATH, "data/");
-        INIT_RULE_PATH = properties.getProperty(Field.INIT_RULE_PATH, "conf/spider-rule.xml");
+        INIT_RULE_PATH = properties.getProperty(Field.INIT_RULE_PATH, "conf/rule");
         INIT_STORE_DATABASE = properties.getProperty(Field.INIT_STORE_DATABASE, "SQLite");
         INIT_STORE_URL = properties.getProperty(Field.INIT_STORE_URL, "jdbc:sqlite:" + INIT_DATA_PATH + "spider.store.db");
         INIT_STORE_DRIVER = properties.getProperty(Field.INIT_STORE_DRIVER, "org.sqlite.JDBC");

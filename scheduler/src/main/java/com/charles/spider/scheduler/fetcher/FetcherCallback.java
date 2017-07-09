@@ -23,7 +23,7 @@ public class FetcherCallback implements FutureCallback<HttpResponse> {
         if (code == 200) {
             try {
                 String body = EntityUtils.toString(response.getEntity());
-                context.setBody(body);
+                //context.setBody(body);
                 this.fetcher.process(Commands.PROCESS, context);
 
             } catch (IOException e) {

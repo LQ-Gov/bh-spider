@@ -1,19 +1,13 @@
 package com.charles.spider.scheduler.task;
 
-import com.charles.common.task.Task;
-import com.charles.spider.scheduler.rule.Rule;
+import com.charles.spider.common.rule.Rule;
 import org.quartz.*;
-import org.quartz.impl.JobDetailImpl;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.triggers.CronTriggerImpl;
-import org.quartz.spi.JobFactory;
 
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;
@@ -26,15 +20,15 @@ public class TaskCoreFactory {
     private static TaskCoreFactory obj = new TaskCoreFactory();
 
     private Map<JobKey,Integer> jobs = new HashMap<>();
-    private Map<Integer,Queue<Task>> store = new ConcurrentHashMap<>();
+    //private Map<Integer,Queue<Task>> store = new ConcurrentHashMap<>();
     private Scheduler quartz = null;
     static {
         try {
             instance().quartz = StdSchedulerFactory.getDefaultScheduler();
 
-            instance().store.put(0, new LinkedBlockingQueue<>());
-            instance().store.put(1, new LinkedBlockingQueue<>());
-            instance().store.put(2, new LinkedBlockingQueue<>());
+//            instance().store.put(0, new LinkedBlockingQueue<>());
+//            instance().store.put(1, new LinkedBlockingQueue<>());
+//            instance().store.put(2, new LinkedBlockingQueue<>());
         } catch (SchedulerException e) {
             e.printStackTrace();
         }
@@ -46,7 +40,7 @@ public class TaskCoreFactory {
     public static TaskCoreFactory instance(){ return obj;}
 
 
-    public Task get(){ return null;}
+    //public Task get(){ return null;}
 
     public void submit(TimerObject timer) throws SchedulerException, ParseException, TimerObjectExistException {
         if (jobs.containsKey(new JobKey(timer.getName())))
@@ -89,9 +83,9 @@ public class TaskCoreFactory {
     }
 
 
-    public class Executor{
-        public void exec(Task task) {
-            store.get(task.getPriority()).offer(task);
-        }
-    }
+//    public class Executor{
+//        public void exec(Task task) {
+//            store.get(task.getPriority()).offer(task);
+//        }
+//    }
 }

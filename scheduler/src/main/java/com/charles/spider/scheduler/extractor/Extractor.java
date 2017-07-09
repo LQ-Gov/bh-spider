@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler.extractor;
 
-import com.charles.spider.scheduler.Context;
+import com.charles.spider.scheduler.context.Context;
 
 /**
  * Created by lq on 17-6-7.

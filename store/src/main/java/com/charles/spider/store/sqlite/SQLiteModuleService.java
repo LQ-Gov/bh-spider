@@ -1,8 +1,8 @@
 package com.charles.spider.store.sqlite;
 
 import com.charles.spider.common.moudle.ModuleType;
-import com.charles.spider.store.base.Query;
-import com.charles.spider.store.condition.Condition;
+import com.charles.spider.query.Query;
+import com.charles.spider.query.condition.Condition;
 import com.charles.spider.store.entity.Module;
 import com.charles.spider.store.service.Service;
 import org.apache.commons.lang3.StringUtils;
@@ -133,7 +133,7 @@ public class SQLiteModuleService implements Service<Module> {
     }
 
     @Override
-    public void delete(Module entity) {
+    public void delete(Query query) {
 
     }
 
@@ -173,6 +173,34 @@ public class SQLiteModuleService implements Service<Module> {
     @Override
     public void upsert(Query query, Module entity) {
         //String sql = "REPLACE "
+    }
+
+    @Override
+    public long count(Query query) {
+        String sql = "SELECT COUNT(*) FROM " + MODULE_TABLE_NAME;
+
+        if (query != null) {
+            Iterator<Condition> it = query.chain();
+
+            String where = "";
+            while (it.hasNext()) {
+                where += " AND " + store.explain(it.next());
+            }
+
+            if (where.startsWith(" AND ")) where = where.replaceFirst(" AND ", " WHERE ");
+
+            if (!StringUtils.isBlank(where)) sql += "WHERE " + where;
+        }
+
+
+        try {
+            ResultSet rs = connection.prepareStatement(sql).executeQuery();
+            return rs.next() ? rs.getLong(1) : 0;
+        }catch (Exception e){
+            return 0;
+        }
+
+
     }
 
 

@@ -1,4 +1,4 @@
-package com.charles.spider.store.condition;
+package com.charles.spider.query.condition;
 
 /**
  * Created by lq on 17-6-23.

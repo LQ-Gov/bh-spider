@@ -1,14 +1,13 @@
 package com.charles.spider.store.sqlite;
 
-import com.charles.spider.store.condition.Condition;
+
+import com.charles.spider.query.condition.Condition;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.sql.SQLException;
 import java.util.Properties;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by lq on 17-6-26.

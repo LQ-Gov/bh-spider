@@ -1,6 +1,8 @@
 package com.charles.spider.common.protocol;
 
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -8,8 +10,12 @@ import java.util.List;
  */
 public interface Protocol {
 
+    static Class constructorCollectionClass(Class<? extends Collection> outer, Class<? extends Object> inner) {
 
-    <T> byte[] pack(T data) throws Exception;
+        return null;
+    }
 
-    Assemble assemble(byte[] data,int pos,int len) throws Exception;
+    byte[] pack(Object data) throws Exception;
+
+    Assemble assemble(byte[] data, int pos, int len) throws Exception;
 }

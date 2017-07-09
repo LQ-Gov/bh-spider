@@ -4,7 +4,7 @@ import com.charles.common.spider.command.Commands;
 import com.charles.common.utils.ArrayUtils;
 import com.charles.spider.common.protocol.Token;
 import com.charles.spider.scheduler.Command;
-import com.charles.spider.scheduler.Context;
+import com.charles.spider.scheduler.context.Context;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

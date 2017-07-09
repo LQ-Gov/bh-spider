@@ -1,7 +1,9 @@
 package com.charles.spider.scheduler.rule;
 
+import com.charles.spider.common.rule.Rule;
 import org.apache.commons.lang3.StringUtils;
 
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -14,7 +16,7 @@ public class Domain {
 
     protected Domain parent = null;
 
-    protected Map<String,Domain> childs = new HashMap<>();
+    protected Map<String,Domain> child = new HashMap<>();
     protected List<Rule> rules = new ArrayList<>();
 
 
@@ -41,11 +43,11 @@ public class Domain {
 
 
     public Domain find(String domainName){
-        return childs.get(domainName);
+        return child.get(domainName);
     }
 
     public Domain match(String host){
-        assert host==null;
+        assert host!=null;
 
         String[] blocks = host.split(".");
 
@@ -71,7 +73,7 @@ public class Domain {
         Domain it = this;
 
         for (int i = 1; i < blocks.length && it != null; i++) {
-            it = it.childs.get(blocks[i]);
+            it = it.child.get(blocks[i]);
         }
 
         return it;
@@ -80,12 +82,12 @@ public class Domain {
     public void add(Domain domain) {
 
 
-        Domain it = childs.get(domain.getName());
+        Domain it = child.get(domain.getName());
         if (it != null)
-            it.add(it.childs.values());
+            it.add(it.child.values());
 
         else {
-            this.childs.put(domain.getName(), domain);
+            this.child.put(domain.getName(), domain);
             domain.parent = this;
         }
     }
@@ -97,9 +99,13 @@ public class Domain {
 
 
     public void addRule(Rule rule) {
-        rules.add(rule);
+        rules.add(new RuleDecorator(rule));
         if (!RULE_CHAINS.containsKey(this.getName()))
             RULE_CHAINS.put(this.getName(), this);
+    }
+
+    public List<Rule> rules(){
+        return rules;
     }
 
 
@@ -109,6 +115,7 @@ public class Domain {
 
         return getName() + "." + parent.host();
     }
+
 
 
 }

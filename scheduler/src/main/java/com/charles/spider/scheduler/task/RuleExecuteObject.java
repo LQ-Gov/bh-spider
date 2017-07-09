@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler.task;
 
-import com.charles.spider.scheduler.rule.Rule;
+import com.charles.spider.common.rule.Rule;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;

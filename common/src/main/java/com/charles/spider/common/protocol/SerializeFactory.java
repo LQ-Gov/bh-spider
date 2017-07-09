@@ -14,4 +14,5 @@ public class SerializeFactory {
     public static <T> T deserialize(byte[] data,Class<T> cls) throws Exception {
         return deserializer.cast(data,cls);
     }
+    
 }

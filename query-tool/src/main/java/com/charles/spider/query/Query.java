@@ -1,6 +1,7 @@
-package com.charles.spider.store.base;
+package com.charles.spider.query;
 
-import com.charles.spider.store.condition.Condition;
+
+import com.charles.spider.query.condition.Condition;
 
 import java.util.Arrays;
 import java.util.Iterator;

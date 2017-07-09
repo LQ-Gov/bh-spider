@@ -1,15 +1,10 @@
 package com.charles.spider.store.sqlite;
 
-import com.charles.spider.store.condition.AndCondition;
-import com.charles.spider.store.condition.Condition;
-import com.charles.spider.store.condition.Operator;
-import com.charles.spider.store.condition.OrCondition;
+import com.charles.spider.query.condition.Condition;
+import com.charles.spider.query.condition.Operator;
+import com.charles.spider.query.condition.OrCondition;
 import org.apache.commons.lang3.ClassUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.TypeUtils;
 
-import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.util.Date;
 
 /**

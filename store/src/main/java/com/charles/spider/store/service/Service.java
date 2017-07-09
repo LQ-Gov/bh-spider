@@ -1,7 +1,8 @@
 package com.charles.spider.store.service;
 
-import com.charles.spider.store.base.Query;
-import com.charles.spider.store.condition.Condition;
+
+import com.charles.spider.query.Query;
+import com.charles.spider.query.condition.Condition;
 
 import java.util.List;
 
