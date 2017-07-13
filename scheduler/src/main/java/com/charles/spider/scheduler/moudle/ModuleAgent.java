@@ -1,15 +1,13 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.alibaba.fastjson.JSON;
-import com.charles.spider.common.moudle.Description;
-import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
-import com.charles.spider.store.entity.Module;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.store.service.Service;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,16 +25,16 @@ public class ModuleAgent {
 
     private Path base = null;
 
-    private ModuleType type = null;
+    private ModuleTypes type = null;
 
     private Service<Module> service;
 
 
-    public ModuleAgent(ModuleType type, String basePath, Service<Module> service) throws IOException {
-        this(type, Paths.get(basePath), service);
+    public ModuleAgent(ModuleTypes type, String basePath, Service<Module> service) throws IOException {
+        this(type, basePath == null ? null : Paths.get(basePath), service);
     }
 
-    public ModuleAgent(ModuleType type, Path path, Service<Module> service) {
+    public ModuleAgent(ModuleTypes type, Path path, Service<Module> service) {
         this.type = type;
         this.base = path;
         this.service = service;
@@ -50,16 +48,14 @@ public class ModuleAgent {
     }
 
 
-    protected Service<Module> service(){
+    protected Service<Module> service() {
         return this.service;
     }
 
 
-    public ModuleType type(){
+    public ModuleTypes type() {
         return this.type;
     }
-
-
 
 
     public Module get(String name) throws IOException {
@@ -67,16 +63,12 @@ public class ModuleAgent {
         if (!Files.exists(path) || !Files.isDirectory(path))
             return null;
 
-        Description desc = JSON.parseObject(
-                Files.readAllBytes(Paths.get(path.toString(), "description")), Description.class);
-
-        //return new Module(desc);
-        return null;
+        return service.single(Query.Condition(Condition.where("name").is(name)));
     }
 
 
-    public Module save(byte[] data, Description desc, boolean override) throws Exception {
-        Path path = Paths.get(base().toString(), desc.getName());
+    public Module save(byte[] data, String name, ModuleTypes type, String description, boolean override) throws Exception {
+        Path path = Paths.get(base().toString(), name);
         Path old = Paths.get(path.toString(), "data");
         Path tmp = Paths.get(path.toString(), "data.tmp");
 
@@ -88,9 +80,18 @@ public class ModuleAgent {
 
         String hash = DigestUtils.sha1Hex(data);
 
-        Module module = service.single(Query.Condition(Condition.where("name").is(desc.getName())));
-        if (module == null)
-            module = service.insert(toStoreEntity(desc, path, hash));
+        Module module = service.single(Query.Condition(Condition.where("name").is(name)));
+        if (module == null) {
+            module = new Module();
+            module.setPath(path.toString());
+            module.setName(name);
+            module.setDetail(description);
+            module.setType(type);
+            module.setUpdateTime(new Date());
+            module.setHash(hash);
+            module.setValid(false);
+            module = service.insert(module);
+        }
 
         if (module.isValid() && module.getHash().equals(hash)) throw new ModuleNoChangeException();
 
@@ -115,25 +116,13 @@ public class ModuleAgent {
     }
 
 
+    public List<Module> select(Query query) {
+        if (query == null) query = new Query();
 
-    public List<Module> select(int skip,int size) {
-        Query query = Query.Condition(Condition.where("type").is(type().toString()));
-        query.skip(skip).limit(size);
+        query.addCondition(Condition.where("type").is(type()));
+
 
         return service.select(query);
-    }
-
-    private Module toStoreEntity(Description desc, Path path, String hash) {
-        Module module = new Module();
-        module.setPath(path.toString());
-        module.setName(desc.getName());
-        module.setDetail(desc.getDetail());
-        module.setType(desc.getType());
-        module.setUpdateTime(new Date());
-        module.setHash(hash);
-        module.setValid(false);
-
-        return module;
     }
 
 }

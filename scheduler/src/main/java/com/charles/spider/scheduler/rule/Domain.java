@@ -1,9 +1,8 @@
 package com.charles.spider.scheduler.rule;
 
-import com.charles.spider.common.rule.Rule;
+import com.charles.spider.common.entity.Rule;
 import org.apache.commons.lang3.StringUtils;
 
-import java.nio.file.Path;
 import java.util.*;
 
 /**

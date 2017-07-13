@@ -2,6 +2,7 @@ package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,22 +12,21 @@ import java.util.Collection;
  */
 public class FloatInterpreter extends UniqueInterpreter<Float> {
     @Override
-    public boolean support(Class cls) {
-        return support(cls,Float.class,float.class);
+    public boolean support(Type cls) {
+        return support((Class<?>)cls,Float.class,float.class);
     }
 
     @Override
     protected byte[] fromArray(Float[] input) {
-        ByteBuffer buffer = ByteBuffer.allocate(4*input.length);
-        Arrays.stream(input).forEach(buffer::putFloat);
-        return buffer.array();
+        return fromCollection(Arrays.asList(input));
     }
 
     @Override
     protected byte[] fromCollection(Collection<Float> collection) {
         ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ collection.size()*4);
+        buffer.put(DataTypes.ARRAY.value());
+        buffer.putInt(collection.size()*4+1);
         buffer.put(DataTypes.FLOAT.value());
-        buffer.putInt(collection.size()*4);
         collection.forEach(buffer::putFloat);
         return buffer.array();
     }

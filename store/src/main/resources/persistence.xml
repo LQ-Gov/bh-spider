@@ -6,7 +6,7 @@
 
 
     <persistence-unit name="t">
-        <class>com.charles.spider.store.entity.Module</class>
+        <class>com.charles.spider.common.entity.Module</class>
     </persistence-unit>
 
 

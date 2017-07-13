@@ -2,6 +2,7 @@ package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,23 +14,27 @@ import java.util.List;
  */
 public class IntInterpreter extends UniqueInterpreter<Integer> {
     @Override
-    public boolean support(Class cls) {
-        return support(cls,Integer.class,int.class);
+    public boolean support(Type cls) {
+        return support((Class<?>) cls, Integer.class, int.class);
 
     }
 
     @Override
     protected byte[] fromArray(Integer[] input) {
-        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ input.length * 4);
-        buffer.put(DataTypes.INT.value()).putInt(input.length*4);
-        Arrays.stream(input).forEach(buffer::putInt);
-        return buffer.array();
+
+        return fromCollection(Arrays.asList(input));
+//        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ input.length * 4);
+//        buffer.put(DataTypes.INT.value()).putInt(input.length*4);
+//        Arrays.stream(input).forEach(buffer::putInt);
+//        return buffer.array();
     }
 
     @Override
     protected byte[] fromCollection(Collection<Integer> collection) {
-        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ collection.size()*4);
-        buffer.put(DataTypes.INT.value()).putInt(collection.size()*4);
+        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + collection.size() * 4);
+        buffer.put(DataTypes.ARRAY.value())
+                .putInt(collection.size() * 4 + 1)
+                .put(DataTypes.INT.value());
         collection.forEach(buffer::putInt);
         return buffer.array();
     }
@@ -61,6 +66,6 @@ public class IntInterpreter extends UniqueInterpreter<Integer> {
 
     @Override
     protected Integer toObject(byte[] data, int pos, int len) {
-        return ByteBuffer.wrap(data,pos+1,len-1).getInt();
+        return ByteBuffer.wrap(data, pos + 1, len - 1).getInt();
     }
 }

@@ -24,8 +24,11 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Command cmd = (Command) msg;
 
-        Context context = new ClientContext(ctx, ProtocolFactory.get());
-        scheduler.process(context, cmd);
+        scheduler.process(cmd);
+
+//        ctx.write("abc");
+//        ctx.flush();
+
     }
 
 

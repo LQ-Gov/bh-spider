@@ -1,9 +1,9 @@
 package com.charles.spider.store.sqlite;
 
-import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
-import com.charles.spider.store.entity.Module;
+import com.charles.spider.common.entity.Module;
 import org.junit.Test;
 
 /**
@@ -16,7 +16,7 @@ public class SQLiteModuleServiceTest {
     public void save() throws Exception {
         Module entity = new Module();
         entity.setDetail("test module store");
-        entity.setType(ModuleType.JAR);
+        entity.setType(ModuleTypes.JAR);
         entity.setHash("ettssgd2330dsf0");
         entity.setPath("/data/mod");
         entity.setName("test");

@@ -1,5 +1,7 @@
 package com.charles.spider.common.protocol;
 
+import java.lang.reflect.Type;
+
 /**
  * Created by lq on 17-4-16.
  */
@@ -10,7 +12,7 @@ public class Deserializer {
         this.protocol = protocol;
     }
 
-    public  <T> T cast(byte[] data,Class<T> cls) throws Exception {
+    public  <T> T cast(byte[] data,Type cls) throws Exception {
         Token token = protocol.assemble(data, 0, data.length).next();
         return token.toClass(cls);
     }

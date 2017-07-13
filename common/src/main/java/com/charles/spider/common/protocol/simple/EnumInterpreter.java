@@ -3,6 +3,7 @@ package com.charles.spider.common.protocol.simple;
 import com.charles.spider.common.protocol.DataTypes;
 import com.charles.spider.common.protocol.Protocol;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,8 +16,8 @@ import java.util.List;
 public class EnumInterpreter extends AbstractInterpreter<Enum> {
 
     @Override
-    public boolean support(Class cls) {
-        return support(cls, Enum.class);
+    public boolean support(Type cls) {
+        return support((Class<?>)cls, Enum.class);
     }
 
     @Override
@@ -32,7 +33,7 @@ public class EnumInterpreter extends AbstractInterpreter<Enum> {
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + len);
-        buffer.put(DataTypes.ENUM.value()).putInt(len);
+        buffer.put(DataTypes.ARRAY.value()).putInt(len + 1).put(DataTypes.ENUM.value());
 
         collection.forEach(x -> buffer.put(fromObject(x)));
 
@@ -48,14 +49,14 @@ public class EnumInterpreter extends AbstractInterpreter<Enum> {
     }
 
     @Override
-    protected Enum[] toArray(Class<Enum> cls, byte[] data, int pos, int len) throws Exception {
+    protected Enum[] toArray(Type cls, byte[] data, int pos, int len) throws Exception {
         List<Enum> list = new ArrayList<>();
         toCollection(cls, list, data, pos, len);
         return (Enum[]) list.toArray();
     }
 
     @Override
-    protected void toCollection(Class<Enum> cls, Collection<Enum> collection, byte[] data, int pos, int len) throws Exception {
+    protected void toCollection(Type cls, Collection<Enum> collection, byte[] data, int pos, int len) throws Exception {
         int end = pos + len;
 
         while (pos < end) {
@@ -68,7 +69,7 @@ public class EnumInterpreter extends AbstractInterpreter<Enum> {
 
     @Override
     @SuppressWarnings("unchecked")
-    protected Enum toObject(Class<Enum> cls, byte[] data, int pos, int len) throws Exception {
+    protected Enum toObject(Type cls, byte[] data, int pos, int len) throws Exception {
         if (data[pos] == DataTypes.NULL.value()) return null;
         int size = ByteBuffer.wrap(data, pos + 1, 4).getInt();
 
@@ -76,6 +77,6 @@ public class EnumInterpreter extends AbstractInterpreter<Enum> {
 
         String name = new String(data, pos + 5, size);
 
-        return Enum.valueOf(cls, name);
+        return Enum.valueOf((Class)cls, name);
     }
 }

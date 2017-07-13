@@ -6,7 +6,7 @@ package com.charles.spider.scheduler.context;
 public interface Context {
     void write(Object data);
 
-    void finish();
+    void complete();
 
     void stream();
 

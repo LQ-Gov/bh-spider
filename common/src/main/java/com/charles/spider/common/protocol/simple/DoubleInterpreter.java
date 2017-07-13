@@ -2,6 +2,7 @@ package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,22 +12,19 @@ import java.util.Collection;
  */
     public class DoubleInterpreter extends UniqueInterpreter<Double> {
     @Override
-    public boolean support(Class cls) {
-        return support(cls,Double.class,double.class);
+    public boolean support(Type cls) {
+        return support((Class<?>)cls,Double.class,double.class);
     }
 
     @Override
     protected byte[] fromArray(Double[] input) {
-        ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + 8 * input.length);
-        buffer.put(DataTypes.DOUBLE.value()).putInt(8 * input.length);
-        Arrays.stream(input).forEach(buffer::putDouble);
-        return buffer.array();
+        return fromCollection(Arrays.asList(input));
     }
 
     @Override
     protected byte[] fromCollection(Collection<Double> collection) {
         ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN+ collection.size()*8);
-        buffer.put(DataTypes.DOUBLE.value()).putInt(collection.size()*8);
+        buffer.put(DataTypes.ARRAY.value()).putInt(collection.size()*8+1).put(DataTypes.DOUBLE.value());
         collection.forEach(buffer::putDouble);
         return buffer.array();
     }

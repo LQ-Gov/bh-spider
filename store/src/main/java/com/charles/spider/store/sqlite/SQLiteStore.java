@@ -2,7 +2,7 @@ package com.charles.spider.store.sqlite;
 
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.store.base.Store;
-import com.charles.spider.store.entity.Module;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.store.service.Service;
 
 import java.sql.Connection;

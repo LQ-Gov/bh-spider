@@ -1,5 +1,6 @@
-package com.charles.spider.common.rule;
+package com.charles.spider.common.entity;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -9,7 +10,7 @@ public class Rule {
 
     private String name;
 
-    private Map<String,String[]> extractors;
+    private Map<String,String[]> extractors= new HashMap<>();
 
     private String cron;
 

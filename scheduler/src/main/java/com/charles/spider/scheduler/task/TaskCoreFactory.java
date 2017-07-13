@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler.task;
 
-import com.charles.spider.common.rule.Rule;
+import com.charles.spider.common.entity.Rule;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.triggers.CronTriggerImpl;

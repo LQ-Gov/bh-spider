@@ -17,7 +17,7 @@ import java.util.List;
  */
 @SuppressWarnings("unchecked")
 abstract class AbstractInterpreter<T> implements Interpreter<T> {
-    protected final static int ARRAY_HEAD_LEN = 5;
+    protected final static int ARRAY_HEAD_LEN = 6;
 
     protected boolean support(Class c, Class... cls) {
         if (c != null && cls != null) {
@@ -29,7 +29,6 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
         }
         return false;
     }
-
 
     protected byte[] toBytes(DataTypes type, List<byte[]> data, int len) {
         ByteBuffer buffer = ByteBuffer.allocate(len + ARRAY_HEAD_LEN).put(type.value()).putInt(len);
@@ -45,22 +44,22 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
     protected abstract byte[] fromObject(T o) throws Exception;
 
 
-    protected abstract T[] toArray(Class<T> cls, byte[] data, int pos, int len) throws Exception;
+    protected abstract T[] toArray(Type cls, byte[] data, int pos, int len) throws Exception;
 
-    protected abstract void toCollection(Class<T> cls, Collection<T> collection, byte[] data, int pos, int len) throws Exception;
+    protected abstract void toCollection(Type cls, Collection<T> collection, byte[] data, int pos, int len) throws Exception;
 
 
-    protected abstract T toObject(Class<T> cls, byte[] data, int pos, int len) throws Exception;
+    protected abstract T toObject(Type type, byte[] data, int pos, int len) throws Exception;
 
-    private boolean checkArrayVaild(byte[] data,int pos,int len) throws Exception {
-        if ((data[pos] & 0x80) == 0) throw new Exception("not a array");//验证是否数组
-        if (len < ARRAY_HEAD_LEN) throw new Exception("len error");//验证长度
-
-        if (ByteBuffer.wrap(data, pos + 1, 4).getInt() != len - ARRAY_HEAD_LEN)
-            throw new Exception("error len");//验证长度
-        return true;
-
-    }
+//    private boolean checkArrayVaild(byte[] data,int pos,int len) throws Exception {
+//        if ((data[pos] & 0x80) == 0) throw new Exception("not a array");//验证是否数组
+//        if (len < ARRAY_HEAD_LEN) throw new Exception("len error");//验证长度
+//
+//        if (ByteBuffer.wrap(data, pos + 1, 4).getInt() != len - ARRAY_HEAD_LEN)
+//            throw new Exception("error len");//验证长度
+//        return true;
+//
+//    }
 
 
 
@@ -71,7 +70,13 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
 
         Class<?> cls = input.getClass();
 
+
+        if(!support(cls)) throw new UnSupportTypeException(input.getClass());
+
+
         byte[] data;
+
+
 
         if (cls.isArray() && support(cls.getComponentType())) {
             if (cls.getComponentType().isPrimitive()) {
@@ -86,26 +91,42 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
                 data = fromArray(reference);
             } else
                 data = fromArray((T[]) input);
-
-            data[0] = (byte) (data[0] | 0x80);
-
             return data;
         }
 
         if (Collection.class.isInstance(input)) {
             Type t = cls.getGenericSuperclass();
-            Class componentType = (Class) ((ParameterizedType) t).getActualTypeArguments()[0];
-            if (support(componentType)) {
-                data = fromCollection((Collection) input);
-                data[0] = (byte) (data[0] | 0x80);
-                return data;
-            }
-            else throw new UnSupportTypeException(cls);
+            t = ((ParameterizedType) t).getActualTypeArguments()[0];
+            if (t instanceof Class<?>) {
+                Class<?> componentType = (Class<?>) t;
+                if (support(componentType)) data = fromCollection((Collection) input);
+                else throw new UnSupportTypeException(componentType);
+            } else
+                data = fromCollection((Collection<T>) input);
+            //data[0] = (byte) (data[0] | 0x80);
+            return data;
         }
+
 
         if (support(cls)) return fromObject((T) input);
 
         throw new UnSupportTypeException(cls);
+    }
+
+    public T unpack(Type type,byte[] data,int pos,int len) throws Exception {
+         if(type==null) type = Object.class;
+         if(type==Object.class) return toObject(type,data,pos,len);
+
+         if(support(type)) {
+             return toObject(type, data, pos, len);
+         }
+
+
+
+
+
+         throw new UnSupportTypeException(type.getTypeName());
+
     }
 
     public T unpack(Class<T> cls, byte[] data, int pos, int len) throws Exception {
@@ -122,7 +143,10 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
         if((data[pos]&0x80)>0&&cls == Object.class)
             return (T) toArray(cls,data,pos+ARRAY_HEAD_LEN,len-ARRAY_HEAD_LEN);
 
-        if((cls.isArray()||cls==Object.class)&&(data[pos]&0x80)>0&&support(cls.getComponentType()))
+        if((cls.isArray()||cls==Object.class)&&(data[pos]&0x80)>0&&support(cls.getComponentType())){
+            return (T) toArray(cls,data,pos+ARRAY_HEAD_LEN,len-ARRAY_HEAD_LEN);
+
+        }
 
 
         if (Collection.class.isAssignableFrom(cls)&&(data[pos]&0x80)>0) {
@@ -133,6 +157,12 @@ abstract class AbstractInterpreter<T> implements Interpreter<T> {
             toCollection(cls, collection, data, pos+ARRAY_HEAD_LEN, len-ARRAY_HEAD_LEN);
             return (T) collection;
         }
+
+
+
+
+
+
 
         throw new UnSupportTypeException(cls);
     }

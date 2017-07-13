@@ -1,8 +1,10 @@
 package com.charles.spider.scheduler;
 
 import com.charles.common.http.Request;
-import com.charles.spider.common.moudle.Description;
-import com.charles.spider.common.rule.Rule;
+import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.entity.Module;
+import com.charles.spider.common.entity.Rule;
+import com.charles.spider.query.Query;
 import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.scheduler.context.Context;
 import com.charles.spider.scheduler.event.EventLoop;
@@ -15,7 +17,6 @@ import com.charles.spider.scheduler.rule.*;
 import com.charles.spider.scheduler.task.RuleExecuteObject;
 import com.charles.spider.scheduler.task.TaskCoreFactory;
 import com.charles.spider.store.base.Store;
-import com.charles.spider.store.entity.Module;
 import com.google.common.base.Preconditions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -26,7 +27,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import org.apache.commons.lang3.ArrayUtils;
+import io.netty.handler.codec.string.StringEncoder;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -78,9 +80,8 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Future process(Context ctx, Command event) {
-
-        return loop.execute(event.key(), ArrayUtils.add(event.params(), 0, ctx));
+    public Future process(Command cmd) {
+        return loop.execute(cmd);
     }
 
 
@@ -114,8 +115,6 @@ public class BasicScheduler implements IEvent {
     }
 
 
-
-
     protected void initRuleFactory() throws IOException, SchedulerException {
         ruleFactory = new RuleFactory(Config.INIT_RULE_PATH);
         List<Rule> rules = ruleFactory.get();
@@ -127,9 +126,10 @@ public class BasicScheduler implements IEvent {
     protected void initLocalListen() throws InterruptedException {
 
         EventLoopGroup group = new NioEventLoopGroup(1);
+        EventLoopGroup worker = new NioEventLoopGroup();
         BasicScheduler me = this;
         try {
-            ServerBootstrap server = new ServerBootstrap().group(group, group)
+            ServerBootstrap server = new ServerBootstrap().group(group, worker)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
@@ -137,6 +137,7 @@ public class BasicScheduler implements IEvent {
                             ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2, 4));
                             ch.pipeline().addLast(new CommandDecoder());
                             ch.pipeline().addLast(new CommandReceiveHandler(me));
+
                         }
                     })
                     .option(ChannelOption.SO_REUSEADDR, true);
@@ -185,14 +186,14 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, Description desc, boolean override) {
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, ModuleTypes type, String description, boolean override) {
 
-        ModuleAgent agent = moduleCoreFactory.agent(desc.getType());
+        ModuleAgent agent = moduleCoreFactory.agent(type);
 
         try {
             if (agent == null)
                 throw new Exception("unknown module type");
-            agent.save(data, desc, override);
+            agent.save(data, name, type, description, override);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -220,28 +221,27 @@ public class BasicScheduler implements IEvent {
     }
 
     @EventMapping
-    protected void GET_MODULE_LIST_HANDLER(Context ctx,int skip,int size) {
+    protected void GET_MODULE_LIST_HANDLER(Context ctx, Query query) {
         ModuleAgent agent = moduleCoreFactory.agent();
-        List<Module> list = agent.select(skip, size);
-
+        List<Module> list = agent.select(query);
         ctx.write(list);
+
+        System.out.println("GET_MODULE_LIST_HANDLER");
     }
 
 
     @EventMapping
-    protected void GET_RULE_LIST_HANDLER(Context ctx,String query, int skip,int size){
+    protected void GET_RULE_LIST_HANDLER(Context ctx, String query, int skip, int size) {
 
 
         Domain matcher = domain.match(query);
 
         List<Rule> result;
-        if(matcher!=null){
-            result = matcher.rules().subList(skip,size);
-        }
-
-        else{
+        if (matcher != null) {
+            result = matcher.rules().subList(skip, size);
+        } else {
             List<Rule> rules = ruleFactory.get();
-            result = rules.subList(skip,size);
+            result = rules.subList(skip, size);
         }
 
         ctx.write(result);

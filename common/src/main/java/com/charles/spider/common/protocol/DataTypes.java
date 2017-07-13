@@ -17,8 +17,9 @@ public enum DataTypes {
     BYTE((byte)8,1,Byte.class,byte.class),
     LONG((byte)64,8,Long.class,long.class),
     STRING((byte)'S',-1,String.class),
-    CLASS((byte)'C',-1),
+    OBJECT((byte)'O',-1),
     ARRAY((byte)'A',-1),
+    COLLECTION((byte)'L',-1),
     ENUM((byte)'E',-1);
 
 
@@ -58,7 +59,7 @@ public enum DataTypes {
 
         if(cls.isEnum()) return ENUM;
 
-        if(!cls.isPrimitive()) return CLASS;
+        if(!cls.isPrimitive()) return OBJECT;
 
 
         return NULL;

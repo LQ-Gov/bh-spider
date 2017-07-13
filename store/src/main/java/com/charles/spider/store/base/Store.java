@@ -1,6 +1,6 @@
 package com.charles.spider.store.base;
 
-import com.charles.spider.store.entity.Module;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.store.service.Service;
 import com.charles.spider.store.sqlite.SQLiteStoreFactory;
 

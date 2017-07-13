@@ -2,6 +2,7 @@ package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,16 +12,16 @@ import java.util.Collection;
  */
 public class ByteInterpreter extends UniqueInterpreter<Byte> {
     @Override
-    public boolean support(Class cls)
-    {
-        return support(cls,Byte.class,byte.class);
+    public boolean support(Type cls) {
+        return support((Class<?>) cls, Byte.class, byte.class);
     }
 
     @Override
     protected byte[] fromArray(Byte[] input) {
         ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + input.length)
-                .put(DataTypes.BYTE.value())
-                .putInt(input.length);
+                .put(DataTypes.ARRAY.value())
+                .putInt(input.length + 1)
+                .put(DataTypes.BYTE.value());
         Arrays.stream(input).forEach(buffer::put);
 
         return buffer.array();
@@ -30,8 +31,9 @@ public class ByteInterpreter extends UniqueInterpreter<Byte> {
     protected byte[] fromCollection(Collection<Byte> collection) {
         byte[] result = new byte[ARRAY_HEAD_LEN + collection.size()];
 
-        result[0] = DataTypes.BYTE.value();
+        result[0] = DataTypes.ARRAY.value();
         System.arraycopy(ByteBuffer.allocate(4).putInt(collection.size()).array(), 0, result, 1, 4);
+        result[5] = DataTypes.BYTE.value();
 
         int index = ARRAY_HEAD_LEN;
         for (Byte it : collection) result[index++] = it;
@@ -52,7 +54,7 @@ public class ByteInterpreter extends UniqueInterpreter<Byte> {
     protected Byte[] toArray(byte[] data, int pos, int len) {
         Byte[] result = new Byte[len];
         for (int i = pos; i < pos + len; i++)
-            result[i-pos] = data[i];
+            result[i - pos] = data[i];
         return result;
     }
 
@@ -65,6 +67,6 @@ public class ByteInterpreter extends UniqueInterpreter<Byte> {
 
     @Override
     protected Byte toObject(byte[] data, int pos, int len) {
-        return data[pos+1];
+        return data[pos + 1];
     }
 }

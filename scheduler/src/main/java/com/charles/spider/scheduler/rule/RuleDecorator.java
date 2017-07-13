@@ -1,7 +1,7 @@
 package com.charles.spider.scheduler.rule;
 
 import com.charles.common.http.Request;
-import com.charles.spider.common.rule.Rule;
+import com.charles.spider.common.entity.Rule;
 import org.quartz.JobDetail;
 
 import java.util.List;

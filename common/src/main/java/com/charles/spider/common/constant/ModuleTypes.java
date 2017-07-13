@@ -1,15 +1,15 @@
-package com.charles.spider.common.moudle;
+package com.charles.spider.common.constant;
 
 /**
  * Created by lq on 17-4-8.
  */
-public enum ModuleType {
+public enum ModuleTypes {
     UNKNOWN,
     JAR,
     CONFIG;
 
 
-    public ModuleType value(String s){
+    public ModuleTypes value(String s){
         switch (s) {
             case "jar":
                 return JAR;

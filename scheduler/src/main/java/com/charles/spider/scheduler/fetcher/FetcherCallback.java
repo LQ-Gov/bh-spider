@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler.fetcher;
 
-import com.charles.common.spider.command.Commands;
+import com.charles.spider.common.command.Commands;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.util.EntityUtils;

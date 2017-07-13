@@ -3,6 +3,7 @@ package com.charles.spider.common.protocol.simple;
 import com.charles.spider.common.protocol.DataTypes;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,8 +15,8 @@ import java.util.List;
  */
 public class StringInterpreter extends UniqueInterpreter<String> {
     @Override
-    public boolean support(Class cls) {
-        return support(cls, String.class);
+    public boolean support(Type cls) {
+        return support((Class<?>)cls, String.class);
     }
 
     @Override
@@ -31,7 +32,8 @@ public class StringInterpreter extends UniqueInterpreter<String> {
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + len);
-        buffer.put(DataTypes.STRING.value()).putInt(len);
+        buffer.put(DataTypes.ARRAY.value()).putInt(len+1);
+        buffer.put(DataTypes.STRING.value());
 
         collection.forEach(x -> buffer.put(fromObject(x)));
 

@@ -1,13 +1,13 @@
 package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.*;
+import org.apache.commons.lang3.ClassUtils;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by lq on 17-5-6.
@@ -23,25 +23,65 @@ class ArrayInterpreter extends AbstractInterpreter<Object> {
     }
 
     @Override
-    public boolean support(Class cls) {
-        return cls != null && (cls.isArray() || cls == Object.class);
+    public boolean support(Type cls) {
+        if (cls instanceof Class<?>)
+            return ((Class) cls).isArray() || Collection.class.isAssignableFrom((Class<?>) cls);
+        if (cls instanceof ParameterizedType) {
+            Type rawType = ((ParameterizedType) cls).getRawType();
+            return Collection.class.isAssignableFrom((Class<?>) rawType);
+        }
+
+        return false;
     }
 
     @Override
     protected byte[] fromArray(Object[] input) throws Exception {
-        return fromCollection(Arrays.asList(input));
+        throw new RuntimeException("not support");
 
     }
 
     @Override
     protected byte[] fromCollection(Collection<Object> collection) throws Exception {
 
-        throw new Exception("not support");
+        throw new RuntimeException("not support");
     }
 
     @Override
     protected byte[] fromObject(Object o) throws Exception {
+
+        Class<?> cls = o.getClass();
+        if (cls.isArray()) {
+            Class<?> componentType = o.getClass().getComponentType();
+
+            Object reference = o;
+            if (componentType.isPrimitive()) {
+                int len = Array.getLength(o);
+                componentType = ClassUtils.primitiveToWrapper(componentType);
+                reference = Array.newInstance(componentType, len);
+
+                for (int i = 0; i < len; i++)
+                    Array.set(reference, i, Array.get(o, i));
+            }
+            DataTypes type = DataTypes.type(componentType);
+            AbstractInterpreter interpreter = (AbstractInterpreter) interpreterFactory.get(type);
+            return interpreter.fromArray((Object[]) reference);
+        }
+        if (Collection.class.isAssignableFrom(cls)) {
+            Type t = cls.getGenericSuperclass();
+            t = ((ParameterizedType) t).getActualTypeArguments()[0];
+
+            DataTypes type = t instanceof Class<?> ? DataTypes.type((Class<?>) t) : DataTypes.OBJECT;
+
+            AbstractInterpreter interpreter = (AbstractInterpreter) interpreterFactory.get(type);
+            return interpreter.fromCollection((Collection) o);
+        }
+
+        if (true) throw new Exception("error type");
+
+
         if (!o.getClass().isArray()) throw new Exception("error type");
+
+
         List<byte[]> list = new LinkedList<>();
         int len = Array.getLength(o), bytes_total_count = 0;
 
@@ -65,55 +105,100 @@ class ArrayInterpreter extends AbstractInterpreter<Object> {
     }
 
     @Override
-    protected Object[] toArray(Class<Object> cls, byte[] data, int pos, int len) throws Exception {
+    protected Object[] toArray(Type cls, byte[] data, int pos, int len) throws Exception {
         //return new Object[0];
         throw new Exception("not support");
     }
 
     @Override
-    protected void toCollection(Class<Object> cls, Collection<Object> collection, byte[] data, int pos, int len) throws Exception {
+    protected void toCollection(Type cls, Collection<Object> collection, byte[] data, int pos, int len) throws Exception {
         throw new Exception("not support");
     }
 
     @Override
-    protected Object toObject(Class<Object> cls, byte[] data, int pos, int len) throws Exception {
+    protected Object toObject(Type type, byte[] data, int pos, int len) throws Exception {
+        boolean isCollection = false;
+        DataTypes dt;
+        AbstractInterpreter interpreter;
+        if (type == Object.class) dt = DataTypes.type(data[pos + ARRAY_HEAD_LEN - 1]);
 
-        if(cls==null||cls == Object.class) cls = Object.class;
+        else if (type instanceof Class<?>) {
+            Class<?> cls = (Class<?>) type;
+            if (cls.isArray()) dt = DataTypes.type(cls.getComponentType());
+            else if (Collection.class.isAssignableFrom(cls)) {
+                isCollection = true;
+                ParameterizedType parameterizedType = (ParameterizedType) cls.getGenericSuperclass();
+                Type t = parameterizedType.getActualTypeArguments()[0];
+                dt = t instanceof Class<?> ? DataTypes.type((Class<?>) t) : DataTypes.OBJECT;
+            }
+            else throw new Exception("error type");
 
-        int size = ByteBuffer.wrap(data, pos + 1, 4).getInt();
-        if (size + 5 > len) throw new Exception("error len");
+        } else if (type instanceof ParameterizedType) {
+            ParameterizedType t = (ParameterizedType) type;
+            Class<?> rawType = (Class<?>) t.getRawType();
+            Type[] arguments = t.getActualTypeArguments();
 
-        DataTypes t = DataTypes.type(data[pos + 5]);
-
-        if (cls != Object.class && DataTypes.type(cls.getComponentType()) != t)
-            throw new UnSupportTypeException(cls);
-
-        if (t != DataTypes.ARRAY){
-            //执行 解析代码
-        }
-        else
-            return interpreterFactory.get(t).unpack(cls, data, pos + 6, size - 1);
+            dt = DataTypes.type(arguments == null || arguments.length == 0 ? Object.class : (Class<?>) arguments[0]);
+            type = rawType;
+        } else throw new Exception("error type");
 
 
-        Assemble assemble = protocol.assemble(data, pos + 5, size);
+        interpreter = (AbstractInterpreter) interpreterFactory.get(dt);
+        interpreter = new AbstractInterpreterWrapper(interpreter);
+        if (!isCollection)
+            return interpreter.toArray(type, data, pos, len);
 
+        Class<?> cls = (Class<?>) type;
+        Collection collection = cls.isInterface() ? new ArrayList() : (Collection) cls.newInstance();
 
-        List list = new LinkedList();
+        interpreter.toCollection(type, collection, data, pos, len);
 
-        Token token;
-
-        while ((token = assemble.next()) != null) {
-            list.add(token.toClass(Object.class));
-        }
-
-        Object result = Array.newInstance(cls, list.size());
-
-        for (int i = 0; i < list.size(); i++) {
-            Array.set(result, i, list.get(i));
-        }
-
-        return result;
+        return collection;
     }
 
+    class AbstractInterpreterWrapper extends AbstractInterpreter {
 
+        private AbstractInterpreter interpreter;
+
+        public AbstractInterpreterWrapper(AbstractInterpreter interpreter) {
+            this.interpreter = interpreter;
+        }
+
+        @Override
+        public boolean support(Type cls) {
+            return this.interpreter.support(cls);
+        }
+
+        @Override
+        protected byte[] fromArray(Object[] input) throws Exception {
+            return this.interpreter.fromArray(input);
+        }
+
+        @Override
+        protected byte[] fromCollection(Collection collection) throws Exception {
+            return this.interpreter.fromCollection(collection);
+        }
+
+        @Override
+        protected byte[] fromObject(Object o) throws Exception {
+            return this.interpreter.fromObject(o);
+        }
+
+        @Override
+        protected Object[] toArray(Type cls, byte[] data, int pos, int len) throws Exception {
+            return this.interpreter.toArray(cls, data, pos + ARRAY_HEAD_LEN, len - ARRAY_HEAD_LEN);
+        }
+
+        @Override
+        protected void toCollection(Type cls, Collection collection, byte[] data, int pos, int len) throws Exception {
+            this.interpreter.toCollection(cls, collection, data, pos + ARRAY_HEAD_LEN, len - ARRAY_HEAD_LEN);
+        }
+
+        @Override
+        protected Object toObject(Type type, byte[] data, int pos, int len) throws Exception {
+            return this.interpreter.toObject(type, data, pos, len);
+        }
+    }
 }
+
+

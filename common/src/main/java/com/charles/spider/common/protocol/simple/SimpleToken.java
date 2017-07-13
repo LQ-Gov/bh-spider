@@ -4,6 +4,8 @@ import com.charles.spider.common.protocol.*;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -73,24 +75,36 @@ public class SimpleToken implements Token {
     }
 
     @Override
-    public <T> T toClass(Class<?> cls) throws Exception {
-
-        if(type()==DataTypes.NULL) return (T) INTERPRETER_FACTORY.get(DataTypes.NULL).unpack(cls,data,pos,length());
-
-
-        if (cls == null) cls = Object.class;
-        if (cls != Object.class && cls.isArray() != isArray()) throw new Exception("error type");
+    public <T> T toClass(Type cls) throws Exception {
 
         Interpreter interpreter;
-        if (cls == Object.class)
-            interpreter = INTERPRETER_FACTORY.get(type());
-        else if (DataTypes.type(cls) != type())
-            throw new Exception("error type");
-        else
-            interpreter = INTERPRETER_FACTORY.get(type());
+
+        if(cls==null) cls = Object.class;
+
+        if (type() == DataTypes.NULL) interpreter = INTERPRETER_FACTORY.get(DataTypes.NULL);
+
+        else if (cls == Object.class) interpreter = INTERPRETER_FACTORY.get(type());
+
+        else if (cls instanceof Class<?>) {
+            interpreter = INTERPRETER_FACTORY.get(DataTypes.type((Class<?>) cls));
+        }
+        else if (cls instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) cls;
+            Class<?> rawType = (Class<?>)parameterizedType.getRawType();
+            if (List.class.isAssignableFrom(rawType)) {
+                interpreter = INTERPRETER_FACTORY.get(DataTypes.ARRAY);
+            }
+            else
+                return toClass(rawType);
+        } else {
+            Class<?> c = Class.forName(cls.getTypeName());
+            interpreter = INTERPRETER_FACTORY.get(DataTypes.type(c));
+        }
+
+
+
 
         return (T) interpreter.unpack(cls, data, pos, length());
-
     }
 
 

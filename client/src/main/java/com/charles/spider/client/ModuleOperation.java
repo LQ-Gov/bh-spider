@@ -1,18 +1,15 @@
 package com.charles.spider.client;
 
-import com.charles.common.spider.command.Commands;
-import com.charles.spider.common.moudle.Description;
-import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.common.command.Commands;
+import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +20,7 @@ import java.util.List;
  */
 public class ModuleOperation {
     private Client client = null;
-    
+
 
     ModuleOperation(Client client){
         this.client = client;
@@ -37,36 +34,26 @@ public class ModuleOperation {
         submit(cls, override);
     }
 
-    public void submit(Class<?> cls, Description desc, boolean override) throws IOException {
-        URL url = cls.getResource("");
-        submit(url.getPath(), desc, override);
+
+
+    public void submit(Path path) throws IOException {
+        submit(path.toString(),null, false);
     }
 
 
-    public void submit(String path) {
-        submit(path, false);
-    }
-
-    public void submit(String path, boolean override) {
-        submit(Paths.get(path), override);
+    public void submit(String path,boolean override) throws IOException {
+        submit(path,null,override);
     }
 
 
-    public void submit(Path path) {
-        submit(path, false);
+    public void submit(String path,String name,boolean override) throws IOException {
+        submit(path, name, (ModuleTypes) null, override);
     }
 
-    public void submit(Path path, boolean override) {
-    }
 
-    /**
-     * 提交module
-     *
-     * @param path
-     * @param desc
-     */
-    public void submit(String path, Description desc, boolean override) throws IOException {
-        submit(Paths.get(path), desc, override);
+
+    public void submit(String path, String name, ModuleTypes type, boolean override) throws IOException {
+        submit(Paths.get(path),name,type,null,override);
     }
 
     /**
@@ -75,42 +62,42 @@ public class ModuleOperation {
      * @param path
      * @param desc
      */
+    public void submit(String path,String name,String desc, boolean override) throws IOException {
+        submit(Paths.get(path), name, null, desc, override);
+    }
 
-    public void submit(Path path, Description desc, boolean override) throws IOException {
-        assert desc != null;
+    public void submit(Path path, String name, ModuleTypes type, String description, boolean override) throws IOException {
+        assert path != null;
 
-        Preconditions.checkNotNull(desc, "the parameter of desc can't null");
-        Preconditions.checkArgument(Files.exists(path), "the file isn't exist");
+        Preconditions.checkState(Files.exists(path), "file not exists");
 
+        String filename = path.getFileName().toString();
 
-        if (StringUtils.isBlank(desc.getName()))
-            desc.setName(path.getFileName().toString());
+        name = name == null ? filename : name;
 
-        if (desc.getType() == ModuleType.UNKNOWN) {
-            int index = desc.getName().lastIndexOf('.');
-            Preconditions.checkArgument(index > 0 && index < desc.getName().length(),
-                    "can't analysis module type");
-
-            String type = desc.getName().substring(index);
-            desc.setType(ModuleType.valueOf(type));
-        }
-
+        type = type == null ? ModuleTypes.valueOf(filename.substring(filename.lastIndexOf('.') + 1)) : type;
 
         byte[] data = Files.readAllBytes(path);
 
+        client.write(Commands.SUBMIT_MODULE,null,data,name,type,description,override);
 
-        client.write(Commands.SUBMIT_MODULE, null, data, desc, override);
     }
 
 
-    public List<Description> select(Query query){
+    public List<String> select(Query query){
 
 
-        ParameterizedType type = ParameterizedTypeImpl.make(List.class,new Type[]{Description.class},null);
+        ParameterizedType type = ParameterizedTypeImpl.make(List.class,new Type[]{Module.class},null);
 
-        List<Description> result = client.write(Commands.GET_MODULE_LIST,type,query);
+
+        List<String> result = client.write(Commands.GET_MODULE_LIST,type,query);
 
         return result;
+    }
+
+
+    public List<String> select(){
+        return  select(null);
     }
 
 

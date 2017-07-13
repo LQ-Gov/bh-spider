@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler.event;
 
-import com.charles.common.spider.command.Commands;
+import com.charles.spider.common.command.Commands;
 import com.charles.common.utils.ArrayUtils;
 import com.charles.spider.common.protocol.Token;
 import com.charles.spider.scheduler.Command;
@@ -35,8 +35,8 @@ public class EventLoop extends Thread {
 
     }
 
-    public Future execute(Commands type, Object... params) {
-        queue.offer(new Command(type, params));
+    public Future execute(Command cmd) {
+        queue.offer(cmd);
 
         return null;
 
@@ -57,47 +57,51 @@ public class EventLoop extends Thread {
 
                 Class<?>[] parameters = executor.getParameters();
 
-                Object[] args = buildArgs(parameters, cmd.params());
+                Object[] args = buildArgs(parameters, cmd.context(), cmd.params());
 
                 executor.invoke(args);
+
+                cmd.context().complete();
+
             } catch (InterruptedException | IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
                 e.printStackTrace();
             } catch (Exception e) {
-                System.out.println("after process");
+                e.printStackTrace();
             }
         }
     }
 
 
-    protected Object[] buildArgs(Class<?>[] parameters, Object[] inputs) {
+    protected Object[] buildArgs(Class<?>[] parameters, Context ctx, Object[] inputs) {
         if (parameters.length == 0) return null;
 
         Object[] args = new Object[parameters.length];
 
-        for (int i = 0; i < parameters.length; i++) {
+        for (int i = 0,x=0; i < parameters.length; i++) {
 
             if (Context.class.isAssignableFrom(parameters[i]))
-                args[i] = null;//赋值给其context
-            else if (parameters[i].isAssignableFrom(inputs[i].getClass()))
-                args[i] = inputs[i];
+                args[i] = ctx;//赋值给其context
+            else if (inputs[x] == null||parameters[i].isAssignableFrom(inputs[x].getClass()))
+                args[i] = inputs[x++];
 
-            else if(parameters[i].isPrimitive()&&parameters[i]== ClassUtils.wrapperToPrimitive(inputs[i].getClass()))
-                args[i]= inputs[i];
+            //参数为值类型
+            else if (parameters[i].isPrimitive() && parameters[i] == ClassUtils.wrapperToPrimitive(inputs[x++].getClass()))
+                args[i] = inputs[x++];
 
-            else if (parameters[i].isArray() && inputs[i].getClass().isArray()) {
+            else if (parameters[i].isArray() && inputs[x++].getClass().isArray()) {
                 Class<?> componentType = parameters[i].getComponentType();
-                if(componentType.isPrimitive()
-                        &&ClassUtils.wrapperToPrimitive(inputs[i].getClass().getComponentType())==componentType)
-                    args[i] = ArrayUtils.toPrimitive(inputs[i]);
+                if (componentType.isPrimitive()
+                        && ClassUtils.wrapperToPrimitive(inputs[x++].getClass().getComponentType()) == componentType)
+                    args[i] = ArrayUtils.toPrimitive(inputs[x++]);
 
                 else {
                     //如果不是基本类型,就依次进行转化
                 }
-            } else if (Token.class.isAssignableFrom(inputs[i].getClass())) {
+            } else if (Token.class.isAssignableFrom(inputs[x].getClass())) {
                 try {
-                    args[i] = ((Token) inputs[i]).toClass(parameters[i]);
+                    args[i] = ((Token) inputs[x++]).toClass(parameters[i]);
                 } catch (Exception e) {
-                    throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i,e);
+                    throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i, e);
                 }
             } else
                 throw new IllegalArgumentException("can't cast to " + parameters[i].toString() + ",index:" + i);

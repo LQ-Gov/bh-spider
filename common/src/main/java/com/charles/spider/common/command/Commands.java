@@ -1,4 +1,4 @@
-package com.charles.common.spider.command;
+package com.charles.spider.common.command;
 
 /**
  * Created by lq on 17-3-16.

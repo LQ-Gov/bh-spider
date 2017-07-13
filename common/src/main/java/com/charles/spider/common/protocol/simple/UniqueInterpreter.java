@@ -1,5 +1,6 @@
 package com.charles.spider.common.protocol.simple;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 
 /**
@@ -14,18 +15,18 @@ public abstract class UniqueInterpreter<T> extends AbstractInterpreter<T>  {
     protected abstract void toCollection(Collection<T> collection, byte[] data, int pos, int len) throws Exception;
 
     @Override
-    protected  T toObject(Class<T> cls, byte[] data, int pos, int len) throws Exception {
+    protected  T toObject(Type cls, byte[] data, int pos, int len) throws Exception {
         return toObject(data,pos,len);
     }
 
     @Override
-    protected T[] toArray(Class<T> cls, byte[] data, int pos, int len) throws Exception {
+    protected T[] toArray(Type cls, byte[] data, int pos, int len) throws Exception {
         return toArray(data, pos, len);
     }
 
 
     @Override
-    protected void toCollection(Class<T> cls, Collection<T> collection, byte[] data, int pos, int len) throws Exception {
+    protected void toCollection(Type cls, Collection<T> collection, byte[] data, int pos, int len) throws Exception {
         toCollection(collection, data, pos, len);
     }
 

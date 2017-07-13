@@ -1,7 +1,6 @@
 package com.charles.spider.monitor.controller;
 
 import com.charles.spider.client.Client;
-import com.charles.spider.common.moudle.Description;
 import com.charles.spider.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,15 +23,14 @@ public class ModuleController {
 
 
     @RequestMapping(value = "",method = RequestMethod.GET)
-    public List<Description> list(int skip, int size){
+    public List<String> list(int skip, int size){
 
         Query query = new Query();
         query.skip(skip).limit(size);
 
-        List<Description> list = client.module().select(query);
 
 
-        return list;
+        return null;
     }
 
 

@@ -2,6 +2,7 @@ package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,8 +12,8 @@ import java.util.Collection;
  */
 public class CharInterpreter extends UniqueInterpreter<Character> {
     @Override
-    public boolean support(Class cls) {
-        return support(cls, Character.class, char.class);
+    public boolean support(Type cls) {
+        return support((Class<?>)cls, Character.class, char.class);
     }
 
     @Override
@@ -23,7 +24,7 @@ public class CharInterpreter extends UniqueInterpreter<Character> {
     @Override
     protected byte[] fromCollection(Collection<Character> collection) {
         ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + collection.size() * 2);
-        buffer.put(DataTypes.CHAR.value()).putInt(collection.size()*2);
+        buffer.put(DataTypes.ARRAY.value()).putInt(collection.size()*2+1).put(DataTypes.INT.value());
         collection.forEach(buffer::putChar);
         return buffer.array();
     }

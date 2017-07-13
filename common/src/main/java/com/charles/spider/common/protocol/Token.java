@@ -1,5 +1,6 @@
 package com.charles.spider.common.protocol;
 
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
 /**
@@ -16,7 +17,7 @@ public interface Token {
     long toLong() throws Exception;
     boolean toBoolean() throws Exception;
     String toString(Charset charset) throws Exception;
-    <T> T toClass(Class<?> cls) throws Exception;
+    <T> T toClass(Type cls) throws Exception;
     <T> T[] toArray(Class<T> cls) throws Exception;
 
     boolean isVaild();

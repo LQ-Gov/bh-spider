@@ -4,16 +4,20 @@ package com.charles.spider.common.protocol;
  * Created by lq on 17-5-26.
  */
 public class UnSupportTypeException extends Exception {
-    private Class<?> type;
+    private String typeName;
 
     public UnSupportTypeException(Class<?> type){
-        this.type = type;
+        this.typeName = type.getTypeName();
+    }
+
+    public UnSupportTypeException(String typeName){
+        this.typeName = typeName;
     }
 
 
     @Override
     public String getMessage() {
-        if (type == null) return "the type can't is null";
-        return "don't support the type:" + type.toString();
+        if (typeName == null) return "the type can't is null";
+        return "don't support the type:" + typeName;
     }
 }

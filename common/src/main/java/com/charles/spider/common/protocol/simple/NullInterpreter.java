@@ -2,6 +2,7 @@ package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -10,7 +11,7 @@ import java.util.Collection;
  */
 public class NullInterpreter extends UniqueInterpreter<Object> {
     @Override
-    public boolean support(Class cls) {
+    public boolean support(Type cls) {
         return true;
     }
 

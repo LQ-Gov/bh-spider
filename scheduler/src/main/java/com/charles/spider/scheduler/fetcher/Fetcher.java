@@ -1,18 +1,13 @@
 package com.charles.spider.scheduler.fetcher;
 
-import com.charles.common.HttpMethod;
 import com.charles.spider.scheduler.BasicScheduler;
-import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
 import com.charles.spider.scheduler.event.EventLoop;
-import com.charles.common.spider.command.Commands;
+import com.charles.spider.common.command.Commands;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.processor.ProcessGroup;
-import org.apache.http.client.methods.*;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -32,7 +27,7 @@ public class Fetcher implements IEvent {
 
     public Future process(Commands event, Object... params) {
         if (Thread.currentThread() != loop)
-            return loop.execute(event, params);
+            //return loop.execute(event, params);
         switch (event) {
 //            case TASK:
 //                return this.scheduler.process(event, params);

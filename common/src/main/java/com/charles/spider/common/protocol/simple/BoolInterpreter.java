@@ -2,6 +2,7 @@ package com.charles.spider.common.protocol.simple;
 
 import com.charles.spider.common.protocol.DataTypes;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -12,8 +13,8 @@ import java.util.Collection;
  */
 class BoolInterpreter extends UniqueInterpreter<Boolean> {
     @Override
-    public boolean support(Class cls) {
-        return support(cls,Boolean.class,boolean.class);
+    public boolean support(Type cls) {
+        return support((Class<?>) cls,Boolean.class,boolean.class);
     }
 
     @Override
@@ -32,8 +33,9 @@ class BoolInterpreter extends UniqueInterpreter<Boolean> {
         byte last = (byte) (collection.size() % 8);
         last = last == 0 && collection.size() > 0 ? 8 : last;
         return ByteBuffer.allocate(ARRAY_HEAD_LEN + 1 + data.length)
+                .put(DataTypes.ARRAY.value())
+                .putInt(1 + 1 + data.length)
                 .put(DataTypes.BOOL.value())
-                .putInt(1 + data.length)
                 .put(last)
                 .put(data)
                 .array();

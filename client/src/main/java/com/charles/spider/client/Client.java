@@ -1,11 +1,7 @@
 package com.charles.spider.client;
 
-import com.charles.common.spider.command.Commands;
-import com.charles.spider.common.moudle.Description;
-import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.common.command.Commands;
 import com.charles.spider.common.protocol.SerializeFactory;
-import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -14,10 +10,6 @@ import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,9 +30,12 @@ public class Client {
     public Client(String servers) throws IOException, URISyntaxException {
         this.servers = Arrays.asList(servers.split(","));
 
-        //moduleOperation = new
 
         open(next());
+
+        moduleOperation = new ModuleOperation(this);
+        ruleOperation = new RuleOperation(this);
+        requestOperation = new RequestOperation(this);
     }
 
     private int next() {
@@ -77,6 +72,8 @@ public class Client {
 
             boolean complete = in.readBoolean();
 
+            System.out.println("已经被原谅");
+
             int len = in.readInt();
 
             if (len == 0 && complete) return null;
@@ -86,8 +83,8 @@ public class Client {
             in.readFully(data);
 
             //
-            //return SerializeFactory.deserialize(data,cls);
-            return null;
+            return SerializeFactory.deserialize(data,cls);
+
 
         } catch (IOException e) {
             e.fillInStackTrace();

@@ -1,8 +1,8 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.query.Query;
-import com.charles.spider.store.entity.Module;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.store.service.Service;
 
 import java.io.IOException;
@@ -12,20 +12,18 @@ import java.util.List;
  * Created by lq on 7/7/17.
  */
 public class GlobalModuleAgent extends ModuleAgent {
-    public GlobalModuleAgent(ModuleType type, String basePath, Service<Module> service) throws IOException {
-        super(type, basePath, service);
+    public GlobalModuleAgent(ModuleTypes type, Service<Module> service) throws IOException {
+        super(type, (String) null, service);
     }
 
     @Override
-    public ModuleType type() {
+    public ModuleTypes type() {
         return null;
     }
 
     @Override
-    public List<Module> select(int skip, int size) {
-        Query query = new Query();
-        query.skip(skip).limit(size);
-
+    public List<Module> select(Query query) {
+        query = query ==null? new Query():query;
         return service().select(query);
     }
 }

@@ -1,10 +1,8 @@
 package com.charles.spider.scheduler.event;
 
-import com.charles.common.spider.command.Commands;
+import com.charles.spider.common.command.Commands;
 
-import java.util.Queue;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by lq on 17-3-16.

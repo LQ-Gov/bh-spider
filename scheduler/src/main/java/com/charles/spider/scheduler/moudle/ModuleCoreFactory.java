@@ -1,49 +1,43 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.moudle.Description;
-import com.charles.spider.common.moudle.ModuleType;
+import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.store.base.Store;
-import com.charles.spider.store.entity.Module;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.store.service.Service;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.security.DigestException;
-import java.security.MessageDigest;
-import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Created by lq on 17-3-16.
  */
 public class ModuleCoreFactory {
-    private static final String ALL_KEY="ALL";
-
     private static final Logger logger = LoggerFactory.getLogger(ModuleCoreFactory.class);
 
 
-
-    private Map<ModuleType, ModuleAgent> agents = new HashMap<>();
+    private Map<ModuleTypes, ModuleAgent> agents = new HashMap<>();
     private static volatile ModuleCoreFactory obj = null;
 
     public ModuleCoreFactory(Service<Module> service) throws IOException {
 
-        agents.put(ModuleType.JAR, new ModuleAgent(ModuleType.JAR, Paths.get(Config.INIT_DATA_PATH, "handler"), service));
-        agents.put(ModuleType.CONFIG, new ModuleAgent(ModuleType.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
-        //agents.put(ALL_KEY,new ModuleAgent())
+        agents.put(ModuleTypes.JAR, new ModuleAgent(ModuleTypes.JAR, Paths.get(Config.INIT_DATA_PATH, "handler"), service));
+        agents.put(ModuleTypes.CONFIG, new ModuleAgent(ModuleTypes.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
+        agents.put(ModuleTypes.UNKNOWN, new GlobalModuleAgent(ModuleTypes.UNKNOWN, service));
     }
 
 
-    public ModuleAgent agent(ModuleType type) {
+    public ModuleAgent agent(ModuleTypes type) {
         return agents.get(type);
     }
-    public ModuleAgent agent(){ return agents.get(ALL_KEY); }
+
+    public ModuleAgent agent() {
+        return agents.get(ModuleTypes.UNKNOWN);
+    }
 
 
     public static ModuleCoreFactory instance() throws Exception {
