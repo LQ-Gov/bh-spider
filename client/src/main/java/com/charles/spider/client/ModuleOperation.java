@@ -84,19 +84,17 @@ public class ModuleOperation {
     }
 
 
-    public List<String> select(Query query){
+    public List<Module> select(Query query) {
 
 
-        ParameterizedType type = ParameterizedTypeImpl.make(List.class,new Type[]{Module.class},null);
+        ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Module.class}, null);
 
 
-        List<String> result = client.write(Commands.GET_MODULE_LIST,type,query);
-
-        return result;
+        return client.write(Commands.GET_MODULE_LIST, type, query);
     }
 
 
-    public List<String> select(){
+    public List<Module> select(){
         return  select(null);
     }
 

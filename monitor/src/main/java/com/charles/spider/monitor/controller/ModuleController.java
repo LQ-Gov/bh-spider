@@ -1,6 +1,7 @@
 package com.charles.spider.monitor.controller;
 
 import com.charles.spider.client.Client;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +15,7 @@ import java.util.List;
  * Created by lq on 7/5/17.
  */
 
-@RequestMapping("/module")
+@RequestMapping("/modules")
 @RestController
 public class ModuleController {
 
@@ -22,15 +23,13 @@ public class ModuleController {
     private Client client;
 
 
-    @RequestMapping(value = "",method = RequestMethod.GET)
-    public List<String> list(int skip, int size){
+    @RequestMapping(value = "/",method = RequestMethod.GET)
+    public List<Module> list(int skip, int size){
 
         Query query = new Query();
         query.skip(skip).limit(size);
 
-
-
-        return null;
+        return client.module().select(query);
     }
 
 

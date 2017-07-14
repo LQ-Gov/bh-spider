@@ -1,7 +1,7 @@
-import { observable } from "MobX";
+import { observable } from "mobx";
+import axios from 'axios';
 
-
-class ModuleStore {
+export default class ModuleStore {
     httpclient;
 
     @observable reacordCount = 0
@@ -9,8 +9,12 @@ class ModuleStore {
     @observable loading = false
 
 
-    constructor(httpclient) {
-        this.httpclient = httpclient;
+    constructor() {
+        this.httpclient = axios;
+    }
+
+    ping = ()=>{
+        console.log("pong");
     }
 
 

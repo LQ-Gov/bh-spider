@@ -1,7 +1,5 @@
 package com.charles.spider.monitor.server;
 
-import com.charles.spider.client.Client;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -20,20 +18,25 @@ public class Program {
 
 
 
-        Server server = new org.eclipse.jetty.server.Server();
+        Server server = new Server();
+
 
         //这是http的连接器
         ServerConnector connector = new ServerConnector(server);
         connector.setPort(PORT);
+
         // 解决Windows下重复启动Jetty居然不报告端口冲突的问题.
         //connector.setReuseAddress(false);
-        server.setConnectors(new Connector[] { connector });
+        server.addConnector(connector);
+
+
 
 
         WebAppContext context = new WebAppContext(DEFAULT_WEBAPP_PATH,CONTEXT);
+        context.setDescriptor(DEFAULT_WEBAPP_PATH+"/WEB-INF/web.xml");
+        context.setResourceBase(DEFAULT_WEBAPP_PATH);
+        //context.setClassLoader(Thread.currentThread().getContextClassLoader());
 
-        context.setDescriptor("monitor/src/main/webapp/WEB-INF/web.xml");
-        context.setClassLoader(Thread.currentThread().getContextClassLoader());
 
 //        context.setConfigurationDiscovered(true);
 //        context.setParentLoaderPriority(true);
@@ -41,7 +44,6 @@ public class Program {
 //        context.setAttribute( "org.eclipse.jetty.containerInitializers", jspInitializers());
 //        context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 //        context.addBean(new ServletContainerInitializersStarter(context), true);
-
 
         server.setHandler(context);
 

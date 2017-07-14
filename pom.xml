@@ -24,7 +24,7 @@
         <commons-lang3.version>3.6</commons-lang3.version>
         <junit.version>4.12</junit.version>
         <spring.version>4.3.7.RELEASE</spring.version>
-        <jetty.version>9.4.2.v20170220</jetty.version>
+        <jetty.version>9.4.6.v20170531</jetty.version>
         <jackson.version>2.8.8</jackson.version>
         <google.guava.version>22.0</google.guava.version>
         <jaskson.version>2.8.9</jaskson.version>

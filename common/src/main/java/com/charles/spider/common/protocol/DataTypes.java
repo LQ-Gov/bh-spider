@@ -1,6 +1,7 @@
 package com.charles.spider.common.protocol;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +20,6 @@ public enum DataTypes {
     STRING((byte)'S',-1,String.class),
     OBJECT((byte)'O',-1),
     ARRAY((byte)'A',-1),
-    COLLECTION((byte)'L',-1),
     ENUM((byte)'E',-1);
 
 
@@ -55,7 +55,7 @@ public enum DataTypes {
 
         if(value!=null) return value;
 
-        if(cls.isArray()) return ARRAY;
+        if(cls.isArray()|| Collection.class.isAssignableFrom(cls)) return ARRAY;
 
         if(cls.isEnum()) return ENUM;
 

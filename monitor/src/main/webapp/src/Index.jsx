@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
 import { Layout, Menu, Icon } from 'antd';
-import {Link} from "react-router-dom"
+import { Link } from "react-router-dom"
+import { inject, observer } from 'mobx-react';
+
 import "./Index.css"
 const { Header, Sider, Content } = Layout;
 
-
+@inject("stores")
+@observer
 class Index extends Component {
   state = {
     collapsed: false,
@@ -27,6 +30,8 @@ class Index extends Component {
   }
 
   render() {
+
+    this.props.stores.moduleStore.ping()
     return (
       <Layout className="root-main-layout">
         <Sider

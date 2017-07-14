@@ -48,7 +48,7 @@ public final class SimpleProtocol implements Protocol {
 
         if(cls.isArray()) type = DataTypes.ARRAY;
 
-        else if (Collection.class.isAssignableFrom(cls)) type=DataTypes.COLLECTION;
+        else if (Collection.class.isAssignableFrom(cls)) type=DataTypes.ARRAY;
 
 
         //if (cls.isArray()) type = DataTypes.type(cls.getComponentType());

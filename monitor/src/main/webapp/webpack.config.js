@@ -16,11 +16,11 @@ var extract_text_webpack_plugin = require("extract-text-webpack-plugin");
 
 module.exports = {
     entry: {
-        index: ["./app-router.js"]
+        index: ["babel-polyfill","./app-router.js"]
     },
     output: {
-        path: __dirname,
-        filename: "public/[name].js"
+        path: path.join(__dirname, "public"),
+        filename: "[name].js"
     },
 
     resolve: {
@@ -39,7 +39,7 @@ module.exports = {
             // },
             options: {
                 plugins: [
-                    ['import', { libraryName: 'antd', style: 'css' }],
+                    ['import', {libraryName: 'antd', style: 'css'}],
                 ],
                 // This is a feature of `babel-loader` for webpack (not Babel itself).
                 // It enables caching results in ./node_modules/.cache/babel-loader/
@@ -47,23 +47,23 @@ module.exports = {
                 cacheDirectory: true
             }
         },
-        {
-            test:/\.(css)$/,
-            loader: extract_text_webpack_plugin.extract({ fallback: 'style-loader', use: 'css-loader' })
+            {
+                test: /\.(css)$/,
+                loader: extract_text_webpack_plugin.extract({fallback: 'style-loader', use: 'css-loader'})
 
-        }
+            }
 
         ]
     },
 
     plugins: [
-        new html_webpack_plugin({ title: "TEST SPIDER APP", template: "src/index-template.html" }),
+        new html_webpack_plugin({title: "TEST SPIDER APP", template: "src/index-template.html"}),
         // new webpack.optimize.OccurenceOrderPlugin(),
-        new webpack.HotModuleReplacementPlugin(),
+        //new webpack.HotModuleReplacementPlugin(),
 
-        new open_browser_webpack_plugin({ url: 'http://localhost:8080' }),
+        new open_browser_webpack_plugin({url: 'http://localhost:8080'}),
 
-        new extract_text_webpack_plugin("[name].css")
+        new extract_text_webpack_plugin("./assets/css/[name].css")
         // new webpack.NoErrorsPlugin()
     ]
 }

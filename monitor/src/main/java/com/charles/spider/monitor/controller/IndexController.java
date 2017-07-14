@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Created by lq on 17-4-9.
@@ -18,14 +19,15 @@ public class IndexController {
 
 
     @RequestMapping("index")
-    @ResponseBody
     public String index(){
-        return "hello world";
+
+        System.out.println("index");
+        return "index";
     }
 
     @ResponseBody
-    @RequestMapping("context")
-    public void context(String name,int value){
-        System.out.println(name+":"+value);
+    @RequestMapping("ping")
+    public String ping(){
+        return "pong";
     }
 }
