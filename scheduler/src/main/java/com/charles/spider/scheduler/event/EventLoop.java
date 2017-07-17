@@ -85,13 +85,13 @@ public class EventLoop extends Thread {
                 args[i] = inputs[x++];
 
             //参数为值类型
-            else if (parameters[i].isPrimitive() && parameters[i] == ClassUtils.wrapperToPrimitive(inputs[x++].getClass()))
+            else if (parameters[i].isPrimitive() && parameters[i] == ClassUtils.wrapperToPrimitive(inputs[x].getClass()))
                 args[i] = inputs[x++];
 
-            else if (parameters[i].isArray() && inputs[x++].getClass().isArray()) {
+            else if (parameters[i].isArray() && inputs[x].getClass().isArray()) {
                 Class<?> componentType = parameters[i].getComponentType();
                 if (componentType.isPrimitive()
-                        && ClassUtils.wrapperToPrimitive(inputs[x++].getClass().getComponentType()) == componentType)
+                        && ClassUtils.wrapperToPrimitive(inputs[x].getClass().getComponentType()) == componentType)
                     args[i] = ArrayUtils.toPrimitive(inputs[x++]);
 
                 else {
@@ -99,7 +99,7 @@ public class EventLoop extends Thread {
                 }
             } else if (Token.class.isAssignableFrom(inputs[x].getClass())) {
                 try {
-                    args[i] = ((Token) inputs[x++]).toClass(parameters[i]);
+                    args[i] = ((Token) inputs[x++]).toObject(parameters[i]);
                 } catch (Exception e) {
                     throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i, e);
                 }

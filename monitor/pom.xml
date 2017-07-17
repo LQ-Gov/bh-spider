@@ -115,5 +115,13 @@
     </dependencies>
     <build>
         <finalName>monitor</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>9.4.6.v20170531</version>
+            </plugin>
+        </plugins>
     </build>
+
 </project>

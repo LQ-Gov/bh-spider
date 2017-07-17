@@ -37,13 +37,7 @@ public class ObjectInterpreter extends AbstractInterpreter<Object> {
         return support((Class<?>) cls, Object.class);
     }
 
-    @Override
-    protected byte[] fromArray(Object[] input) throws Exception {
-        return fromCollection(Arrays.asList(input));
-    }
-
-    @Override
-    protected byte[] fromCollection(Collection<Object> collection) throws Exception {
+    private byte[] fromCollection(DataTypes header, Collection collection) throws Exception {
         List<byte[]> store = new LinkedList<>();
 
         int len = 0;
@@ -55,13 +49,23 @@ public class ObjectInterpreter extends AbstractInterpreter<Object> {
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(ARRAY_HEAD_LEN + len);
-        buffer.put(DataTypes.ARRAY.value())
+        buffer.put(header.value())
                 .putInt(len + 1)
                 .put(DataTypes.OBJECT.value());
 
         store.forEach(buffer::put);
 
         return buffer.array();
+    }
+
+    @Override
+    protected byte[] fromArray(Object[] input) throws Exception {
+        return fromCollection(DataTypes.ARRAY, Arrays.asList(input));
+    }
+
+    @Override
+    protected byte[] fromCollection(Collection<Object> collection) throws Exception {
+        return fromCollection(DataTypes.COLLECTION, collection);
     }
 
     @Override
@@ -106,7 +110,7 @@ public class ObjectInterpreter extends AbstractInterpreter<Object> {
 
         Token token;
         while ((token = assemble.next()) != null) {
-            collection.add(token.toClass(cls));
+            collection.add(token.toObject(cls));
         }
     }
 
@@ -132,14 +136,14 @@ public class ObjectInterpreter extends AbstractInterpreter<Object> {
             int start = pos + 5, end = pos + len;
             for (int i = start; i < end; ) {
                 Token token = new SimpleToken(data, i);
-                Field field = cls.getDeclaredField(token.toString(Charset.defaultCharset()));
+                Field field = cls.getDeclaredField(token.toObject(String.class));
 
                 token = new SimpleToken(data, i += token.length());
 
                 try {
                     Method set = cls.getDeclaredMethod(set_method_name(field.getName()), field.getType());
                     if (set != null) {
-                        set.invoke(o, (Object) token.toClass(field.getType()));
+                        set.invoke(o, (Object) token.toObject(field.getType()));
                     }
                 } catch (NoSuchMethodException ignored) {
                 }

@@ -20,6 +20,7 @@ public enum DataTypes {
     STRING((byte)'S',-1,String.class),
     OBJECT((byte)'O',-1),
     ARRAY((byte)'A',-1),
+    COLLECTION((byte)'C',-1),
     ENUM((byte)'E',-1);
 
 
@@ -55,7 +56,9 @@ public enum DataTypes {
 
         if(value!=null) return value;
 
-        if(cls.isArray()|| Collection.class.isAssignableFrom(cls)) return ARRAY;
+        if(cls.isArray()) return ARRAY;
+
+        if(Collection.class.isAssignableFrom(cls)) return COLLECTION;
 
         if(cls.isEnum()) return ENUM;
 
@@ -64,6 +67,7 @@ public enum DataTypes {
 
         return NULL;
     }
+
 
 
     static {

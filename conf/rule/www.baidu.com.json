@@ -1,0 +1,29 @@
+[
+  {
+    "cron": "* */1 * * * *?",
+    "host": "www.baidu.com",
+    "pattern": "www.baidu.com",
+    "extractors":{
+      "200":["m1","m2","m3"],
+      "404":["m1","m2","m3"]
+    }
+  },
+  {
+    "cron": "* */1 * * * *?",
+    "host": "www.baidu.com",
+    "pattern": "www.baidu.com",
+    "extractors":{
+      "200":["m1","m2","m3"],
+      "404":["m1","m2","m3"]
+    }
+  },
+  {
+    "cron": "* */1 * * * *?",
+    "host": "www.baidu.com",
+    "pattern": "www.baidu.com",
+    "extractors":{
+      "200":["m1","m2","m3"],
+      "404":["m1","m2","m3"]
+    }
+  }
+]

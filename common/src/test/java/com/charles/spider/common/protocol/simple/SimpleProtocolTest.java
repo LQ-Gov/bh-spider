@@ -19,7 +19,7 @@ public class SimpleProtocolTest {
         byte[] data = SimpleProtocol.instance().pack(o);
         Token token = SimpleProtocol.instance().assemble(data, 0, data.length).next();
 
-        Object out = token.toClass(cls);
+        Object out = token.toObject(cls);
 
         if (o!=null&& o.getClass().isArray()) {
             Assert.assertArrayEquals((Object[]) o, (Object[]) out);

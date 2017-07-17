@@ -6,22 +6,21 @@ import com.charles.spider.common.entity.Rule;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.Test;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import javax.lang.model.type.TypeVariable;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by lq on 7/6/17.
  */
 public class RuleFactoryTest {
-    private List<Boolean> o = Arrays.asList(true,false,true,false);
+    private List<Boolean> o = Arrays.asList(true, false, true, false);
 
 
     @Test
@@ -31,7 +30,7 @@ public class RuleFactoryTest {
         String path = "src/test/resources/rule";
 
         RuleFactory factory = new RuleFactory(path);
-        Rule rule = new Rule("save-test","www.sina.com","*******");
+        Rule rule = new Rule("save-test", "www.sina.com", "*******");
         rule.setPattern("pattern-demo");
         factory.save(rule);
 
@@ -44,42 +43,20 @@ public class RuleFactoryTest {
         RuleFactory factory = new RuleFactory(path);
         List<Rule> list = factory.get();
 
-        String[] chains =list.get(0).extractor("200");
-        System.out.println( Arrays.toString(chains));
+        String[] chains = list.get(0).extractor("200");
+        System.out.println(Arrays.toString(chains));
     }
 
     @Test
     public void t() throws NoSuchFieldException {
-        List<Boolean> o = Arrays.asList(true,false,true,false);
 
-        //List<String> o = new ArrayList<String>();
+        Map<String, String> map = new ConcurrentHashMap<>();
 
-        System.out.println( JSON.toJSONString(o));
+        String s = map.computeIfAbsent("1", k -> "123");
 
-
-
-
-        ParameterizedType parameterizedType = (ParameterizedType) o.getClass().getGenericSuperclass();
-
-
-
-
-        //parameterizedType = (ParameterizedType) oField.getGenericType();
-
-        Type actualTypeArgument = parameterizedType.getActualTypeArguments()[0];
-
-        if (actualTypeArgument instanceof WildcardType) {
-            WildcardType wildcardType = (WildcardType) actualTypeArgument;
-            Type[] upperBounds = wildcardType.getUpperBounds();
-            if (upperBounds.length == 1) {
-                actualTypeArgument = upperBounds[0];
-            }
-        }
-
-        System.out.println(actualTypeArgument.getTypeName());
-
+//        System.out.println(map.putIfAbsent ("1", "100"));
+//        System.out.println(map.putIfAbsent("1", "123"));
     }
-
 
 
 }

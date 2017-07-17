@@ -1,7 +1,10 @@
 package com.charles.spider.client;
 
+import com.charles.common.JsonFactory;
 import com.charles.spider.common.command.Commands;
 import com.charles.spider.common.protocol.SerializeFactory;
+import com.charles.spider.common.protocol.jackson.JacksonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -18,61 +21,49 @@ import java.util.List;
  */
 public class Client {
 
-    private List<String> servers = null;
-    private ThreadLocal<Integer> c = new ThreadLocal<>();
-    private ThreadLocal<Socket> socket = new ThreadLocal<>();
+    private final static ObjectMapper mapper = JsonFactory.get();
 
-    private ModuleOperation moduleOperation = null;
+    private String server = null;
+    private Socket socket = null;
+
     private RuleOperation ruleOperation = null;
+    private ModuleOperation moduleOperation = null;
     private RequestOperation requestOperation = null;
 
 
-    public Client(String servers) throws IOException, URISyntaxException {
-        this.servers = Arrays.asList(servers.split(","));
-
-
-        open(next());
-
+    public Client(String server) throws IOException, URISyntaxException {
+        this.server = server;
         moduleOperation = new ModuleOperation(this);
         ruleOperation = new RuleOperation(this);
         requestOperation = new RequestOperation(this);
+        open();
     }
 
-    private int next() {
-        Integer n = c.get();
-        if (n == null)
-            c.set(n = -1);
-        c.set(n = ((n + 1) % servers.size()));
-        return n;
-    }
 
-    private boolean open(int i) throws URISyntaxException, IOException {
-        if (i >= servers.size()) return false;
-        URI uri = new URI("tcp://" + servers.get(i));
-        socket.set(new Socket(uri.getHost(), uri.getPort()));
+    private boolean open() throws URISyntaxException, IOException {
+        URI uri = new URI("tcp://" + server);
+        socket = new Socket(uri.getHost(), uri.getPort());
         return true;
     }
 
     public void close() throws IOException, InterruptedException {
-        if (socket != null && socket.get().isConnected()) socket.get().close();
+        if (socket != null && socket.isConnected()) socket.close();
 
     }
 
-    protected <T> T write(Commands cmd, Type cls, Object... params) {
+    protected synchronized  <T> T write(Commands cmd, Type cls, Object... params) {
         short type = (short) cmd.ordinal();
         try {
-            byte[] data = SerializeFactory.serialize(params);
-            DataOutputStream out = new DataOutputStream(socket.get().getOutputStream());
+            byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.writeShort(type);
             out.writeInt(data.length);
             out.write(data);
             out.flush();
 
-            DataInputStream in = new DataInputStream(socket.get().getInputStream());
+            DataInputStream in = new DataInputStream(socket.getInputStream());
 
             boolean complete = in.readBoolean();
-
-            System.out.println("已经被原谅");
 
             int len = in.readInt();
 
@@ -82,8 +73,7 @@ public class Client {
 
             in.readFully(data);
 
-            //
-            return SerializeFactory.deserialize(data,cls);
+            return mapper.readValue(data, mapper.getTypeFactory().constructType(cls));
 
 
         } catch (IOException e) {
@@ -95,16 +85,17 @@ public class Client {
     }
 
 
-    public ModuleOperation module() {return moduleOperation;}
+    public ModuleOperation module() {
+        return moduleOperation;
+    }
 
-    public RuleOperation rule() {return ruleOperation;}
+    public RuleOperation rule() {
+        return ruleOperation;
+    }
 
-    public RequestOperation request(){return requestOperation;}
-
-
-
-
-
+    public RequestOperation request() {
+        return requestOperation;
+    }
 
 
 }

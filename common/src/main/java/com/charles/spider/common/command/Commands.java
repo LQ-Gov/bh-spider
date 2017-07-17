@@ -10,7 +10,7 @@ public enum Commands {
 
     GET_MODULE_LIST,//获取module列表
     GET_RULE_LIST,//获取RULE列表
-
+    GET_HOST_LIST,///获取所有规则的host
     GET_MODULE,//获取单个module
 
     DELETE_MODULE,

@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Created by lq on 17-3-29.
  */
-public class Chain extends Rule {
+public class Chain {
     public static class Value{
         public Value(String scope,String modules){
             this.scope =scope;
@@ -32,7 +32,6 @@ public class Chain extends Rule {
     private Value finished;
 
     public Chain(String pattern,String scope,Map<Integer,Value> status,Value prepare,Value finished) {
-        super(pattern);
         this.scope = scope;
         this.status = status;
         this.prepare = prepare;

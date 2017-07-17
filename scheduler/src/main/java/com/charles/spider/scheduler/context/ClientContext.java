@@ -1,27 +1,24 @@
 package com.charles.spider.scheduler.context;
 
-import com.charles.spider.common.protocol.Protocol;
-import com.charles.spider.common.protocol.SerializeFactory;
+import com.charles.common.JsonFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Created by lq on 17-4-8.
  */
 public class ClientContext implements Context {
-    private ChannelHandlerContext source =null;
+
+    private ChannelHandlerContext source = null;
     private volatile Boolean enable = true;
 
-    private List<byte[]> buffer = new LinkedList<>();
-    private int bufferCount = 0;
+    private Object buffer = null;
 
 
-    public ClientContext(ChannelHandlerContext source){
+    public ClientContext(ChannelHandlerContext source) {
 
-        this.source=source;
+        this.source = source;
     }
 
 
@@ -30,29 +27,27 @@ public class ClientContext implements Context {
         if (!IsWriteEnable())
             return;
 
-        try {
-            byte[] bytes = SerializeFactory.serialize(data);
-            buffer.add(bytes);
-            bufferCount += bytes.length;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        buffer = data;
+
     }
 
     @Override
     public synchronized void complete() {
 
-        ByteBuf buf = source.alloc().buffer(5+bufferCount);
-        buf.writeBoolean(true);
-        buf.writeInt(bufferCount);
+        try {
+            byte[] data = JsonFactory.get().writeValueAsBytes(buffer);
+            ByteBuf buf = source.alloc().buffer(5 + data.length);
+            buf.writeBoolean(true);
+            buf.writeInt(data.length);
+            buf.writeBytes(data);
 
-        buffer.forEach(buf::writeBytes);
+            source.writeAndFlush(buf);
 
-        enable = false;
+            enable = false;
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
-        source.writeAndFlush(buf);
-
-        System.out.println("当然是选择原谅他了");
     }
 
     @Override

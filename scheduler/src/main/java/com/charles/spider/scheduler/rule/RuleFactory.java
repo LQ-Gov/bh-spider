@@ -1,6 +1,7 @@
 package com.charles.spider.scheduler.rule;
 
 import com.alibaba.fastjson.JSON;
+import com.charles.common.JsonFactory;
 import com.charles.spider.common.entity.Rule;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -19,11 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class RuleFactory {
     //    private Map<String, RuleTemplate> templates = new HashMap<>();
-    private final static ObjectMapper mapper = new ObjectMapper();
-
-    static {
-        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-    }
 
 
     private Path base = null;
@@ -32,7 +28,6 @@ public class RuleFactory {
 
 
     private Map<String, List<Rule>> map = new ConcurrentHashMap<>();
-
 
 
     public RuleFactory(String p) throws IOException {
@@ -68,19 +63,19 @@ public class RuleFactory {
     }
 
     private void load(File[] files) throws IOException {
-        if(files==null) return;
+        if (files == null) return;
         for (File file : files) {
 
             byte[] data = Files.readAllBytes(file.toPath());
 
-            JsonNode node = mapper.readTree(data);
+            JsonNode node = JsonFactory.get().readTree(data);
 
             if (node.isArray()) {
 
-                List<Rule> rules = mapper.readValue(node.traverse(), mapper.getTypeFactory().constructCollectionType(List.class, Rule.class));
+                List<Rule> rules = JsonFactory.get().readValue(node.traverse(), JsonFactory.get().getTypeFactory().constructCollectionType(List.class, Rule.class));
                 rules.forEach(this::cache);
             } else if (node.isObject()) {
-                Rule rule = mapper.readValue(node.traverse(), Rule.class);
+                Rule rule = JsonFactory.get().readValue(node.traverse(), Rule.class);
                 cache(rule);
             }
         }
@@ -99,8 +94,7 @@ public class RuleFactory {
     public void save(Rule rule) throws IOException {
         List<Rule> values = cache(rule);
 
-        save(rule.getHost()+".json",values);
-
+        save(rule.getHost() + ".json", values);
 
 
     }
@@ -117,16 +111,14 @@ public class RuleFactory {
     }
 
 
-
-
     private void save(String filename, List<Rule> rules) throws IOException {
         Path path = base;
         if (Files.isDirectory(base))
             path = Paths.get(base.toString(), filename);
 
 
-        byte[] data =mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(rules);
-        Files.write(path,data);
+        byte[] data = JsonFactory.get().writerWithDefaultPrettyPrinter().writeValueAsBytes(rules);
+        Files.write(path, data);
     }
 
 

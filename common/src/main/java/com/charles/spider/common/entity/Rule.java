@@ -7,7 +7,6 @@ import java.util.Map;
  * Created by lq on 17-6-7.
  */
 public class Rule {
-
     private String name;
 
     private Map<String,String[]> extractors= new HashMap<>();
@@ -17,6 +16,10 @@ public class Rule {
     private String host;
 
     private String pattern;
+
+    private boolean exact;
+
+    private String description;
 
     protected Rule(){}
 
@@ -29,6 +32,10 @@ public class Rule {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String[] extractor(String key) {
@@ -61,5 +68,21 @@ public class Rule {
 
     public void setPattern(String pattern) {
         this.pattern = pattern;
+    }
+
+    public boolean isExact() {
+        return exact;
+    }
+
+    public void setExact(boolean exact) {
+        this.exact = exact;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

@@ -22,9 +22,10 @@ public class InterpreterFactory {
         INTERPRETERS.put(DataTypes.FLOAT, new FloatInterpreter());
         INTERPRETERS.put(DataTypes.DOUBLE, new DoubleInterpreter());
         INTERPRETERS.put(DataTypes.STRING, new StringInterpreter());
+        INTERPRETERS.put(DataTypes.ENUM, new EnumInterpreter());
         INTERPRETERS.put(DataTypes.OBJECT, new ObjectInterpreter(protocol,this));
         INTERPRETERS.put(DataTypes.ARRAY, new ArrayInterpreter(protocol,this));
-        INTERPRETERS.put(DataTypes.ENUM, new EnumInterpreter());
+        INTERPRETERS.put(DataTypes.COLLECTION,new CollectionInterpreter(protocol,this));
     }
 
     public Interpreter get(DataTypes type){

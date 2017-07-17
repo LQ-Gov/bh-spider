@@ -15,7 +15,6 @@ import java.util.List;
  * Created by lq on 7/5/17.
  */
 
-@RequestMapping("/modules")
 @RestController
 public class ModuleController {
 
@@ -23,17 +22,17 @@ public class ModuleController {
     private Client client;
 
 
-    @RequestMapping(value = "/",method = RequestMethod.GET)
+    @RequestMapping(value = "/modules",method = RequestMethod.GET)
     public List<Module> list(int skip, int size){
 
         Query query = new Query();
         query.skip(skip).limit(size);
 
-        return client.module().select(query);
+        return client.module().select();
     }
 
 
-    @RequestMapping(value = "/{id}",method = RequestMethod.DELETE)
+    @RequestMapping(value = "/module/{id}",method = RequestMethod.DELETE)
     public String delete(@PathVariable("id") int id) {
 
 

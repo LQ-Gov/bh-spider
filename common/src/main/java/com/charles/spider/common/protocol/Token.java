@@ -9,16 +9,7 @@ import java.nio.charset.Charset;
 public interface Token {
     DataTypes type();
 
-    int toInt() throws Exception;
-    byte toByte() throws Exception;
-    float toFloat() throws Exception;
-    double toDouble() throws Exception;
-    char toChar() throws Exception;
-    long toLong() throws Exception;
-    boolean toBoolean() throws Exception;
-    String toString(Charset charset) throws Exception;
-    <T> T toClass(Type cls) throws Exception;
-    <T> T[] toArray(Class<T> cls) throws Exception;
+    <T> T toObject(Type cls) throws Exception;
 
     boolean isVaild();
 

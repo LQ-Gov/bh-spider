@@ -28,6 +28,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import org.apache.commons.lang3.StringUtils;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -176,7 +177,7 @@ public class BasicScheduler implements IEvent {
         if (matcher == null)
             matcher = domain.add(host);
 
-        JobDetail job = taskFactory.scheduler(rule, RuleExecuteObject.class);
+        //JobDetail job = taskFactory.scheduler(rule, RuleExecuteObject.class);
 
         RuleDecorator decorator = new RuleDecorator(rule);
 
@@ -231,21 +232,38 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void GET_RULE_LIST_HANDLER(Context ctx, String query, int skip, int size) {
+    protected void GET_RULE_LIST_HANDLER(Context ctx, String host, int skip, int size) {
 
+        List<Rule> rules;
 
-        Domain matcher = domain.match(query);
+        if (StringUtils.isBlank(host)) rules = ruleFactory.get();
 
-        List<Rule> result;
-        if (matcher != null) {
-            result = matcher.rules().subList(skip, size);
-        } else {
-            List<Rule> rules = ruleFactory.get();
-            result = rules.subList(skip, size);
+        else {
+
+            Domain matcher = domain.match(host);
+
+            rules = matcher == null ? ruleFactory.get() : matcher.rules();
         }
 
-        ctx.write(result);
+        if (size < 0) size = Math.max(rules.size() - skip, 0);
 
+        rules = rules.subList(skip, Math.min(skip + size, rules.size()));
+
+        ctx.write(rules);
+    }
+
+    @EventMapping
+    protected void DELETE_RULE_HANDLER(Context ctx, String host, String id) {
+
+    }
+
+    @EventMapping
+    protected void GET_HOST_LIST_HANDLER(Context ctx) {
+        TopDomain top = (TopDomain)domain;
+
+        List<String> rules = top.hosts();
+
+        ctx.write(top.hosts());
     }
 
 

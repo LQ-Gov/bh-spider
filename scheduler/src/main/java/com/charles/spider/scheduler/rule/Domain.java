@@ -9,19 +9,24 @@ import java.util.*;
  * Created by lq on 17-6-12.
  */
 public class Domain {
-    private final static Map<String,Domain> RULE_CHAINS = new HashMap<>();
+    private final static Map<String, Domain> RULE_CHAINS = new HashMap<>();
 
     private String name;
 
     protected Domain parent = null;
 
-    protected Map<String,Domain> child = new HashMap<>();
+    protected Map<String, Domain> child = new HashMap<>();
     protected List<Rule> rules = new ArrayList<>();
 
 
-
-    public Domain(String name){
+    public Domain(String name) {
         this.name = name;
+    }
+
+
+    public Domain(String name, Domain parent) {
+        this.name = name;
+        this.parent = parent;
     }
 
     public boolean equals(String domain) {
@@ -30,7 +35,7 @@ public class Domain {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof Domain) {
+        if (obj instanceof Domain) {
             return equals(((Domain) obj).getName());
         }
         return super.equals(obj);
@@ -41,20 +46,20 @@ public class Domain {
     }
 
 
-    public Domain find(String domainName){
+    public Domain find(String domainName) {
         return child.get(domainName);
     }
 
-    public Domain match(String host){
-        assert host!=null;
+    public Domain match(String host) {
+        assert host != null;
 
-        String[] blocks = host.split(".");
+        String[] blocks = host.split("\\.");
 
-        if(!equals(blocks[blocks.length-1])) return null;
+        if (!equals(blocks[blocks.length - 1])) return null;
 
         Domain cur = this;
 
-        for(int i=blocks.length-2;i>0;i--) {
+        for (int i = blocks.length - 2; i > 0; i--) {
             cur = cur.find(blocks[i]);
             if (cur == null) break;
         }
@@ -65,14 +70,16 @@ public class Domain {
     public Domain add(String host) {
         assert host != null;
 
-        String[] blocks = host.split(".");
+        String[] blocks = host.split("\\.");
 
-        if (!equals(blocks[0])) return null;
+        if (!equals(blocks[blocks.length - 1])) return null;
 
         Domain it = this;
 
-        for (int i = 1; i < blocks.length && it != null; i++) {
-            it = it.child.get(blocks[i]);
+        for (int i = blocks.length - 2; i >= 0 && it != null; i--) {
+            final String key = blocks[i];
+            final Domain p = it;
+            it = it.child.computeIfAbsent(key, k -> new Domain(key, p));
         }
 
         return it;
@@ -103,7 +110,7 @@ public class Domain {
             RULE_CHAINS.put(this.getName(), this);
     }
 
-    public List<Rule> rules(){
+    public List<Rule> rules() {
         return rules;
     }
 
@@ -112,9 +119,11 @@ public class Domain {
         if (parent == null)
             return getName();
 
-        return getName() + "." + parent.host();
-    }
+        String parentHost = parent.host();
 
+        return StringUtils.isBlank(parentHost) ? getName() : getName() + "." + parentHost;
+
+    }
 
 
 }

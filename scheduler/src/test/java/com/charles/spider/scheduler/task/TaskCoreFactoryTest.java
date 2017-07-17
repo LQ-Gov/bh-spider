@@ -1,6 +1,15 @@
 package com.charles.spider.scheduler.task;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.protostuff.LinkedBuffer;
+import io.protostuff.ProtostuffIOUtil;
+import io.protostuff.Schema;
+import io.protostuff.runtime.RuntimeSchema;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Iterator;
 
 import static org.junit.Assert.*;
 
@@ -23,6 +32,35 @@ public class TaskCoreFactoryTest {
 
         //TaskCoreFactory.instance().start();
         //System.in.read();
+
+        //LinkedBuffer.allocate()
+
+        ObjectMapper mapper = new ObjectMapper();
+
+
+
+        Object[] o = new Object[]{new byte[]{1,2,3},1, true, "abc"};
+
+        System.out.println( mapper.writeValueAsString(o));
+
+
+        byte[] data = mapper.writeValueAsBytes(o);
+
+        JsonNode node = mapper.readTree(data);
+
+        Iterator<JsonNode> it = node.iterator();
+        if (it.hasNext()){
+            JsonNode x = it.next();
+
+            byte[] result = mapper.readValue(x.traverse(),byte[].class);
+
+            System.out.println(Arrays.toString(result));
+
+
+        }
+//        Schema schema = RuntimeSchema.getSchema(o.getClass());
+//
+//        System.out.println(schema.typeClass());
     }
 
 }

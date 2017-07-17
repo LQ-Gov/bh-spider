@@ -1,6 +1,7 @@
 package com.charles.spider.client;
 
 import com.alibaba.fastjson.JSON;
+import com.charles.spider.common.entity.Module;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.Before;
@@ -31,7 +32,9 @@ public class ModuleOperationTest {
     @Test
     public void select() throws Exception {
 
-         client.module().select();
+         List<Module> list = client.module().select();
+
+         System.out.println(list.get(0).getName());
     }
 
     @Test

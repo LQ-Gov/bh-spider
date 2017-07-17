@@ -1,5 +1,6 @@
 package com.charles.spider.common.protocol;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -10,9 +11,19 @@ import java.util.List;
  */
 public interface Protocol {
 
-    static Class constructorCollectionClass(Class<? extends Collection> outer, Class<? extends Object> inner) {
+    static Type getGenericType(ParameterizedType parameterizedType) {
+        return parameterizedType.getActualTypeArguments()[0];
+    }
 
-        return null;
+    static Type getGenericType(Type type){
+        if(type instanceof Class<?>){
+            ParameterizedType parameterizedType = (ParameterizedType) ((Class) type).getGenericSuperclass();
+            return getGenericType(parameterizedType);
+        }
+        else if(type instanceof ParameterizedType)
+            return getGenericType((ParameterizedType) type);
+
+        return type;
     }
 
     byte[] pack(Object data) throws Exception;

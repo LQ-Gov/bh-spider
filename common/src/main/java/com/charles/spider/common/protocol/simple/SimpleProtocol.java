@@ -39,32 +39,14 @@ public final class SimpleProtocol implements Protocol {
 
         //Array
         //Object
-        if (o == null) return interpreterFactory.get(DataTypes.NULL).pack(o);
+        if (o == null) return interpreterFactory.get(DataTypes.NULL).pack(null);
 
 
         DataTypes type;
 
         Class<?> cls = o.getClass();
 
-        if(cls.isArray()) type = DataTypes.ARRAY;
-
-        else if (Collection.class.isAssignableFrom(cls)) type=DataTypes.ARRAY;
-
-
-        //if (cls.isArray()) type = DataTypes.type(cls.getComponentType());
-
-//        else if (Collection.class.isAssignableFrom(cls)) {
-//            ParameterizedType parameterizedType = (ParameterizedType) o.getClass().getGenericSuperclass();
-//            Type t = parameterizedType.getActualTypeArguments()[0];
-//            if (t instanceof Class<?>)
-//                type = DataTypes.type((Class<?>) t);
-//            else
-//                type = DataTypes.CLASS;
-//        }
-
-
-
-        else type = DataTypes.type(o.getClass());
+        type = DataTypes.type(o.getClass());
 
 
         return interpreterFactory.get(type).pack(o);
