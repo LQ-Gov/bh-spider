@@ -1,13 +1,18 @@
 package com.charles.spider.common.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by lq on 17-6-7.
  */
 public class Rule {
-    private String name;
+
+    private String id;
 
     private Map<String,String[]> extractors= new HashMap<>();
 
@@ -21,21 +26,24 @@ public class Rule {
 
     private String description;
 
-    protected Rule(){}
+    protected Rule() {
+        this.id = UUID.randomUUID().toString();
+    }
 
-    public Rule(String name,String host,String cron){
-        this.name = name;
+    @JsonCreator
+    public Rule(@JsonProperty("id") String id) {
+        this.id = id;
+        if (this.id == null || this.id.length() == 0) this.id = UUID.randomUUID().toString();
+    }
+
+    public Rule(String pattern,String host,String cron){
+        this.pattern = pattern;
         this.host = host;
         this.cron = cron;
     }
 
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public String getId() {
+        return id;
     }
 
     public String[] extractor(String key) {

@@ -5,21 +5,25 @@ import java.util.*;
 /**
  * Created by lq on 17-6-13.
  */
-public class TopDomain extends Domain {
-    public TopDomain() {
+public class RootDomain extends Domain {
+    public RootDomain() {
         super("");
     }
 
 
     @Override
-    public Domain match(String host) {
+    public Domain match(String host,boolean exact) {
         assert host != null;
         String[] blocks = host.split("\\.");
 
         Domain it = this;
         for (int i = blocks.length - 1; i > 0; i--) {
-            it = it.child.get(blocks[i]);
-            if (it == null) return null;
+            Domain next = it.child.get(blocks[i]);
+            if (next == null) {
+                it = exact ? null : it;
+                break;
+            }
+            it = next;
         }
 
         return it;

@@ -61,15 +61,16 @@ public class TaskCoreFactory {
     }
 
     public JobDetail scheduler(Rule rule,Class<? extends Job> job) throws SchedulerException {
-        JobDetail detail = newJob(job).withIdentity(rule.getName(), "RULE").build();
-        detail.getJobDataMap().put("rule", rule);
-
-        CronTriggerImpl trigger = (CronTriggerImpl) newTrigger().withIdentity(rule.getName())
-                .withSchedule(cronSchedule(rule.getCron())).build();
-
-        quartz.scheduleJob(detail, trigger);
-
-        return detail;
+//        JobDetail detail = newJob(job).withIdentity(rule.getName(), "RULE").build();
+//        detail.getJobDataMap().put("rule", rule);
+//
+//        CronTriggerImpl trigger = (CronTriggerImpl) newTrigger().withIdentity(rule.getName())
+//                .withSchedule(cronSchedule(rule.getCron())).build();
+//
+//        quartz.scheduleJob(detail, trigger);
+//
+//        return detail;
+        return null;
     }
 
     public synchronized void start() throws SchedulerException {

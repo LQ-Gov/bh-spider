@@ -19,8 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by lq on 7/5/17.
  */
 public class RuleFactory {
-    //    private Map<String, RuleTemplate> templates = new HashMap<>();
-
 
     private Path base = null;
 
@@ -43,25 +41,6 @@ public class RuleFactory {
             load(new File[]{file});
 
     }
-
-    private void loadTemplate(File[] files) throws IOException {
-        for (File file : files) {
-            String name = file.getName();
-            if (name.endsWith(".template.json")) {
-                byte[] data = Files.readAllBytes(file.toPath());
-                RuleTemplate template = JSON.parseObject(data, RuleTemplate.class);
-
-                Preconditions.checkNotNull(template.getName(), "you must define the name property");
-
-                //Preconditions.checkState(templates.containsKey(template.getName()), "the template %s is exists", template.getName());
-
-                template.setName(name.substring(0, name.length() - ".template.json".length()));
-
-            }
-        }
-
-    }
-
     private void load(File[] files) throws IOException {
         if (files == null) return;
         for (File file : files) {

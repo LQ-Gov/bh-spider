@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler;
 
-import com.charles.common.http.Request;
+import com.charles.spider.common.http.Request;
 import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.common.entity.Rule;
@@ -14,7 +14,6 @@ import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.moudle.ModuleAgent;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
 import com.charles.spider.scheduler.rule.*;
-import com.charles.spider.scheduler.task.RuleExecuteObject;
 import com.charles.spider.scheduler.task.TaskCoreFactory;
 import com.charles.spider.store.base.Store;
 import com.google.common.base.Preconditions;
@@ -27,16 +26,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 import org.apache.commons.lang3.StringUtils;
-import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -54,7 +50,7 @@ public class BasicScheduler implements IEvent {
     private Store store = null;
 
 
-    private Domain domain = new TopDomain();
+    private Domain domain = new RootDomain();
 
 
     public BasicScheduler() {
@@ -172,10 +168,17 @@ public class BasicScheduler implements IEvent {
 
     protected void executeRule(Rule rule) throws SchedulerException {
         String host = rule.getHost();
-        Domain matcher = domain.match(host);
 
-        if (matcher == null)
-            matcher = domain.add(host);
+        Domain matcher;
+
+        if (".".equals(rule.getHost())) matcher = domain;
+
+        else {
+            matcher = domain.match(host, true);
+
+            if (matcher == null)
+                matcher = domain.add(host);
+        }
 
         //JobDetail job = taskFactory.scheduler(rule, RuleExecuteObject.class);
 
@@ -211,15 +214,33 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_REQUEST_HANDLER(Context ctx, Request request) {
+    protected void SUBMIT_REQUEST_HANDLER(Context ctx, Request req) {
+        String host = req.url().getHost();
+        Domain matcher = domain.match(host, false);
 
-        String host = request.uri().getHost();
-        Domain matcher = domain.match(host);
-        if (matcher == null) {
-
-        }
+        if (!(matcher != null && bindRequestToDomain(matcher, req)))
+            bindRequestToDomain(domain, req);
 
     }
+
+
+    protected boolean bindRequestToDomain(Domain d, Request req) {
+
+
+        List<Rule> rules = d.rules();
+
+        if (rules != null && !rules.isEmpty()) {
+            for (Rule it : rules) {
+                if (it instanceof RuleDecorator) {
+                    RuleDecorator decorator = (RuleDecorator) it;
+                    if (decorator.bind(req)) return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     @EventMapping
     protected void GET_MODULE_LIST_HANDLER(Context ctx, Query query) {
@@ -240,7 +261,7 @@ public class BasicScheduler implements IEvent {
 
         else {
 
-            Domain matcher = domain.match(host);
+            Domain matcher = domain.match(host, true);
 
             rules = matcher == null ? ruleFactory.get() : matcher.rules();
         }
@@ -259,7 +280,7 @@ public class BasicScheduler implements IEvent {
 
     @EventMapping
     protected void GET_HOST_LIST_HANDLER(Context ctx) {
-        TopDomain top = (TopDomain)domain;
+        RootDomain top = (RootDomain) domain;
 
         List<String> rules = top.hosts();
 

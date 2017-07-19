@@ -50,21 +50,25 @@ public class Domain {
         return child.get(domainName);
     }
 
-    public Domain match(String host) {
+    public Domain match(String host,boolean exact) {
         assert host != null;
 
         String[] blocks = host.split("\\.");
 
         if (!equals(blocks[blocks.length - 1])) return null;
 
-        Domain cur = this;
+        Domain it = this;
 
         for (int i = blocks.length - 2; i > 0; i--) {
-            cur = cur.find(blocks[i]);
-            if (cur == null) break;
+            Domain next = it.find(blocks[i]);
+            if (next == null) {
+                it = exact ? null : it;
+                break;
+            }
+            it = next;
         }
 
-        return cur;
+        return it;
     }
 
     public Domain add(String host) {
