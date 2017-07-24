@@ -46,7 +46,12 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
             if (chain == null || chain.length == 0) return;
 
             for (String it : chain) {
-                Extractor extractor = scheduler.extractorObject(it);
+                Extractor extractor = null;
+                try {
+                    extractor = scheduler.extractorObject(it, null);
+                } catch (ClassNotFoundException | IOException | IllegalAccessException | InstantiationException e) {
+                    e.printStackTrace();
+                }
                 if (extractor == null) break;
 
                 extractor.run(ctx, ctx.document());

@@ -1,6 +1,7 @@
 package com.charles.spider.scheduler.moudle;
 
 import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.extractor.Extractor;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.common.entity.Module;
@@ -20,8 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by lq on 17-3-16.
  */
-public class ModuleAgent {
-    private static Map<String, ModuleCoreFactory> locks = new ConcurrentHashMap<String, ModuleCoreFactory>();
+public class ModuleAgent<T> {
+    private static Map<String, Object> extractorObjects = new ConcurrentHashMap<>();
 
     private Path base = null;
 
@@ -109,7 +110,7 @@ public class ModuleAgent {
                 Condition.where("id").is(module.getId())
                         .and(Condition.where("update_time").is(module.getUpdateTime())));
 
-        if (count == 0) throw new Exception("unknow reason,the database can't update");
+        if (count == 0) throw new Exception("unknown reason,the database can't update");
 
 
         return module;
@@ -124,5 +125,6 @@ public class ModuleAgent {
 
         return service.select(query);
     }
+
 
 }

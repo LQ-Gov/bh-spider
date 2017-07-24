@@ -1,17 +1,20 @@
 package com.charles.spider.scheduler.moudle;
 
 import com.charles.spider.common.constant.ModuleTypes;
-import com.charles.spider.scheduler.config.Config;
-import com.charles.spider.store.base.Store;
 import com.charles.spider.common.entity.Module;
+import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.store.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by lq on 17-3-16.
@@ -19,9 +22,11 @@ import java.util.Map;
 public class ModuleCoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(ModuleCoreFactory.class);
 
+    private static Map<String,Object> moduleObjects = new ConcurrentHashMap<>();
 
     private Map<ModuleTypes, ModuleAgent> agents = new HashMap<>();
-    private static volatile ModuleCoreFactory obj = null;
+
+
 
     public ModuleCoreFactory(Service<Module> service) throws IOException {
 
@@ -40,15 +45,37 @@ public class ModuleCoreFactory {
     }
 
 
-    public static ModuleCoreFactory instance() throws Exception {
-        if (obj == null) {
-            synchronized (ModuleCoreFactory.class) {
-                if (obj == null) {
+    public Object object(String moduleName, String className) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
 
-                    obj = new ModuleCoreFactory(Store.get(Config.INIT_STORE_DATABASE, Config.getStoreProperties()).module());
-                }
+
+        ModuleAgent agent = agents.get(ModuleTypes.UNKNOWN);
+
+        String key = moduleName+"."+className;
+
+
+        Object o = moduleObjects.get(key);
+
+        if(o==null){
+            Module module = agent.get(moduleName);
+
+            if(module==null) throw new FileNotFoundException("the module not exists");
+
+            synchronized (module.getType()) {
+                o = moduleObjects.get(key);
+                if (o != null) return o;
+
+                String path = module.getPath();
+
+                URLClassLoader cl = new URLClassLoader(new URL[]{new URL("file:///" + path)}, this.getClass().getClassLoader());
+
+                Class<?> cls = cl.loadClass(className);
+
+                o = cls.newInstance();
+
+                moduleObjects.put(key, o);
             }
         }
-        return obj;
+
+        return o;
     }
 }
