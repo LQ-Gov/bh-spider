@@ -1,23 +1,13 @@
-package com.charles.spider.scheduler.task;
+package com.charles.spider.scheduler.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.protostuff.LinkedBuffer;
-import io.protostuff.ProtostuffIOUtil;
-import io.protostuff.Schema;
-import io.protostuff.runtime.RuntimeSchema;
 import org.junit.Test;
 
 import java.nio.file.*;
-import java.util.Arrays;
-import java.util.Iterator;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by lq on 17-3-31.
  */
-public class TaskCoreFactoryTest {
+public class JobCoreFactoryTest {
     @Test
     public void get() throws Exception {
     }
@@ -29,9 +19,9 @@ public class TaskCoreFactoryTest {
 //        obj.setCron("/5 * * * * ?");
 //        obj.setName("test");
 //
-//        TaskCoreFactory.instance().submit(obj);
+//        JobCoreFactory.instance().submit(obj);
 
-        //TaskCoreFactory.instance().start();
+        //JobCoreFactory.instance().start();
         //System.in.read();
 
         //LinkedBuffer.allocate()

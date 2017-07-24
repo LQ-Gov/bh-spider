@@ -1,42 +1,48 @@
 package com.charles.spider.scheduler.fetcher;
 
+import com.charles.common.utils.ArrayUtils;
+import com.charles.spider.common.http.FetchContext;
+import com.charles.spider.common.http.Request;
 import com.charles.spider.scheduler.BasicScheduler;
 import com.charles.spider.scheduler.event.EventLoop;
-import com.charles.spider.common.command.Commands;
 import com.charles.spider.scheduler.event.IEvent;
-import com.charles.spider.scheduler.processor.ProcessGroup;
+import org.apache.http.client.methods.*;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
-import java.util.concurrent.Future;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by lq on 17-3-17.
  */
 public class Fetcher implements IEvent {
-    private EventLoop loop = new EventLoop(this);
+    //private EventLoop loop = new EventLoop(this);
     private BasicScheduler scheduler = null;
     private CloseableHttpAsyncClient client = HttpAsyncClientBuilder.create().build();
-    private ProcessGroup processGroup = new ProcessGroup();
 
 
-    public Fetcher(BasicScheduler scheduler) {
+    private volatile ExecutorService workers = null;
+
+    public Fetcher(BasicScheduler scheduler, int workerCount) {
+
         this.scheduler = scheduler;
+        workerCount = workerCount <= 0 ? Runtime.getRuntime().availableProcessors() : workerCount;
+
+        this.workers = Executors.newFixedThreadPool(workerCount);
+
+        this.client.start();
     }
 
+    public Fetcher(BasicScheduler scheduler) {
+        this(scheduler, 0);
+    }
 
-    public Future process(Commands event, Object... params) {
-        if (Thread.currentThread() != loop)
-            //return loop.execute(event, params);
-        switch (event) {
-//            case TASK:
-//                return this.scheduler.process(event, params);
-//            case PROCESS:
-
-
-        }
-        return null;
-
+    protected ExecutorService service() {
+        return workers;
     }
 
     @Override
@@ -44,62 +50,86 @@ public class Fetcher implements IEvent {
         return false;
     }
 
-//    public void fetch(Task task) {
-//
-//
-//        HttpRequestBase request = pack_request_from_task(task);
-//
-//        FetcherContext context = new FetcherContext(request, task);
-//        exec_request_prepare_moudles(task, request, context);
-//
-//        client.execute(request, new FetcherCallback(this, context));
-//
-//    }
-
-//    protected HttpRequestBase pack_request_from_task(Task task) {
-//        HttpRequestBase request = null;
-//        if (task.getMethod() == HttpMethod.GET)
-//            request = new HttpGet(task.getUrl());
-//        else if (task.getMethod() == HttpMethod.POST)
-//            request = new HttpPost(task.getUrl());
-//        else if (task.getMethod() == HttpMethod.DELETE)
-//            request = new HttpDelete(task.getUrl());
-//        else if (task.getMethod() == HttpMethod.PUT)
-//            request = new HttpPut(task.getUrl());
-//
-//        init_request_header(request, task);
-//        return request;
-//    }
-//
-//    protected void init_request_header(HttpRequestBase request, Task task) {
-//        //Pattern.compile("(?<=//|)((\\w)+\\.)+\\w+")
-//
-//        if (task.getHeaders() != null) {
-//            task.getHeaders().entrySet().forEach(header -> request.setHeader(header.getKey(), header.getValue()));
-//        }
-//
-//    }
-
-//    protected void exec_request_prepare_moudles(Task task, HttpRequestBase request, FetcherContext context) {
-//        List<String> prepare = task.getHandlers().get("prepare");
-//        if (prepare != null && prepare.size() > 0) {
-////            prepare.forEach(x -> {
-////                try {
-////                    ModuleCoreFactory moudle = (ModuleCoreFactory) this.scheduler.process(Commands.GET_MODULE).get();
-////                    //此次需执行moudle
-////                } catch (InterruptedException | ExecutionException e) {
-////                    e.printStackTrace();
-////                }
-////            });
-//        }
-//    }
-//
-//
-//    protected void TASK_PROCESS_HANDLE(FetcherContext context) {
-//        Task task = context.getTask();
-//        processGroup.execute(() -> new Processor(task, context).exec(), () -> this.scheduler.report(task.getId(), 1));
-//    }
+    public void fetch(Request req) throws URISyntaxException {
 
 
-    public void close(){}
+        HttpRequestBase base = build_request_from_original(req);
+
+        FetchContext context = new BasicFetchContext(base, req);
+
+        //exec_request_prepare_modules(req, base, context);
+
+        client.execute(base, new FetchCallback(this.scheduler, this, context));
+
+    }
+
+
+    protected HttpRequestBase build_request_from_original(Request original) throws URISyntaxException {
+        HttpRequestBase base;
+
+        URI uri = original.url().toURI();
+
+        switch (original.method()) {
+            case GET:
+                base = new HttpGet(uri);
+                break;
+            case POST:
+                base = new HttpPost(uri);
+                break;
+            case PUT:
+                base = new HttpPut(uri);
+                break;
+            case HEAD:
+                base = new HttpHead(uri);
+                break;
+            case PATCH:
+                base = new HttpPatch(uri);
+                break;
+
+            case TRACE:
+                base = new HttpTrace(uri);
+                break;
+
+            case DELETE:
+                base = new HttpDelete(uri);
+                break;
+            case OPTIONS:
+                base = new HttpOptions(uri);
+                break;
+
+            default:
+                throw new RuntimeException("not support this type");
+        }
+
+        init_request_header(base, original.headers());
+        return base;
+    }
+
+    //
+    protected void init_request_header(HttpRequestBase request, Map<String, String> headers) {
+
+        //Pattern.compile("(?<=//|)((\\w)+\\.)+\\w+")
+
+        if (headers != null && !headers.isEmpty()) {
+            headers.forEach(request::setHeader);
+        }
+
+    }
+
+    protected void exec_request_prepare_modules(Request req, HttpRequestBase request, BasicScheduler context) {
+        String[] prepare = req.extractor("prepare");
+        if (!ArrayUtils.isEmpty(prepare)) {
+            //scheduler.
+        }
+    }
+//
+//
+//    protected void TASK_PROCESS_HANDLE(FetchContext context) {
+//        Task job = context.getTask();
+//        processGroup.execute(() -> new Processor(job, context).exec(), () -> this.scheduler.report(job.getId(), 1));
+//    }
+
+
+    public void close() {
+    }
 }

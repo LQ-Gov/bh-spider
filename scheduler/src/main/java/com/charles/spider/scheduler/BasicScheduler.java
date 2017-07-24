@@ -1,5 +1,6 @@
 package com.charles.spider.scheduler;
 
+import com.charles.spider.common.extractor.Extractor;
 import com.charles.spider.common.http.Request;
 import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.common.entity.Module;
@@ -14,7 +15,9 @@ import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.moudle.ModuleAgent;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
 import com.charles.spider.scheduler.rule.*;
-import com.charles.spider.scheduler.task.TaskCoreFactory;
+import com.charles.spider.scheduler.job.JobExecutor;
+import com.charles.spider.scheduler.job.RuleExecuteObject;
+import com.charles.spider.scheduler.job.JobCoreFactory;
 import com.charles.spider.store.base.Store;
 import com.google.common.base.Preconditions;
 import io.netty.bootstrap.ServerBootstrap;
@@ -33,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -44,7 +48,7 @@ public class BasicScheduler implements IEvent {
     private volatile boolean closed = true;
     private EventLoop loop = null;
     private Fetcher fetcher = null;
-    private TaskCoreFactory taskFactory = null;
+    private JobCoreFactory jobFactory = null;
     private ModuleCoreFactory moduleCoreFactory = null;
     private RuleFactory ruleFactory = null;
     private Store store = null;
@@ -67,8 +71,8 @@ public class BasicScheduler implements IEvent {
         //先初始化存储，其他模块依赖存储
         initStore();
         initModuleFactory();//初始化模块工厂
+        initJobFactory();
         initRuleFactory();//初始化规则工厂
-        initTaskFactory();
         initLocalListen();//初始化本地端口坚挺
     }
 
@@ -82,13 +86,17 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public void report(String id, int process) {
-        //this.process(Commands.PROCESS, id, process);
-    }
-
     private void close() {
         //process(Commands.CLOSE);
     }
+
+
+    public Extractor extractorObject(String name){
+        return null;
+    }
+
+
+
 
 
     protected void init_system_signal_handles() {
@@ -161,9 +169,9 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    protected void initTaskFactory() throws SchedulerException {
-        taskFactory = TaskCoreFactory.instance();
-        taskFactory.start();
+    protected void initJobFactory() throws SchedulerException {
+        jobFactory = new JobCoreFactory(this);
+        jobFactory.start();
     }
 
     protected void executeRule(Rule rule) throws SchedulerException {
@@ -180,11 +188,12 @@ public class BasicScheduler implements IEvent {
                 matcher = domain.add(host);
         }
 
-        //JobDetail job = taskFactory.scheduler(rule, RuleExecuteObject.class);
+        JobExecutor je = jobFactory.build(RuleExecuteObject.class);
 
-        RuleDecorator decorator = new RuleDecorator(rule);
+        RuleDecorator decorator = new RuleDecorator(rule, je);
 
         matcher.addRule(decorator);
+        decorator.exec();
 
     }
 
@@ -282,9 +291,13 @@ public class BasicScheduler implements IEvent {
     protected void GET_HOST_LIST_HANDLER(Context ctx) {
         RootDomain top = (RootDomain) domain;
 
-        List<String> rules = top.hosts();
-
         ctx.write(top.hosts());
+    }
+
+
+    @EventMapping
+    protected void FETCH_HANDLER(Context ctx, Request req) throws URISyntaxException {
+        fetcher.fetch(req);
     }
 
 
@@ -300,7 +313,7 @@ public class BasicScheduler implements IEvent {
             fetcher.close();
 
         try {
-            TaskCoreFactory.instance().close();
+            jobFactory.close();
         } catch (SchedulerException e) {
             e.printStackTrace();
         }

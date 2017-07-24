@@ -14,6 +14,10 @@ public enum Commands {
     GET_MODULE,//获取单个module
 
     DELETE_MODULE,
+    DELETE_RULE,
+
+
+    FETCH,
 
 
     ALIVE,

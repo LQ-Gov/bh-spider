@@ -1,6 +1,8 @@
 package com.charles.spider.common.http;
 
 import com.charles.spider.common.constant.HttpMethod;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,8 +22,11 @@ public class Request {
 
     private Map<String,Object> extra = new HashMap<>();
 
+    private Map<String,String[]> extractors = new HashMap<>();
 
-    public Request(String url) throws MalformedURLException {
+
+    @JsonCreator
+    public Request(@JsonProperty("base") String url) throws MalformedURLException {
         this(url, HttpMethod.GET);
     }
 
@@ -60,4 +65,13 @@ public class Request {
      * @return
      */
     public Map<String,Object> extra(){return extra;}
+
+
+    public String[] extractor(String key){
+        return extractors.get(key);
+    }
+
+    public void extractor(String key,String[] modules){
+        extractors.put(key,modules);
+    }
 }

@@ -51,7 +51,7 @@ public class Client {
 
     }
 
-    protected synchronized  <T> T write(Commands cmd, Type cls, Object... params) {
+    protected synchronized <T> T write(Commands cmd, Type cls, Object... params) {
         short type = (short) cmd.ordinal();
         try {
             byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
@@ -73,7 +73,7 @@ public class Client {
 
             in.readFully(data);
 
-            return mapper.readValue(data, mapper.getTypeFactory().constructType(cls));
+            return cls == null ? null : mapper.readValue(data, mapper.getTypeFactory().constructType(cls));
 
 
         } catch (IOException e) {
@@ -95,6 +95,11 @@ public class Client {
 
     public RequestOperation request() {
         return requestOperation;
+    }
+
+
+    public boolean crawler(String url,Class<?>... extractors){
+        return false;
     }
 
 

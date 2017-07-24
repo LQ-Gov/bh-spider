@@ -17,7 +17,7 @@ public class RootDomain extends Domain {
         String[] blocks = host.split("\\.");
 
         Domain it = this;
-        for (int i = blocks.length - 1; i > 0; i--) {
+        for (int i = blocks.length - 1; i >= 0; i--) {
             Domain next = it.child.get(blocks[i]);
             if (next == null) {
                 it = exact ? null : it;

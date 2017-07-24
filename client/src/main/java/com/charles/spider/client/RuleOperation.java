@@ -51,4 +51,9 @@ public class RuleOperation {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
         return client.write(Commands.GET_HOST_LIST, type);
     }
+
+    public void delete(String host,String uuid){
+        client.write(Commands.DELETE_RULE,null,host,uuid);
+    }
+
 }

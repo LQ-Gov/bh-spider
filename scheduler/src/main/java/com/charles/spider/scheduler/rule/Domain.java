@@ -59,7 +59,7 @@ public class Domain {
 
         Domain it = this;
 
-        for (int i = blocks.length - 2; i > 0; i--) {
+        for (int i = blocks.length - 2; i >= 0; i--) {
             Domain next = it.find(blocks[i]);
             if (next == null) {
                 it = exact ? null : it;
@@ -109,7 +109,7 @@ public class Domain {
 
 
     public void addRule(Rule rule) {
-        rules.add(new RuleDecorator(rule));
+        rules.add(rule);
         if (!RULE_CHAINS.containsKey(this.getName()))
             RULE_CHAINS.put(this.getName(), this);
     }

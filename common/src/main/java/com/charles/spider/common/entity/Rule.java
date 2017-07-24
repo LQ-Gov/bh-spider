@@ -24,6 +24,10 @@ public class Rule {
 
     private boolean exact;
 
+    private int threadCount;
+
+    private String dispatcher;
+
     private String description;
 
     protected Rule() {

@@ -6,12 +6,15 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.deploy.net.HttpResponse;
+import org.omg.CORBA.PUBLIC_MEMBER;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,13 +24,6 @@ import java.util.List;
 
 @RestController
 public class RuleController {
-//        private Map<String, RuleTemplate> templates = new HashMap<>();
-    private final static ObjectMapper mapper = new ObjectMapper();
-
-    static {
-        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-    }
-
 
     @Autowired
     private Client client;
@@ -47,4 +43,25 @@ public class RuleController {
         return client.rule().hosts();
         //return new ArrayList<>();
     }
+
+
+    @RequestMapping(value = "/rule",method = RequestMethod.PUT)
+    public String add(HttpServletResponse response, @RequestBody Rule rule) {
+        client.rule().submit(rule);
+        return rule.getId();
+    }
+
+
+    @RequestMapping(value = "/rule",method = RequestMethod.POST)
+    public void update(@RequestBody Rule rule){
+
+
+    }
+
+    @RequestMapping(value = "/rule/{host}/{uuid}",method = RequestMethod.DELETE)
+    public void delete(@PathVariable("host") String host, @PathVariable("uuid")String uuid) {
+        client.rule().delete(host, uuid);
+    }
+
+
 }

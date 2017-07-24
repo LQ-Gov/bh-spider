@@ -61,7 +61,7 @@ public class EventLoop extends Thread {
 
                 executor.invoke(args);
 
-                cmd.context().complete();
+                if(cmd.context()!=null) cmd.context().complete();
 
             } catch (InterruptedException | IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
                 e.printStackTrace();

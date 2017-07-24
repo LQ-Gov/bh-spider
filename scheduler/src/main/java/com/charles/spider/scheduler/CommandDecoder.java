@@ -1,5 +1,6 @@
 package com.charles.spider.scheduler;
 
+import com.charles.common.JsonFactory;
 import com.charles.spider.common.command.Commands;
 import com.charles.spider.common.protocol.ProtocolFactory;
 import com.charles.spider.common.protocol.SerializeFactory;
@@ -21,7 +22,7 @@ import java.util.List;
  * Created by lq on 17-3-26.
  */
 public class CommandDecoder extends ByteToMessageDecoder {
-    private final static ObjectMapper mapper = new ObjectMapper();
+    private final static ObjectMapper mapper = JsonFactory.get();
 
 
     @Override
@@ -38,11 +39,8 @@ public class CommandDecoder extends ByteToMessageDecoder {
 
                 byte[] data = new byte[len];
                 byteBuf.readBytes(data);
-                Iterator<JsonNode> iterator = mapper.readTree(data).iterator();
 
-                while (iterator.hasNext()) {
-                    JsonNode node = iterator.next();
-
+                for (JsonNode node : mapper.readTree(data)) {
                     params.add(new JacksonToken(mapper, node.traverse()));
                 }
             }

@@ -30,17 +30,6 @@ public class Program {
             logger.warn("the config file {} not exists,program start with default config", file);
 
 
-//        Class.forName("org.sqlite.JDBC");
-//
-//
-//        Connection conn = DriverManager.getConnection( "jdbc:sqlite:sql-lite.db");
-//
-//        conn.setAutoCommit(false);
-//        Statement stmt = conn.createStatement();
-//
-//        stmAddress already in uset.executeUpdate("create table hehe(id number, name varchar(32))");
-//        conn.commit();
-
         Class<?> mode = RunModeClassFactory.get(Config.INIT_RUN_MODE);
         if (mode == null)
             throw new Exception("not valid run mode");
