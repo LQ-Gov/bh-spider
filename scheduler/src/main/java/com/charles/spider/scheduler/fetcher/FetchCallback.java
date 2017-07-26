@@ -1,13 +1,11 @@
 package com.charles.spider.scheduler.fetcher;
 
-import com.charles.spider.common.command.Commands;
 import com.charles.spider.common.extractor.Extractor;
 import com.charles.spider.common.http.FetchContext;
 import com.charles.spider.common.http.Request;
 import com.charles.spider.scheduler.BasicScheduler;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
@@ -48,8 +46,16 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
             for (String it : chain) {
                 Extractor extractor = null;
                 try {
-                    extractor = scheduler.extractorObject(it, null);
+                    Object o  = scheduler.moduleObject(it, null);
+
+                    if(o instanceof Extractor) extractor = (Extractor) o;
+
+                    else throw new Exception("not a extractor module");
+
+
                 } catch (ClassNotFoundException | IOException | IllegalAccessException | InstantiationException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 if (extractor == null) break;

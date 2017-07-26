@@ -5,3 +5,5 @@
 data/*
 monitor/**/node_modules
 
+client-test
+

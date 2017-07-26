@@ -22,17 +22,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ModuleCoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(ModuleCoreFactory.class);
 
-    private static Map<String,Object> moduleObjects = new ConcurrentHashMap<>();
+    private static Map<String, Object> moduleObjects = new ConcurrentHashMap<>();
 
     private Map<ModuleTypes, ModuleAgent> agents = new HashMap<>();
-
 
 
     public ModuleCoreFactory(Service<Module> service) throws IOException {
 
         agents.put(ModuleTypes.JAR, new ModuleAgent(ModuleTypes.JAR, Paths.get(Config.INIT_DATA_PATH, "handler"), service));
+        agents.put(ModuleTypes.GROOVY, new GroovyModuleAgent(ModuleTypes.GROOVY, Config.INIT_DATA_PATH + "handler", service));
         agents.put(ModuleTypes.CONFIG, new ModuleAgent(ModuleTypes.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
         agents.put(ModuleTypes.UNKNOWN, new GlobalModuleAgent(ModuleTypes.UNKNOWN, service));
+
     }
 
 
@@ -50,31 +51,36 @@ public class ModuleCoreFactory {
 
         ModuleAgent agent = agents.get(ModuleTypes.UNKNOWN);
 
-        String key = moduleName+"."+className;
+        Module module = agent.get(moduleName);
+
+        agent = agents.get(module.getType());
 
 
-        Object o = moduleObjects.get(key);
+        Object o = agent.object(moduleName, className);
 
-        if(o==null){
-            Module module = agent.get(moduleName);
+//        Object o = moduleObjects.get(key);
+//
+//        if (o == null) {
+//
+//
+//            if (module == null) throw new FileNotFoundException("the module not exists");
+//
+//            synchronized (module.getType()) {
+//                o = moduleObjects.get(key);
+//                if (o != null) return o;
+//
+//                String path = module.getPath();
+//
+//                URLClassLoader cl = new URLClassLoader(new URL[]{new URL("file:///" + path)}, this.getClass().getClassLoader());
+//
+//                Class<?> cls = cl.loadClass(className);
+//
+//                o = cls.newInstance();
+//
+//                moduleObjects.put(key, o);
+//            }
+//        }
 
-            if(module==null) throw new FileNotFoundException("the module not exists");
-
-            synchronized (module.getType()) {
-                o = moduleObjects.get(key);
-                if (o != null) return o;
-
-                String path = module.getPath();
-
-                URLClassLoader cl = new URLClassLoader(new URL[]{new URL("file:///" + path)}, this.getClass().getClassLoader());
-
-                Class<?> cls = cl.loadClass(className);
-
-                o = cls.newInstance();
-
-                moduleObjects.put(key, o);
-            }
-        }
 
         return o;
     }

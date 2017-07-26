@@ -6,13 +6,16 @@ package com.charles.spider.common.constant;
 public enum ModuleTypes {
     UNKNOWN,
     JAR,
+    GROOVY,
     CONFIG;
 
 
-    public ModuleTypes value(String s){
+    public ModuleTypes value(String s) {
         switch (s) {
             case "jar":
                 return JAR;
+            case "groovy":
+                return GROOVY;
 
             default:
                 return UNKNOWN;

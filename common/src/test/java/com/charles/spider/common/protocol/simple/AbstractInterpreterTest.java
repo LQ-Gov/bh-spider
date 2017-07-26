@@ -2,7 +2,6 @@ package com.charles.spider.common.protocol.simple;
 
 import org.junit.Assert;
 import org.junit.Before;
-import sun.reflect.misc.ReflectUtil;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;

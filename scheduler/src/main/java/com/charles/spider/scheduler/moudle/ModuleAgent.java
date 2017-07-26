@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by lq on 17-3-16.
  */
-public class ModuleAgent<T> {
+public class ModuleAgent {
     private static Map<String, Object> extractorObjects = new ConcurrentHashMap<>();
 
     private Path base = null;
@@ -42,9 +42,7 @@ public class ModuleAgent<T> {
     }
 
 
-    private Path base() throws IOException {
-        if (!Files.exists(this.base))
-            Files.createDirectory(this.base);
+    protected Path base() {
         return base;
     }
 
@@ -124,6 +122,11 @@ public class ModuleAgent<T> {
 
 
         return service.select(query);
+    }
+
+
+    public Object object(String moduleName,String className) throws IllegalAccessException, InstantiationException, IOException {
+        return null;
     }
 
 

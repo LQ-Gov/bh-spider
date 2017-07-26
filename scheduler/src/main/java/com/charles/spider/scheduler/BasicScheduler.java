@@ -91,9 +91,8 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Extractor extractorObject(String moduleName,String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
-        moduleCoreFactory.object(moduleName,className);
-        return null;
+    public Object moduleObject(String moduleName,String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+        return moduleCoreFactory.object(moduleName,className);
     }
 
 

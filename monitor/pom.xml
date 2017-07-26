@@ -11,11 +11,6 @@
     <name>monitor Maven Webapp</name>
     <url>http://maven.apache.org</url>
 
-    <properties>
-
-    </properties>
-
-
     <dependencies>
 
         <dependency>
@@ -35,6 +30,16 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-core -->
@@ -93,12 +98,6 @@
             <artifactId>jetty-server</artifactId>
             <version>${jetty.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-jsp -->
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-jsp</artifactId>
-            <version>9.2.21.v20170120</version>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
         <dependency>
@@ -121,6 +120,58 @@
                 <artifactId>jetty-maven-plugin</artifactId>
                 <version>9.4.6.v20170531</version>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>main-class-placement</id>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <copy todir="${project.build.directory}/${project.artifactId}/">
+                                    <fileset dir="${project.build.directory}/classes/">
+                                        <include name="**/*.*"/>
+                                    </fileset>
+                                </copy>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+
+                            <mainClass>com.charles.spider.monitor.server.Program</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>${project.artifactId}/WEB-INF/lib</classpathPrefix>
+
+                        </manifest>
+                    </archive>
+                    <!--<archiveClasses>true</archiveClasses>-->
+                    <!--<webResources>-->
+                    <!--<resource>-->
+                    <!--<directory>src/main/webapp/public</directory>-->
+                    <!--</resource>-->
+                    <!--</webResources>-->
+                </configuration>
+            </plugin>
+
+            <!--<plugin>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-dependency-plugin</artifactId>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 
