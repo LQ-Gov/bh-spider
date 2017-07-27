@@ -5,14 +5,17 @@ import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
 import com.google.common.base.Preconditions;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URL;
+import java.nio.file.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,52 +25,116 @@ public class ModuleOperation {
     private Client client = null;
 
 
-    ModuleOperation(Client client){
+    ModuleOperation(Client client) {
         this.client = client;
     }
 
-    public void submit(Class<?> cls) {
-        submit(cls, false);
+    public void submit(Class<?> cls) throws Exception {
+        submit(null, cls);
     }
 
-    public void submit(Class<?> cls, boolean override) {
-        submit(cls, override);
+    public void submit(String name, Class<?> cls) throws IOException {
+        submit(name, cls, (String) null);
+    }
+
+    public void submit(String name, Class<?> cls, String desc) throws IOException {
+        Preconditions.checkArgument(cls != null, "you must special a valid class");
+        URL url = cls.getResource("");
+
+        Preconditions.checkNotNull(url, "can't get path of %s", cls.getName());
+
+        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + cls.getSimpleName() + ".*");
+        System.out.println(url.getPath());
+        System.out.println(Arrays.toString(new File(url.getPath()).list()));
+        String[] paths = new File(url.getPath()).list((dir, name1) -> matcher.matches(dir.toPath()));
+
+
+        Preconditions.checkState(paths != null && paths.length == 1, "this have multi class file");
+
+        Arrays.stream(paths).forEach(System.out::println);
+
+        name = name == null ? cls.getSimpleName() : name;
+
+        submit(name, paths[0], desc);
+
+
+    }
+
+    public void submit(String name, Class<?> cls, ModuleTypes type) throws IOException {
+        submit(name, cls, type, null);
     }
 
 
+    public void submit(String name, Class<?> cls, ModuleTypes type, String desc) throws IOException {
+
+        Preconditions.checkArgument(cls != null, "you must special a valid class");
+        Preconditions.checkArgument(type != null && type != ModuleTypes.UNKNOWN, "you must special a valid module type");
+
+
+        URL url = cls.getResource("");
+
+        Preconditions.checkNotNull(url, "can't get path of %s", cls.getName());
+
+
+        String path = url.getPath() + cls.getSimpleName();
+
+        String extension = type.toString();
+
+        if (!StringUtils.isBlank(extension)) {
+            extension = StringUtils.lowerCase(extension);
+            if (extension.startsWith(".")) path += extension;
+            else path += "." + extension;
+        }
+
+        submit(name, path, type, desc);
+    }
+
+
+    public void submit(String path) throws IOException {
+        submit(Paths.get(path));
+    }
 
     public void submit(Path path) throws IOException {
-        submit(path.toString(),null, false);
+        String name = path.getFileName().toString();
+        name = FilenameUtils.getBaseName(name);
+        submit(name, path);
     }
 
 
-    public void submit(String path,boolean override) throws IOException {
-        submit(path,null,override);
+    public void submit(String name, String path) throws IOException {
+        submit(name, path, null);
     }
 
 
-    public void submit(String path,String name,boolean override) throws IOException {
-        submit(path, name, (ModuleTypes) null, override);
+    public void submit(String name, Path path) throws IOException {
+        submit(name, path, null);
     }
 
+    public void submit(String name, String path, String desc) throws IOException {
 
+        submit(name, Paths.get(path), desc);
 
-    public void submit(String path, String name, ModuleTypes type, boolean override) throws IOException {
-        submit(Paths.get(path),name,type,null,override);
     }
 
-    /**
-     * 提交module
-     *
-     * @param path
-     * @param desc
-     */
-    public void submit(String path,String name,String desc, boolean override) throws IOException {
-        submit(Paths.get(path), name, null, desc, override);
+    public void submit(String name, Path path, String desc) throws IOException {
+        String extension = FilenameUtils.getExtension(path.getFileName().toString());
+
+        ModuleTypes type = ModuleTypes.value(extension);
+
+        submit(name, path, type, desc);
+
+
     }
 
-    public void submit(Path path, String name, ModuleTypes type, String description, boolean override) throws IOException {
+    public void submit(String name, String path, ModuleTypes type, String desc) throws IOException {
+        submit(name, Paths.get(path), type, desc);
+    }
+
+    public void submit(String name, Path path, ModuleTypes type, String desc) throws IOException {
+
         assert path != null;
+
+        Preconditions.checkArgument(type != null && type != ModuleTypes.UNKNOWN, "you must special a valid module type");
 
         Preconditions.checkState(Files.exists(path), "file not exists");
 
@@ -75,11 +142,9 @@ public class ModuleOperation {
 
         name = name == null ? filename : name;
 
-        type = type == null ? ModuleTypes.valueOf(filename.substring(filename.lastIndexOf('.') + 1)) : type;
-
         byte[] data = Files.readAllBytes(path);
 
-        client.write(Commands.SUBMIT_MODULE,null,data,name,type,description,override);
+        client.write(Commands.SUBMIT_MODULE, null, data, name, type, desc);
 
     }
 
@@ -94,12 +159,12 @@ public class ModuleOperation {
     }
 
 
-    public List<Module> select(){
-        return  select(null);
+    public List<Module> select() {
+        return select(null);
     }
 
 
-    public void delete(int id){
-        client.write(Commands.DELETE_MODULE,null,id);
+    public void delete(int id) {
+        client.write(Commands.DELETE_MODULE, null, id);
     }
 }

@@ -10,7 +10,7 @@ public enum ModuleTypes {
     CONFIG;
 
 
-    public ModuleTypes value(String s) {
+    public static ModuleTypes value(String s) {
         switch (s) {
             case "jar":
                 return JAR;

@@ -75150,7 +75150,7 @@ var RuleStore = (_class = function RuleStore() {
                             response = _context.sent;
 
                             _this.reacordCount = response.count;
-                            data = response.data;
+                            data = response.data || [];
 
 
                             if (data) data.map(function (it, index) {
@@ -75184,9 +75184,7 @@ var RuleStore = (_class = function RuleStore() {
                     case 2:
                         response = _context2.sent;
 
-                        _this.hosts = response.data;
-
-                    case 4:
+                    case 3:
                     case "end":
                         return _context2.stop();
                 }

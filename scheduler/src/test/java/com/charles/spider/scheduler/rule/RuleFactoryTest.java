@@ -1,19 +1,11 @@
 package com.charles.spider.scheduler.rule;
 
-import com.alibaba.fastjson.JSON;
-import com.charles.spider.common.entity.Module;
 import com.charles.spider.common.entity.Rule;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.Test;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
-import javax.lang.model.type.TypeVariable;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.WildcardType;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

@@ -1,9 +1,7 @@
 [
   {
     "id": "ccb95a67-cff0-45d6-b437-dca36be1feae",
-    "extractors": {
-      "200":["TouTiaoListPareser"]
-    },
+    "extractors": {},
     "cron": "*/5 * * * * ?",
     "host": "www.toutiao.com",
     "pattern": "{http,https}://www.toutiao.com/[a]**",

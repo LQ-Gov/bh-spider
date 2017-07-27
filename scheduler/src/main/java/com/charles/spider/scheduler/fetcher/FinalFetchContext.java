@@ -11,8 +11,14 @@ import java.util.Map;
 
 public class FinalFetchContext implements FetchContext {
 
-    public FinalFetchContext(FetchContext parent, HttpResponse response){
+    private FetchContext parent;
+    private HttpResponse response;
+    private int statusCode = 200;
 
+    public FinalFetchContext(FetchContext parent, HttpResponse response) {
+        this.parent = parent;
+        this.response = response;
+        this.statusCode = response.getStatusLine().getStatusCode();
     }
 
     @Override
@@ -22,7 +28,7 @@ public class FinalFetchContext implements FetchContext {
 
     @Override
     public Request request() {
-        return null;
+        return parent.request();
     }
 
     @Override
@@ -92,6 +98,6 @@ public class FinalFetchContext implements FetchContext {
 
     @Override
     public int status() {
-        return 0;
+        return this.statusCode;
     }
 }

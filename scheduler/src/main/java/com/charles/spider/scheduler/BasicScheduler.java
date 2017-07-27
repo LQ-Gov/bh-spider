@@ -91,12 +91,9 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Object moduleObject(String moduleName,String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
-        return moduleCoreFactory.object(moduleName,className);
+    public Object moduleObject(String moduleName, String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+        return moduleCoreFactory.object(moduleName, className);
     }
-
-
-
 
 
     protected void init_system_signal_handles() {
@@ -199,19 +196,17 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, ModuleTypes type, String description, boolean override) {
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, ModuleTypes type, String description) {
 
         ModuleAgent agent = moduleCoreFactory.agent(type);
 
         try {
             if (agent == null)
                 throw new Exception("unknown module type");
-            agent.save(data, name, type, description, override);
+            agent.save(data, name, type, description, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        System.out.println("trigger SUBMIT_MODULE_HANDLER");
     }
 
 
@@ -256,8 +251,6 @@ public class BasicScheduler implements IEvent {
         ModuleAgent agent = moduleCoreFactory.agent();
         List<Module> list = agent.select(query);
         ctx.write(list);
-
-        System.out.println("GET_MODULE_LIST_HANDLER");
     }
 
 

@@ -58,6 +58,8 @@ public class Rule {
         this.extractors.put(key,chains);
     }
 
+    public Map<String,String[]> extractors(){return extractors;}
+
     public String getCron() {
         return cron;
     }

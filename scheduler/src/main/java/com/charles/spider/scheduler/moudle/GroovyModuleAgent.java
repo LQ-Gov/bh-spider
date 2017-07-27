@@ -37,7 +37,8 @@ public class GroovyModuleAgent extends ModuleAgent {
 
             GroovyClassLoader loader = new GroovyClassLoader(ClassLoader.getSystemClassLoader());
 
-            Class<?> cls = loader.parseClass(new File(module.getPath()));
+            Class<?> cls = loader.parseClass(new File(module.getPath()+"/data"));
+
 
             if (cls != null) {
                 o = cls.newInstance();

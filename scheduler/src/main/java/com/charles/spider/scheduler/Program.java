@@ -1,13 +1,10 @@
 package com.charles.spider.scheduler;
 
-import com.alibaba.fastjson.util.ParameterizedTypeImpl;
 import com.charles.spider.scheduler.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 
 /**
  * Created by lq on 17-3-23.

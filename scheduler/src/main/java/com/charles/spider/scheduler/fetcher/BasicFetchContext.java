@@ -28,7 +28,7 @@ public class BasicFetchContext implements FetchContext {
 
     @Override
     public Request request() {
-        return null;
+        return this.orignal;
     }
 
     @Override

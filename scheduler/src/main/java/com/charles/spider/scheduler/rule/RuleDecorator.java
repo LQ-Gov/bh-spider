@@ -130,4 +130,9 @@ public class RuleDecorator extends Rule {
     public Queue<Request> getRequests() {
         return requests;
     }
+
+    @Override
+    public Map<String, String[]> extractors() {
+        return this.rule.extractors();
+    }
 }
