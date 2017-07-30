@@ -4,6 +4,7 @@ import com.charles.spider.common.command.Commands;
 import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
+import com.charles.spider.query.condition.Condition;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -163,8 +164,15 @@ public class ModuleOperation {
         return select(null);
     }
 
+    public Module get(String name) {
+        List<Module> list = select(Query.Condition(Condition.where("name").is(name)));
 
-    public void delete(int id) {
-        client.write(Commands.DELETE_MODULE, null, id);
+        return list == null || list.isEmpty() ? null : list.get(0);
     }
+
+    public void delete(Query query){
+        client.write(Commands.DELETE_MODULE,null,query);
+    }
+
+
 }

@@ -16,7 +16,7 @@ public interface Service<T> {
 
     T single(Query query);
 
-    void delete(Query query);
+    int delete(Query query);
 
 
     int update(T entity, Condition condition);

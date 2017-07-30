@@ -101,8 +101,7 @@ public class RuleDecorator extends Rule {
             String pretty = pattern.replaceAll("/{2,}", "/");
             if (!this.isExact()) {
                 if (pretty.startsWith("**")) {
-                }
-                else if (pretty.startsWith("*")) pretty = "*" + pretty;
+                } else if (pretty.startsWith("*")) pretty = "*" + pretty;
                 else pretty = "**" + pretty;
 
                 if (pretty.endsWith("**")) {
@@ -121,10 +120,25 @@ public class RuleDecorator extends Rule {
         return this.rule.isExact();
     }
 
-    public void exec() throws SchedulerException {
+
+    public JobExecutor.State exec() throws SchedulerException {
         Map<String, Object> params = new HashMap<>();
         params.put("rule-decorator", this);
         executor.exec(this.getCron(), params);
+        this.setValid(true);
+
+        return JobExecutor.State.RUNNING;
+    }
+
+    public JobExecutor.State pause() throws SchedulerException {
+        executor.pause();
+        this.rule.setValid(false);
+        return JobExecutor.State.STOP;
+    }
+
+
+    public void destroy() throws SchedulerException {
+        this.executor.destroy();
     }
 
     public Queue<Request> getRequests() {
@@ -135,4 +149,16 @@ public class RuleDecorator extends Rule {
     public Map<String, String[]> extractors() {
         return this.rule.extractors();
     }
+
+    @Override
+    public boolean isValid() {
+        return this.rule.isValid();
+    }
+
+    @Override
+    public void setValid(boolean valid) {
+        this.rule.setValid(valid);
+    }
+
+
 }

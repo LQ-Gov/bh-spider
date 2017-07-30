@@ -5,6 +5,12 @@
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
+
+    <!--资源文件必须放在annotation-driven上面，且order设置为较小值，否则会被/** mapping 拦截-->
+    <mvc:resources mapping="/public/**.html" location="/public/" order="0"/>
+    <mvc:resources mapping="/assets/css/*.css" location="/public/assets/css/" order="0"/>
+    <mvc:resources mapping="/*.js" location="/public/" order="0"/>
+
     <mvc:annotation-driven>
         <mvc:path-matching suffix-pattern="false"/>
         <mvc:message-converters>
@@ -15,14 +21,11 @@
                 </property>
             </bean>
         </mvc:message-converters>
+
     </mvc:annotation-driven>
 
 
     <context:component-scan base-package="com.charles.spider.monitor.controller"/>
-
-    <mvc:resources mapping="/public/**.html" location="/public/"/>
-    <mvc:resources mapping="/assets/css/*.css" location="/public/assets/css/"/>
-    <mvc:resources mapping="/*.js" location="/public/"/>
 
 
     <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">

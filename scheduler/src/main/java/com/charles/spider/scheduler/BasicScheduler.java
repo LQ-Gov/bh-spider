@@ -1,6 +1,5 @@
 package com.charles.spider.scheduler;
 
-import com.charles.spider.common.extractor.Extractor;
 import com.charles.spider.common.http.Request;
 import com.charles.spider.common.constant.ModuleTypes;
 import com.charles.spider.common.entity.Module;
@@ -37,6 +36,7 @@ import sun.misc.Signal;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -276,15 +276,88 @@ public class BasicScheduler implements IEvent {
     }
 
     @EventMapping
-    protected void DELETE_RULE_HANDLER(Context ctx, String host, String id) {
-
-    }
-
-    @EventMapping
     protected void GET_HOST_LIST_HANDLER(Context ctx) {
         RootDomain top = (RootDomain) domain;
 
         ctx.write(top.hosts());
+    }
+
+
+    //edit 暂时不开放
+    @EventMapping
+    protected void EDIT_RULE_HANDLER(Context ctx,String host,String id,Rule rule) throws Exception {
+//        Domain matcher = domain.match(host,true);
+//
+//        if(matcher==null) throw new Exception("");
+//        List<Rule> rules = matcher.rules();
+//
+//        for(Rule it:rules){
+//            if(it.getId().equals(id)){
+//                RuleDecorator decorator = (RuleDecorator) it;
+//                decorator.pause();
+//
+//                decorator.setCron(rule.getCron());
+//                decorator.setValid(rule.isValid());
+//
+//                decorator.exec();
+//            }
+//        }
+
+    }
+
+
+
+    @EventMapping
+    protected void DELETE_RULE_HANDLER(Context ctx, String host, String id) throws Exception {
+        Domain matcher = domain.match(host, true);
+        if (matcher == null) throw new Exception("");
+
+        List<Rule> rules = matcher.rules();
+
+        if (rules != null) {
+            Iterator<Rule> it = rules.iterator();
+
+            while (it.hasNext()) {
+                Rule rule = it.next();
+                if (rule.getId().equals(id)) {
+                    RuleDecorator decorator = (RuleDecorator) rule;
+                    decorator.destroy();
+                    it.remove();
+                    ruleFactory.delete(rule);
+                    break;
+                }
+            }
+        }
+    }
+
+
+    @EventMapping
+    protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, String host, String id, boolean valid) throws Exception {
+        Domain matcher = domain.match(host, true);
+        if (matcher == null) throw new Exception("");
+
+        List<Rule> rules = matcher.rules();
+
+        if (rules != null) {
+
+            for (Rule it : rules) {
+                if (it.getId().equals(id)) {
+                    RuleDecorator decorator = (RuleDecorator) it;
+                    JobExecutor.State state = valid ? decorator.exec() : decorator.pause();
+
+                    if (state == JobExecutor.State.ERROR)
+                        throw new Exception("scheduler rule executor error");
+
+                    break;
+                }
+            }
+        }
+    }
+
+
+    @EventMapping
+    protected void DELETE_MODULE_HANDLER(Context ctx, Query query) throws IOException {
+        moduleCoreFactory.agent().delete(query);
     }
 
 

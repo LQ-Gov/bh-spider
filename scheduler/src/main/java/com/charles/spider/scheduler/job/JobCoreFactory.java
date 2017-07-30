@@ -1,6 +1,5 @@
 package com.charles.spider.scheduler.job;
 
-import com.charles.spider.common.entity.Rule;
 import com.charles.spider.scheduler.BasicScheduler;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -35,7 +34,15 @@ public class JobCoreFactory {
 //    }
 
     public synchronized void scheduler(JobExecutor executor) throws SchedulerException {
-        if (executors.containsKey(executor.getId())) throw new RuntimeException("can't submit duplicate");
+        if (executors.containsKey(executor.getId())) {
+            if (executor.status() == JobExecutor.State.RUNNING)
+                throw new RuntimeException("can't submit duplicate");
+            else {
+                quartz.resumeJob(executor.getDetail().getKey());
+                return;
+            }
+        }
+
 
         executors.put(executor.getId(), executor);
 
@@ -52,6 +59,13 @@ public class JobCoreFactory {
 
     }
 
+    public Trigger.TriggerState status(JobExecutor executor) throws SchedulerException {
+        return quartz.getTriggerState(executor.getTrigger().getKey());
+    }
+
+    public synchronized void pause(JobExecutor executor) throws SchedulerException {
+        quartz.pauseJob(executor.getDetail().getKey());
+    }
 
     public synchronized void destroy(JobExecutor executor) throws SchedulerException {
         if (!executors.containsKey(executor.getId())) throw new RuntimeException("the executor not in factory");

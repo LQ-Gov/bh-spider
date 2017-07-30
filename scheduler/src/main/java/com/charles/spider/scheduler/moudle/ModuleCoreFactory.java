@@ -58,29 +58,6 @@ public class ModuleCoreFactory {
 
         Object o = agent.object(moduleName, className);
 
-//        Object o = moduleObjects.get(key);
-//
-//        if (o == null) {
-//
-//
-//            if (module == null) throw new FileNotFoundException("the module not exists");
-//
-//            synchronized (module.getType()) {
-//                o = moduleObjects.get(key);
-//                if (o != null) return o;
-//
-//                String path = module.getPath();
-//
-//                URLClassLoader cl = new URLClassLoader(new URL[]{new URL("file:///" + path)}, this.getClass().getClassLoader());
-//
-//                Class<?> cls = cl.loadClass(className);
-//
-//                o = cls.newInstance();
-//
-//                moduleObjects.put(key, o);
-//            }
-//        }
-
 
         return o;
     }

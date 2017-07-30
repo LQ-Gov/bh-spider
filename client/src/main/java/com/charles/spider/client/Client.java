@@ -84,6 +84,10 @@ public class Client {
         return null;
     }
 
+    protected void stream(){
+
+    }
+
 
     public ModuleOperation module() {
         return moduleOperation;
@@ -101,6 +105,9 @@ public class Client {
     public boolean crawler(String url,Class<?>... extractors){
         return false;
     }
+
+
+
 
 
 }

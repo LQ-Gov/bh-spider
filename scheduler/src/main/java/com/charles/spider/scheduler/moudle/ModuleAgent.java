@@ -125,7 +125,12 @@ public class ModuleAgent {
     }
 
 
-    public Object object(String moduleName,String className) throws IllegalAccessException, InstantiationException, IOException {
+    public void delete(Query query) {
+        service.delete(query);
+    }
+
+
+    public Object object(String moduleName, String className) throws IllegalAccessException, InstantiationException, IOException {
         return null;
     }
 

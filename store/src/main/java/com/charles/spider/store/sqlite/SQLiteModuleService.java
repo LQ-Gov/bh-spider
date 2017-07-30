@@ -83,14 +83,15 @@ public class SQLiteModuleService implements Service<Module> {
         if (query != null) {
             Iterator<Condition> it = query.chain();
 
-            String where = "";
+            StringBuilder where = new StringBuilder();
             while (it.hasNext()) {
-                where += " AND " + store.explain(it.next());
+                where.append(" AND ").append(store.explain(it.next()));
             }
 
-            if (where.startsWith(" AND ")) where = where.replaceFirst(" AND ", " WHERE ");
 
-            if (!StringUtils.isBlank(where)) sql += where;
+            if (where.toString().startsWith(" AND ")) where = new StringBuilder(where.toString().replaceFirst(" AND ", " WHERE "));
+
+            if (!StringUtils.isBlank(where.toString())) sql += where;
 
             sql += String.format(" LIMIT %s,%s", query.skip(), query.limit());
         }
@@ -133,7 +134,28 @@ public class SQLiteModuleService implements Service<Module> {
     }
 
     @Override
-    public void delete(Query query) {
+    public int delete(Query query) {
+        assert query!=null;
+        String sql = "DELETE FROM "+ MODULE_TABLE_NAME;
+
+        Iterator<Condition> it = query.chain();
+        StringBuilder where = new StringBuilder();
+        while (it.hasNext()) {
+            where.append(" AND ").append(store.explain(it.next()));
+        }
+        if (where.toString().startsWith(" AND ")) where = new StringBuilder(where.toString().replaceFirst(" AND ", " WHERE "));
+
+        if (!StringUtils.isBlank(where.toString())) sql += where;
+
+
+        try {
+            PreparedStatement stat = connection.prepareStatement(sql);
+            return stat.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+
 
     }
 

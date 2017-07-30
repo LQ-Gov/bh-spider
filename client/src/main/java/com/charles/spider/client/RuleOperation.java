@@ -56,4 +56,23 @@ public class RuleOperation {
         client.write(Commands.DELETE_RULE,null,host,uuid);
     }
 
+
+    public void run(String host,String id) {
+        client.write(Commands.SCHEDULER_RULE_EXECUTOR, null, host, id, true);
+    }
+
+    public void pause(String host,String id){
+        client.write(Commands.SCHEDULER_RULE_EXECUTOR,null,host,id,false);
+    }
+
+    public void destroy(String host,String id){
+        client.write(Commands.DELETE_RULE,null,host,id);
+    }
+
+    public void edit(String host,String id,Rule rule){
+         client.write(Commands.EDIT_RULE,null, host,id,rule);
+    }
+
+
+
 }
