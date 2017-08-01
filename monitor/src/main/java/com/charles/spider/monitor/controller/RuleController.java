@@ -42,8 +42,14 @@ public class RuleController {
     }
 
 
-    @RequestMapping(value = "/rule",method = RequestMethod.POST)
-    public void update(@RequestBody Rule rule){
+    @RequestMapping(value = "/rule/state/{host}/{id}",method = RequestMethod.PATCH)
+    public void state(@PathVariable("host") String host, @PathVariable("id") String id,boolean state){
+
+        if (state) {
+            client.rule().run(host, id);
+        } else {
+            client.rule().pause(host, id);
+        }
 
 
     }

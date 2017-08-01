@@ -36,7 +36,6 @@ public class RuleDecorator extends Rule {
         this.rule = rule;
 
         this.executor = executor;
-
         setPattern(rule.getPattern());
     }
 

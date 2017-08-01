@@ -1,9 +1,11 @@
 package com.charles.spider.scheduler.job;
 
 import com.charles.spider.scheduler.BasicScheduler;
+import org.apache.commons.lang3.StringUtils;
 import org.quartz.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -20,10 +22,9 @@ public class JobExecutor {
 
     private BasicScheduler scheduler;
 
-    public JobExecutor(JobCoreFactory factory, String id, JobDetail detail, BasicScheduler scheduler) {
+    public JobExecutor(JobCoreFactory factory, JobDetail detail, BasicScheduler scheduler) {
 
         this.factory = factory;
-        this.id = id;
         this.detail = detail;
 
         this.scheduler = scheduler;
@@ -32,9 +33,14 @@ public class JobExecutor {
     }
 
 
-    public void exec(String cron, Map<String, Object> params) throws SchedulerException {
-        this.trigger = newTrigger().withIdentity(id)
-                .withSchedule(cronSchedule(cron)).build();
+    public synchronized void exec(String cron, Map<String, Object> params) throws SchedulerException {
+        if(StringUtils.isBlank(this.id)||!this.trigger.getCronExpression().equals(cron)) {
+            this.id = UUID.randomUUID().toString();
+            this.trigger = newTrigger()
+                    .withIdentity(id)
+                    .withSchedule(cronSchedule(cron).withMisfireHandlingInstructionFireAndProceed())
+                    .build();
+        }
 
         JobDataMap map = this.detail.getJobDataMap();
 
@@ -58,12 +64,11 @@ public class JobExecutor {
         return trigger;
     }
 
-    public void pause() throws SchedulerException {
+    public synchronized void pause() throws SchedulerException {
         factory.pause(this);
     }
 
-
-    public void destroy() throws SchedulerException {
+    public synchronized void destroy() throws SchedulerException {
         factory.destroy(this);
     }
 

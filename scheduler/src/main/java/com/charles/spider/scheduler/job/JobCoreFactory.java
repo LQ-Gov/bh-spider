@@ -7,6 +7,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;
@@ -24,6 +25,7 @@ public class JobCoreFactory {
 
     private BasicScheduler scheduler = null;
 
+
     public JobCoreFactory(BasicScheduler scheduler) throws SchedulerException {
         this.scheduler = scheduler;
         this.quartz = StdSchedulerFactory.getDefaultScheduler();
@@ -34,28 +36,32 @@ public class JobCoreFactory {
 //    }
 
     public synchronized void scheduler(JobExecutor executor) throws SchedulerException {
-        if (executors.containsKey(executor.getId())) {
-            if (executor.status() == JobExecutor.State.RUNNING)
-                throw new RuntimeException("can't submit duplicate");
-            else {
-                quartz.resumeJob(executor.getDetail().getKey());
-                return;
+        JobExecutor cache = executors.get(executor.getId());
+        if (cache != null) {
+            if (cache.getTrigger() == executor.getTrigger()) {
+                if (cache.status() == JobExecutor.State.RUNNING)
+                    throw new RuntimeException("can't submit duplicate");
+            } else {
+                quartz.rescheduleJob(cache.getTrigger().getKey(), executor.getTrigger());
+                if (cache.status() == JobExecutor.State.RUNNING) return;
             }
+
+            quartz.resumeJob(executor.getDetail().getKey());
+            return;
         }
 
 
-        executors.put(executor.getId(), executor);
-
         quartz.scheduleJob(executor.getDetail(), executor.getTrigger());
-
+        executors.put(executor.getId(), executor);
     }
 
     public JobExecutor build(Class<? extends Job> job) {
+
         String id = UUID.randomUUID().toString();
-        JobDetail detail = newJob(job).withIdentity(id, job.getName()).build();
 
+        JobDetail detail = newJob(job).withIdentity(id).build();
 
-        return new JobExecutor(this, id, detail, scheduler);
+        return new JobExecutor(this, detail, scheduler);
 
     }
 
@@ -63,9 +69,10 @@ public class JobCoreFactory {
         return quartz.getTriggerState(executor.getTrigger().getKey());
     }
 
-    public synchronized void pause(JobExecutor executor) throws SchedulerException {
+    public void pause(JobExecutor executor) throws SchedulerException {
         quartz.pauseJob(executor.getDetail().getKey());
     }
+
 
     public synchronized void destroy(JobExecutor executor) throws SchedulerException {
         if (!executors.containsKey(executor.getId())) throw new RuntimeException("the executor not in factory");

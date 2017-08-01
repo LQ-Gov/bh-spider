@@ -1,15 +1,14 @@
-[
-  {
-    "id": "ccb95a67-cff0-45d6-b437-dca36be1feae",
-    "extractors": {
-      "200":["TouTiaoListPareser"]
-    },
-    "cron": "*/5 * * * * ?",
-    "host": "www.toutiao.com",
-    "pattern": "{http,https}://www.toutiao.com/[a]**",
-    "exact": false,
-    "threadCount": 0,
-    "dispatcher": "RANDOM",
-    "description": "头条进行测试"
-  }
-]
+[ {
+  "id" : "ccb95a67-cff0-45d6-b437-dca36be1feae",
+  "extractors" : {
+    "200" : [ "TouTiaoListPareser" ]
+  },
+  "cron" : "*/5 * * * * ?",
+  "host" : "www.toutiao.com",
+  "pattern" : "{http,https}://www.toutiao.com/[a]**",
+  "exact" : false,
+  "taskCount" : 0,
+  "dispatcher" : "RANDOM",
+  "description" : "头条进行测试",
+  "valid" : true
+} ]

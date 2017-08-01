@@ -69,9 +69,9 @@ public class RuleOperation {
         client.write(Commands.DELETE_RULE,null,host,id);
     }
 
-    public void edit(String host,String id,Rule rule){
-         client.write(Commands.EDIT_RULE,null, host,id,rule);
-    }
+//    public void edit(String host,String id,Rule rule){
+//         client.write(Commands.EDIT_RULE,null, host,id,rule);
+//    }
 
 
 

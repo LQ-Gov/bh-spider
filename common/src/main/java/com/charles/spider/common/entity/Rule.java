@@ -47,7 +47,7 @@ public class Rule {
     }
 
     public Rule(String id, String pattern, String host, String cron) {
-        id = StringUtils.isBlank(this.id) ? UUID.randomUUID().toString() : id;
+        id = StringUtils.isBlank(id) ? UUID.randomUUID().toString() : id;
         this.id = id;
         this.pattern = pattern;
         this.host = host;

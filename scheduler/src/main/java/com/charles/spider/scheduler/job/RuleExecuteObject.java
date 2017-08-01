@@ -26,12 +26,13 @@ public class RuleExecuteObject implements Job {
 
         Queue<Request> queue = rule.getRequests();
 
-        Request req = queue.poll();
+        Request req = queue.peek();
 
         if (req != null) {
-            bind(req, rule.extractors());
-            Command cmd = new Command(Commands.FETCH, null, new Object[]{req});
-            scheduler.process(cmd);
+            System.out.println(req.url());
+//            bind(req, rule.extractors());
+//            Command cmd = new Command(Commands.FETCH, null, new Object[]{req});
+//            scheduler.process(cmd);
         }
     }
 
