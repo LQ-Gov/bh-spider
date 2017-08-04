@@ -25,6 +25,8 @@ public enum Commands {
     //request operation
     SUBMIT_REQUEST,//提交任务
 
+    WATCH,
+
     FETCH,
 
 

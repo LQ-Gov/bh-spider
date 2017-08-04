@@ -1,6 +1,7 @@
 package com.charles.spider.scheduler;
 
 import com.charles.spider.scheduler.config.Config;
+import com.charles.spider.scheduler.config.Markers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,6 @@ public class Program {
             System.getProperties().load(stream);
         } else
             logger.warn("the config file {} not exists,program start with default config", file);
-
 
         Class<?> mode = RunModeClassFactory.get(Config.INIT_RUN_MODE);
         if (mode == null)

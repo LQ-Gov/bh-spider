@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Created by lq on 7/9/17.
@@ -47,9 +49,10 @@ public class RuleOperation {
      * 获取HOST集合
      * @return
      */
-    public List<String> hosts() {
+    public List<String> hosts() throws ExecutionException, InterruptedException {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
-        return client.write(Commands.GET_HOST_LIST, type);
+        Future<List<String>> future = client.write(Commands.GET_HOST_LIST, type);
+        return future.get();
     }
 
     public void delete(String host,String uuid){
@@ -65,9 +68,6 @@ public class RuleOperation {
         client.write(Commands.SCHEDULER_RULE_EXECUTOR,null,host,id,false);
     }
 
-    public void destroy(String host,String id){
-        client.write(Commands.DELETE_RULE,null,host,id);
-    }
 
 //    public void edit(String host,String id,Rule rule){
 //         client.write(Commands.EDIT_RULE,null, host,id,rule);

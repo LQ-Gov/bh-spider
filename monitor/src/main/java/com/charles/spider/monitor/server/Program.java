@@ -16,18 +16,18 @@ public class Program {
 
     private static final int PORT = 8080;
     private static final String CONTEXT = "/";
-    private static final String DEFAULT_WEBAPP_PATH = "monitor/src/main/webapp";
+    private static final String DEFAULT_WEBAPP_PATH = "watch/src/main/webapp";
 
     public static void main(String[] args) throws Exception {
 
 
-        int port = Integer.getInteger("init.monitor.port", PORT);
+        int port = Integer.getInteger("init.watch.port", PORT);
 
 
-        String webapp = System.getProperty("init.monitor.app.path", DEFAULT_WEBAPP_PATH);
+        String webapp = System.getProperty("init.watch.app.path", DEFAULT_WEBAPP_PATH);
 
 
-        logger.info("the monitor server started,listen port:{},webapp path:{}",port,webapp);
+        logger.info("the watch server started,listen port:{},webapp path:{}",port,webapp);
 
 
 

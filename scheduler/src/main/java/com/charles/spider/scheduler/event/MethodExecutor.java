@@ -10,14 +10,24 @@ public class MethodExecutor {
     private Object bean;
     private Method method;
     private Class<?>[] parameters;
-    public MethodExecutor(Object bean, Method method) {
-        this.bean=bean;
+    private EventMapping mapping;
+
+    public MethodExecutor(Object bean, Method method, EventMapping mapping) {
+        this.bean = bean;
         this.method = method;
+        this.mapping = mapping;
         this.parameters = this.method.getParameterTypes();
     }
 
 
-    public Class<?>[] getParameters(){ return parameters;}
+    public Class<?>[] parameters() {
+        return parameters;
+    }
+
+
+    public EventMapping mapping() {
+        return this.mapping;
+    }
 
 
     public void invoke(Object[] args) throws InvocationTargetException, IllegalAccessException {

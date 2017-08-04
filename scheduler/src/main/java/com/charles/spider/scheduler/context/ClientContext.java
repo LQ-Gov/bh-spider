@@ -15,8 +15,16 @@ public class ClientContext implements Context {
 
     private Object buffer = null;
 
+    private long id;
 
-    public ClientContext(ChannelHandlerContext source) {
+    private boolean stream = false;
+
+
+    public ClientContext(long id, byte flag, ChannelHandlerContext source) {
+
+        this.id = id;
+
+        stream = flag > 0;
 
         this.source = source;
     }
@@ -24,24 +32,29 @@ public class ClientContext implements Context {
 
     @Override
     public synchronized void write(Object data) {
-        if (!IsWriteEnable())
-            return;
+        if(isWriteEnable()) return;
 
-        buffer = data;
+        if (!stream) buffer = data;
 
+        else {
+            try {
+
+                write0(id, (byte) 1, JsonFactory.get().writeValueAsBytes(buffer));
+
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public synchronized void complete() {
 
-        try {
-            byte[] data = JsonFactory.get().writeValueAsBytes(buffer);
-            ByteBuf buf = source.alloc().buffer(5 + data.length);
-            buf.writeBoolean(true);
-            buf.writeInt(data.length);
-            buf.writeBytes(data);
+        if (!source.channel().isOpen()) return;
 
-            source.writeAndFlush(buf);
+        try {
+
+            write0(id,(byte)0,JsonFactory.get().writeValueAsBytes(buffer));
 
             enable = false;
         } catch (JsonProcessingException e) {
@@ -51,12 +64,23 @@ public class ClientContext implements Context {
     }
 
     @Override
-    public void stream() {
+    public boolean isStream() {
+        return stream;
+    }
 
+
+
+    private void write0(long id, byte flag, byte[] data) {
+        ByteBuf buf = source.alloc().buffer(8 + 1 + 4 + data.length);//id,flag,len,data
+        buf.writeLong(id);
+        buf.writeByte(flag);
+        buf.writeInt(data.length);
+        buf.writeBytes(data);
+        source.writeAndFlush(buf);
     }
 
     @Override
-    public boolean IsWriteEnable() {
+    public boolean isWriteEnable() {
         return enable;
     }
 }

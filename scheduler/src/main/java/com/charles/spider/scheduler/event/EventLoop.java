@@ -1,9 +1,9 @@
 package com.charles.spider.scheduler.event;
 
-import com.charles.spider.common.command.Commands;
 import com.charles.common.utils.ArrayUtils;
 import com.charles.spider.common.protocol.Token;
 import com.charles.spider.scheduler.Command;
+import com.charles.spider.scheduler.config.Markers;
 import com.charles.spider.scheduler.context.Context;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +29,7 @@ public class EventLoop extends Thread {
     private BlockingQueue<Command> queue = new LinkedBlockingQueue<>();
     private Map<String, MethodExecutor> resolvers = new HashMap<>();
 
+
     public EventLoop(IEvent parent) {
         this.parent = parent;
         init_process_methods(this.parent);
@@ -44,24 +45,25 @@ public class EventLoop extends Thread {
 
     @Override
     public void run() {
+        logger.info(Markers.ANALYSIS, "log test");
         while (!this.parent.isClosed()) {
             try {
                 Command cmd = queue.take();
                 if (this.parent.isClosed()) break;
                 if (cmd == null) continue;
 
-                logger.info("execute command {}", cmd.key());
+                logger.info(Markers.ANALYSIS, "event loop for {}, execute command:{},params bytes size:{}",
+                        this.parent.getClass().getName(), cmd.key(), 0);
 
                 MethodExecutor executor = resolvers.get(cmd.key().toString());
 
+                Class<?>[] parameters = executor.parameters();
 
-                Class<?>[] parameters = executor.getParameters();
+                Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
-                Object[] args = buildArgs(parameters, cmd.context(), cmd.params());
 
                 executor.invoke(args);
-
-                if(cmd.context()!=null) cmd.context().complete();
+                if (cmd.context() != null&&!cmd.context().isStream()) cmd.context().complete();
 
             } catch (InterruptedException | IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
                 e.printStackTrace();
@@ -72,19 +74,19 @@ public class EventLoop extends Thread {
     }
 
 
-    protected Object[] buildArgs(Class<?>[] parameters, Context ctx, Object[] inputs) {
+    protected Object[] buildArgs(Context ctx, Class<?>[] parameters, Object[] inputs) {
         if (parameters.length == 0) return null;
 
         Object[] args = new Object[parameters.length];
 
-        for (int i = 0,x=0; i < parameters.length; i++) {
+        for (int i = 0, x = 0; i < parameters.length; i++) {
 
             if (Context.class.isAssignableFrom(parameters[i]))
                 args[i] = ctx;//赋值给其context
-            else if (inputs[x] == null||parameters[i].isAssignableFrom(inputs[x].getClass()))
+            else if (inputs[x] == null || parameters[i].isAssignableFrom(inputs[x].getClass()))
                 args[i] = inputs[x++];
 
-            //参数为值类型
+                //参数为值类型
             else if (parameters[i].isPrimitive() && parameters[i] == ClassUtils.wrapperToPrimitive(inputs[x].getClass()))
                 args[i] = inputs[x++];
 
@@ -123,7 +125,11 @@ public class EventLoop extends Thread {
                     if (key.endsWith("_HANDLER"))
                         key = key.substring(0, key.length() - "_HANDLER".length());
                 }
-                resolvers.put(key, new MethodExecutor(o, method));
+                if (StringUtils.isBlank(key))
+                    throw new RuntimeException("error method event mapping for " + method.getName());
+
+
+                resolvers.put(key, new MethodExecutor(o, method, mapping));
             }
         }
     }

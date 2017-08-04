@@ -1,25 +1,29 @@
 package com.charles.spider.client;
 
 import com.charles.common.JsonFactory;
+import com.charles.spider.client.converter.TypeConverter;
+import com.charles.spider.client.receiver.Receiver;
 import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.protocol.SerializeFactory;
-import com.charles.spider.common.protocol.jackson.JacksonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Created by lq on 17-3-25.
  */
 public class Client {
+    public final static byte DISPOSABLE_REQUEST = 0;
+    public final static byte STREAM_REQUEST = 1;
+
 
     private final static ObjectMapper mapper = JsonFactory.get();
 
@@ -30,19 +34,27 @@ public class Client {
     private ModuleOperation moduleOperation = null;
     private RequestOperation requestOperation = null;
 
+    private Receiver receiver = null;
+    private final AtomicLong ID = new AtomicLong(0);
+
 
     public Client(String server) throws IOException, URISyntaxException {
         this.server = server;
         moduleOperation = new ModuleOperation(this);
         ruleOperation = new RuleOperation(this);
         requestOperation = new RequestOperation(this);
+
         open();
+        receiver = new Receiver(socket);
+        receiver.start();
     }
 
 
     private boolean open() throws URISyntaxException, IOException {
         URI uri = new URI("tcp://" + server);
         socket = new Socket(uri.getHost(), uri.getPort());
+
+
         return true;
     }
 
@@ -51,41 +63,43 @@ public class Client {
 
     }
 
-    protected synchronized <T> T write(Commands cmd, Type cls, Object... params) {
+    private synchronized long write0(Commands cmd, byte flag, Object... params) throws IOException {
         short type = (short) cmd.ordinal();
+        byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+        long id = ID.incrementAndGet();
+
+        out.writeShort(type);
+        out.writeLong(id);
+        out.writeByte(flag);
+        out.writeInt(data.length);
+        out.write(data);
+        out.flush();
+
+        return id;
+
+    }
+
+
+    protected synchronized <T> T write(Commands cmd, Type t, Object... params) throws IOException {
+
+        long id = write0(cmd,DISPOSABLE_REQUEST,params);
+
         try {
-            byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            out.writeShort(type);
-            out.writeInt(data.length);
-            out.write(data);
-            out.flush();
-
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-
-            boolean complete = in.readBoolean();
-
-            int len = in.readInt();
-
-            if (len == 0 && complete) return null;
-
-            data = new byte[len];
-
-            in.readFully(data);
-
-            return cls == null ? null : mapper.readValue(data, mapper.getTypeFactory().constructType(cls));
-
-
-        } catch (IOException e) {
-            e.fillInStackTrace();
-        } catch (Exception e) {
+            Future<T> future = receiver.watch(id,new TypeConverter<>(t));
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 
-    protected void stream(){
+    protected void stream(Commands cmd, Consumer<String> consumer, Object... params) throws IOException {
+        long id = write0(cmd, STREAM_REQUEST, params);
 
+        receiver.watch(id, consumer, new TypeConverter<>(String.class));
     }
 
 
@@ -102,12 +116,13 @@ public class Client {
     }
 
 
-    public boolean crawler(String url,Class<?>... extractors){
+    public boolean crawler(String url, Class<?>... extractors) {
         return false;
     }
 
-
-
+    public void  watch(String point, Consumer<String> consumer) throws IOException {
+        stream(Commands.WATCH, consumer, point);
+    }
 
 
 }

@@ -8,7 +8,7 @@ public interface Context {
 
     void complete();
 
-    void stream();
+    boolean isStream();
 
-    boolean IsWriteEnable();
+    boolean isWriteEnable();
 }

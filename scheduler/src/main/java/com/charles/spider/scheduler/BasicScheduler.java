@@ -11,6 +11,8 @@ import com.charles.spider.scheduler.event.EventLoop;
 import com.charles.spider.scheduler.event.EventMapping;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
+import com.charles.spider.scheduler.job.WatchExecuteObject;
+import com.charles.spider.scheduler.watch.WatchStore;
 import com.charles.spider.scheduler.moudle.ModuleAgent;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
 import com.charles.spider.scheduler.rule.*;
@@ -51,6 +53,7 @@ public class BasicScheduler implements IEvent {
     private JobCoreFactory jobFactory = null;
     private ModuleCoreFactory moduleCoreFactory = null;
     private RuleFactory ruleFactory = null;
+    private JobExecutor watchJobExecutor = null;
     private Store store = null;
 
 
@@ -65,13 +68,16 @@ public class BasicScheduler implements IEvent {
         if (!closed) return;
         closed = false;
         //init_system_signal_handles();
+        initJobFactory();
         initEventLoop();
-        initFetcher();
-
         //先初始化存储，其他模块依赖存储
         initStore();
+        initWatch();
+        initFetcher();
+
+
         initModuleFactory();//初始化模块工厂
-        initJobFactory();
+
         initRuleFactory();//初始化规则工厂
         initLocalListen();//初始化本地端口坚挺
     }
@@ -83,6 +89,7 @@ public class BasicScheduler implements IEvent {
 
     public Future process(Command cmd) {
         return loop.execute(cmd);
+
     }
 
 
@@ -98,14 +105,14 @@ public class BasicScheduler implements IEvent {
 
     protected void init_system_signal_handles() {
         Signal.handle(new Signal("INT"), (Signal sig) -> this.close());
-        logger.info("init moudle of handle system signal");
+        logger.info("init module of handle system signal");
 
     }
 
 
     protected void initFetcher() {
         fetcher = new Fetcher(this);
-        logger.info("init moudle of fetcher");
+        logger.info("init module of fetcher");
     }
 
 
@@ -124,6 +131,12 @@ public class BasicScheduler implements IEvent {
         for (Rule rule : rules) executeRule(rule);
 
     }
+
+    protected void initWatch() throws SchedulerException {
+        watchJobExecutor = jobFactory.build(WatchExecuteObject.class);
+        watchJobExecutor.exec("*/5 * * * * ?",null);
+    }
+
 
     protected void initLocalListen() throws InterruptedException {
 
@@ -154,6 +167,9 @@ public class BasicScheduler implements IEvent {
     }
 
     protected void initEventLoop() {
+//        JobExecutor executor = jobFactory.build(WatchExecuteObject.class);
+//        Monitor watch = new MonitorImpl(executor);
+
         loop = new EventLoop(this);
         loop.start();
     }
@@ -219,12 +235,13 @@ public class BasicScheduler implements IEvent {
 
     @EventMapping
     protected void SUBMIT_REQUEST_HANDLER(Context ctx, Request req) {
+
         String host = req.url().getHost();
         Domain matcher = domain.match(host, false);
 
+
         if (!(matcher != null && bindRequestToDomain(matcher, req)))
             bindRequestToDomain(domain, req);
-
     }
 
 
@@ -285,7 +302,7 @@ public class BasicScheduler implements IEvent {
 
     //edit 暂时不开放
     @EventMapping
-    protected void EDIT_RULE_HANDLER(Context ctx,String host,String id,Rule rule) throws Exception {
+    protected void EDIT_RULE_HANDLER(Context ctx, String host, String id, Rule rule) throws Exception {
 //        Domain matcher = domain.match(host,true);
 //
 //        if(matcher==null) throw new Exception("");
@@ -304,7 +321,6 @@ public class BasicScheduler implements IEvent {
 //        }
 
     }
-
 
 
     @EventMapping
@@ -358,6 +374,17 @@ public class BasicScheduler implements IEvent {
     @EventMapping
     protected void DELETE_MODULE_HANDLER(Context ctx, Query query) throws IOException {
         moduleCoreFactory.agent().delete(query);
+    }
+
+    @EventMapping
+    protected void WATCH_HANDLER(Context ctx, String key) throws Exception {
+
+        WatchStore.get(key).bind(ctx);
+    }
+
+    @EventMapping
+    protected void WATCH_CANCEL_HANDLER(Context ctx, String key) throws Exception {
+        WatchStore.get(key);
     }
 
 

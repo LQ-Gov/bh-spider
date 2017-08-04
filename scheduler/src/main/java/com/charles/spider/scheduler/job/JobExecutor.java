@@ -34,7 +34,7 @@ public class JobExecutor {
 
 
     public synchronized void exec(String cron, Map<String, Object> params) throws SchedulerException {
-        if(StringUtils.isBlank(this.id)||!this.trigger.getCronExpression().equals(cron)) {
+        if (StringUtils.isBlank(this.id) || !this.trigger.getCronExpression().equals(cron)) {
             this.id = UUID.randomUUID().toString();
             this.trigger = newTrigger()
                     .withIdentity(id)
@@ -44,7 +44,7 @@ public class JobExecutor {
 
         JobDataMap map = this.detail.getJobDataMap();
 
-        map.putAll(params);
+        if (params != null) map.putAll(params);
 
         map.put("basic-scheduler", scheduler);
 
