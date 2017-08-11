@@ -32,9 +32,9 @@ public class CommandDecoder extends ByteToMessageDecoder {
 
             Commands key = Commands.values()[byteBuf.readShort()];
 
-            byte flag = byteBuf.readByte();
-
             long id = byteBuf.readLong();
+
+            byte flag = byteBuf.readByte();
 
             int len = byteBuf.readInt();
 

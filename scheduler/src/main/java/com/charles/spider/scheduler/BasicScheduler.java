@@ -149,7 +149,7 @@ public class BasicScheduler implements IEvent {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2, 4));
+                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2+8+1, 4));
                             ch.pipeline().addLast(new CommandDecoder());
                             ch.pipeline().addLast(new CommandReceiveHandler(me));
 

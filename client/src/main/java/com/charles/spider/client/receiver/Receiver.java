@@ -12,42 +12,41 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-public class Receiver {
+public class Receiver extends Thread {
     private Map<Long, Callback> callbacks = new ConcurrentHashMap<>();
-    private Thread thread = new Thread();
     private Socket socket = null;
 
 
     public Receiver(Socket socket) {
         this.socket = socket;
-        thread = new Thread(() -> {
-            try {
-                DataInputStream in = new DataInputStream(socket.getInputStream());
-                while (!this.socket.isClosed()) {
-
-                    long id = in.readLong();
-                    byte flag = in.readByte();
-                    int len = in.readInt();
-
-                    byte[] data = new byte[len];
-
-                    in.readFully(data);
-
-                    Callback callback = callbacks.get(id);
-
-                    boolean result = callback.accept(data, flag > 0);
-
-                    if (!result) callbacks.remove(id);
-
-
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        });
+        this.setDaemon(true);
     }
 
+    @Override
+    public void run() {
+        try {
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            while (!this.socket.isClosed()) {
+
+                long id = in.readLong();
+                byte flag = in.readByte();
+                int len = in.readInt();
+
+                byte[] data = new byte[len];
+
+                in.readFully(data);
+
+                Callback callback = callbacks.get(id);
+
+                boolean result = callback.accept(data, flag == 0);
+
+                if (!result) callbacks.remove(id);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     public Future<byte[]> watch(long id) {
         return watch(id, new DefaultConverter());
@@ -88,21 +87,6 @@ public class Receiver {
 
         Callback<T> callback = new Callback<>(consumer, converter);
 
-
         callbacks.put(id, callback);
     }
-
-
-    public void start() {
-        if (!thread.isAlive()) {
-            thread.start();
-        }
-    }
-
-    public void close() throws InterruptedException {
-        if (thread.isAlive())
-            thread.join();
-    }
-
-
 }

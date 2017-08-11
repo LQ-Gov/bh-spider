@@ -45,7 +45,6 @@ public class EventLoop extends Thread {
 
     @Override
     public void run() {
-        logger.info(Markers.ANALYSIS, "log test");
         while (!this.parent.isClosed()) {
             try {
                 Command cmd = queue.take();

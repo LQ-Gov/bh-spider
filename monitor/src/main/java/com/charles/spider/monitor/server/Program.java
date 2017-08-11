@@ -16,7 +16,7 @@ public class Program {
 
     private static final int PORT = 8080;
     private static final String CONTEXT = "/";
-    private static final String DEFAULT_WEBAPP_PATH = "watch/src/main/webapp";
+    private static final String DEFAULT_WEBAPP_PATH = "monitor/src/main/webapp";
 
     public static void main(String[] args) throws Exception {
 

@@ -32,14 +32,14 @@ public class ClientContext implements Context {
 
     @Override
     public synchronized void write(Object data) {
-        if(isWriteEnable()) return;
+        if(!isWriteEnable()) return;
 
         if (!stream) buffer = data;
 
         else {
             try {
 
-                write0(id, (byte) 1, JsonFactory.get().writeValueAsBytes(buffer));
+                write0(id, (byte) 1, JsonFactory.get().writeValueAsBytes(data));
 
             } catch (JsonProcessingException e) {
                 e.printStackTrace();

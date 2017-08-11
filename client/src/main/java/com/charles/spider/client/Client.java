@@ -1,6 +1,7 @@
 package com.charles.spider.client;
 
 import com.charles.common.JsonFactory;
+import com.charles.spider.client.converter.StringConverter;
 import com.charles.spider.client.converter.TypeConverter;
 import com.charles.spider.client.receiver.Receiver;
 import com.charles.spider.common.command.Commands;
@@ -29,6 +30,7 @@ public class Client {
 
     private String server = null;
     private Socket socket = null;
+    private DataOutputStream out = null;
 
     private RuleOperation ruleOperation = null;
     private ModuleOperation moduleOperation = null;
@@ -40,35 +42,34 @@ public class Client {
 
     public Client(String server) throws IOException, URISyntaxException {
         this.server = server;
-        moduleOperation = new ModuleOperation(this);
-        ruleOperation = new RuleOperation(this);
-        requestOperation = new RequestOperation(this);
 
-        open();
-        receiver = new Receiver(socket);
-        receiver.start();
+
+        if (open()) {
+            ruleOperation = new RuleOperation(this);
+            moduleOperation = new ModuleOperation(this);
+            requestOperation = new RequestOperation(this);
+            receiver = new Receiver(socket);
+            receiver.start();
+        }
     }
 
 
     private boolean open() throws URISyntaxException, IOException {
         URI uri = new URI("tcp://" + server);
         socket = new Socket(uri.getHost(), uri.getPort());
-
-
+        out = new DataOutputStream(socket.getOutputStream());
         return true;
     }
 
     public void close() throws IOException, InterruptedException {
         if (socket != null && socket.isConnected()) socket.close();
+        if (receiver.isAlive()) receiver.join();
 
     }
 
-    private synchronized long write0(Commands cmd, byte flag, Object... params) throws IOException {
+    private synchronized long write0(long id, Commands cmd, byte flag, Object... params) throws IOException {
         short type = (short) cmd.ordinal();
         byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
-        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
-        long id = ID.incrementAndGet();
 
         out.writeShort(type);
         out.writeLong(id);
@@ -82,24 +83,33 @@ public class Client {
     }
 
 
-    protected synchronized <T> T write(Commands cmd, Type t, Object... params) throws IOException {
+    protected <T> T write(Commands cmd, Type t, Object... params) {
 
-        long id = write0(cmd,DISPOSABLE_REQUEST,params);
 
         try {
-            Future<T> future = receiver.watch(id,new TypeConverter<>(t));
+            long id = ID.incrementAndGet();
+            Future<T> future = receiver.watch(id, new TypeConverter<>(t));
+
+            write0(id, cmd, DISPOSABLE_REQUEST, params);
+
             return future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException | IOException e) {
             e.printStackTrace();
         }
 
         return null;
     }
 
-    protected void stream(Commands cmd, Consumer<String> consumer, Object... params) throws IOException {
-        long id = write0(cmd, STREAM_REQUEST, params);
+    protected void stream(Commands cmd, Consumer<String> consumer, Object... params) {
+        try {
+            long id = ID.incrementAndGet();
+            receiver.watch(id, consumer, new StringConverter());
+            write0(id, cmd, STREAM_REQUEST, params);
 
-        receiver.watch(id, consumer, new TypeConverter<>(String.class));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -120,7 +130,7 @@ public class Client {
         return false;
     }
 
-    public void  watch(String point, Consumer<String> consumer) throws IOException {
+    public void watch(String point, Consumer<String> consumer) throws IOException {
         stream(Commands.WATCH, consumer, point);
     }
 

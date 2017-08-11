@@ -22,7 +22,7 @@ public class WatchContainer extends WatchPoint {
     }
 
 
-    public void unbind(Context ctx){
+    public void unbind(Context ctx) {
 
     }
 
@@ -34,10 +34,11 @@ public class WatchContainer extends WatchPoint {
         Iterator<Context> iterator = contexts.iterator();
         while (iterator.hasNext()) {
             Context ctx = iterator.next();
-            if (ctx.isWriteEnable())
+            if (!ctx.isWriteEnable())
                 iterator.remove();
 
-            ctx.write(point);
+            else
+                ctx.write(point);
         }
     }
 

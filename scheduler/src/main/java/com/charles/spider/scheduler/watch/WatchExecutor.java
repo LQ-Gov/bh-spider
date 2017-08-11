@@ -12,14 +12,14 @@ public class WatchExecutor extends Thread {
     private Logger logger = LoggerFactory.getLogger(WatchExecutor.class);
 
     static {
-        Analyst.register("event loop for (.*), execute command:(.*),params bytes size:(.*)", WatchExecutor::eventLoopAnalysis);
+        Analyst.register("event loop for {}, execute command:{},params bytes size:{}", WatchExecutor::eventLoopAnalysis);
     }
 
 
-    private static void eventLoopAnalysis(String[] params) {
-        WatchStore.get("event.loop." + params[2]).increment();
+    private static void eventLoopAnalysis(Object[] params) {
+        Commands cmd = (Commands) params[1];
+        WatchStore.get("event.loop." + cmd.toString()).increment();
 
-        Commands cmd = Commands.valueOf(params[2]);
 
         switch (cmd) {
             case SUBMIT_REQUEST:
@@ -29,8 +29,6 @@ public class WatchExecutor extends Thread {
             case FETCH:
                 WatchStore.get("request.fetch.count").increment();
                 break;
-
-
         }
     }
 
@@ -48,8 +46,8 @@ public class WatchExecutor extends Thread {
         while (true) {
             try {
                 ILoggingEvent event = events.take();
-                String message = event.getMessage();
-                if (!Analyst.analysis(message)) {
+                String format = event.getMessage();
+                if (!Analyst.analysis(format, event.getArgumentArray())) {
                     logger.warn("the analysis message not found any analyst to explain");
                 }
 

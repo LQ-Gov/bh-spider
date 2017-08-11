@@ -9,12 +9,12 @@ import java.util.regex.Pattern;
 public class Analyst {
     private final static List<Analyst> store = new ArrayList<>();
 
-    private Pattern pattern = null;
-    private Consumer<String[]> consumer;
+    private String format = null;
+    private Consumer<Object[]> consumer;
 
 
-    public Analyst(Pattern pattern, Consumer<String[]> consumer) {
-        this.pattern = pattern;
+    public Analyst(String format, Consumer<Object[]> consumer) {
+        this.format = format;
         this.consumer = consumer;
     }
 
@@ -24,31 +24,34 @@ public class Analyst {
     }
 
 
-    public static synchronized void register(String regex, Consumer<String[]> consumer) {
-        Pattern pattern = Pattern.compile(regex);
+    public static synchronized void register(String format, Consumer<Object[]> consumer) {
+        assert format!=null;
 
-        store.add(new Analyst(pattern, consumer));
+        store.add(new Analyst(format, consumer));
     }
 
 
-    public static synchronized boolean analysis(String text) {
-        for (Analyst it : store) {
-            Matcher matcher = it.pattern.matcher(text);
-            if (matcher.find()) {
-                int count = matcher.groupCount();
-                String[] params = null;
-                if (count > 0) {
-                    params = new String[count];
+    public static synchronized boolean analysis(String text,Object[] arguments) {
+        try {
+            for (Analyst it : store) {
+                if(it.format.equals(text)){
 
-                    for (int i = 0; i < count; i++)
-                        params[i] = matcher.group(i);
+//                    int count = matcher.groupCount();
+//                    String[] params = null;
+//                    if (count > 0) {
+//                        params = new String[count];
+//
+//                        for (int i = 0; i < count; i++)
+//                            params[i] = matcher.group(i);
+//                    }
+
+                    it.consumer.accept(arguments);
+
+
+                    return true;
                 }
-
-                it.consumer.accept(params);
-
-
-                return true;
             }
+        } catch (Exception ignore) {
         }
         return false;
 

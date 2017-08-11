@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Created by lq on 17-4-9.
  */
@@ -17,7 +19,7 @@ public class IndexController {
     }
 
     @RequestMapping(value = "/**", method = RequestMethod.GET)
-    public String others() {
+    public String others(HttpServletRequest request) {
         return "forward:/index";
     }
 

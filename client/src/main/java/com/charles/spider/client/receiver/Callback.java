@@ -32,7 +32,7 @@ public class Callback<T> {
         this.future = new FutureTask<>(this::complete);
     }
 
-    public boolean accept(byte[] data, boolean complete) {
+    public synchronized boolean accept(byte[] data, boolean complete) {
         try {
             this.data = this.converter.convert(data);
             if (complete || this.consumer == null) this.future.run();

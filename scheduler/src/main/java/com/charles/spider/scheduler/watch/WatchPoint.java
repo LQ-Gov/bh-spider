@@ -5,7 +5,7 @@ public class WatchPoint {
     private String key;
     private Object value = 0L;
 
-    private Object state = null;
+    private transient Object state = null;
 
     WatchPoint(){}
 

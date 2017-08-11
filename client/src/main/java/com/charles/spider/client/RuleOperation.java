@@ -35,44 +35,43 @@ public class RuleOperation {
         client.write(Commands.SUBMIT_RULE, null, rule);
     }
 
-    public List<Rule> select(){
-        return select(null,0,-1);
+    public List<Rule> select() {
+        return select(null, 0, -1);
 
     }
 
-    public List<Rule> select(String host,int skip,int size) {
+    public List<Rule> select(String host, int skip, int size) {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Rule.class}, null);
-        return client.write(Commands.GET_RULE_LIST,type, host,skip,size);
+        return client.write(Commands.GET_RULE_LIST, type, host, skip, size);
     }
 
     /**
      * 获取HOST集合
+     *
      * @return
      */
-    public List<String> hosts() throws ExecutionException, InterruptedException {
+    public List<String> hosts() {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
-        Future<List<String>> future = client.write(Commands.GET_HOST_LIST, type);
-        return future.get();
+        return client.write(Commands.GET_HOST_LIST, type);
     }
 
-    public void delete(String host,String uuid){
-        client.write(Commands.DELETE_RULE,null,host,uuid);
+    public void delete(String host, String uuid) {
+        client.write(Commands.DELETE_RULE, null, host, uuid);
     }
 
 
-    public void run(String host,String id) {
+    public void run(String host, String id) {
         client.write(Commands.SCHEDULER_RULE_EXECUTOR, null, host, id, true);
     }
 
-    public void pause(String host,String id){
-        client.write(Commands.SCHEDULER_RULE_EXECUTOR,null,host,id,false);
+    public void pause(String host, String id) {
+        client.write(Commands.SCHEDULER_RULE_EXECUTOR, null, host, id, false);
     }
 
 
 //    public void edit(String host,String id,Rule rule){
 //         client.write(Commands.EDIT_RULE,null, host,id,rule);
 //    }
-
 
 
 }

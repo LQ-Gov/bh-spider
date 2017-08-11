@@ -26,7 +26,7 @@ public class RuleExecuteObject implements Job {
 
         Queue<Request> queue = rule.getRequests();
 
-        Request req = queue.peek();
+        Request req = queue.poll();
 
         if (req != null) {
             System.out.println(req.url());
