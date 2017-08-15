@@ -1,7 +1,7 @@
 package com.charles.spider.client;
 
 import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
@@ -61,15 +61,15 @@ public class ModuleOperation {
 
     }
 
-    public void submit(String name, Class<?> cls, ModuleTypes type) throws IOException {
+    public void submit(String name, Class<?> cls, ModuleType type) throws IOException {
         submit(name, cls, type, null);
     }
 
 
-    public void submit(String name, Class<?> cls, ModuleTypes type, String desc) throws IOException {
+    public void submit(String name, Class<?> cls, ModuleType type, String desc) throws IOException {
 
         Preconditions.checkArgument(cls != null, "you must special a valid class");
-        Preconditions.checkArgument(type != null && type != ModuleTypes.UNKNOWN, "you must special a valid module type");
+        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid module type");
 
 
         URL url = cls.getResource("");
@@ -120,22 +120,22 @@ public class ModuleOperation {
     public void submit(String name, Path path, String desc) throws IOException {
         String extension = FilenameUtils.getExtension(path.getFileName().toString());
 
-        ModuleTypes type = ModuleTypes.value(extension);
+        ModuleType type = ModuleType.value(extension);
 
         submit(name, path, type, desc);
 
 
     }
 
-    public void submit(String name, String path, ModuleTypes type, String desc) throws IOException {
+    public void submit(String name, String path, ModuleType type, String desc) throws IOException {
         submit(name, Paths.get(path), type, desc);
     }
 
-    public void submit(String name, Path path, ModuleTypes type, String desc) throws IOException {
+    public void submit(String name, Path path, ModuleType type, String desc) throws IOException {
 
         assert path != null;
 
-        Preconditions.checkArgument(type != null && type != ModuleTypes.UNKNOWN, "you must special a valid module type");
+        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid module type");
 
         Preconditions.checkState(Files.exists(path), "file not exists");
 

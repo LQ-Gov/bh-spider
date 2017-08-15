@@ -11,7 +11,7 @@ public interface Extractor {
 
 
 
-    void run(FetchContext ctx,Document doc);
+    boolean run(FetchContext ctx) throws Exception;
 
 
 }

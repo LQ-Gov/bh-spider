@@ -11,11 +11,9 @@ public interface FetchContext {
 
     URL url();
 
-
-
     Request request();
 
-    void response();
+    Response response();
 
     Document document();
 
@@ -43,8 +41,6 @@ public interface FetchContext {
 
 
     void cancel();
-
-    int status();
 
 
 

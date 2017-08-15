@@ -1,16 +1,13 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.store.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,32 +21,32 @@ public class ModuleCoreFactory {
 
     private static Map<String, Object> moduleObjects = new ConcurrentHashMap<>();
 
-    private Map<ModuleTypes, ModuleAgent> agents = new HashMap<>();
+    private Map<ModuleType, ModuleAgent> agents = new HashMap<>();
 
 
     public ModuleCoreFactory(Service<Module> service) throws IOException {
 
-        agents.put(ModuleTypes.JAR, new ModuleAgent(ModuleTypes.JAR, Paths.get(Config.INIT_DATA_PATH, "handler"), service));
-        agents.put(ModuleTypes.GROOVY, new GroovyModuleAgent(ModuleTypes.GROOVY, Config.INIT_DATA_PATH + "handler", service));
-        agents.put(ModuleTypes.CONFIG, new ModuleAgent(ModuleTypes.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
-        agents.put(ModuleTypes.UNKNOWN, new GlobalModuleAgent(ModuleTypes.UNKNOWN, service));
+        agents.put(ModuleType.JAR, new ModuleAgent(ModuleType.JAR, Paths.get(Config.INIT_DATA_PATH, "handler"), service));
+        agents.put(ModuleType.GROOVY, new GroovyModuleAgent(ModuleType.GROOVY, Config.INIT_DATA_PATH + "handler", service));
+        agents.put(ModuleType.CONFIG, new ModuleAgent(ModuleType.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
+        agents.put(ModuleType.UNKNOWN, new GlobalModuleAgent(ModuleType.UNKNOWN, service));
 
     }
 
 
-    public ModuleAgent agent(ModuleTypes type) {
+    public ModuleAgent agent(ModuleType type) {
         return agents.get(type);
     }
 
     public ModuleAgent agent() {
-        return agents.get(ModuleTypes.UNKNOWN);
+        return agents.get(ModuleType.UNKNOWN);
     }
 
 
     public Object object(String moduleName, String className) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
 
 
-        ModuleAgent agent = agents.get(ModuleTypes.UNKNOWN);
+        ModuleAgent agent = agents.get(ModuleType.UNKNOWN);
 
         Module module = agent.get(moduleName);
 

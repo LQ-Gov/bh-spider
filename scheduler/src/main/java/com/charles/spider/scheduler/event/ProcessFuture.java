@@ -1,8 +1,6 @@
 package com.charles.spider.scheduler.event;
 
 
-import com.charles.common.Action;
-import io.netty.channel.ChannelFuture;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

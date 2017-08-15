@@ -3,20 +3,24 @@ package com.charles.spider.scheduler.fetcher;
 import com.charles.spider.common.extractor.Document;
 import com.charles.spider.common.http.FetchContext;
 import com.charles.spider.common.http.Request;
-import com.charles.spider.scheduler.BasicScheduler;
+import com.charles.spider.common.http.Response;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 public class BasicFetchContext implements FetchContext {
 
     private HttpRequestBase base;
-    private Request orignal;
+    private Request original;
+
+    private Map<String,Object> fields = new HashMap<>();
+
     public BasicFetchContext(HttpRequestBase req,Request original){
         this.base = req;
-        this.orignal = original;
+        this.original = original;
 
     }
 
@@ -28,11 +32,12 @@ public class BasicFetchContext implements FetchContext {
 
     @Override
     public Request request() {
-        return this.orignal;
+        return this.original;
     }
 
     @Override
-    public void response() {
+    public Response response() {
+        return null;
 
     }
 
@@ -49,17 +54,19 @@ public class BasicFetchContext implements FetchContext {
 
     @Override
     public void set(String key, Object value) {
+        fields.put(key,value);
 
     }
 
     @Override
     public void set(Map<String, Object> collection) {
+        fields.putAll(collection);
 
     }
 
     @Override
     public Object get(String key) {
-        return null;
+        return fields.get(key);
     }
 
     @Override
@@ -95,10 +102,5 @@ public class BasicFetchContext implements FetchContext {
     @Override
     public void cancel() {
 
-    }
-
-    @Override
-    public int status() {
-        return 0;
     }
 }

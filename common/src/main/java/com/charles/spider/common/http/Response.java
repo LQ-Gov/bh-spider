@@ -1,4 +1,12 @@
 package com.charles.spider.common.http;
 
-public class Response {
+import java.util.Map;
+
+public interface Response {
+
+    int statusCode();
+
+    Map<String,String> headers();
+
+    byte[] original();
 }

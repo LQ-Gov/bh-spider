@@ -1,6 +1,6 @@
 package com.charles.spider.common.entity;
 
-import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.constant.ModuleType;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -14,7 +14,7 @@ public class Module implements Serializable {
     private String name;
     private String path;
     private String hash;
-    private ModuleTypes type;
+    private ModuleType type;
     private String detail;
     private Date updateTime;
     private boolean valid;
@@ -51,11 +51,11 @@ public class Module implements Serializable {
         this.hash = hash;
     }
 
-    public ModuleTypes getType() {
+    public ModuleType getType() {
         return type;
     }
 
-    public void setType(ModuleTypes type) {
+    public void setType(ModuleType type) {
         this.type = type;
     }
 

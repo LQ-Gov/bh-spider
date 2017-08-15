@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.store.service.Service;
@@ -17,7 +17,7 @@ public class GroovyModuleAgent extends ModuleAgent {
 
     private final static Map<String, Object> moduleObjects = new ConcurrentHashMap<>();
 
-    public GroovyModuleAgent(ModuleTypes type, String basePath, Service service) throws IOException {
+    public GroovyModuleAgent(ModuleType type, String basePath, Service service) throws IOException {
         super(type, basePath, service);
     }
 

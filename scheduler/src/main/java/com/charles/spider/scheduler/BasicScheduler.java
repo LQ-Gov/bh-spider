@@ -1,7 +1,7 @@
 package com.charles.spider.scheduler;
 
 import com.charles.spider.common.http.Request;
-import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.common.entity.Rule;
 import com.charles.spider.query.Query;
@@ -53,7 +53,6 @@ public class BasicScheduler implements IEvent {
     private JobCoreFactory jobFactory = null;
     private ModuleCoreFactory moduleCoreFactory = null;
     private RuleFactory ruleFactory = null;
-    private JobExecutor watchJobExecutor = null;
     private Store store = null;
 
 
@@ -133,7 +132,7 @@ public class BasicScheduler implements IEvent {
     }
 
     protected void initWatch() throws SchedulerException {
-        watchJobExecutor = jobFactory.build(WatchExecuteObject.class);
+        JobExecutor watchJobExecutor = jobFactory.build(WatchExecuteObject.class);
         watchJobExecutor.exec("*/5 * * * * ?",null);
     }
 
@@ -212,7 +211,7 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, ModuleTypes type, String description) {
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, ModuleType type, String description) {
 
         ModuleAgent agent = moduleCoreFactory.agent(type);
 

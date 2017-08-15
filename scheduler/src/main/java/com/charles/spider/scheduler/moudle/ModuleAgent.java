@@ -1,7 +1,6 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.constant.ModuleTypes;
-import com.charles.spider.common.extractor.Extractor;
+import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.common.entity.Module;
@@ -26,16 +25,16 @@ public class ModuleAgent {
 
     private Path base = null;
 
-    private ModuleTypes type = null;
+    private ModuleType type = null;
 
     private Service<Module> service;
 
 
-    public ModuleAgent(ModuleTypes type, String basePath, Service<Module> service) throws IOException {
+    public ModuleAgent(ModuleType type, String basePath, Service<Module> service) throws IOException {
         this(type, basePath == null ? null : Paths.get(basePath), service);
     }
 
-    public ModuleAgent(ModuleTypes type, Path path, Service<Module> service) {
+    public ModuleAgent(ModuleType type, Path path, Service<Module> service) {
         this.type = type;
         this.base = path;
         this.service = service;
@@ -52,7 +51,7 @@ public class ModuleAgent {
     }
 
 
-    public ModuleTypes type() {
+    public ModuleType type() {
         return this.type;
     }
 
@@ -66,7 +65,7 @@ public class ModuleAgent {
     }
 
 
-    public Module save(byte[] data, String name, ModuleTypes type, String description, boolean override) throws Exception {
+    public Module save(byte[] data, String name, ModuleType type, String description, boolean override) throws Exception {
         Path path = Paths.get(base().toString(), name);
         Path old = Paths.get(path.toString(), "data");
         Path tmp = Paths.get(path.toString(), "data.tmp");

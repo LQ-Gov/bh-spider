@@ -3,6 +3,8 @@ package com.charles.spider.scheduler.fetcher;
 import com.charles.spider.common.extractor.Extractor;
 import com.charles.spider.common.http.FetchContext;
 import com.charles.spider.common.http.Request;
+import com.charles.spider.fetch.context.FetchResponse;
+import com.charles.spider.fetch.context.FinalFetchContext;
 import com.charles.spider.scheduler.BasicScheduler;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
@@ -30,12 +32,15 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
     @Override
     public void completed(HttpResponse response) {
 
-        this.context = new FinalFetchContext(this.context, response);
-
+        try {
+            this.context = new FinalFetchContext(this.context, new FetchResponse(response));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         this.fetcher.service().execute(() -> {
             FetchContext ctx = this.context;
-            int code = ctx.status();
+            int code = ctx.response().statusCode();
 
             Request req = ctx.request();
 
@@ -46,11 +51,16 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
             for (String it : chain) {
                 Extractor extractor = null;
                 try {
-                    Object o  = scheduler.moduleObject(it, null);
+                    Object o = scheduler.moduleObject(it, null);
 
-                    if(o instanceof Extractor) extractor = (Extractor) o;
+                    if (o instanceof Extractor) extractor = (Extractor) o;
 
                     else throw new Exception("not a extractor module");
+
+
+
+                    if(!extractor.run(ctx)) break;
+
 
 
                 } catch (ClassNotFoundException | IOException | IllegalAccessException | InstantiationException e) {
@@ -58,9 +68,7 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                if (extractor == null) break;
 
-                extractor.run(ctx, ctx.document());
             }
         });
 

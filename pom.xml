@@ -14,7 +14,8 @@
         <module>store</module>
         <module>client</module>
         <module>monitor</module>
-        <module>query-tool</module>
+        <module>store-query</module>
+        <module>spider-fetch-context</module>
     </modules>
 
     <properties>
@@ -80,15 +81,6 @@
                 <version>${common-io.version}</version>
             </dependency>
 
-
-            <!-- https://mvnrepository.com/artifact/junit/junit -->
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <scope>test</scope>
-                <version>${junit.version}</version>
-            </dependency>
-
             <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -112,6 +104,16 @@
         </dependencies>
 
     </dependencyManagement>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+            <version>${junit.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
 

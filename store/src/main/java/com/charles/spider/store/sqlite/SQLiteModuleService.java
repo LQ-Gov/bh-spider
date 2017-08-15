@@ -1,6 +1,6 @@
 package com.charles.spider.store.sqlite;
 
-import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.common.entity.Module;
@@ -107,7 +107,7 @@ public class SQLiteModuleService implements Service<Module> {
                 module.setPath(rs.getString("path"));
                 module.setHash(rs.getString("hash"));
                 module.setUpdateTime(rs.getTimestamp("update_time",Calendar.getInstance(TimeZone.getTimeZone("UTC"))));
-                module.setType(ModuleTypes.valueOf(rs.getString("type")));
+                module.setType(ModuleType.valueOf(rs.getString("type")));
                 module.setDetail(rs.getString("detail"));
                 module.setId(rs.getLong("id"));
                 module.setValid(rs.getBoolean("valid"));

@@ -1,6 +1,6 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.constant.ModuleTypes;
+import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.query.Query;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.condition.Condition;
@@ -13,12 +13,12 @@ import java.util.List;
  * Created by lq on 7/7/17.
  */
 public class GlobalModuleAgent extends ModuleAgent {
-    public GlobalModuleAgent(ModuleTypes type, Service<Module> service) throws IOException {
+    public GlobalModuleAgent(ModuleType type, Service<Module> service) throws IOException {
         super(type, (String) null, service);
     }
 
     @Override
-    public ModuleTypes type() {
+    public ModuleType type() {
         return null;
     }
 

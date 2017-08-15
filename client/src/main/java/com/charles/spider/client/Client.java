@@ -1,10 +1,15 @@
 package com.charles.spider.client;
 
 import com.charles.common.JsonFactory;
+import com.charles.spider.client.converter.Converter;
 import com.charles.spider.client.converter.StringConverter;
 import com.charles.spider.client.converter.TypeConverter;
 import com.charles.spider.client.receiver.Receiver;
 import com.charles.spider.common.command.Commands;
+import com.charles.spider.common.extractor.Extractor;
+import com.charles.spider.common.http.FetchContext;
+import com.charles.spider.fetch.context.FetchResponse;
+import com.charles.spider.fetch.context.FinalFetchContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.DataOutputStream;
@@ -100,16 +105,20 @@ public class Client {
         return null;
     }
 
-    protected void stream(Commands cmd, Consumer<String> consumer, Object... params) {
+    protected <T> void streamBase(Commands cmd, Consumer<T> consumer, Converter<byte[], T> converter, Object... params) {
         try {
             long id = ID.incrementAndGet();
-            receiver.watch(id, consumer, new StringConverter());
+            receiver.watch(id, consumer, converter);
             write0(id, cmd, STREAM_REQUEST, params);
 
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    protected void stream(Commands cmd, Consumer<String> consumer, Object... params) {
+        stream(cmd, consumer, new StringConverter(), params);
     }
 
 
@@ -126,8 +135,30 @@ public class Client {
     }
 
 
-    public boolean crawler(String url, Class<?>... extractors) {
-        return false;
+    public boolean crawler(String url, Class<? extends Extractor>... extractors) {
+        streamBase(Commands.FETCH, (Consumer<FetchResponse>) response -> {
+
+            FetchContext ctx = new FinalFetchContext(null, response);
+            try {
+                for (Class<?> it : extractors) {
+
+                    Extractor extractor = (Extractor) it.newInstance();
+                    try {
+                        if (!extractor.run(ctx))
+                            break;
+                    } catch (Exception e) {
+                        //此处做报告
+                        e.printStackTrace();
+                    }
+
+                }
+            } catch (InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+
+
+        }, new TypeConverter<>(FetchResponse.class));
+        return true;
     }
 
     public void watch(String point, Consumer<String> consumer) throws IOException {
