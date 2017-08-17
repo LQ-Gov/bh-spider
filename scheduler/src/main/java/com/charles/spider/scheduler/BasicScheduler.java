@@ -4,6 +4,7 @@ import com.charles.spider.common.http.Request;
 import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.common.entity.Rule;
+import com.charles.spider.fetch.context.FetchRequest;
 import com.charles.spider.query.Query;
 import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.scheduler.context.Context;
@@ -12,6 +13,7 @@ import com.charles.spider.scheduler.event.EventMapping;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.job.WatchExecuteObject;
+import com.charles.spider.scheduler.moudle.ModuleBuildException;
 import com.charles.spider.scheduler.watch.WatchStore;
 import com.charles.spider.scheduler.moudle.ModuleAgent;
 import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
@@ -97,7 +99,7 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Object moduleObject(String moduleName, String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+    public Object moduleObject(String moduleName, String className) throws IOException, ModuleBuildException {
         return moduleCoreFactory.object(moduleName, className);
     }
 
@@ -118,7 +120,12 @@ public class BasicScheduler implements IEvent {
     //初始化数据库数据
     protected void initStore() throws Exception {
         store = Store.get(Config.INIT_STORE_DATABASE, Config.getStoreProperties());
+        store.register(Module.class,"charles_spider_module");
+        store.register(FetchRequest.class,"charles_spider_request");
+        store.register(Rule.class,"charles_spider_rule");
         store.init();
+
+        logger.info("init database store");
 
     }
 
@@ -177,7 +184,7 @@ public class BasicScheduler implements IEvent {
 
         Preconditions.checkNotNull(store, "the data store not init");
 
-        this.moduleCoreFactory = new ModuleCoreFactory(store.module());
+        this.moduleCoreFactory = new ModuleCoreFactory(store);
     }
 
 
@@ -264,6 +271,7 @@ public class BasicScheduler implements IEvent {
 
     @EventMapping
     protected void GET_MODULE_LIST_HANDLER(Context ctx, Query query) {
+
         ModuleAgent agent = moduleCoreFactory.agent();
         List<Module> list = agent.select(query);
         ctx.write(list);
@@ -389,7 +397,7 @@ public class BasicScheduler implements IEvent {
 
     @EventMapping
     protected void FETCH_HANDLER(Context ctx, Request req) throws URISyntaxException {
-        fetcher.fetch(req);
+        fetcher.fetch(ctx, req);
     }
 
 

@@ -25,7 +25,7 @@ public class FetchResponse implements Response {
     }
 
     @Override
-    public int statusCode() {
+    public int code() {
         return code;
     }
 
@@ -35,7 +35,7 @@ public class FetchResponse implements Response {
     }
 
     @Override
-    public byte[] original() {
+    public byte[] data() {
         return entity;
     }
 }

@@ -9,6 +9,10 @@ import java.util.Date;
  * Created by lq on 17-6-21.
  */
 public class Module implements Serializable {
+    public enum State {
+        NULL, TMP, VALID
+    }
+
 
     private long id;
     private String name;
@@ -17,7 +21,11 @@ public class Module implements Serializable {
     private ModuleType type;
     private String detail;
     private Date updateTime;
-    private boolean valid;
+
+
+    private State state = State.NULL;
+
+
 
     public long getId() {
         return id;
@@ -76,11 +84,11 @@ public class Module implements Serializable {
     }
 
 
-    public boolean isValid() {
-        return valid;
+    public State getState() {
+        return state;
     }
 
-    public void setValid(boolean valid) {
-        this.valid = valid;
+    public void setState(State state) {
+        this.state = state;
     }
 }

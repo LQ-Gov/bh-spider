@@ -3,13 +3,13 @@ package com.charles.spider.scheduler.moudle;
 import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
-import com.charles.spider.store.service.Service;
+import com.charles.spider.store.base.Store;
 import com.google.common.base.Preconditions;
 import groovy.lang.GroovyClassLoader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,28 +17,28 @@ public class GroovyModuleAgent extends ModuleAgent {
 
     private final static Map<String, Object> moduleObjects = new ConcurrentHashMap<>();
 
-    public GroovyModuleAgent(ModuleType type, String basePath, Service service) throws IOException {
-        super(type, basePath, service);
+    public GroovyModuleAgent(Path basePath, Store store) {
+        super(ModuleType.GROOVY, basePath, store);
     }
 
 
     @Override
-    public void delete(Query query) {
-        List<Module> list = this.select(query);
+    public void delete(Query query) throws IOException {
+        Module module = this.store().single(Module.class, query);
 
-        Preconditions.checkState(list != null && !list.isEmpty(), "module is not exist");
-
-        Module module = list.get(0);
+        Preconditions.checkState(module != null, "module is not exist");
 
         String key = module.getName() + ".null";
 
-        moduleObjects.remove(key);
+        synchronized (moduleObjects) {
+            moduleObjects.remove(key);
 
-        super.delete(query);
+            super.delete(query);
+        }
     }
 
     @Override
-    public Object object(String moduleName, String className) throws IllegalAccessException, InstantiationException, IOException {
+    public Object object(String moduleName, String className) throws IOException, ModuleBuildException {
 
         String key = moduleName + "." + className;
 
@@ -52,15 +52,21 @@ public class GroovyModuleAgent extends ModuleAgent {
 
 
             Module module = super.get(moduleName);
+            if (module == null) throw new ModuleBuildException(moduleName, "module not found");
 
             GroovyClassLoader loader = new GroovyClassLoader(ClassLoader.getSystemClassLoader());
 
             Class<?> cls = loader.parseClass(new File(module.getPath() + "/data"));
 
+            if (cls == null) throw new ModuleBuildException(moduleName, "can't find any class");
 
-            if (cls != null) {
+
+            try {
                 o = cls.newInstance();
                 moduleObjects.put(key, o);
+
+            } catch (Exception e) {
+                throw new ModuleBuildException(moduleName, e.getMessage());
             }
         }
 

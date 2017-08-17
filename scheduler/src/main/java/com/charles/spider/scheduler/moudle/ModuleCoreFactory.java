@@ -3,7 +3,7 @@ package com.charles.spider.scheduler.moudle;
 import com.charles.spider.common.constant.ModuleType;
 import com.charles.spider.common.entity.Module;
 import com.charles.spider.scheduler.config.Config;
-import com.charles.spider.store.service.Service;
+import com.charles.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by lq on 17-3-16.
@@ -19,17 +18,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ModuleCoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(ModuleCoreFactory.class);
 
-    private static Map<String, Object> moduleObjects = new ConcurrentHashMap<>();
-
     private Map<ModuleType, ModuleAgent> agents = new HashMap<>();
+    private Store store;
 
 
-    public ModuleCoreFactory(Service<Module> service) throws IOException {
+    public ModuleCoreFactory(Store store) throws IOException {
 
-        agents.put(ModuleType.JAR, new ModuleAgent(ModuleType.JAR, Paths.get(Config.INIT_DATA_PATH, "handler"), service));
-        agents.put(ModuleType.GROOVY, new GroovyModuleAgent(ModuleType.GROOVY, Config.INIT_DATA_PATH + "handler", service));
-        agents.put(ModuleType.CONFIG, new ModuleAgent(ModuleType.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
-        agents.put(ModuleType.UNKNOWN, new GlobalModuleAgent(ModuleType.UNKNOWN, service));
+        this.store = store;
+
+        agents.put(ModuleType.GROOVY, new GroovyModuleAgent(Paths.get(Config.INIT_DATA_PATH, "module"), store));
+        agents.put(ModuleType.CONFIG, new ModuleAgent(ModuleType.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), store));
+        agents.put(ModuleType.UNKNOWN, new GlobalModuleAgent(this, store));
 
     }
 
@@ -43,14 +42,12 @@ public class ModuleCoreFactory {
     }
 
 
-    public Object object(String moduleName, String className) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    public Object object(String moduleName, String className) throws IOException, ModuleBuildException {
 
 
-        ModuleAgent agent = agents.get(ModuleType.UNKNOWN);
+        Module module = agent().get(moduleName);
 
-        Module module = agent.get(moduleName);
-
-        agent = agents.get(module.getType());
+        ModuleAgent agent = agents.get(module.getType());
 
 
         Object o = agent.object(moduleName, className);

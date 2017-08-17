@@ -39,7 +39,6 @@ public interface FetchContext {
 
     void scheduler(String url);
 
-
     void cancel();
 
 

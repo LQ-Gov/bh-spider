@@ -4,6 +4,7 @@ import com.charles.spider.common.extractor.Document;
 import com.charles.spider.common.http.FetchContext;
 import com.charles.spider.common.http.Request;
 import com.charles.spider.common.http.Response;
+import com.charles.spider.scheduler.context.Context;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.net.URL;
@@ -16,9 +17,13 @@ public class BasicFetchContext implements FetchContext {
     private HttpRequestBase base;
     private Request original;
 
+    private Context ctx;
+
     private Map<String,Object> fields = new HashMap<>();
 
-    public BasicFetchContext(HttpRequestBase req,Request original){
+    public BasicFetchContext(Context ctx, HttpRequestBase req, Request original){
+
+        this.ctx =ctx;
         this.base = req;
         this.original = original;
 

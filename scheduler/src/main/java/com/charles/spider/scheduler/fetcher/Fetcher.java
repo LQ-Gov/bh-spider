@@ -4,6 +4,7 @@ import com.charles.common.utils.ArrayUtils;
 import com.charles.spider.common.http.FetchContext;
 import com.charles.spider.common.http.Request;
 import com.charles.spider.scheduler.BasicScheduler;
+import com.charles.spider.scheduler.context.Context;
 import com.charles.spider.scheduler.event.EventLoop;
 import com.charles.spider.scheduler.event.IEvent;
 import org.apache.http.client.methods.*;
@@ -50,16 +51,16 @@ public class Fetcher implements IEvent {
         return false;
     }
 
-    public void fetch(Request req) throws URISyntaxException {
+    public void fetch(Context ctx, Request req) throws URISyntaxException {
 
 
         HttpRequestBase base = build_request_from_original(req);
 
-        FetchContext context = new BasicFetchContext(base, req);
+        FetchContext context = new BasicFetchContext(ctx, base, req);
 
         //exec_request_prepare_modules(req, base, context);
 
-        client.execute(base, new FetchCallback(this.scheduler, this, context));
+        client.execute(base, new FetchCallback(ctx, this.scheduler, this, context));
 
     }
 

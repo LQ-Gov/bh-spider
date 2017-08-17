@@ -118,7 +118,7 @@ public class Client {
     }
 
     protected void stream(Commands cmd, Consumer<String> consumer, Object... params) {
-        stream(cmd, consumer, new StringConverter(), params);
+        streamBase(cmd, consumer, new StringConverter(), params);
     }
 
 

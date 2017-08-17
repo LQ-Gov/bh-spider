@@ -1,43 +1,35 @@
 package com.charles.spider.scheduler.moudle;
 
 import com.charles.spider.common.constant.ModuleType;
+import com.charles.spider.common.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
-import com.charles.spider.common.entity.Module;
-import com.charles.spider.store.service.Service;
+import com.charles.spider.store.base.Entity;
+import com.charles.spider.store.base.Store;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by lq on 17-3-16.
  */
 public class ModuleAgent {
-    private static Map<String, Object> extractorObjects = new ConcurrentHashMap<>();
 
     private Path base = null;
 
     private ModuleType type = null;
 
-    private Service<Module> service;
+    private Store store;
 
 
-    public ModuleAgent(ModuleType type, String basePath, Service<Module> service) throws IOException {
-        this(type, basePath == null ? null : Paths.get(basePath), service);
-    }
-
-    public ModuleAgent(ModuleType type, Path path, Service<Module> service) {
+    public ModuleAgent(ModuleType type, Path path, Store store) {
         this.type = type;
         this.base = path;
-        this.service = service;
+        this.store = store;
     }
 
 
@@ -46,8 +38,8 @@ public class ModuleAgent {
     }
 
 
-    protected Service<Module> service() {
-        return this.service;
+    protected Store store() {
+        return this.store;
     }
 
 
@@ -61,7 +53,21 @@ public class ModuleAgent {
         if (!Files.exists(path) || !Files.isDirectory(path))
             return null;
 
-        return service.single(Query.Condition(Condition.where("name").is(name)));
+        Module module = store().single(Module.class, Query.Condition(Condition.where("name").is(name)));
+        if (module == null) return null;
+        if (module.getState() == Module.State.TMP) {
+            Path old = Paths.get(path.toString(), "data");
+            Path tmp = Paths.get(path.toString(), "data.tmp");
+            Files.copy(tmp, old, StandardCopyOption.REPLACE_EXISTING);
+
+            module.setState(Module.State.VALID);
+            int count = store().update(Entity.toEntity(module),
+                    Condition.where("id").is(module.getId())
+                            .and(Condition.where("update_time").is(module.getUpdateTime())));
+            Files.delete(tmp);
+        }
+
+        return module;
     }
 
 
@@ -78,7 +84,7 @@ public class ModuleAgent {
 
         String hash = DigestUtils.sha1Hex(data);
 
-        Module module = service.single(Query.Condition(Condition.where("name").is(name)));
+        Module module = store().single(Module.class, Query.Condition(Condition.where("name").is(name)));
         if (module == null) {
             module = new Module();
             module.setPath(path.toString());
@@ -87,28 +93,31 @@ public class ModuleAgent {
             module.setType(type);
             module.setUpdateTime(new Date());
             module.setHash(hash);
-            module.setValid(false);
-            module = service.insert(module);
+            module = (Module) store().insert(Entity.toEntity(module)).toObject();
         }
 
-        if (module.isValid() && module.getHash().equals(hash)) throw new ModuleNoChangeException();
+        if (module.getState() == Module.State.VALID && module.getHash().equals(hash))
+            throw new ModuleNoChangeException();
+
+        module.setHash(hash);
 
         //写入临时文件
         Files.write(tmp, data);
+        module.setState(Module.State.TMP);
+        store().update(Entity.toEntity(module),
+                Condition.where("id").is(module.getId())
+                        .and(Condition.where("update_time").is(module.getUpdateTime())));
 
-        //delete old version,move new version
-        if (Files.exists(old)) Files.delete(old);
-        Files.move(tmp, old);
+        Files.copy(tmp, old, StandardCopyOption.REPLACE_EXISTING);
 
-
-        module.setHash(hash);
-        module.setValid(true);
-        int count = service.update(module,
+        module.setState(Module.State.VALID);
+        int count = store().update(Entity.toEntity(module),
                 Condition.where("id").is(module.getId())
                         .and(Condition.where("update_time").is(module.getUpdateTime())));
 
         if (count == 0) throw new Exception("unknown reason,the database can't update");
 
+        Files.delete(tmp);
 
         return module;
     }
@@ -120,16 +129,27 @@ public class ModuleAgent {
         query.addCondition(Condition.where("type").is(type()));
 
 
-        return service.select(query);
+        return store().select(Module.class, query);
     }
 
 
-    public void delete(Query query) {
-        service.delete(query);
+    public void delete(Query query) throws IOException {
+        Module module = store().single(Module.class, query);
+
+        if (module.getState() != Module.State.NULL) {
+            int count = store().delete(Module.class, query);
+
+            if (count == 1) {
+                Path path = Paths.get(base().toString(), module.getName());
+                FileUtils.deleteDirectory(path.toFile());
+            }
+
+
+        }
     }
 
 
-    public Object object(String moduleName, String className) throws IllegalAccessException, InstantiationException, IOException {
+    public Object object(String moduleName, String className) throws IOException, ModuleBuildException {
         return null;
     }
 
