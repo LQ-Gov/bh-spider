@@ -1,7 +1,7 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.constant.ModuleType;
-import com.charles.spider.common.entity.Module;
+import com.charles.spider.transfer.entity.ModuleType;
+import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.store.base.Store;

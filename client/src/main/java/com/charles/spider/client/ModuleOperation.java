@@ -1,8 +1,7 @@
 package com.charles.spider.client;
 
-import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.constant.ModuleType;
-import com.charles.spider.common.entity.Module;
+import com.charles.spider.transfer.entity.ModuleType;
+import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
 import com.google.common.base.Preconditions;

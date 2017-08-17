@@ -15,7 +15,7 @@
         <module>client</module>
         <module>monitor</module>
         <module>store-query</module>
-        <module>spider-fetch-context</module>
+        <module>spider-transfer</module>
     </modules>
 
     <properties>

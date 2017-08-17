@@ -23,11 +23,26 @@ public interface Store {
 
     }
 
-    void init() throws Exception;
+    /**
+     * 打开连接
+     * @throws Exception
+     */
+    void connect() throws Exception;
 
+    /**
+     * 关闭连接
+     */
+    void close();
+
+    /**
+     * 注册类与表的关联
+     * @param cls
+     * @param table
+     */
     void register(Class<?> cls, String table);
 
-    Entity insert(Entity entity);
+
+    Entity insert(Object o);
 
     long count(Class<?> cls, Query query);
 
@@ -39,7 +54,7 @@ public interface Store {
     int delete(Class<?> cls, Query query);
 
 
-    int update(Entity entity, Condition condition);
+    int update(Object o, Condition condition);
 
 
 

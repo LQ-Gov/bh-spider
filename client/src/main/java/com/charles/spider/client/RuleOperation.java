@@ -1,16 +1,13 @@
 package com.charles.spider.client;
 
-import com.charles.common.JsonFactory;
-import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.entity.Rule;
+import com.charles.spider.transfer.JsonFactory;
+import com.charles.spider.transfer.entity.Rule;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * Created by lq on 7/9/17.

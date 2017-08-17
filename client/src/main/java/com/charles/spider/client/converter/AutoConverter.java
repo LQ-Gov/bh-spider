@@ -1,6 +1,6 @@
 package com.charles.spider.client.converter;
 
-import com.charles.common.JsonFactory;
+import com.charles.spider.transfer.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.reflect.TypeUtils;
 

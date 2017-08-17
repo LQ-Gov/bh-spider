@@ -16,10 +16,7 @@ import static org.quartz.JobBuilder.newJob;
  * Created by lq on 17-3-30.
  */
 public class JobCoreFactory {
-    //private static JobCoreFactory obj = new JobCoreFactory();
-
     private Map<String, JobExecutor> executors = new HashMap<>();
-    //private Map<Integer,Queue<Task>> store = new ConcurrentHashMap<>();
     private Scheduler quartz = null;
 
 
@@ -30,10 +27,6 @@ public class JobCoreFactory {
         this.scheduler = scheduler;
         this.quartz = StdSchedulerFactory.getDefaultScheduler();
     }
-
-//    public static JobCoreFactory instance() {
-//        return obj;
-//    }
 
     public synchronized void scheduler(JobExecutor executor) throws SchedulerException {
         JobExecutor cache = executors.get(executor.getId());

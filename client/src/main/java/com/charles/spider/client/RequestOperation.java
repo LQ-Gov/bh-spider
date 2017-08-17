@@ -1,7 +1,6 @@
 package com.charles.spider.client;
 
-import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.http.Request;
+import com.ccharles.spider.fetch.Request;
 
 import java.net.MalformedURLException;
 

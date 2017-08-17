@@ -1,23 +1,23 @@
 package com.charles.spider.scheduler;
 
-import com.charles.spider.common.command.Commands;
 import com.charles.spider.scheduler.context.Context;
+import com.charles.spider.transfer.CommandCode;
 
 /**
  * Created by lq on 17-3-26.
  */
 public class Command {
-    private Commands k;
+    private CommandCode k;
     private Object[] p;
     private Context ctx;
 
-    public Command(Commands key,Context ctx, Object[] params){
+    public Command(CommandCode key, Context ctx, Object[] params) {
         this.k = key;
         this.p = params;
         this.ctx = ctx;
     }
 
-    public Commands key() {
+    public CommandCode key() {
         return k;
     }
 
@@ -25,5 +25,7 @@ public class Command {
         return p;
     }
 
-    public Context context(){return ctx;}
+    public Context context() {
+        return ctx;
+    }
 }

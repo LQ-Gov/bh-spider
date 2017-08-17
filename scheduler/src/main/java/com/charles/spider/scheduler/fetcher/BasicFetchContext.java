@@ -1,9 +1,9 @@
 package com.charles.spider.scheduler.fetcher;
 
-import com.charles.spider.common.extractor.Document;
-import com.charles.spider.common.http.FetchContext;
-import com.charles.spider.common.http.Request;
-import com.charles.spider.common.http.Response;
+import com.ccharles.spider.fetch.FetchContext;
+import com.charles.spider.doc.Document;
+import com.ccharles.spider.fetch.Request;
+import com.ccharles.spider.fetch.Response;
 import com.charles.spider.scheduler.context.Context;
 import org.apache.http.client.methods.HttpRequestBase;
 

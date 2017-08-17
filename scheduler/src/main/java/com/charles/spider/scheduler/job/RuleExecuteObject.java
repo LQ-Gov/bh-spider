@@ -1,10 +1,7 @@
 package com.charles.spider.scheduler.job;
 
-import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.extractor.Extractor;
-import com.charles.spider.common.http.Request;
+import com.ccharles.spider.fetch.Request;
 import com.charles.spider.scheduler.BasicScheduler;
-import com.charles.spider.scheduler.Command;
 import com.charles.spider.scheduler.rule.RuleDecorator;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
@@ -31,7 +28,7 @@ public class RuleExecuteObject implements Job {
         if (req != null) {
             System.out.println(req.url());
 //            bind(req, rule.extractors());
-//            Command cmd = new Command(Commands.FETCH, null, new Object[]{req});
+//            CommandCode cmd = new CommandCode(Commands.FETCH, null, new Object[]{req});
 //            scheduler.process(cmd);
         }
     }

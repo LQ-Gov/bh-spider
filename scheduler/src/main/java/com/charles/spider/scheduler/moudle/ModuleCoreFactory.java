@@ -1,7 +1,7 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.constant.ModuleType;
-import com.charles.spider.common.entity.Module;
+import com.charles.spider.transfer.entity.ModuleType;
+import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.store.base.Store;
 import org.slf4j.Logger;

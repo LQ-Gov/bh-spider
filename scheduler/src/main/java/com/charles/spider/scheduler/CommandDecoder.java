@@ -1,10 +1,8 @@
 package com.charles.spider.scheduler;
 
-import com.charles.common.JsonFactory;
-import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.protocol.ProtocolFactory;
-import com.charles.spider.common.protocol.SerializeFactory;
-import com.charles.spider.common.protocol.jackson.JacksonToken;
+import com.charles.spider.scheduler.event.token.JacksonToken;
+import com.charles.spider.transfer.CommandCode;
+import com.charles.spider.transfer.JsonFactory;
 import com.charles.spider.scheduler.context.ClientContext;
 import com.charles.spider.scheduler.context.Context;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,8 +11,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
-import javax.naming.CompositeName;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,7 +26,7 @@ public class CommandDecoder extends ByteToMessageDecoder {
 
         if (byteBuf.isReadable()) {
 
-            Commands key = Commands.values()[byteBuf.readShort()];
+            CommandCode key = CommandCode.values()[byteBuf.readShort()];
 
             long id = byteBuf.readLong();
 
@@ -48,7 +44,7 @@ public class CommandDecoder extends ByteToMessageDecoder {
                     params.add(new JacksonToken(mapper, node.traverse()));
                 }
             }
-            Context context = new ClientContext(id,flag,ctx);
+            Context context = new ClientContext(id, flag, ctx);
 
             list.add(new Command(key, context, params.toArray()));
         }

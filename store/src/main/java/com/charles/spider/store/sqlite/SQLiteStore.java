@@ -1,12 +1,10 @@
 package com.charles.spider.store.sqlite;
 
 import com.charles.spider.query.Query;
-import com.charles.spider.query.annotation.GeneratedKey;
-import com.charles.spider.query.annotation.Table;
+import com.charles.spider.query.annotation.StoreTable;
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.store.base.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.sql.*;
 import java.util.HashMap;
@@ -49,7 +47,7 @@ public class SQLiteStore implements Store {
 
 
     @Override
-    public synchronized void init() {
+    public synchronized void connect() {
         if (initialized) {
 
             initialized = true;
@@ -58,14 +56,20 @@ public class SQLiteStore implements Store {
     }
 
     @Override
+    public void close() {
+
+    }
+
+    @Override
     public synchronized void register(Class<?> cls, String table) {
         if (initialized) throw new RuntimeException("you must register before initialized");
 
-        if (tableCaches.containsKey(cls) || tableCaches.containsValue(table))
+
+        if (tableCaches.containsKey(cls))
             throw new RuntimeException("the table is registered");
 
         if (StringUtils.isBlank(table)) {
-            Table tableAnnotation = cls.getAnnotation(Table.class);
+            StoreTable tableAnnotation = cls.getAnnotation(StoreTable.class);
             if (tableAnnotation == null || StringUtils.isBlank(tableAnnotation.value()))
                 throw new RuntimeException("you must special a table name from " + cls.getName());
             table = tableAnnotation.value();
@@ -78,20 +82,21 @@ public class SQLiteStore implements Store {
     }
 
     @Override
-    public Entity insert(Entity entity) {
-        EntitiesBuilder builder = findEntityBuilder(entity.getType());
+    public Entity insert(Object o) {
+        EntitiesBuilder builder = findEntityBuilder(o.getClass());
 
-        Field[] fields = entity.getFields();
+        Entity entity = builder.toEntity(o);
 
 
-        String[] names = new String[fields.length];
-        Object[] values = new Object[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            names[i] = fields[i].getName();
-            values[i] = fields[i].getValue();
-        }
+        Map<String, Object> fields = entity.toMap();
 
-        String sql = "INSERT INTO " + table + "(" + StringUtils.join(names, ',')
+
+        String[] names = (String[]) fields.keySet().toArray();
+
+        Object[] values = fields.values().toArray();
+
+        String sql = "INSERT INTO " + builder.getTableName() + "("
+                + StringUtils.join(names, ',')
                 + ") VALUES(" + StringUtils.repeat('?', names.length) + ")";
 
 
@@ -115,7 +120,8 @@ public class SQLiteStore implements Store {
 
     @Override
     public long count(Class<?> cls, Query query) {
-        String sql = "SELECT COUNT(*) FROM " + getTable(cls);
+        EntitiesBuilder builder = findEntityBuilder(cls);
+        String sql = "SELECT COUNT(*) FROM " + builder.getTableName();
 
 
         String where = interpreter.explain(query);
@@ -135,7 +141,9 @@ public class SQLiteStore implements Store {
     @Override
     public <T> List<T> select(Class<T> cls, Query query) {
 
-        String sql = "SELECT * FROM " + getTable(cls);
+        EntitiesBuilder builder = findEntityBuilder(cls);
+
+        String sql = "SELECT * FROM " + builder.getTableName();
 
         String where = interpreter.explain(query);
 
@@ -151,20 +159,15 @@ public class SQLiteStore implements Store {
             for (int i = 0; i < columns.length; i++) columns[i] = meta.getColumnName(i);
 
             while (rs.next()) {
-                Entity entity = new Entity(cls);
+
+                Entity entity = builder.toEntity();
                 for (String col : columns)
                     entity.set(col, rs.getObject(col));
 
                 result.add((T) entity.toObject());
             }
             return result;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
+        } catch (SQLException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
 
@@ -187,7 +190,7 @@ public class SQLiteStore implements Store {
     }
 
     @Override
-    public int update(Entity entity, Condition condition) {
+    public int update(Object entity, Condition condition) {
         return 0;
     }
 

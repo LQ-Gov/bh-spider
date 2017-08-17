@@ -1,10 +1,9 @@
 package com.charles.spider.scheduler.moudle;
 
-import com.charles.spider.common.constant.ModuleType;
-import com.charles.spider.common.entity.Module;
+import com.charles.spider.transfer.entity.ModuleType;
+import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
-import com.charles.spider.store.base.Entity;
 import com.charles.spider.store.base.Store;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -61,7 +60,7 @@ public class ModuleAgent {
             Files.copy(tmp, old, StandardCopyOption.REPLACE_EXISTING);
 
             module.setState(Module.State.VALID);
-            int count = store().update(Entity.toEntity(module),
+            int count = store().update(module,
                     Condition.where("id").is(module.getId())
                             .and(Condition.where("update_time").is(module.getUpdateTime())));
             Files.delete(tmp);
@@ -93,7 +92,7 @@ public class ModuleAgent {
             module.setType(type);
             module.setUpdateTime(new Date());
             module.setHash(hash);
-            module = (Module) store().insert(Entity.toEntity(module)).toObject();
+            module = (Module) store().insert(module).toObject();
         }
 
         if (module.getState() == Module.State.VALID && module.getHash().equals(hash))
@@ -104,14 +103,14 @@ public class ModuleAgent {
         //写入临时文件
         Files.write(tmp, data);
         module.setState(Module.State.TMP);
-        store().update(Entity.toEntity(module),
+        store().update(module,
                 Condition.where("id").is(module.getId())
                         .and(Condition.where("update_time").is(module.getUpdateTime())));
 
         Files.copy(tmp, old, StandardCopyOption.REPLACE_EXISTING);
 
         module.setState(Module.State.VALID);
-        int count = store().update(Entity.toEntity(module),
+        int count = store().update(module,
                 Condition.where("id").is(module.getId())
                         .and(Condition.where("update_time").is(module.getUpdateTime())));
 

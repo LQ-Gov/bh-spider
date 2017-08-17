@@ -1,11 +1,10 @@
 package com.charles.spider.scheduler.fetcher;
 
+import com.ccharles.spider.fetch.FetchContext;
 import com.charles.common.utils.ArrayUtils;
-import com.charles.spider.common.http.FetchContext;
-import com.charles.spider.common.http.Request;
+import com.ccharles.spider.fetch.Request;
 import com.charles.spider.scheduler.BasicScheduler;
 import com.charles.spider.scheduler.context.Context;
-import com.charles.spider.scheduler.event.EventLoop;
 import com.charles.spider.scheduler.event.IEvent;
 import org.apache.http.client.methods.*;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;

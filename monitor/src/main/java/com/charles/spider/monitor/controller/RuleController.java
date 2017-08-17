@@ -1,7 +1,7 @@
 package com.charles.spider.monitor.controller;
 
 import com.charles.spider.client.Client;
-import com.charles.spider.common.entity.Rule;
+import com.charles.spider.transfer.entity.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

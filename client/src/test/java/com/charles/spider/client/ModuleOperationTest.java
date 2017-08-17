@@ -1,6 +1,6 @@
 package com.charles.spider.client;
 
-import com.charles.spider.common.entity.Module;
+import com.charles.spider.transfer.entity.Module;
 import org.junit.Before;
 import org.junit.Test;
 

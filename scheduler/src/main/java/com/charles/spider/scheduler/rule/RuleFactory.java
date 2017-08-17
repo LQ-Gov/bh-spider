@@ -1,7 +1,7 @@
 package com.charles.spider.scheduler.rule;
 
-import com.charles.common.JsonFactory;
-import com.charles.spider.common.entity.Rule;
+import com.charles.spider.transfer.JsonFactory;
+import com.charles.spider.transfer.entity.Rule;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 

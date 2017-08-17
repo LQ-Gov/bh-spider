@@ -1,10 +1,10 @@
 package com.charles.spider.scheduler;
 
-import com.charles.spider.common.http.Request;
-import com.charles.spider.common.constant.ModuleType;
-import com.charles.spider.common.entity.Module;
-import com.charles.spider.common.entity.Rule;
-import com.charles.spider.fetch.context.FetchRequest;
+import com.ccharles.spider.fetch.Request;
+import com.charles.spider.transfer.entity.ModuleType;
+import com.charles.spider.transfer.entity.Module;
+import com.charles.spider.transfer.entity.Rule;
+import com.charles.spider.fetch.impl.FetchRequest;
 import com.charles.spider.query.Query;
 import com.charles.spider.scheduler.config.Config;
 import com.charles.spider.scheduler.context.Context;
@@ -122,8 +122,7 @@ public class BasicScheduler implements IEvent {
         store = Store.get(Config.INIT_STORE_DATABASE, Config.getStoreProperties());
         store.register(Module.class,"charles_spider_module");
         store.register(FetchRequest.class,"charles_spider_request");
-        store.register(Rule.class,"charles_spider_rule");
-        store.init();
+        store.connect();
 
         logger.info("init database store");
 

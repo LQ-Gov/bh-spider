@@ -1,7 +1,7 @@
 package com.charles.spider.monitor.controller;
 
 import com.charles.spider.client.Client;
-import com.charles.spider.common.entity.Module;
+import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
 import org.springframework.beans.factory.annotation.Autowired;

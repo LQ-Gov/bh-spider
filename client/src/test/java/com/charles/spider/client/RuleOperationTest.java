@@ -1,6 +1,6 @@
 package com.charles.spider.client;
 
-import com.charles.spider.common.entity.Rule;
+import com.charles.spider.transfer.entity.Rule;
 import org.junit.Before;
 import org.junit.Test;
 

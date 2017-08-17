@@ -1,15 +1,15 @@
 package com.charles.spider.scheduler.fetcher;
 
-import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.extractor.Extractor;
-import com.charles.spider.common.http.FetchContext;
-import com.charles.spider.common.http.Request;
-import com.charles.spider.fetch.context.FetchResponse;
-import com.charles.spider.fetch.context.FinalFetchContext;
+import com.ccharles.spider.fetch.Extractor;
+import com.ccharles.spider.fetch.FetchContext;
+import com.ccharles.spider.fetch.Request;
+import com.charles.spider.fetch.impl.FetchResponse;
+import com.charles.spider.fetch.impl.FinalFetchContext;
 import com.charles.spider.scheduler.BasicScheduler;
 import com.charles.spider.scheduler.Command;
 import com.charles.spider.scheduler.context.Context;
 import com.charles.spider.scheduler.moudle.ModuleBuildException;
+import com.charles.spider.transfer.CommandCode;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 
@@ -71,7 +71,7 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
                 e.printStackTrace();
             } catch (Exception e) {
                 //向master报告
-                Command cmd = new Command(Commands.REPORT,this.trackContext,new Object[]{req,false,e});
+                Command cmd = new Command(CommandCode.REPORT,this.trackContext,new Object[]{req,false,e});
                 this.scheduler.process(cmd);
             }
         });

@@ -1,7 +1,7 @@
 package com.charles.spider.scheduler.watch;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.charles.spider.common.command.Commands;
+import com.charles.spider.transfer.CommandCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ public class WatchExecutor extends Thread {
 
 
     private static void eventLoopAnalysis(Object[] params) {
-        Commands cmd = (Commands) params[1];
+        CommandCode cmd = (CommandCode) params[1];
         WatchStore.get("event.loop." + cmd.toString()).increment();
 
 

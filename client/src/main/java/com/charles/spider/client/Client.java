@@ -1,15 +1,13 @@
 package com.charles.spider.client;
 
-import com.charles.common.JsonFactory;
+import com.charles.spider.transfer.JsonFactory;
 import com.charles.spider.client.converter.Converter;
 import com.charles.spider.client.converter.StringConverter;
 import com.charles.spider.client.converter.TypeConverter;
 import com.charles.spider.client.receiver.Receiver;
-import com.charles.spider.common.command.Commands;
-import com.charles.spider.common.extractor.Extractor;
-import com.charles.spider.common.http.FetchContext;
-import com.charles.spider.fetch.context.FetchResponse;
-import com.charles.spider.fetch.context.FinalFetchContext;
+import com.ccharles.spider.fetch.Extractor;
+import com.charles.spider.fetch.impl.FetchResponse;
+import com.charles.spider.fetch.impl.FinalFetchContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.DataOutputStream;
