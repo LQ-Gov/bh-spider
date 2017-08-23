@@ -9,4 +9,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface StoreProperty {
     String value() default "";
+    String def() default "";
 }

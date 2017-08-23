@@ -1,9 +1,9 @@
 package com.charles.spider.scheduler.moudle;
 
+import com.charles.spider.scheduler.persist.Service;
 import com.charles.spider.transfer.entity.ModuleType;
 import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.scheduler.config.Config;
-import com.charles.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,16 +19,16 @@ public class ModuleCoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(ModuleCoreFactory.class);
 
     private Map<ModuleType, ModuleAgent> agents = new HashMap<>();
-    private Store store;
+    private Service<Module> service;
 
 
-    public ModuleCoreFactory(Store store) throws IOException {
+    public ModuleCoreFactory(Service<Module> service) throws IOException {
 
-        this.store = store;
+        this.service = service;
 
-        agents.put(ModuleType.GROOVY, new GroovyModuleAgent(Paths.get(Config.INIT_DATA_PATH, "module"), store));
-        agents.put(ModuleType.CONFIG, new ModuleAgent(ModuleType.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), store));
-        agents.put(ModuleType.UNKNOWN, new GlobalModuleAgent(this, store));
+        agents.put(ModuleType.GROOVY, new GroovyModuleAgent(Paths.get(Config.INIT_DATA_PATH, "module"), service));
+        agents.put(ModuleType.CONFIG, new ModuleAgent(ModuleType.CONFIG, Paths.get(Config.INIT_DATA_PATH, "config"), service));
+        agents.put(ModuleType.UNKNOWN, new GlobalModuleAgent(this, service));
 
     }
 

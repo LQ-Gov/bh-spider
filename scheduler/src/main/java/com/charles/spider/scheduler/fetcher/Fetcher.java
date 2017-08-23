@@ -1,8 +1,7 @@
 package com.charles.spider.scheduler.fetcher;
 
-import com.ccharles.spider.fetch.FetchContext;
-import com.charles.common.utils.ArrayUtils;
-import com.ccharles.spider.fetch.Request;
+import com.charles.spider.fetch.FetchContext;
+import com.charles.spider.fetch.Request;
 import com.charles.spider.scheduler.BasicScheduler;
 import com.charles.spider.scheduler.context.Context;
 import com.charles.spider.scheduler.event.IEvent;
@@ -20,7 +19,6 @@ import java.util.concurrent.Executors;
  * Created by lq on 17-3-17.
  */
 public class Fetcher implements IEvent {
-    //private EventLoop loop = new EventLoop(this);
     private BasicScheduler scheduler = null;
     private CloseableHttpAsyncClient client = HttpAsyncClientBuilder.create().build();
 
@@ -55,7 +53,7 @@ public class Fetcher implements IEvent {
 
         HttpRequestBase base = build_request_from_original(req);
 
-        FetchContext context = new BasicFetchContext(ctx, base, req);
+        FetchContext context = new BasicFetchContext(this.scheduler, base, req);
 
         //exec_request_prepare_modules(req, base, context);
 
@@ -118,16 +116,10 @@ public class Fetcher implements IEvent {
 
     protected void exec_request_prepare_modules(Request req, HttpRequestBase request, BasicScheduler context) {
         String[] prepare = req.extractor("prepare");
-        if (!ArrayUtils.isEmpty(prepare)) {
-            //scheduler.
-        }
+//        if (!ArrayUtils.isEmpty(prepare)) {
+//            //scheduler.
+//        }
     }
-//
-//
-//    protected void TASK_PROCESS_HANDLE(FetchContext context) {
-//        Task job = context.getTask();
-//        processGroup.execute(() -> new Processor(job, context).exec(), () -> this.scheduler.report(job.getId(), 1));
-//    }
 
 
     public void close() {

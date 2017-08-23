@@ -1,9 +1,10 @@
 package com.charles.spider.scheduler.moudle;
 
+
+import com.charles.spider.scheduler.persist.Service;
 import com.charles.spider.transfer.entity.ModuleType;
 import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.query.Query;
-import com.charles.spider.store.base.Store;
 import com.google.common.base.Preconditions;
 import groovy.lang.GroovyClassLoader;
 
@@ -17,14 +18,14 @@ public class GroovyModuleAgent extends ModuleAgent {
 
     private final static Map<String, Object> moduleObjects = new ConcurrentHashMap<>();
 
-    public GroovyModuleAgent(Path basePath, Store store) {
+    public GroovyModuleAgent(Path basePath, Service<Module> store) {
         super(ModuleType.GROOVY, basePath, store);
     }
 
 
     @Override
     public void delete(Query query) throws IOException {
-        Module module = this.store().single(Module.class, query);
+        Module module = this.service().single(query);
 
         Preconditions.checkState(module != null, "module is not exist");
 

@@ -1,4 +1,4 @@
-package com.ccharles.spider.fetch;
+package com.charles.spider.fetch;
 
 /**
  * Created by lq on 7/18/17.

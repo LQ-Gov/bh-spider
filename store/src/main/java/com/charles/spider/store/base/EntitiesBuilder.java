@@ -7,14 +7,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EntitiesBuilder {
     private String tableName;
     private Class<?> entityClass;
-    private Map<String, Field> fieldMap = new HashMap<>();
+    private String[] storeFieldNames;
+    private Map<String, StoreField> fieldMap = new HashMap<>();
+
     private GeneratedField generatedField;
 
     public EntitiesBuilder(String table, Class<?> cls) {
@@ -25,19 +25,21 @@ public class EntitiesBuilder {
         if (generatedFields.isEmpty() || generatedFields.size() > 1)
             throw new RuntimeException("only one generated key");
 
-        generatedField = new GeneratedField(generatedFields.get(0));
+        Field gen = generatedFields.get(0);
+        generatedField = new GeneratedField(new StoreField(gen), gen.getAnnotation(StoreGeneratedKey.class));
 
         Field[] fields = cls.getDeclaredFields();
 
+        storeFieldNames = new String[fields.length];
         for (Field field : fields) {
 
-            String key = field.getName();
-            StoreProperty property = field.getAnnotation(StoreProperty.class);
-            if (property != null && !StringUtils.isBlank(property.value()))
-                key = property.value();
-
-            fieldMap.put(key, field);
+            StoreField storeField = new StoreField(field);
+            fieldMap.put(storeField.getStoreName(), storeField);
         }
+
+        fieldMap.keySet().toArray(storeFieldNames);
+
+
     }
 
 
@@ -47,7 +49,7 @@ public class EntitiesBuilder {
 
 
     public String[] getStoreFieldNames() {
-        return (String[]) fieldMap.keySet().toArray();
+        return storeFieldNames;
     }
 
 
@@ -66,9 +68,9 @@ public class EntitiesBuilder {
         Entity entity = new Entity(this, this.getGeneratedField(), o.getClass());
 
         try {
-            for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
-                entry.getValue().setAccessible(true);
-                Object value = entry.getValue().get(o);
+            for (Map.Entry<String, StoreField> entry : fieldMap.entrySet()) {
+                entry.getValue().getOriginal().setAccessible(true);
+                Object value = entry.getValue().getOriginal().get(o);
 
                 Class<?> cls = value.getClass();
                 if (cls.isPrimitive())
@@ -77,7 +79,9 @@ public class EntitiesBuilder {
                         Byte.class, Integer.class, Short.class, Long.class,
                         Float.class, Double.class, Character.class, String.class}, cls)) {
                     entity.set(entry.getKey(), value);
-                } else {
+                } else if (Date.class == cls)
+                    entity.set(entry.getKey(), value);
+                else {
                     entity.set(entry.getKey(), toEntity(value));
                 }
 
@@ -95,7 +99,7 @@ public class EntitiesBuilder {
         return entity;
     }
 
-    public Field getFieldMapping(String storeFieldName) {
+    public StoreField getFieldMapping(String storeFieldName) {
         return fieldMap.get(storeFieldName);
     }
 }

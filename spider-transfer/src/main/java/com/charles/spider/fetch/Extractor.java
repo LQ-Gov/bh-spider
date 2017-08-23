@@ -1,7 +1,5 @@
-package com.ccharles.spider.fetch;
+package com.charles.spider.fetch;
 
-
-import com.ccharles.spider.fetch.FetchContext;
 
 public interface Extractor {
 

@@ -1,4 +1,4 @@
-package com.ccharles.spider.fetch;
+package com.charles.spider.fetch;
 
 import java.util.Map;
 

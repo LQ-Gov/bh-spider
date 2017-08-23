@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
+        http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd" version="2.0">
+
+
+    <persistence-unit name="Tutorial">
+        <class>com.charles.spider.transfer.entity.Module</class>
+        <!--<class>com.charles.spider.fetch.impl.FetchRequest</class>-->
+        <class>com.charles.spider.store.datanucleus.Inventory</class>
+        <exclude-unlisted-classes/>
+
+        <properties>
+            <property name="javax.jdo.option.ConnectionURL" value="jdbc:sqlite:data/spider.store.db"/>
+            <property name="javax.jdo.option.ConnectionDriverName" value="org.sqlite.JDBC"/>
+            <property name="datanucleus.schema.autoCreateAll" value="true"/>
+            <!--<property name="javax.jdo.option.Mapping" value="SQLite"/>-->
+            <property name="datanucleus.valuegeneration.transactionAttribute" value="EXISTING"/>
+        </properties>
+    </persistence-unit>
+
+
+</persistence>

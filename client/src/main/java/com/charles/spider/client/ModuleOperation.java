@@ -1,5 +1,6 @@
 package com.charles.spider.client;
 
+import com.charles.spider.transfer.CommandCode;
 import com.charles.spider.transfer.entity.ModuleType;
 import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.query.Query;
@@ -144,7 +145,7 @@ public class ModuleOperation {
 
         byte[] data = Files.readAllBytes(path);
 
-        client.write(Commands.SUBMIT_MODULE, null, data, name, type, desc);
+        client.write(CommandCode.SUBMIT_MODULE, null, data, name, type, desc);
 
     }
 
@@ -155,7 +156,7 @@ public class ModuleOperation {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Module.class}, null);
 
 
-        return client.write(Commands.GET_MODULE_LIST, type, query);
+        return client.write(CommandCode.GET_MODULE_LIST, type, query);
     }
 
 
@@ -170,7 +171,7 @@ public class ModuleOperation {
     }
 
     public void delete(Query query){
-        client.write(Commands.DELETE_MODULE,null,query);
+        client.write(CommandCode.DELETE_MODULE,null,query);
     }
 
 

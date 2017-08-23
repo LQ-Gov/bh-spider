@@ -1,12 +1,15 @@
 package com.charles.spider.store.sqlite;
 
 import com.charles.spider.query.Query;
-import com.charles.spider.query.annotation.StoreTable;
+import com.charles.spider.query.annotation.StoreGenerationType;
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.store.base.*;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.lang.reflect.Field;
 import java.sql.*;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,13 +18,12 @@ import java.util.Map;
 /**
  * Created by lq on 17-6-22.
  */
-public class SQLiteStore implements Store {
+public class SQLiteStore extends AbstractStore {
 
     private Map<Class<?>, EntitiesBuilder> tableCaches = new HashMap<>();
 
     private Connection connection;
     private SQLiteQueryInterpreter interpreter;
-    private boolean initialized = false;
 
     public SQLiteStore(Connection connection, Connection moduleConnection) {
         this.connection = connection;
@@ -34,56 +36,50 @@ public class SQLiteStore implements Store {
         return connection;
     }
 
-
-    private EntitiesBuilder findEntityBuilder(Class<?> cls) {
-
-        EntitiesBuilder builder = tableCaches.get(cls);
-
-
-        if (builder == null) throw new RuntimeException("the table not register");
-
-        return builder;
-    }
-
-
-    @Override
-    public synchronized void connect() {
-        if (initialized) {
-
-            initialized = true;
-        }
-
-    }
-
     @Override
     public void close() {
 
     }
 
+
     @Override
-    public synchronized void register(Class<?> cls, String table) {
-        if (initialized) throw new RuntimeException("you must register before initialized");
+    public void connect() throws Exception {
+        super.connect();
+    }
 
+    @Override
+    protected void register0(EntitiesBuilder builder) throws Exception {
 
-        if (tableCaches.containsKey(cls))
-            throw new RuntimeException("the table is registered");
+        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS " + builder.getTableName() + "(");
 
-        if (StringUtils.isBlank(table)) {
-            StoreTable tableAnnotation = cls.getAnnotation(StoreTable.class);
-            if (tableAnnotation == null || StringUtils.isBlank(tableAnnotation.value()))
-                throw new RuntimeException("you must special a table name from " + cls.getName());
-            table = tableAnnotation.value();
+        //主键
+        GeneratedField gen = builder.getGeneratedField();
+        sql.append(gen.getStoreName()).append(" ");
+        sql.append(typeConvert(gen.getType())).append(" PRIMARY KEY ");
+        sql.append(gen.getStrategy() == StoreGenerationType.INCREMENT ? " AUTOINCREMENT," : ",");
+
+        String[] fields = builder.getStoreFieldNames();
+
+        for (String f : fields) {
+            if (f.equals(gen.getStoreName())) continue;
+            StoreField field = builder.getFieldMapping(f);
+            sql.append(f).append(" ").append(typeConvert(field.getType()));
+            if (field.isNotNull()) sql.append(" NOT NULL");
+            sql.append(",");
         }
+        sql.delete(sql.length() - 1, sql.length());
+        sql.append(")");
+
+        System.out.println(sql.toString());
+
+        connection.prepareStatement(sql.toString()).execute();
 
 
-        EntitiesBuilder builder = new EntitiesBuilder(table, cls);
-
-        tableCaches.put(cls, builder);
     }
 
     @Override
     public Entity insert(Object o) {
-        EntitiesBuilder builder = findEntityBuilder(o.getClass());
+        EntitiesBuilder builder = findBuilder(o.getClass());
 
         Entity entity = builder.toEntity(o);
 
@@ -120,7 +116,7 @@ public class SQLiteStore implements Store {
 
     @Override
     public long count(Class<?> cls, Query query) {
-        EntitiesBuilder builder = findEntityBuilder(cls);
+        EntitiesBuilder builder = findBuilder(cls);
         String sql = "SELECT COUNT(*) FROM " + builder.getTableName();
 
 
@@ -139,9 +135,9 @@ public class SQLiteStore implements Store {
     }
 
     @Override
-    public <T> List<T> select(Class<T> cls, Query query) {
+    public List<?> select(Class<?> cls, Query query) {
 
-        EntitiesBuilder builder = findEntityBuilder(cls);
+        EntitiesBuilder builder = findBuilder(cls);
 
         String sql = "SELECT * FROM " + builder.getTableName();
 
@@ -152,22 +148,21 @@ public class SQLiteStore implements Store {
         try {
             ResultSet rs = connection.prepareStatement(sql).executeQuery();
 
-            List<T> result = new LinkedList<>();
+            List<Object> result = new LinkedList<>();
 
-            ResultSetMetaData meta = rs.getMetaData();
-            String[] columns = new String[meta.getColumnCount()];
-            for (int i = 0; i < columns.length; i++) columns[i] = meta.getColumnName(i);
+            String[] fields = builder.getStoreFieldNames();
+
 
             while (rs.next()) {
 
                 Entity entity = builder.toEntity();
-                for (String col : columns)
+                for (String col : fields)
                     entity.set(col, rs.getObject(col));
 
-                result.add((T) entity.toObject());
+                result.add(entity.toObject());
             }
             return result;
-        } catch (SQLException | InstantiationException | IllegalAccessException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -175,11 +170,11 @@ public class SQLiteStore implements Store {
     }
 
     @Override
-    public <T> T single(Class<T> cls, Query query) {
+    public Object single(Class<?> cls, Query query) {
         query = query == null ? new Query() : query;
 
         query.limit(1);
-        List<T> result = select(cls, query);
+        List<?> result = select(cls, query);
 
         return result != null && result.size() == 1 ? result.get(0) : null;
     }
@@ -192,6 +187,22 @@ public class SQLiteStore implements Store {
     @Override
     public int update(Object entity, Condition condition) {
         return 0;
+    }
+
+
+    private static String typeConvert(Class<?> cls) {
+        if (ArrayUtils.contains(new Object[]{
+                Integer.class, Integer.TYPE,
+                Long.class, Long.TYPE}, cls))
+            return "INTEGER";
+
+        if (cls == String.class || Enum.class.isAssignableFrom(cls))
+            return "TEXT";
+
+        if (cls == Date.class)
+            return "TIMESTAMP";
+
+        return null;
     }
 
 

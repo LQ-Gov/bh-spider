@@ -1,12 +1,13 @@
 package com.charles.spider.scheduler.fetcher;
 
-import com.ccharles.spider.fetch.FetchContext;
+import com.charles.spider.fetch.*;
 import com.charles.spider.doc.Document;
-import com.ccharles.spider.fetch.Request;
-import com.ccharles.spider.fetch.Response;
-import com.charles.spider.scheduler.context.Context;
+import com.charles.spider.fetch.impl.FetchRequest;
+import com.charles.spider.scheduler.BasicScheduler;
 import org.apache.http.client.methods.HttpRequestBase;
 
+
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -17,13 +18,14 @@ public class BasicFetchContext implements FetchContext {
     private HttpRequestBase base;
     private Request original;
 
-    private Context ctx;
 
-    private Map<String,Object> fields = new HashMap<>();
+    private BasicScheduler sch;
 
-    public BasicFetchContext(Context ctx, HttpRequestBase req, Request original){
+    private Map<String, Object> fields = new HashMap<>();
 
-        this.ctx =ctx;
+    public BasicFetchContext(BasicScheduler scheduler, HttpRequestBase req, Request original) {
+
+        this.sch = scheduler;
         this.base = req;
         this.original = original;
 
@@ -59,7 +61,7 @@ public class BasicFetchContext implements FetchContext {
 
     @Override
     public void set(String key, Object value) {
-        fields.put(key,value);
+        fields.put(key, value);
 
     }
 
@@ -76,36 +78,40 @@ public class BasicFetchContext implements FetchContext {
 
     @Override
     public void scheduler(FetchContext ctx, Request req, boolean local) {
+        if (ctx != null) {
+            //格式化 req
+        }
 
+        sch.submit(null, (FetchRequest) req);
     }
 
     @Override
     public void scheduler(FetchContext ctx, Request req) {
-
+        scheduler(ctx, req, false);
     }
 
     @Override
     public void scheduler(Request req) {
-
+        scheduler(null, req);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url, boolean local) {
-
+    public void scheduler(FetchContext ctx, String url, boolean local) throws MalformedURLException {
+        scheduler(ctx,new FetchRequest(url),local);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url) {
-
+    public void scheduler(FetchContext ctx, String url) throws MalformedURLException {
+        scheduler(ctx,url,false);
     }
 
     @Override
-    public void scheduler(String url) {
-
+    public void scheduler(String url) throws MalformedURLException {
+        scheduler(null,url);
     }
 
     @Override
-    public void cancel() {
-
+    public void cancel() throws ExtractorChainException {
+        throw new ExtractorChainException(Behaviour.CANCEL);
     }
 }

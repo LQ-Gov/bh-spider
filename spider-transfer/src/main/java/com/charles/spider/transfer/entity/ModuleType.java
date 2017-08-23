@@ -7,7 +7,8 @@ public enum ModuleType {
     UNKNOWN,
     JAR,
     GROOVY,
-    CONFIG;
+    CONFIG,
+    SYSTEM;
 
 
     public static ModuleType value(String s) {

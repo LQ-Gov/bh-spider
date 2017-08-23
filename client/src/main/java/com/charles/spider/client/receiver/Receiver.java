@@ -5,6 +5,7 @@ import com.charles.spider.client.converter.Converter;
 import com.charles.spider.client.converter.DefaultConverter;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
@@ -42,7 +43,10 @@ public class Receiver extends Thread {
 
                 if (!result) callbacks.remove(id);
             }
-        } catch (IOException e) {
+        }
+        catch (EOFException ignored){
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -80,7 +84,7 @@ public class Receiver extends Thread {
     }
 
 
-    public <T> void watch(long id, Consumer<T> consumer, Converter<byte[], T> converter) {
+    public <T> Future<T> watch(long id, Consumer<T> consumer, Converter<byte[], T> converter) {
         if (callbacks.containsKey(id))
             throw new RuntimeException("the request is watched");
 
@@ -88,5 +92,7 @@ public class Receiver extends Thread {
         Callback<T> callback = new Callback<>(consumer, converter);
 
         callbacks.put(id, callback);
+
+        return callback.future();
     }
 }

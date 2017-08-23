@@ -39,22 +39,25 @@ public interface Store {
      * @param cls
      * @param table
      */
-    void register(Class<?> cls, String table);
+    void register(Class<?> cls, String table) throws Exception;
 
 
     Entity insert(Object o);
 
     long count(Class<?> cls, Query query);
 
-    <T> List<T> select(Class<T> cls, Query query);
+    List<?> select(Class<?> cls, Query query);
 
 
-    <T> T single(Class<T> cls, Query query);
+    Object single(Class<?> cls, Query query);
 
     int delete(Class<?> cls, Query query);
 
 
     int update(Object o, Condition condition);
+
+
+    <T> Service<T> service(Class<T> cls);
 
 
 

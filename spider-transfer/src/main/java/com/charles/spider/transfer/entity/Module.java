@@ -1,7 +1,5 @@
 package com.charles.spider.transfer.entity;
 
-import com.charles.spider.query.annotation.StoreGeneratedKey;
-
 import java.io.Serializable;
 import java.util.Date;
 
@@ -12,9 +10,6 @@ public class Module implements Serializable {
     public enum State {
         NULL, TMP, VALID
     }
-
-
-    @StoreGeneratedKey
     private long id;
     private String name;
     private String path;
@@ -22,7 +17,6 @@ public class Module implements Serializable {
     private ModuleType type;
     private String detail;
     private Date updateTime;
-
 
     private State state = State.NULL;
 

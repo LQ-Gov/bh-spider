@@ -1,8 +1,5 @@
 package com.charles.spider.scheduler;
 
-import com.charles.spider.common.protocol.ProtocolFactory;
-import com.charles.spider.scheduler.context.ClientContext;
-import com.charles.spider.scheduler.context.Context;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 

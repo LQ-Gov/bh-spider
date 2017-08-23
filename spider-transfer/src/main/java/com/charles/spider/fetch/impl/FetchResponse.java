@@ -1,6 +1,6 @@
 package com.charles.spider.fetch.impl;
 
-import com.ccharles.spider.fetch.Response;
+import com.charles.spider.fetch.Response;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -14,13 +14,12 @@ public class FetchResponse implements Response {
     private byte[] entity;
     private Map<String,String> headers = new HashMap<>();
 
-    public FetchResponse(HttpResponse response) throws IOException {
-        this.code = response.getStatusLine().getStatusCode();
-        this.entity = EntityUtils.toByteArray(response.getEntity());
-        Header[] list = response.getAllHeaders();
-        for(Header h:list){
-            headers.put(h.getName(),h.getValue());
-        }
+    FetchResponse(){}
+
+    public FetchResponse(int code, byte[] data, Map<String,String> headers) throws IOException {
+        this.code = code;
+        this.entity = data;
+        this.headers = headers;
 
     }
 

@@ -120656,17 +120656,17 @@ var RuleEdit = (_dec = (0, _mobxReact.inject)("ruleStore"), (0, _reactRouter.wit
 }(_react.Component), (_descriptor = _applyDecoratedDescriptor(_class2.prototype, 'pattern', [_mobx.observable], {
     enumerable: true,
     initializer: function initializer() {
-        return "www.toutiao.com/[a]*";
+        return "{http,https}://*";
     }
 }), _descriptor2 = _applyDecoratedDescriptor(_class2.prototype, 'host', [_mobx.observable], {
     enumerable: true,
     initializer: function initializer() {
-        return "www.toutiao.com";
+        return "";
     }
 }), _descriptor3 = _applyDecoratedDescriptor(_class2.prototype, 'cron', [_mobx.observable], {
     enumerable: true,
     initializer: function initializer() {
-        return "0 */1 * * * ?";
+        return "0 */5 * * * ?";
     }
 }), _descriptor4 = _applyDecoratedDescriptor(_class2.prototype, 'dispatcher', [_mobx.observable], {
     enumerable: true,
@@ -120681,7 +120681,7 @@ var RuleEdit = (_dec = (0, _mobxReact.inject)("ruleStore"), (0, _reactRouter.wit
 }), _descriptor6 = _applyDecoratedDescriptor(_class2.prototype, 'description', [_mobx.observable], {
     enumerable: true,
     initializer: function initializer() {
-        return "头条进行测试";
+        return "";
     }
 })), _class2)) || _class) || _class) || _class);
 exports.default = RuleEdit;

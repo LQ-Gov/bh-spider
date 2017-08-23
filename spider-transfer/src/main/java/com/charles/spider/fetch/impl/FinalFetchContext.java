@@ -1,8 +1,8 @@
 package com.charles.spider.fetch.impl;
 
-import com.ccharles.spider.fetch.FetchContext;
-import com.ccharles.spider.fetch.Request;
-import com.ccharles.spider.fetch.Response;
+import com.charles.spider.fetch.FetchContext;
+import com.charles.spider.fetch.Request;
+import com.charles.spider.fetch.Response;
 import com.charles.spider.doc.Document;
 import com.charles.spider.doc.impl.DocumentImpl;
 
@@ -67,34 +67,34 @@ public class FinalFetchContext implements FetchContext {
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req, boolean local) {
+    public void scheduler(FetchContext ctx, Request req, boolean local) throws Exception {
 
         this.parent.scheduler(ctx,req,local);
 
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req) {
+    public void scheduler(FetchContext ctx, Request req) throws Exception {
         this.parent.scheduler(ctx,req);
     }
 
     @Override
-    public void scheduler(Request req) {
+    public void scheduler(Request req) throws Exception {
         this.parent.scheduler(req);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url, boolean local) {
+    public void scheduler(FetchContext ctx, String url, boolean local) throws Exception {
         this.parent.scheduler(ctx,url,local);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url) {
+    public void scheduler(FetchContext ctx, String url) throws Exception {
         this.parent.scheduler(ctx,url);
     }
 
     @Override
-    public void scheduler(String url) {
+    public void scheduler(String url) throws Exception {
         this.parent.scheduler(url);
     }
 

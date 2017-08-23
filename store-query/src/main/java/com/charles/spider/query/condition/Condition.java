@@ -17,11 +17,10 @@ public class Condition {
 
     private Operator operator = Operator.IS;
 
-    private List<Condition> conditions;
-
     private Condition next;
 
-    Condition(){}
+    Condition() {
+    }
 
     Condition(String key) {
         this.key = key;
@@ -29,18 +28,18 @@ public class Condition {
 
 
     public static Condition where(String key) {
-        Preconditions.checkArgument(!StringUtils.isBlank(key),"the parameter %s can't empty",key);
+        Preconditions.checkArgument(!StringUtils.isBlank(key), "the parameter %s can't empty", key);
         return new Condition(key);
     }
 
-    public Condition and(Condition condition){
+    public Condition and(Condition condition) {
 
         this.next = new AndCondition(condition);
         return this.next;
 
     }
 
-    public Condition or(Condition conds){
+    public Condition or(Condition conds) {
         return null;
     }
 
@@ -62,17 +61,18 @@ public class Condition {
 
         Preconditions.checkArgument(this.value.equals(NOT_SET)
                 , "Multiple 'is' values declared. You need to use 'and' with multiple criteria");
-
-        Preconditions.checkArgument(!lastOperatorWasNot(), "Invalid query: 'not' can't be used with 'is' - use 'ne' instead.");
-
         this.value = value;
         return this;
     }
 
-    private boolean lastOperatorWasNot() {
-        return this.conditions != null
-                && !this.conditions.isEmpty()
-                && conditions.get(conditions.size() - 1).operator == Operator.NOT;
+
+    public Condition in(Object value) {
+        Preconditions.checkArgument(NOT_SET.equals(this.value)
+                , "Multiple 'is' values declared. You need to use 'and' with multiple criteria");
+        this.operator = Operator.IN;
+        this.value = value;
+
+        return this;
     }
 
 
@@ -84,6 +84,8 @@ public class Condition {
         return this;
     }
 
-    public Condition next(){return next;}
+    public Condition next() {
+        return next;
+    }
 
 }

@@ -1,10 +1,9 @@
 package com.charles.spider.scheduler.event;
 
-import com.charles.common.utils.ArrayUtils;
-import com.charles.spider.common.protocol.Token;
 import com.charles.spider.scheduler.Command;
 import com.charles.spider.scheduler.config.Markers;
 import com.charles.spider.scheduler.context.Context;
+import com.charles.spider.scheduler.event.token.Token;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -56,6 +55,8 @@ public class EventLoop extends Thread {
 
                 MethodExecutor executor = resolvers.get(cmd.key().toString());
 
+                if(executor==null) throw new RuntimeException("executor not found");
+
                 Class<?>[] parameters = executor.parameters();
 
                 Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
@@ -90,14 +91,14 @@ public class EventLoop extends Thread {
                 args[i] = inputs[x++];
 
             else if (parameters[i].isArray() && inputs[x].getClass().isArray()) {
-                Class<?> componentType = parameters[i].getComponentType();
-                if (componentType.isPrimitive()
-                        && ClassUtils.wrapperToPrimitive(inputs[x].getClass().getComponentType()) == componentType)
-                    args[i] = ArrayUtils.toPrimitive(inputs[x++]);
-
-                else {
-                    //如果不是基本类型,就依次进行转化
-                }
+//                Class<?> componentType = parameters[i].getComponentType();
+//                if (componentType.isPrimitive()
+//                        && ClassUtils.wrapperToPrimitive(inputs[x].getClass().getComponentType()) == componentType)
+//                    args[i] = ArrayUtils.toPrimitive(inputs[x++]);
+//
+//                else {
+//                    //如果不是基本类型,就依次进行转化
+//                }
             } else if (Token.class.isAssignableFrom(inputs[x].getClass())) {
                 try {
                     args[i] = ((Token) inputs[x++]).toObject(parameters[i]);

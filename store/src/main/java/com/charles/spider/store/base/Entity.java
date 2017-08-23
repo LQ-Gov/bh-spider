@@ -43,19 +43,22 @@ public class Entity {
     }
 
 
-    public Object toObject() throws IllegalAccessException, InstantiationException {
-        Object o = getType().newInstance();
+    public Object toObject() {
+        try {
+            Object o = getType().newInstance();
 
 
-        for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
+            for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
 
-            Field field = builder.getFieldMapping(entry.getKey());
-            field.setAccessible(true);
-            field.set(o, entry.getValue());
-            field.setAccessible(false);
+                Field field = builder.getFieldMapping(entry.getKey()).getOriginal();
+                field.setAccessible(true);
+                field.set(o, entry.getValue());
 
+            }
+            return o;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
-        return o;
     }
 }

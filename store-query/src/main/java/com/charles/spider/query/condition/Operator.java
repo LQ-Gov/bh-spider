@@ -6,5 +6,6 @@ package com.charles.spider.query.condition;
 public enum Operator {
     NOT,
     IS,
+    IN,
 
 }

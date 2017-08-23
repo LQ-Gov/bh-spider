@@ -1,0 +1,15 @@
+[ {
+  "id" : "838a101e-5f43-42dd-bb30-fe99b0cc6080",
+  "extractors" : {
+    "200" : [ ],
+    "404" : [ ]
+  },
+  "cron" : "0 */1 * * * ?",
+  "host" : "exception",
+  "pattern" : "exception",
+  "exact" : false,
+  "taskCount" : 0,
+  "dispatcher" : "RANDOM",
+  "description" : "异常url的处理规则",
+  "valid" : true
+} ]

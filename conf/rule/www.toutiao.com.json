@@ -1,7 +1,8 @@
 [ {
-  "id" : "ccb95a67-cff0-45d6-b437-dca36be1feae",
+  "id" : "6b2f0b6d-d697-43e3-ae6a-e611984079c6",
   "extractors" : {
-    "200" : [ "TouTiaoListPareser" ]
+    "200" : [ "TOUTIAO_LIST_PARSER" ],
+    "404" : [ ]
   },
   "cron" : "*/5 * * * * ?",
   "host" : "www.toutiao.com",

@@ -1,21 +1,23 @@
 package com.charles.spider.fetch.impl;
 
-import com.ccharles.spider.fetch.Request;
-import com.ccharles.spider.fetch.HttpMethod;
+import com.charles.spider.fetch.Request;
+import com.charles.spider.fetch.HttpMethod;
 import com.charles.spider.query.annotation.StoreGeneratedKey;
 import com.charles.spider.query.annotation.StoreTable;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.HttpResponse;
 
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@StoreTable("charles_spider_request")
+
 public class FetchRequest implements Request {
 
-    @StoreGeneratedKey
-    private String id;
+    private long id;
 
     private URL base;
     private HttpMethod method;
@@ -28,13 +30,39 @@ public class FetchRequest implements Request {
 
     private Map<String, String[]> extractors = new HashMap<>();
 
+    private String ruleId;
+    private String h;
     private FetchState state;
     private String message;
     private Date createTime;
     private Date updateTime;
 
+    public FetchRequest() {
+    }
+
     public FetchRequest(String url) throws MalformedURLException {
-        this.base = new URL(url);
+        this(url,HttpMethod.GET);
+    }
+
+    public FetchRequest(String url, HttpMethod method) throws MalformedURLException {
+        this(new URL(url),method);
+    }
+
+
+    public FetchRequest(URL url, HttpMethod method){
+        this.base =url;
+        this.method = method;
+        this.h = DigestUtils.sha1Hex(url.toString());
+    }
+
+
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     public URL url() {
@@ -113,5 +141,17 @@ public class FetchRequest implements Request {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getRuleId() {
+        return ruleId;
+    }
+
+    public void setRuleId(String ruleId) {
+        this.ruleId = ruleId;
+    }
+
+    public String hash() {
+        return h;
     }
 }

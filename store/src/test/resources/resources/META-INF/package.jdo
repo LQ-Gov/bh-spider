@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<jdo xmlns="http://xmlns.jcp.org/xml/ns/jdo/jdo"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/jdo/jdo http://xmlns.jcp.org/xml/ns/jdo/jdo_3_1.xsd">
+
+    <package name="com.charles.spider.store.datanucleus">
+        <class name="Inventory" table="INVENTORIES">
+            <field name="name">
+                <column name="INVENTORY_NAME" length="100"/>
+            </field>
+        </class>
+    </package>
+
+    <package name="com.charles.spider.transfer.entity">
+        <class name="Module" table="charles_spider_modules">
+            <primary-key name="id" column="id"/>
+            <field name="name" column="name"/>
+            <field name="path" column="path"/>
+            <field name="hash" column="hash"/>
+            <field name="type" column="type"/>
+            <field name="detail" column="detail"/>
+            <field name="updateTime" column="updateTime"/>
+            <field name="state" column="state"/>
+        </class>
+    </package>
+    <!--<package name="com.charles.spider.fetch.impl">-->
+        <!--<class name="FetchRequest" table="charles_spider_request">-->
+            <!--<primary-key name="id" column="id"/>-->
+            <!--<field name="base" column="url"/>-->
+            <!--<field name="method" column="method"/>-->
+            <!--<field name="headers" column="headers" serialized="true"/>-->
+            <!--<field name="params" column="params" serialized="true"/>-->
+            <!--<field name="extra" column="extra" serialized="true"/>-->
+            <!--<field name="extractors" column="extractors" serialized="true"/>-->
+            <!--<field name="state" column="state"/>-->
+            <!--<field name="message" column="message"/>-->
+            <!--<field name="createTime" column="createTime"/>-->
+            <!--<field name="updateTime" column="updateTime"/>-->
+        <!--</class>-->
+    <!--</package>-->
+</jdo>

@@ -1,6 +1,13 @@
 package com.charles.spider.scheduler;
 
-import com.ccharles.spider.fetch.Request;
+import com.charles.spider.fetch.Request;
+import com.charles.spider.fetch.impl.FetchState;
+import com.charles.spider.query.condition.Condition;
+import com.charles.spider.scheduler.config.Markers;
+import com.charles.spider.scheduler.persist.RequestService;
+import com.charles.spider.scheduler.persist.Store;
+import com.charles.spider.scheduler.persist.StoreBuilder;
+import com.charles.spider.transfer.CommandCode;
 import com.charles.spider.transfer.entity.ModuleType;
 import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.transfer.entity.Rule;
@@ -21,7 +28,6 @@ import com.charles.spider.scheduler.rule.*;
 import com.charles.spider.scheduler.job.JobExecutor;
 import com.charles.spider.scheduler.job.RuleExecuteObject;
 import com.charles.spider.scheduler.job.JobCoreFactory;
-import com.charles.spider.store.base.Store;
 import com.google.common.base.Preconditions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -104,6 +110,12 @@ public class BasicScheduler implements IEvent {
     }
 
 
+    public void submit(Context ctx, FetchRequest req) {
+        Command cmd = new Command(CommandCode.SUBMIT_REQUEST, ctx, new Object[]{req});
+        this.process(cmd);
+    }
+
+
     protected void init_system_signal_handles() {
         Signal.handle(new Signal("INT"), (Signal sig) -> this.close());
         logger.info("init module of handle system signal");
@@ -119,10 +131,14 @@ public class BasicScheduler implements IEvent {
 
     //初始化数据库数据
     protected void initStore() throws Exception {
-        store = Store.get(Config.INIT_STORE_DATABASE, Config.getStoreProperties());
-        store.register(Module.class,"charles_spider_module");
-        store.register(FetchRequest.class,"charles_spider_request");
-        store.connect();
+        StoreBuilder builder = Store.builder(Config.INIT_STORE_DATABASE);
+
+        assert builder != null;
+        store = builder.build(Config.getStoreProperties());
+
+//        store.register(Module.class, "charles_spider_module");
+//        store.register(FetchRequest.class, "charles_spider_request");
+//        store.connect();
 
         logger.info("init database store");
 
@@ -133,13 +149,15 @@ public class BasicScheduler implements IEvent {
         ruleFactory = new RuleFactory(Config.INIT_RULE_PATH);
         List<Rule> rules = ruleFactory.get();
 
-        for (Rule rule : rules) executeRule(rule);
+        for (Rule rule : rules) {
+            executeRule(rule, true);
+        }
 
     }
 
     protected void initWatch() throws SchedulerException {
         JobExecutor watchJobExecutor = jobFactory.build(WatchExecuteObject.class);
-        watchJobExecutor.exec("*/5 * * * * ?",null);
+        watchJobExecutor.exec("*/5 * * * * ?", null);
     }
 
 
@@ -154,7 +172,7 @@ public class BasicScheduler implements IEvent {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2+8+1, 4));
+                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8 + 1, 4));
                             ch.pipeline().addLast(new CommandDecoder());
                             ch.pipeline().addLast(new CommandReceiveHandler(me));
 
@@ -183,7 +201,7 @@ public class BasicScheduler implements IEvent {
 
         Preconditions.checkNotNull(store, "the data store not init");
 
-        this.moduleCoreFactory = new ModuleCoreFactory(store);
+        this.moduleCoreFactory = new ModuleCoreFactory(store.module());
     }
 
 
@@ -192,7 +210,7 @@ public class BasicScheduler implements IEvent {
         jobFactory.start();
     }
 
-    protected void executeRule(Rule rule) throws SchedulerException {
+    protected void executeRule(Rule rule, boolean loadStore) throws SchedulerException {
         String host = rule.getHost();
 
         Domain matcher;
@@ -208,8 +226,7 @@ public class BasicScheduler implements IEvent {
 
         JobExecutor je = jobFactory.build(RuleExecuteObject.class);
 
-        RuleDecorator decorator = new RuleDecorator(rule, je);
-
+        RuleDecorator decorator = new RuleDecorator(store.request(), rule, je);
         matcher.addRule(decorator);
         decorator.exec();
 
@@ -234,23 +251,30 @@ public class BasicScheduler implements IEvent {
     @EventMapping
     protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws SchedulerException, IOException {
         ruleFactory.save(rule);
-        executeRule(rule);
+        executeRule(rule, false);
     }
 
 
     @EventMapping
-    protected void SUBMIT_REQUEST_HANDLER(Context ctx, Request req) {
+    protected void SUBMIT_REQUEST_HANDLER(Context ctx, FetchRequest req) {
 
         String host = req.url().getHost();
         Domain matcher = domain.match(host, false);
 
+        try {
 
-        if (!(matcher != null && bindRequestToDomain(matcher, req)))
-            bindRequestToDomain(domain, req);
+            if (!(matcher != null && bindRequestToDomain(matcher, req))) {
+
+                bindRequestToDomain(domain, req);
+            }
+        } catch (MultiInQueueException e) {
+            String ruleId = e.getRule().getId();
+            logger.info(Markers.ANALYSIS, "submit failed,the request is already in  queue of rule:{}", ruleId);
+        }
     }
 
 
-    protected boolean bindRequestToDomain(Domain d, Request req) {
+    protected boolean bindRequestToDomain(Domain d, Request req) throws MultiInQueueException {
 
 
         List<Rule> rules = d.rules();
@@ -259,7 +283,9 @@ public class BasicScheduler implements IEvent {
             for (Rule it : rules) {
                 if (it instanceof RuleDecorator) {
                     RuleDecorator decorator = (RuleDecorator) it;
-                    if (decorator.bind(req)) return true;
+                    if (decorator.bind(req)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -395,13 +421,24 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void FETCH_HANDLER(Context ctx, Request req) throws URISyntaxException {
+    protected void FETCH_HANDLER(Context ctx, FetchRequest req) throws URISyntaxException {
         fetcher.fetch(ctx, req);
     }
 
 
     @EventMapping
-    protected void TASK_REPORT_HANDLER() {
+    protected void REPORT_HANDLER(Context ctx, FetchRequest req) {
+
+        if (req.getRuleId() != null) {
+
+            Condition condition = Condition.where("id").is(req.getId());
+
+            store.request().update(req, condition);
+
+            logger.info(Markers.ANALYSIS, "the report of request,rule:{},state:{},message:{}", req.getRuleId(), req.getState(), req.getMessage());
+        }
+
+
     }
 
     @EventMapping

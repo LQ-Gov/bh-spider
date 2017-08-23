@@ -27,8 +27,107 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.charles</groupId>
+            <artifactId>spider-transfer</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/javax.jdo/jdo-api -->
+        <dependency>
+            <groupId>javax.jdo</groupId>
+            <artifactId>jdo-api</artifactId>
+            <version>3.1</version>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/org.datanucleus/datanucleus-core -->
+        <dependency>
+            <groupId>org.datanucleus</groupId>
+            <artifactId>datanucleus-core</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.datanucleus/javax.jdo -->
+        <dependency>
+            <groupId>org.datanucleus</groupId>
+            <artifactId>javax.jdo</artifactId>
+            <version>3.2.0-m7</version>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/org.datanucleus/datanucleus-api-jdo -->
+        <dependency>
+            <groupId>org.datanucleus</groupId>
+            <artifactId>datanucleus-api-jdo</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.datanucleus/datanucleus-rdbms -->
+        <dependency>
+            <groupId>org.datanucleus</groupId>
+            <artifactId>datanucleus-rdbms</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/org.datanucleus/datanucleus-jdo-query -->
+        <!--<dependency>-->
+        <!--<groupId>org.datanucleus</groupId>-->
+        <!--<artifactId>datanucleus-jdo-query</artifactId>-->
+        <!--<version>5.0.1</version>-->
+        <!--</dependency>-->
+
 
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>DN_Nightly_M2_Repo</id>
+            <url>http://www.datanucleus.org/downloads/maven2-nightly/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.datanucleus</groupId>
+                <artifactId>datanucleus-maven-plugin</artifactId>
+                <version>5.0.2</version>
+                <configuration>
+                    <!--<persistenceUnitName>Tutorial</persistenceUnitName>-->
+                    <api>JDO</api>
+
+                    <log4jConfiguration>${basedir}/log4j.properties</log4jConfiguration>
+                    <verbose>true</verbose>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>process-classes</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>enhance</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>process-test-classes</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>enhance</goal>
+                        </goals>
+                        <configuration>
+                            <metadataDirectory>${project.build.testOutputDirectory}</metadataDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 
 </project>

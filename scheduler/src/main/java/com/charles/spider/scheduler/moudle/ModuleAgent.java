@@ -1,10 +1,11 @@
 package com.charles.spider.scheduler.moudle;
 
+
+import com.charles.spider.scheduler.persist.Service;
 import com.charles.spider.transfer.entity.ModuleType;
 import com.charles.spider.transfer.entity.Module;
 import com.charles.spider.query.Query;
 import com.charles.spider.query.condition.Condition;
-import com.charles.spider.store.base.Store;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
@@ -22,13 +23,13 @@ public class ModuleAgent {
 
     private ModuleType type = null;
 
-    private Store store;
+    private  Service<Module> service;
 
 
-    public ModuleAgent(ModuleType type, Path path, Store store) {
+    public ModuleAgent(ModuleType type, Path path, Service<Module> service) {
         this.type = type;
         this.base = path;
-        this.store = store;
+        this.service = service;
     }
 
 
@@ -37,8 +38,8 @@ public class ModuleAgent {
     }
 
 
-    protected Store store() {
-        return this.store;
+    protected Service<Module> service() {
+        return this.service;
     }
 
 
@@ -52,7 +53,7 @@ public class ModuleAgent {
         if (!Files.exists(path) || !Files.isDirectory(path))
             return null;
 
-        Module module = store().single(Module.class, Query.Condition(Condition.where("name").is(name)));
+        Module module = service().single(Query.Condition(Condition.where("name").is(name)));
         if (module == null) return null;
         if (module.getState() == Module.State.TMP) {
             Path old = Paths.get(path.toString(), "data");
@@ -60,7 +61,7 @@ public class ModuleAgent {
             Files.copy(tmp, old, StandardCopyOption.REPLACE_EXISTING);
 
             module.setState(Module.State.VALID);
-            int count = store().update(module,
+            int count = service().update(module,
                     Condition.where("id").is(module.getId())
                             .and(Condition.where("update_time").is(module.getUpdateTime())));
             Files.delete(tmp);
@@ -83,7 +84,7 @@ public class ModuleAgent {
 
         String hash = DigestUtils.sha1Hex(data);
 
-        Module module = store().single(Module.class, Query.Condition(Condition.where("name").is(name)));
+        Module module = service().single(Query.Condition(Condition.where("name").is(name)));
         if (module == null) {
             module = new Module();
             module.setPath(path.toString());
@@ -92,7 +93,7 @@ public class ModuleAgent {
             module.setType(type);
             module.setUpdateTime(new Date());
             module.setHash(hash);
-            module = (Module) store().insert(module).toObject();
+            module = service().insert(module);
         }
 
         if (module.getState() == Module.State.VALID && module.getHash().equals(hash))
@@ -103,14 +104,14 @@ public class ModuleAgent {
         //写入临时文件
         Files.write(tmp, data);
         module.setState(Module.State.TMP);
-        store().update(module,
+        service().update(module,
                 Condition.where("id").is(module.getId())
                         .and(Condition.where("update_time").is(module.getUpdateTime())));
 
         Files.copy(tmp, old, StandardCopyOption.REPLACE_EXISTING);
 
         module.setState(Module.State.VALID);
-        int count = store().update(module,
+        int count = service().update(module,
                 Condition.where("id").is(module.getId())
                         .and(Condition.where("update_time").is(module.getUpdateTime())));
 
@@ -128,15 +129,15 @@ public class ModuleAgent {
         query.addCondition(Condition.where("type").is(type()));
 
 
-        return store().select(Module.class, query);
+        return service().select(query);
     }
 
 
     public void delete(Query query) throws IOException {
-        Module module = store().single(Module.class, query);
+        Module module = service().single(query);
 
         if (module.getState() != Module.State.NULL) {
-            int count = store().delete(Module.class, query);
+            int count = service().delete(query);
 
             if (count == 1) {
                 Path path = Paths.get(base().toString(), module.getName());

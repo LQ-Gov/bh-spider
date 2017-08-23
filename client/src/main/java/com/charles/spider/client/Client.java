@@ -1,11 +1,16 @@
 package com.charles.spider.client;
 
+import com.charles.spider.client.context.ClientFetchContext;
+import com.charles.spider.fetch.FetchContext;
+import com.charles.spider.fetch.Request;
+import com.charles.spider.fetch.impl.FetchRequest;
+import com.charles.spider.transfer.CommandCode;
 import com.charles.spider.transfer.JsonFactory;
 import com.charles.spider.client.converter.Converter;
 import com.charles.spider.client.converter.StringConverter;
 import com.charles.spider.client.converter.TypeConverter;
 import com.charles.spider.client.receiver.Receiver;
-import com.ccharles.spider.fetch.Extractor;
+import com.charles.spider.fetch.Extractor;
 import com.charles.spider.fetch.impl.FetchResponse;
 import com.charles.spider.fetch.impl.FinalFetchContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -70,7 +76,7 @@ public class Client {
 
     }
 
-    private synchronized long write0(long id, Commands cmd, byte flag, Object... params) throws IOException {
+    private synchronized long write0(long id, CommandCode cmd, byte flag, Object... params) throws IOException {
         short type = (short) cmd.ordinal();
         byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
 
@@ -86,7 +92,7 @@ public class Client {
     }
 
 
-    protected <T> T write(Commands cmd, Type t, Object... params) {
+    protected <T> T write(CommandCode cmd, Type t, Object... params) {
 
 
         try {
@@ -103,19 +109,22 @@ public class Client {
         return null;
     }
 
-    protected <T> void streamBase(Commands cmd, Consumer<T> consumer, Converter<byte[], T> converter, Object... params) {
+    protected <T> Future<T> streamBase(CommandCode cmd, Consumer<T> consumer, Converter<byte[], T> converter, Object... params) {
         try {
             long id = ID.incrementAndGet();
-            receiver.watch(id, consumer, converter);
+            Future<T> future = receiver.watch(id, consumer, converter);
             write0(id, cmd, STREAM_REQUEST, params);
+
+            return future;
 
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
-    protected void stream(Commands cmd, Consumer<String> consumer, Object... params) {
+    protected void stream(CommandCode cmd, Consumer<String> consumer, Object... params) {
         streamBase(cmd, consumer, new StringConverter(), params);
     }
 
@@ -133,10 +142,13 @@ public class Client {
     }
 
 
-    public boolean crawler(String url, Class<? extends Extractor>... extractors) {
-        streamBase(Commands.FETCH, (Consumer<FetchResponse>) response -> {
+    @SuppressWarnings({"unchecked", "varargs"})
+    public Future<FetchResponse> crawler(String url, Class<? extends Extractor>... extractors) throws MalformedURLException {
+        Request req = new FetchRequest(url);
+        FetchContext base = new ClientFetchContext(req);
+        return streamBase(CommandCode.FETCH, (Consumer<FetchResponse>) response -> {
 
-            FetchContext ctx = new FinalFetchContext(null, response);
+            FetchContext ctx = new FinalFetchContext(base, response);
             try {
                 for (Class<?> it : extractors) {
 
@@ -155,12 +167,11 @@ public class Client {
             }
 
 
-        }, new TypeConverter<>(FetchResponse.class));
-        return true;
+        }, new TypeConverter<>(FetchResponse.class), req);
     }
 
     public void watch(String point, Consumer<String> consumer) throws IOException {
-        stream(Commands.WATCH, consumer, point);
+        stream(CommandCode.WATCH, consumer, point);
     }
 
 

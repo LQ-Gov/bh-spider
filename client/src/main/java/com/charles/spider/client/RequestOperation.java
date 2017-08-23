@@ -1,6 +1,8 @@
 package com.charles.spider.client;
 
-import com.ccharles.spider.fetch.Request;
+import com.charles.spider.fetch.Request;
+import com.charles.spider.fetch.impl.FetchRequest;
+import com.charles.spider.transfer.CommandCode;
 
 import java.net.MalformedURLException;
 
@@ -19,12 +21,12 @@ public class RequestOperation {
 
 
     public void submit(Request req){
-        client.write(Commands.SUBMIT_REQUEST,null,req);
+        client.write(CommandCode.SUBMIT_REQUEST,null,req);
     }
 
 
     public void submit(String url) throws MalformedURLException {
-        Request req = new Request(url);
+        Request req = new FetchRequest(url);
         submit(req);
     }
 }
