@@ -1,10 +1,10 @@
 package com.charles.spider.scheduler;
 
+import com.charles.spider.fetch.Extractor;
 import com.charles.spider.fetch.Request;
-import com.charles.spider.fetch.impl.FetchState;
 import com.charles.spider.query.condition.Condition;
 import com.charles.spider.scheduler.config.Markers;
-import com.charles.spider.scheduler.persist.RequestService;
+import com.charles.spider.scheduler.module.ComponentProxy;
 import com.charles.spider.scheduler.persist.Store;
 import com.charles.spider.scheduler.persist.StoreBuilder;
 import com.charles.spider.transfer.CommandCode;
@@ -20,10 +20,9 @@ import com.charles.spider.scheduler.event.EventMapping;
 import com.charles.spider.scheduler.event.IEvent;
 import com.charles.spider.scheduler.fetcher.Fetcher;
 import com.charles.spider.scheduler.job.WatchExecuteObject;
-import com.charles.spider.scheduler.moudle.ModuleBuildException;
+import com.charles.spider.scheduler.module.ComponentBuildException;
 import com.charles.spider.scheduler.watch.WatchStore;
-import com.charles.spider.scheduler.moudle.ModuleAgent;
-import com.charles.spider.scheduler.moudle.ModuleCoreFactory;
+import com.charles.spider.scheduler.module.ComponentCoreFactory;
 import com.charles.spider.scheduler.rule.*;
 import com.charles.spider.scheduler.job.JobExecutor;
 import com.charles.spider.scheduler.job.RuleExecuteObject;
@@ -59,7 +58,7 @@ public class BasicScheduler implements IEvent {
     private EventLoop loop = null;
     private Fetcher fetcher = null;
     private JobCoreFactory jobFactory = null;
-    private ModuleCoreFactory moduleCoreFactory = null;
+    private ComponentCoreFactory componentCoreFactory = null;
     private RuleFactory ruleFactory = null;
     private Store store = null;
 
@@ -105,8 +104,8 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Object moduleObject(String moduleName, String className) throws IOException, ModuleBuildException {
-        return moduleCoreFactory.object(moduleName, className);
+    public Extractor extractorCompoent(String componentName) throws IOException, ComponentBuildException {
+        return componentCoreFactory.extractorComponent(componentName);
     }
 
 
@@ -201,7 +200,7 @@ public class BasicScheduler implements IEvent {
 
         Preconditions.checkNotNull(store, "the data store not init");
 
-        this.moduleCoreFactory = new ModuleCoreFactory(store.module());
+        this.componentCoreFactory = new ComponentCoreFactory(store.module());
     }
 
 
@@ -236,12 +235,12 @@ public class BasicScheduler implements IEvent {
     @EventMapping
     protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, ModuleType type, String description) {
 
-        ModuleAgent agent = moduleCoreFactory.agent(type);
+        ComponentProxy proxy = componentCoreFactory.proxy(type);
 
         try {
-            if (agent == null)
+            if (proxy == null)
                 throw new Exception("unknown module type");
-            agent.save(data, name, type, description, true);
+            proxy.save(data, name, type, description, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -297,8 +296,8 @@ public class BasicScheduler implements IEvent {
     @EventMapping
     protected void GET_MODULE_LIST_HANDLER(Context ctx, Query query) {
 
-        ModuleAgent agent = moduleCoreFactory.agent();
-        List<Module> list = agent.select(query);
+        ComponentProxy proxy = componentCoreFactory.proxy();
+        List<Module> list = proxy.select(query);
         ctx.write(list);
     }
 
@@ -405,7 +404,7 @@ public class BasicScheduler implements IEvent {
 
     @EventMapping
     protected void DELETE_MODULE_HANDLER(Context ctx, Query query) throws IOException {
-        moduleCoreFactory.agent().delete(query);
+        componentCoreFactory.proxy().delete(query);
     }
 
     @EventMapping

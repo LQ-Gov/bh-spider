@@ -3,12 +3,13 @@ package com.charles.spider.scheduler.fetcher;
 import com.charles.spider.fetch.Extractor;
 import com.charles.spider.fetch.FetchContext;
 import com.charles.spider.fetch.Request;
+import com.charles.spider.fetch.impl.FetchRequest;
 import com.charles.spider.fetch.impl.FetchResponse;
+import com.charles.spider.fetch.impl.FetchState;
 import com.charles.spider.fetch.impl.FinalFetchContext;
 import com.charles.spider.scheduler.BasicScheduler;
 import com.charles.spider.scheduler.Command;
 import com.charles.spider.scheduler.context.Context;
-import com.charles.spider.scheduler.moudle.ModuleBuildException;
 import com.charles.spider.transfer.CommandCode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.Header;
@@ -71,7 +72,7 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
                     process(ctx, req.extractor(String.valueOf("default"))) :
                     process(ctx, chain);
 
-            Command cmd = new Command(CommandCode.REPORT, this.trackContext, new Object[]{ctx.request(), true});
+            Command cmd = new Command(CommandCode.REPORT, this.trackContext, new Object[]{ctx.request()});
             this.scheduler.process(cmd);
 
             this.trackContext.complete();
@@ -92,29 +93,24 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
     private boolean process(FetchContext ctx, String... chain) {
         //String[] chain = req.extractor(String.valueOf(code));
 
+        FetchRequest fr = (FetchRequest) ctx.request();
         if (ArrayUtils.isNotEmpty(chain)) {
             try {
                 for (String it : chain) {
-                    Extractor extractor;
 
-                    Object o = scheduler.moduleObject(it, null);
-
-                    if (o instanceof Extractor) extractor = (Extractor) o;
-
-                    else throw new Exception("not a extractor module");
+                    Extractor extractor = scheduler.extractorCompoent(it);
 
 
                     if (!extractor.run(ctx)) break;
-
                 }
-            } catch (ModuleBuildException | IOException e) {
-                e.printStackTrace();
+
+
             } catch (Exception e) {
                 //向master报告
-                Command cmd = new Command(CommandCode.REPORT, this.trackContext, new Object[]{ctx.request(), false, e});
-                this.scheduler.process(cmd);
+                fr.setState(FetchState.EXCEPTION);
+                fr.setMessage(e.getMessage());
+                return false;
             }
-
         }
         return true;
     }

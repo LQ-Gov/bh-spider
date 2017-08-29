@@ -60,18 +60,19 @@ public class RuleDecorator extends Rule {
         Query query = Query.Condition(Condition.where("state").is(FetchState.QUEUE));
         query.addCondition(Condition.where("rule_id").is(this.getId()));
         query.addCondition(Condition.where("hash").is(fr.hash()));
-        if (service.count(query) > 0)
-            throw new MultiInQueueException(this);
+//        if (service.count(query) > 0)
+//            throw new MultiInQueueException(this);
 
 
         if (match(req)) {
 
             fr.setRuleId(this.getId());
             fr.setState(FetchState.QUEUE);
-            service.insert(fr);
-            if (requests.size() == queueLength && requests.size() < QUEUE_CACHE_SIZE)
-                requests.add(fr);
-            queueLength++;
+//            service.insert(fr);
+//            if (requests.size() == queueLength && requests.size() < QUEUE_CACHE_SIZE)
+//                requests.add(fr);
+//            queueLength++;
+            requests.add(fr);
             return true;
         }
 
@@ -184,6 +185,13 @@ public class RuleDecorator extends Rule {
 
 
     public List<Request> poll(int size) {
+
+        List<Request> l = new LinkedList<>();
+        if (!requests.isEmpty()) {
+            l.add(requests.poll());
+            return l;
+        }
+        if(true) return null;
 
         if (queueLength == 0) return null;
         List<Request> list = new LinkedList<>();

@@ -42,7 +42,7 @@ public class Client {
     private DataOutputStream out = null;
 
     private RuleOperation ruleOperation = null;
-    private ModuleOperation moduleOperation = null;
+    private ComponentOperation moduleOperation = null;
     private RequestOperation requestOperation = null;
 
     private Receiver receiver = null;
@@ -55,7 +55,7 @@ public class Client {
 
         if (open()) {
             ruleOperation = new RuleOperation(this);
-            moduleOperation = new ModuleOperation(this);
+            moduleOperation = new ComponentOperation(this);
             requestOperation = new RequestOperation(this);
             receiver = new Receiver(socket);
             receiver.start();
@@ -129,7 +129,7 @@ public class Client {
     }
 
 
-    public ModuleOperation module() {
+    public ComponentOperation module() {
         return moduleOperation;
     }
 

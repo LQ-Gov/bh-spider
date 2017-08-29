@@ -1,10 +1,10 @@
-package com.charles.spider.scheduler.moudle;
+package com.charles.spider.scheduler.module;
 
-public class ModuleBuildException extends Exception {
+public class ComponentBuildException extends Exception {
     private String module;
     private String message;
 
-    public ModuleBuildException(String module, String message){
+    public ComponentBuildException(String module, String message){
         this.module = module;
         this.message = message;
     }

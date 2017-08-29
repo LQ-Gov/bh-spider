@@ -22,11 +22,11 @@ import java.util.List;
 /**
  * Created by lq on 7/9/17.
  */
-public class ModuleOperation {
+public class ComponentOperation {
     private Client client = null;
 
 
-    ModuleOperation(Client client) {
+    ComponentOperation(Client client) {
         this.client = client;
     }
 
@@ -95,10 +95,28 @@ public class ModuleOperation {
         submit(Paths.get(path));
     }
 
+    public void submit(String path,ModuleType type) throws IOException {
+        submit(path,type,null);
+    }
+
+    public void submit(String path,ModuleType type,String desc) throws IOException {
+        submit(Paths.get(path),type,desc);
+    }
+
     public void submit(Path path) throws IOException {
         String name = path.getFileName().toString();
         name = FilenameUtils.getBaseName(name);
         submit(name, path);
+    }
+
+    public void submit(Path path,ModuleType type) throws IOException {
+        submit(path,type,null);
+    }
+
+    public void submit(Path path,ModuleType type,String desc) throws IOException {
+        String name = path.getFileName().toString();
+        name = FilenameUtils.getBaseName(name);
+        submit(name, path,type,desc);
     }
 
 
@@ -120,7 +138,7 @@ public class ModuleOperation {
     public void submit(String name, Path path, String desc) throws IOException {
         String extension = FilenameUtils.getExtension(path.getFileName().toString());
 
-        ModuleType type = ModuleType.value(extension);
+        ModuleType type = ModuleType.EXTRACTOR;
 
         submit(name, path, type, desc);
 

@@ -119,7 +119,7 @@ public class SQLiteRequestService implements RequestService<FetchRequest> {
     public synchronized int update(FetchRequest o, Condition condition) {
         Date now = new Date();
         o.setUpdateTime(now);
-        String sql = "UPDATE " + tableName + " SET headers=?,params=?,extra=?,state=?,message=?,update_ime=?";
+        String sql = "UPDATE " + tableName + " SET headers=?,params=?,extra=?,state=?,message=?,update_time=?";
         sql = interpreter.explain(sql, condition);
 
         return template.update(sql, preparedStatement -> {

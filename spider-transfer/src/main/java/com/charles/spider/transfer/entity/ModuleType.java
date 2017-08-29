@@ -8,6 +8,8 @@ public enum ModuleType {
     JAR,
     GROOVY,
     CONFIG,
+    COMMON,
+    EXTRACTOR,
     SYSTEM;
 
 
