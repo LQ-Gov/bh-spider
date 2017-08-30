@@ -72,8 +72,12 @@ public class FetchCallback implements FutureCallback<HttpResponse> {
                     process(ctx, req.extractor(String.valueOf("default"))) :
                     process(ctx, chain);
 
-            Command cmd = new Command(CommandCode.REPORT, this.trackContext, new Object[]{ctx.request()});
-            this.scheduler.process(cmd);
+            if(res) {
+                FetchRequest fr = (FetchRequest) ctx.request();
+                fr.setState(FetchState.FINISHED);
+                Command cmd = new Command(CommandCode.REPORT, this.trackContext, new Object[]{ctx.request()});
+                this.scheduler.process(cmd);
+            }
 
             this.trackContext.complete();
         });

@@ -1,11 +1,8 @@
 package com.charles.spider.store.datanucleus;
 
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.PrimaryKey;
 
 //@PersistenceCapable
 public class Inventory {
-    @PrimaryKey
     protected String name=null;
 
 
