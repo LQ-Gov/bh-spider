@@ -6,7 +6,7 @@
 
     <import resource="spring-mvc.xml"/>
 
-    <bean id="spider-client" class="com.charles.spider.client.Client">
+    <bean id="spider-client" class="com.bh.spider.client.Client">
         <constructor-arg value="127.0.0.1:8033"/>
     </bean>
 

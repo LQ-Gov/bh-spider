@@ -7,7 +7,7 @@
         </encoder>
     </appender>
 
-    <appender name="ANALYSIS" class="com.charles.spider.scheduler.watch.AnalysisAppender"/>
+    <appender name="ANALYSIS" class="com.bh.spider.scheduler.watch.AnalysisAppender"/>
 
 
     <root level="info">

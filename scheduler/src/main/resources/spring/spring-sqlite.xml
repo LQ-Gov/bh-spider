@@ -14,15 +14,15 @@
         <property name="dataSource" ref="dataSource"/>
     </bean>
 
-    <bean id="module-service" class="com.charles.spider.scheduler.persist.sqlite.SQLiteModuleService">
+    <bean id="component-service" class="com.bh.spider.scheduler.persist.sqlite.SQLiteModuleService">
         <constructor-arg name="template" ref="jdbcTemplate"/>
     </bean>
-    <bean id="request-service" class="com.charles.spider.scheduler.persist.sqlite.SQLiteRequestService">
+    <bean id="request-service" class="com.bh.spider.scheduler.persist.sqlite.SQLiteRequestService">
         <constructor-arg name="template" ref="jdbcTemplate"/>
     </bean>
 
-    <bean id="store" class="com.charles.spider.scheduler.persist.sqlite.SQLiteStore">
-        <property name="moduleService" ref="module-service"/>
+    <bean id="store" class="com.bh.spider.scheduler.persist.sqlite.SQLiteStore">
+        <property name="moduleService" ref="component-service"/>
         <property name="requestService" ref="request-service"/>
     </bean>
 </beans>

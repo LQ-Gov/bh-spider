@@ -3,6 +3,6 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="module-entity" class="com.charles.spider.transfer.entity.Module"/>
-    <bean id="request-entity" class="com.charles.spider.fetch.impl.FetchRequest"/>
+    <bean id="component-entity" class="com.bh.spider.transfer.entity.Component"/>
+    <bean id="request-entity" class="com.bh.spider.fetch.impl.FetchRequest"/>
 </beans>

@@ -126156,9 +126156,11 @@ var RuleStore = (_class = function RuleStore() {
                     case 2:
                         response = _context.sent;
 
+                        //this.hosts = []
+                        console.log(response.data);
                         _this.hosts = response.data ? response.data : [];
 
-                    case 4:
+                    case 5:
                     case "end":
                         return _context.stop();
                 }

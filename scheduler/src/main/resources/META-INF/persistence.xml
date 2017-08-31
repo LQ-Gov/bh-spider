@@ -6,8 +6,8 @@
 
 
     <persistence-unit name="Tutorial">
-        <class>com.charles.spider.transfer.entity.Module</class>
-        <class>com.charles.spider.fetch.impl.FetchRequest</class>
+        <class>com.bh.spider.transfer.entity.Component</class>
+        <class>com.bh.spider.fetch.impl.FetchRequest</class>
         <exclude-unlisted-classes/>
 
 
