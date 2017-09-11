@@ -8,7 +8,9 @@ public interface Context {
 
     void complete();
 
-    boolean isStream();
-
     boolean isWriteEnable();
+
+    void exception(Throwable cause);
+
+    void flush();
 }

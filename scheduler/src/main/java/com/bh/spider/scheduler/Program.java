@@ -15,7 +15,6 @@ public class Program {
 
     public static void main(String[] args) throws Exception {
 
-
         String file = args.length > 0 ? args[0] : "spider.properties";
 
         InputStream stream = Program.class.getResourceAsStream(file);

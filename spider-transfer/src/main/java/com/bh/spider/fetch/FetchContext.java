@@ -4,6 +4,7 @@ import com.bh.spider.doc.Document;
 
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 
 public interface FetchContext {
@@ -14,6 +15,10 @@ public interface FetchContext {
     Request request();
 
     Response response();
+
+    Cookie cookie(String name);
+
+    List<Cookie> cookies();
 
     Document document();
 
@@ -40,6 +45,7 @@ public interface FetchContext {
     void scheduler(String url) throws Exception;
 
     void cancel() throws ExtractorChainException;
+
 
 
 }

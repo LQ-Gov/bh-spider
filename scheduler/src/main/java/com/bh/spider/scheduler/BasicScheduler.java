@@ -1,29 +1,30 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.scheduler.job.*;
-import com.bh.spider.scheduler.rule.*;
 import com.bh.spider.fetch.Extractor;
 import com.bh.spider.fetch.Request;
-import com.bh.spider.query.condition.Condition;
-import com.bh.spider.scheduler.config.Markers;
-import com.bh.spider.scheduler.module.ComponentProxy;
-import com.bh.spider.scheduler.persist.Store;
-import com.bh.spider.scheduler.persist.StoreBuilder;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.ModuleType;
-import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.Rule;
 import com.bh.spider.fetch.impl.FetchRequest;
 import com.bh.spider.query.Query;
+import com.bh.spider.query.condition.Condition;
 import com.bh.spider.scheduler.config.Config;
+import com.bh.spider.scheduler.config.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IEvent;
+import com.bh.spider.scheduler.fetcher.FetchExecuteException;
 import com.bh.spider.scheduler.fetcher.Fetcher;
-import com.bh.spider.scheduler.module.ComponentBuildException;
+import com.bh.spider.scheduler.job.*;
+import com.bh.spider.scheduler.component.ComponentBuildException;
+import com.bh.spider.scheduler.component.ComponentCoreFactory;
+import com.bh.spider.scheduler.component.ComponentProxy;
+import com.bh.spider.scheduler.persist.Store;
+import com.bh.spider.scheduler.persist.StoreBuilder;
+import com.bh.spider.scheduler.rule.*;
 import com.bh.spider.scheduler.watch.WatchStore;
-import com.bh.spider.scheduler.module.ComponentCoreFactory;
+import com.bh.spider.transfer.CommandCode;
+import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.transfer.entity.ModuleType;
+import com.bh.spider.transfer.entity.Rule;
 import com.google.common.base.Preconditions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -41,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -105,6 +105,10 @@ public class BasicScheduler implements IEvent {
         return componentCoreFactory.extractorComponent(componentName);
     }
 
+    public Component component(ModuleType type, String componentName) throws IOException {
+        return componentCoreFactory.proxy(type).get(componentName);
+    }
+
 
     public void submit(Context ctx, FetchRequest req) {
         Command cmd = new Command(CommandCode.SUBMIT_REQUEST, ctx, new Object[]{req});
@@ -114,14 +118,14 @@ public class BasicScheduler implements IEvent {
 
     protected void init_system_signal_handles() {
         Signal.handle(new Signal("INT"), (Signal sig) -> this.close());
-        logger.info("init module of handle system signal");
+        logger.info("init component of handle system signal");
 
     }
 
 
     protected void initFetcher() {
         fetcher = new Fetcher(this);
-        logger.info("init module of fetcher");
+        logger.info("init component of fetcher");
     }
 
 
@@ -171,7 +175,7 @@ public class BasicScheduler implements IEvent {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8 + 1, 4));
+                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
                             ch.pipeline().addLast(new CommandDecoder());
                             ch.pipeline().addLast(new CommandReceiveHandler(me));
 
@@ -239,7 +243,7 @@ public class BasicScheduler implements IEvent {
 
         try {
             if (proxy == null)
-                throw new Exception("unknown module type");
+                throw new Exception("unknown component type");
             proxy.save(data, name, type, description, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -430,34 +434,36 @@ public class BasicScheduler implements IEvent {
         componentCoreFactory.proxy().delete(query);
     }
 
-    @EventMapping
+    @EventMapping(autoComplete = false)
     protected void WATCH_HANDLER(Context ctx, String key) throws Exception {
 
         WatchStore.get(key).bind(ctx);
     }
 
+    //未实现
     @EventMapping
     protected void WATCH_CANCEL_HANDLER(Context ctx, String key) throws Exception {
         WatchStore.get(key);
     }
 
 
-    @EventMapping
-    protected void FETCH_HANDLER(Context ctx, FetchRequest req) throws URISyntaxException {
+    @EventMapping(autoComplete = false)
+    protected void FETCH_HANDLER(Context ctx, FetchRequest req) throws FetchExecuteException {
         fetcher.fetch(ctx, req);
     }
 
 
     @EventMapping
     protected void REPORT_HANDLER(Context ctx, FetchRequest req) {
+        String ruleId = req.getRule() != null && req.getRule().getId() != null ? req.getRule().getId() : null;
 
-        if (req.getRuleId() != null) {
+        if (req.getRule() != null && req.getRule().getId() != null) {
 
             Condition condition = Condition.where("id").is(req.getId());
 
             store.request().update(req, condition);
 
-            logger.info(Markers.ANALYSIS, "the report of request,rule:{},state:{},message:{}", req.getRuleId(), req.getState(), req.getMessage());
+            logger.info(Markers.ANALYSIS, "the report of request,rule:{},state:{},message:{}", ruleId, req.getState(), req.getMessage());
         }
 
 

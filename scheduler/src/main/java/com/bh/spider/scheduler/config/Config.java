@@ -24,6 +24,7 @@ public class Config {
         //数据/配置存储路径
         public static final String INIT_RULE_PATH = "init.rules.path";
         public static final String INIT_DATA_PATH = "init.data.path";
+        public static final String INIT_PHANTOMJS_PATH="init.phantomjs.path";
 
         //数据库存储配置
         public static final String INIT_STORE_DATABASE = "init.store.database"; //数据库存储类型
@@ -45,6 +46,7 @@ public class Config {
     public static int INIT_LISTEN_PORT;
     public static String INIT_DATA_PATH;
     public static String INIT_RULE_PATH;
+    public static String INIT_PHANTOMJS_PATH;
     public static String INIT_STORE_DATABASE;
     public static String INIT_STORE_URL;
     public static String INIT_STORE_USER;
@@ -62,6 +64,7 @@ public class Config {
         properties.put(Field.INIT_STORE_DRIVER, INIT_STORE_DRIVER);
         properties.put(Field.INIT_DATA_PATH, INIT_DATA_PATH);
 
+
         return properties;
     }
 
@@ -74,6 +77,7 @@ public class Config {
         INIT_LISTEN_PORT = (int) properties.getOrDefault(Field.INIT_LISTEN_PORT, 8033);
         INIT_DATA_PATH = properties.getProperty(Field.INIT_DATA_PATH, "data/");
         INIT_RULE_PATH = properties.getProperty(Field.INIT_RULE_PATH, "conf/rule");
+        INIT_PHANTOMJS_PATH=properties.getProperty(Field.INIT_PHANTOMJS_PATH,"/var/phantomjs-2.1.1-linux-x86_64/bin/phantomjs");
         INIT_STORE_DATABASE = properties.getProperty(Field.INIT_STORE_DATABASE, "SQLite");
         INIT_STORE_URL = properties.getProperty(Field.INIT_STORE_URL, "jdbc:sqlite:" + INIT_DATA_PATH + "spider.store.db");
         INIT_STORE_DRIVER = properties.getProperty(Field.INIT_STORE_DRIVER, "org.sqlite.JDBC");

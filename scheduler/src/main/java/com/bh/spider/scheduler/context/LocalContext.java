@@ -12,12 +12,17 @@ public class LocalContext implements Context {
     }
 
     @Override
-    public boolean isStream() {
+    public boolean isWriteEnable() {
         return false;
     }
 
     @Override
-    public boolean isWriteEnable() {
-        return false;
+    public void exception(Throwable cause) {
+
+    }
+
+    @Override
+    public void flush() {
+
     }
 }

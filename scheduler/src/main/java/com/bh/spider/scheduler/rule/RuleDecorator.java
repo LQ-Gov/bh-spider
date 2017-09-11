@@ -60,7 +60,7 @@ public class RuleDecorator extends Rule {
 
         if (match(req)) {
 
-            fr.setRuleId(this.getId());
+            fr.setRule(this.original());
             fr.setState(FetchState.QUEUE);
             service.insert(fr);
             if (requests.size() == queueLength && requests.size() < QUEUE_CACHE_SIZE)

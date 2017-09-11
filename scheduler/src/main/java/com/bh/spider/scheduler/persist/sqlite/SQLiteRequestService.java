@@ -24,7 +24,7 @@ import java.util.List;
 public class SQLiteRequestService implements RequestService<FetchRequest> {
 
     private ObjectMapper mapper = JsonFactory.get();
-    private String tableName = "charles_spider_requests";
+    private String tableName = "bh_spider_requests";
 
     private SQLiteQueryInterpreter interpreter = new SQLiteQueryInterpreter();
 
@@ -70,7 +70,7 @@ public class SQLiteRequestService implements RequestService<FetchRequest> {
                 statement.setString(3, JsonFactory.get().writeValueAsString(o.headers()));
                 statement.setString(4, JsonFactory.get().writeValueAsString(o.params()));
                 statement.setString(5, JsonFactory.get().writeValueAsString(o.extra()));
-                statement.setObject(6, o.getRuleId());
+                statement.setObject(6, o.getRule() == null ? null : o.getRule().getId());
                 statement.setString(7, o.hash());
                 statement.setString(8, o.getState().toString());
                 statement.setString(9, o.getMessage());
@@ -164,7 +164,6 @@ public class SQLiteRequestService implements RequestService<FetchRequest> {
                 req.params().putAll(mapper.readValue(resultSet.getString("params"), JsonFactory.mapType(String.class, Object.class)));
                 req.extra().putAll(mapper.readValue(resultSet.getString("extra"), JsonFactory.mapType(String.class, Object.class)));
                 req.setState(FetchState.valueOf(resultSet.getString("state")));
-                req.setRuleId(resultSet.getString("rule_id"));
                 req.setCreateTime(resultSet.getDate("create_time"));
                 return req;
 

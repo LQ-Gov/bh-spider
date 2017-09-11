@@ -2,6 +2,7 @@ package com.bh.spider.fetch.impl;
 
 import com.bh.spider.fetch.HttpMethod;
 import com.bh.spider.fetch.Request;
+import com.bh.spider.transfer.entity.Rule;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.net.MalformedURLException;
@@ -24,9 +25,7 @@ public class FetchRequest implements Request {
 
     private Map<String, Object> extra = new HashMap<>();
 
-    private Map<String, String[]> extractors = new HashMap<>();
-
-    private String ruleId;
+    private Rule rule;
     private String h;
     private FetchState state;
     private String message;
@@ -37,20 +36,19 @@ public class FetchRequest implements Request {
     }
 
     public FetchRequest(String url) throws MalformedURLException {
-        this(url,HttpMethod.GET);
+        this(url, HttpMethod.GET);
     }
 
     public FetchRequest(String url, HttpMethod method) throws MalformedURLException {
-        this(new URL(url),method);
+        this(new URL(url), method);
     }
 
 
-    public FetchRequest(URL url, HttpMethod method){
-        this.base =url;
+    public FetchRequest(URL url, HttpMethod method) {
+        this.base = url;
         this.method = method;
         this.h = DigestUtils.sha1Hex(url.toString());
     }
-
 
 
     public long getId() {
@@ -97,13 +95,15 @@ public class FetchRequest implements Request {
         return extra;
     }
 
-
+    @Override
     public String[] extractor(String key) {
-        return extractors.get(key);
+        return this.rule == null ? null : this.rule.extractor(key);
     }
 
+    @Override
     public void extractor(String key, String[] modules) {
-        extractors.put(key, modules);
+
+         this.rule.extractor(key, modules);
     }
 
 
@@ -139,15 +139,15 @@ public class FetchRequest implements Request {
         this.message = message;
     }
 
-    public String getRuleId() {
-        return ruleId;
-    }
-
-    public void setRuleId(String ruleId) {
-        this.ruleId = ruleId;
-    }
-
     public String hash() {
         return h;
+    }
+
+    public Rule getRule() {
+        return rule;
+    }
+
+    public void setRule(Rule rule) {
+        this.rule = rule;
     }
 }

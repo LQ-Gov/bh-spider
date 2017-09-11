@@ -4,11 +4,14 @@ import com.bh.spider.transfer.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by lq on 17-4-8.
  */
 public class ClientContext implements Context {
+    private static final Logger logger = LoggerFactory.getLogger(ClientContext.class);
 
     private ChannelHandlerContext source = null;
     private volatile Boolean enable = true;
@@ -17,61 +20,35 @@ public class ClientContext implements Context {
 
     private long id;
 
-    private boolean stream = false;
-
-
-    public ClientContext(long id, byte flag, ChannelHandlerContext source) {
-
+    public ClientContext(long id, ChannelHandlerContext source) {
         this.id = id;
-
-        stream = flag > 0;
-
         this.source = source;
     }
 
 
     @Override
     public synchronized void write(Object data) {
-        if(!isWriteEnable()) return;
-
-        if (!stream) buffer = data;
-
-        else {
-            try {
-
-                write0(id, (byte) 1, JsonFactory.get().writeValueAsBytes(data));
-
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-        }
+        flush();
+        buffer = data;
     }
 
     @Override
     public synchronized void complete() {
 
-        if (!source.channel().isOpen()) return;
-
+        if (!isWriteEnable()) return;
         try {
-
-            write0(id,(byte)0,JsonFactory.get().writeValueAsBytes(buffer));
-
+            write0(id, (byte) 0, buffer != null ? JsonFactory.get().writeValueAsBytes(buffer) : null);
             enable = false;
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            exception(e);
         }
 
+
     }
 
-    @Override
-    public boolean isStream() {
-        return stream;
-    }
-
-
-
-    private void write0(long id, byte flag, byte[] data) {
-        ByteBuf buf = source.alloc().buffer(8 + 1 + 4 + data.length);//id,flag,len,data
+    private synchronized void write0(long id, byte flag, byte[] data) {
+        if (data == null) data = new byte[0];
+        ByteBuf buf = source.alloc().buffer(8 + 1 + 4 + (data.length));//id,flag,len,data
         buf.writeLong(id);
         buf.writeByte(flag);
         buf.writeInt(data.length);
@@ -80,7 +57,27 @@ public class ClientContext implements Context {
     }
 
     @Override
-    public boolean isWriteEnable() {
-        return enable;
+    public synchronized boolean isWriteEnable() {
+        return enable && this.source.channel().isOpen();
     }
+
+    @Override
+    public synchronized void exception(Throwable cause) {
+        write0(id, (byte) 0x02, cause.getMessage().getBytes());
+        enable = false;
+    }
+
+    @Override
+    public synchronized void flush() {
+
+        if (isWriteEnable() && buffer != null) {
+            try {
+                write0(id, (byte) 1, JsonFactory.get().writeValueAsBytes(buffer));
+                buffer = null;
+            } catch (Exception e) {
+                exception(e);
+            }
+        }
+    }
+
 }

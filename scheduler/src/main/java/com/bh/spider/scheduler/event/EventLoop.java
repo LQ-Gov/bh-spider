@@ -13,9 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 /**
  * Created by lq on 17-3-16.
@@ -37,7 +35,6 @@ public class EventLoop extends Thread {
 
     public Future execute(Command cmd) {
         queue.offer(cmd);
-
         return null;
 
     }
@@ -55,7 +52,7 @@ public class EventLoop extends Thread {
 
                 MethodExecutor executor = resolvers.get(cmd.key().toString());
 
-                if(executor==null) throw new RuntimeException("executor not found");
+                if (executor == null) throw new RuntimeException("executor not found");
 
                 Class<?>[] parameters = executor.parameters();
 
@@ -63,11 +60,15 @@ public class EventLoop extends Thread {
 
 
                 executor.invoke(args);
-                if (cmd.context() != null&&!cmd.context().isStream()) cmd.context().complete();
+
+                if (cmd.context() != null && executor.mapping().autoComplete())
+                    cmd.context().complete();
 
             } catch (InterruptedException | IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
+                logger.error("eventLoop execute error,mss:{}", e.getMessage());
                 e.printStackTrace();
             } catch (Exception e) {
+                logger.error("eventLoop execute error,mss:{}", e.getMessage());
                 e.printStackTrace();
             }
         }

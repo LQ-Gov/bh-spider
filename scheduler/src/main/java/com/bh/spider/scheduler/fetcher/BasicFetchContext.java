@@ -7,15 +7,16 @@ import com.bh.spider.fetch.impl.FetchRequest;
 import org.apache.http.client.methods.HttpRequestBase;
 
 
+import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BasicFetchContext implements FetchContext {
 
-    private HttpRequestBase base;
     private Request original;
 
 
@@ -23,10 +24,9 @@ public class BasicFetchContext implements FetchContext {
 
     private Map<String, Object> fields = new HashMap<>();
 
-    public BasicFetchContext(BasicScheduler scheduler, HttpRequestBase req, Request original) {
+    public BasicFetchContext(BasicScheduler scheduler,Request original) {
 
         this.sch = scheduler;
-        this.base = req;
         this.original = original;
 
     }
@@ -46,6 +46,16 @@ public class BasicFetchContext implements FetchContext {
     public Response response() {
         return null;
 
+    }
+
+    @Override
+    public Cookie cookie(String name) {
+        return null;
+    }
+
+    @Override
+    public List<Cookie> cookies() {
+        return null;
     }
 
     @Override

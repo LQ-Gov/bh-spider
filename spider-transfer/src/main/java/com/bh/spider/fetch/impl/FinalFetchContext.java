@@ -1,5 +1,6 @@
 package com.bh.spider.fetch.impl;
 
+import com.bh.spider.fetch.Cookie;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.Response;
@@ -7,8 +8,10 @@ import com.bh.spider.doc.Document;
 import com.bh.spider.doc.impl.DocumentImpl;
 
 
+import java.net.HttpCookie;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 
 public class FinalFetchContext implements FetchContext {
@@ -37,6 +40,16 @@ public class FinalFetchContext implements FetchContext {
     @Override
     public Response response() {
         return this.response;
+    }
+
+    @Override
+    public Cookie cookie(String name) {
+        return response.cookie(name);
+    }
+
+    @Override
+    public List<Cookie> cookies() {
+        return response.cookies();
     }
 
     @Override

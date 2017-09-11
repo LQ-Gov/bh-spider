@@ -17,7 +17,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class SQLiteModuleService implements Service<Component> {
-    private String tableName = "charles_spider_modules";
+    private String tableName = "bh_spider_modules";
 
     private SQLiteQueryInterpreter interpreter = new SQLiteQueryInterpreter();
 

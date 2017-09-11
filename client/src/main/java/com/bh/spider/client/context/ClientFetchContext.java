@@ -1,6 +1,7 @@
 package com.bh.spider.client.context;
 
 import com.bh.spider.doc.Document;
+import com.bh.spider.fetch.Cookie;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.Response;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 
 
@@ -36,6 +38,16 @@ public class ClientFetchContext implements FetchContext {
 
     @Override
     public Response response() {
+        return null;
+    }
+
+    @Override
+    public Cookie cookie(String name) {
+        return null;
+    }
+
+    @Override
+    public List<Cookie> cookies() {
         return null;
     }
 

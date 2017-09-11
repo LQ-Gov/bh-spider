@@ -10,6 +10,7 @@ public enum ModuleType {
     CONFIG,
     COMMON,
     EXTRACTOR,
+    JS,
     SYSTEM;
 
 

@@ -69,7 +69,7 @@ public class ComponentOperation {
     public void submit(String name, Class<?> cls, ModuleType type, String desc) throws IOException {
 
         Preconditions.checkArgument(cls != null, "you must special a valid class");
-        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid module type");
+        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid component type");
 
 
         URL url = cls.getResource("");
@@ -153,7 +153,7 @@ public class ComponentOperation {
 
         assert path != null;
 
-        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid module type");
+        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid component type");
 
         Preconditions.checkState(Files.exists(path), "file not exists");
 

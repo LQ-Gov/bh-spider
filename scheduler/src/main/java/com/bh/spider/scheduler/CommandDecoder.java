@@ -30,8 +30,6 @@ public class CommandDecoder extends ByteToMessageDecoder {
 
             long id = byteBuf.readLong();
 
-            byte flag = byteBuf.readByte();
-
             int len = byteBuf.readInt();
 
             List<Object> params = new LinkedList<>();
@@ -44,7 +42,7 @@ public class CommandDecoder extends ByteToMessageDecoder {
                     params.add(new JacksonToken(mapper, node.traverse()));
                 }
             }
-            Context context = new ClientContext(id, flag, ctx);
+            Context context = new ClientContext(id, ctx);
 
             list.add(new Command(key, context, params.toArray()));
         }

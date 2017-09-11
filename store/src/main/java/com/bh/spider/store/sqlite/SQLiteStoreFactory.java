@@ -43,7 +43,7 @@ public class SQLiteStoreFactory {
 
 
         Connection connection = DriverManager.getConnection(this.url, config);
-//        Connection moduleConnection = DriverManager.getConnection("jdbc:sqlite:"+this.dataPath+"module.db", config);
+//        Connection moduleConnection = DriverManager.getConnection("jdbc:sqlite:"+this.dataPath+"component.db", config);
 
         SQLiteStore store = new SQLiteStore(connection, null);
 

@@ -1,26 +1,25 @@
 package com.bh.spider.scheduler.fetcher;
 
+import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.fetch.Request;
+import com.bh.spider.fetch.impl.FetchRequest;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.IEvent;
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.fetch.Request;
-import org.apache.http.client.methods.*;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import com.bh.spider.transfer.entity.Rule;
+import org.apache.http.client.methods.HttpRequestBase;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Map;
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Created by lq on 17-3-17.
  */
 public class Fetcher implements IEvent {
     private BasicScheduler scheduler = null;
-    private CloseableHttpAsyncClient client = HttpAsyncClientBuilder.create().build();
 
 
     private volatile ExecutorService workers = null;
@@ -31,8 +30,6 @@ public class Fetcher implements IEvent {
         workerCount = workerCount <= 0 ? Runtime.getRuntime().availableProcessors() : workerCount;
 
         this.workers = Executors.newFixedThreadPool(workerCount);
-
-        this.client.start();
     }
 
     public Fetcher(BasicScheduler scheduler) {
@@ -48,70 +45,47 @@ public class Fetcher implements IEvent {
         return false;
     }
 
-    public void fetch(Context ctx, Request req) throws URISyntaxException {
+    public void fetch(Context ctx, FetchRequest req) throws FetchExecuteException {
+
+        Rule rule = req.getRule();
 
 
-        HttpRequestBase base = build_request_from_original(req);
+        FetchClientBuilder builder =
+                (rule == null || rule.driver() == null || !rule.driver().isAllow()) ?
+                        new HttpFetchClientBuilder() : new SeleniumFetchClientBuilder();
 
-        FetchContext context = new BasicFetchContext(this.scheduler, base, req);
 
-        //exec_request_prepare_modules(req, base, context);
+        FetchClient client = builder.build();
 
-        client.execute(base, new FetchCallback(ctx, this.scheduler, this, context));
+        FetchContext context = new BasicFetchContext(this.scheduler, req);
+
+        initHeaders(req);
+        //这里还需执行component yeah!!!
+
+        client.execute(req, new FetchCallback(ctx, this.scheduler, this, context));
 
     }
 
 
-    protected HttpRequestBase build_request_from_original(Request original) throws URISyntaxException {
-        HttpRequestBase base;
+    protected void initHeaders(FetchRequest req) {
+        Set<String> keys = req.headers().keySet()
+                .stream().map(String::toLowerCase)
+                .collect(Collectors.toSet());
+        setHeader(keys, req, "User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36");
+        setHeader(keys, req, "Accept-Encoding", "gzip,deflate");
+        setHeader(keys, req, "Accept-Language", "en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4");
+        setHeader(keys, req, "Cache-Control", "no-cache");
+        setHeader(keys, req, "Connection", "keep-alive");
+        setHeader(keys, req, "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+        setHeader(keys, req, "Pragma", "no-cache");
+        setHeader(keys, req, "Upgrade-Insecure-Requests", "1");
+        setHeader(keys, req, "Host", req.url().getHost());
 
-        URI uri = original.url().toURI();
-
-        switch (original.method()) {
-            case GET:
-                base = new HttpGet(uri);
-                break;
-            case POST:
-                base = new HttpPost(uri);
-                break;
-            case PUT:
-                base = new HttpPut(uri);
-                break;
-            case HEAD:
-                base = new HttpHead(uri);
-                break;
-            case PATCH:
-                base = new HttpPatch(uri);
-                break;
-
-            case TRACE:
-                base = new HttpTrace(uri);
-                break;
-
-            case DELETE:
-                base = new HttpDelete(uri);
-                break;
-            case OPTIONS:
-                base = new HttpOptions(uri);
-                break;
-
-            default:
-                throw new RuntimeException("not support this type");
-        }
-
-        init_request_header(base, original.headers());
-        return base;
     }
 
-    //
-    protected void init_request_header(HttpRequestBase request, Map<String, String> headers) {
-
-        //Pattern.compile("(?<=//|)((\\w)+\\.)+\\w+")
-
-        if (headers != null && !headers.isEmpty()) {
-            headers.forEach(request::setHeader);
-        }
-
+    protected void setHeader(Collection<String> lowerKey, FetchRequest req, String key, String value) {
+        if (!lowerKey.contains(key.toLowerCase()))
+            req.headers().put(key, value);
     }
 
     protected void exec_request_prepare_modules(Request req, HttpRequestBase request, BasicScheduler context) {

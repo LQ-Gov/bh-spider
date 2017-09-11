@@ -10,10 +10,14 @@ import com.bh.spider.scheduler.persist.Service;
 import com.bh.spider.transfer.entity.Rule;
 
 import java.util.List;
+import java.util.UUID;
 
 public class ErrorRuleDecorator extends RuleDecorator {
     private final static long POLL_MAX_SIZE = 3000;
-    private final static Rule BASIC_RULE = new Rule("**", "exception", "0 * */6 * * ?");
+    private final static Rule BASIC_RULE = new Rule(UUID.randomUUID().toString(),"**", "exception", "0 * */6 * * ?");
+    static {
+        BASIC_RULE.setDescription("异常url处理规则(特殊)");
+    }
 
     private transient Service<FetchRequest> service;
 

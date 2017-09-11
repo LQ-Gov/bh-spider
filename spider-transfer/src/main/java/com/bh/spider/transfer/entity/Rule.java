@@ -28,6 +28,8 @@ public class Rule {
 
     private boolean valid;
 
+    private DriverSetting driver = new DriverSetting();
+
     public Rule() {
     }
 
@@ -136,5 +138,9 @@ public class Rule {
 
     public void setTaskCount(int taskCount) {
         this.taskCount = taskCount;
+    }
+
+    public DriverSetting driver() {
+        return this.driver;
     }
 }

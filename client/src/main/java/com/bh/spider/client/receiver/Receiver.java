@@ -1,11 +1,10 @@
 package com.bh.spider.client.receiver;
 
 
-import com.bh.spider.client.converter.DefaultConverter;
 import com.bh.spider.client.converter.Converter;
+import com.bh.spider.client.converter.DefaultConverter;
 
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
@@ -31,23 +30,29 @@ public class Receiver extends Thread {
 
                 long id = in.readLong();
                 byte flag = in.readByte();
-                int len = in.readInt();
 
-                byte[] data = new byte[len];
-
+                byte[] data = new byte[in.readInt()];
                 in.readFully(data);
+
 
                 Callback callback = callbacks.get(id);
 
-                boolean result = callback.accept(data, flag == 0);
+                boolean complete = (flag & 0x01) == 0;
 
-                if (!result) callbacks.remove(id);
+                boolean exception = (flag & 0x02) > 0;
+
+                boolean remove = exception;
+                if (exception)
+                    callback.exception(new Exception(new String(data)));
+
+                else remove = !callback.accept(data, complete);
+
+                if (remove) callbacks.remove(id);
             }
-        }
-        catch (EOFException ignored){
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
+            callbacks.forEach((k, v) -> v.exception(e));
+            callbacks.clear();
         }
 
     }

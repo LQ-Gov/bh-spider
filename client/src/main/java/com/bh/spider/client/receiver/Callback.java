@@ -17,10 +17,11 @@ public class Callback<T> {
 
     private Converter<byte[], T> converter;
 
-    private Exception exception;
+    private Throwable cause;
 
     private T complete() throws Exception {
-        if (exception != null) throw exception;
+        if (cause != null)
+            throw cause instanceof Exception ? (Exception) cause : new Exception(cause);
 
         return data;
     }
@@ -35,20 +36,24 @@ public class Callback<T> {
     public synchronized boolean accept(byte[] data, boolean complete) {
         try {
             this.data = this.converter.convert(data);
+            if (this.consumer != null)
+                this.consumer.accept(this.data);
             if (complete || this.consumer == null) this.future.run();
 
-            else this.consumer.accept(this.data);
 
             this.data = null;
             return !complete;
 
         } catch (IOException e) {
-            this.exception = e;
+            this.cause = e;
             this.future.run();
             return false;
         }
+    }
 
-
+    public synchronized void exception(Throwable cause) {
+        this.cause = cause;
+        this.future.run();
     }
 
     public Future<T> future() {
