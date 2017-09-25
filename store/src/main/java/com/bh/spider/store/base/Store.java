@@ -1,10 +1,9 @@
 package com.bh.spider.store.base;
 
-import com.bh.spider.query.Query;
-import com.bh.spider.query.condition.Condition;
-import com.bh.spider.store.sqlite.SQLiteStoreFactory;
+import com.bh.spider.store.service.FetchService;
+import com.bh.spider.store.service.Service;
+import com.bh.spider.transfer.entity.Component;
 
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -12,14 +11,9 @@ import java.util.Properties;
  */
 public interface Store {
 
-    static Store get(String type, Properties properties) throws Exception {
-        switch (type) {
-            case "SQLite":
-                return new SQLiteStoreFactory(properties).build();
-
-            default:
-                throw new Exception("not support the " + type + " database");
-        }
+    static StoreBuilder builder(String cls) throws Exception {
+        StoreBuilder builder = (StoreBuilder) Class.forName(cls).newInstance();
+        return builder;
 
     }
 
@@ -32,33 +26,12 @@ public interface Store {
     /**
      * 关闭连接
      */
-    void close();
+    void close() throws Exception;
 
-    /**
-     * 注册类与表的关联
-     * @param cls
-     * @param table
-     */
-    void register(Class<?> cls, String table) throws Exception;
+    Properties config();
 
+    FetchService request();
 
-    Entity insert(Object o);
-
-    long count(Class<?> cls, Query query);
-
-    List<?> select(Class<?> cls, Query query);
-
-
-    Object single(Class<?> cls, Query query);
-
-    int delete(Class<?> cls, Query query);
-
-
-    int update(Object o, Condition condition);
-
-
-    <T> Service<T> service(Class<T> cls);
-
-
+    Service<Component> component();
 
 }

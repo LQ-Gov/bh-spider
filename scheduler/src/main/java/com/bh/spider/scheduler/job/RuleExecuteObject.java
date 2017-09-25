@@ -11,7 +11,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by lq on 17-6-13.
@@ -23,24 +22,16 @@ public class RuleExecuteObject implements Job {
         BasicScheduler scheduler = (BasicScheduler) context.getMergedJobDataMap().get("basic-scheduler");
         RuleDecorator rule = (RuleDecorator) context.getMergedJobDataMap().get("rule-decorator");
 
+        int taskCount = rule.getTaskCount() == 0 ? 10 : rule.getTaskCount();
 
-        List<? extends Request> list = rule.poll(1);
+        List<? extends Request> list = rule.poll(taskCount);
         if (list != null) {
-            list.forEach(x -> bind(x, rule.extractors()));
+            list.forEach(x -> {
+                Command cmd = new Command(CommandCode.FETCH, new LocalContext(), new Object[]{x, rule});
+                scheduler.process(cmd);
+            });
 
 
-            Command cmd = new Command(CommandCode.FETCH, new LocalContext(), new Object[]{list.get(0)});
-
-            scheduler.process(cmd);
         }
-
-
-    }
-
-    private void bind(Request req, Map<String, String[]> extractors) {
-        if (extractors == null || extractors.isEmpty()) return;
-        extractors.forEach((k, v) -> {
-            if (req.extractor(k) == null) req.extractor(k, v);
-        });
     }
 }

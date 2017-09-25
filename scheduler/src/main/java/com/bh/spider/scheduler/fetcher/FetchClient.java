@@ -1,9 +1,8 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.impl.FetchRequest;
-import com.bh.spider.fetch.impl.FetchResponse;
-import org.apache.http.concurrent.FutureCallback;
+import com.bh.spider.fetch.Request;
+import com.bh.spider.transfer.entity.Rule;
 
 public interface FetchClient {
-    void execute(FetchRequest request, FutureCallback<FetchResponse> callback) throws FetchExecuteException;
+    void execute(Request request, Rule rule,FetchCallback callback) throws FetchExecuteException;
 }

@@ -82,6 +82,27 @@ public class Condition {
         return this;
     }
 
+    public Condition gt(Object value) {
+        return this;
+    }
+
+
+    public Condition gte(Object value) {
+        return this;
+    }
+
+    public Condition lt(Object value) {
+        return this;
+    }
+
+    public Condition lte(Object value) {
+        return this;
+    }
+
+    public boolean isValid() {
+        return value != NOT_SET;
+    }
+
     public Condition next() {
         return next;
     }

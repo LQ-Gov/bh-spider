@@ -1,13 +1,11 @@
 package com.bh.spider.scheduler.fetcher;
 
 import com.bh.spider.fetch.*;
+import com.bh.spider.fetch.impl.RequestBuilder;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.doc.Document;
-import com.bh.spider.fetch.impl.FetchRequest;
-import org.apache.http.client.methods.HttpRequestBase;
 
 
-import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -30,7 +28,6 @@ public class BasicFetchContext implements FetchContext {
         this.original = original;
 
     }
-
 
     @Override
     public URL url() {
@@ -87,12 +84,17 @@ public class BasicFetchContext implements FetchContext {
     }
 
     @Override
+    public Object get(String key, Object defaultValue) {
+        return fields.getOrDefault(key,defaultValue);
+    }
+
+    @Override
     public void scheduler(FetchContext ctx, Request req, boolean local) {
         if (ctx != null) {
             //格式化 req
         }
 
-        sch.submit(null, (FetchRequest) req);
+        sch.submit(null,req);
     }
 
     @Override
@@ -107,7 +109,7 @@ public class BasicFetchContext implements FetchContext {
 
     @Override
     public void scheduler(FetchContext ctx, String url, boolean local) throws MalformedURLException {
-        scheduler(ctx,new FetchRequest(url),local);
+        scheduler(ctx, RequestBuilder.create(url).build(),local);
     }
 
     @Override
@@ -121,7 +123,12 @@ public class BasicFetchContext implements FetchContext {
     }
 
     @Override
-    public void cancel() throws ExtractorChainException {
-        throw new ExtractorChainException(Behaviour.CANCEL);
+    public void skip() throws ExtractorChainException {
+
+    }
+
+    @Override
+    public void termination() throws ExtractorChainException {
+
     }
 }

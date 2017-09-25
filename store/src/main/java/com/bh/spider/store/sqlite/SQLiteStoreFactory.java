@@ -49,6 +49,4 @@ public class SQLiteStoreFactory {
 
         return store;
     }
-
-
 }

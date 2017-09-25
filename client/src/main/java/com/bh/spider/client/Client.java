@@ -1,20 +1,18 @@
 package com.bh.spider.client;
 
 import com.bh.spider.client.context.ClientFetchContext;
-import com.bh.spider.client.converter.StringConverter;
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchRequest;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.JsonFactory;
 import com.bh.spider.client.converter.Converter;
+import com.bh.spider.client.converter.StringConverter;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
-import com.bh.spider.fetch.Extractor;
+import com.bh.spider.fetch.*;
+import com.bh.spider.fetch.impl.RequestBuilder;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
+import com.bh.spider.transfer.CommandCode;
+import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.entity.Rule;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.reflect.TypeUtils;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -114,7 +112,7 @@ public class Client {
     }
 
 
-    public ComponentOperation module() {
+    public ComponentOperation component() {
         return moduleOperation;
     }
 
@@ -128,7 +126,7 @@ public class Client {
 
 
     @SafeVarargs
-    public final Future<FetchResponse> crawler(Request req, Class<? extends Extractor>... extractors) throws MalformedURLException {
+    public final Future<FetchResponse> crawler(Request req, Rule rule, Class<? extends Extractor>... extractors) throws MalformedURLException {
 
         FetchContext base = new ClientFetchContext(req);
         return stream(CommandCode.FETCH, response -> {
@@ -139,8 +137,10 @@ public class Client {
 
                     Extractor extractor = (Extractor) it.newInstance();
                     try {
-                        if (!extractor.run(ctx))
-                            break;
+                        extractor.run(ctx);
+                    } catch (ExtractorChainException e) {
+                        if (e.result() == Behaviour.TERMINATION) break;
+
                     } catch (Exception e) {
                         //此处做报告
                         e.printStackTrace();
@@ -152,12 +152,23 @@ public class Client {
             }
 
 
-        }, new TypeConverter<>(FetchResponse.class), req);
+        }, new TypeConverter<>(FetchResponse.class), req, rule);
     }
 
     @SafeVarargs
+    public final Future<FetchResponse> crawler(Request req, Class<? extends Extractor>... extractors) throws MalformedURLException {
+        return crawler(req, null, extractors);
+    }
+
+
+    @SafeVarargs
     public final Future<FetchResponse> crawler(String url, Class<? extends Extractor>... extractors) throws MalformedURLException {
-        return crawler(new FetchRequest(url), extractors);
+        return crawler(url, null, extractors);
+    }
+
+    @SafeVarargs
+    public final Future<FetchResponse> crawler(String url, Rule rule, Class<? extends Extractor>... extractors) throws MalformedURLException {
+        return crawler(RequestBuilder.create(url).build(), rule, extractors);
     }
 
     public void watch(String point, Consumer<String> consumer) throws IOException {

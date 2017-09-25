@@ -9,7 +9,6 @@ import java.util.Map;
 
 public interface FetchContext {
 
-
     URL url();
 
     Request request();
@@ -20,6 +19,8 @@ public interface FetchContext {
 
     List<Cookie> cookies();
 
+
+
     Document document();
 
     Document document(Charset charset);
@@ -29,6 +30,7 @@ public interface FetchContext {
     void set(Map<String, Object> collection);
 
     Object get(String key);
+    Object get(String key,Object defaultValue);
 
 
     void scheduler(FetchContext ctx, Request req, boolean local) throws Exception;
@@ -44,7 +46,10 @@ public interface FetchContext {
 
     void scheduler(String url) throws Exception;
 
-    void cancel() throws ExtractorChainException;
+    void skip() throws ExtractorChainException;
+
+    void termination() throws ExtractorChainException;
+
 
 
 

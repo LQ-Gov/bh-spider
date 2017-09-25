@@ -2,17 +2,13 @@ package com.bh.spider.scheduler.rule;
 
 import com.bh.spider.transfer.entity.Rule;
 
-public class MultiInQueueException extends Exception {
+public class MultiInQueueException extends RuleBindException {
 
     private Rule rule;
 
     public MultiInQueueException(Rule rule) {
+        super("the request already in queue");
         this.rule = rule;
-    }
-
-    @Override
-    public String getMessage() {
-        return "the reuquest already in queue";
     }
 
     public Rule getRule() {

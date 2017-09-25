@@ -1,10 +1,10 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.scheduler.persist.Service;
+
 import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
+import com.bh.spider.store.service.Service;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.ModuleType;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,7 +14,7 @@ public class GlobalComponentProxy extends ComponentProxy {
     private ComponentCoreFactory factory;
 
     public GlobalComponentProxy(ComponentCoreFactory factory, Service<Component> service) {
-        super(ModuleType.UNKNOWN, service, null);
+        super(Component.Type.UNKNOWN, service, null);
         this.factory = factory;
     }
 

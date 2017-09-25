@@ -24,7 +24,7 @@ public class ComponentOperationTest {
     @Test
     public void select() throws Exception {
 
-         List<Component> list = client.module().select();
+         List<Component> list = client.component().select();
 
          System.out.println(list.get(0).getName());
     }

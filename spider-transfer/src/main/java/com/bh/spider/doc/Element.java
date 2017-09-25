@@ -12,10 +12,21 @@ public interface Element {
 
     String text();
 
-    List<Element> $(String selector);
+    String data();
 
-    List<Element> xpath(String xpath);
+    Elements $(String selector);
 
+    Elements xpath(String xpath);
+
+    Element getElementById(String id);
+
+    String attr(String attributeName);
+
+    Elements children();
+
+    boolean hasAttr(String attributeName);
+
+    String nodeName();
 
 
 }

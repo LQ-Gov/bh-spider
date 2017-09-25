@@ -25,4 +25,5 @@ public abstract class JoinCondition extends Condition {
         return condition.value();
     }
 
+
 }

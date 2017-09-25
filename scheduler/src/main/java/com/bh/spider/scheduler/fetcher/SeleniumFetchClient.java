@@ -1,14 +1,14 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.impl.FetchRequest;
+import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.transfer.entity.DriverSetting;
 import com.bh.spider.transfer.entity.Rule;
 import com.bh.spider.transfer.entity.Script;
-import org.apache.http.concurrent.FutureCallback;
 import org.openqa.selenium.*;
-import org.openqa.selenium.phantomjs.PhantomJSDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -31,6 +31,8 @@ public class SeleniumFetchClient implements FetchClient {
     private final static Logger logger = LoggerFactory.getLogger(SeleniumFetchClient.class);
     private final static CookieStore cookieStore = CookieStoreFactory.get();
 
+    private static volatile WebDriver driver = null;
+
     private static volatile ExecutorService workers = null;
 
     static {
@@ -41,16 +43,85 @@ public class SeleniumFetchClient implements FetchClient {
     public SeleniumFetchClient() {
     }
 
+//    private static WebDriver driverInstance() {
+//
+//        if (driver == null) {
+//            synchronized (SeleniumFetchClient.class) {
+//                ChromeOptions options = new ChromeOptions();
+////                options.addArguments("--headless");
+//                driver = new ChromeDriver(options);
+//
+//                driver = new PhantomJSDriver()
+//
+//
+//            }
+//        }
+//        return driver;
+//
+//    }
+
+
+    public static WebDriver createDriver() {
+
+        //chrome
+//        if (driver == null) {
+//            synchronized (SeleniumFetchClient.class) {
+//                ChromeOptions options = new ChromeOptions();
+////                options.addArguments("--headless");
+//                driver = new ChromeDriver(options);
+//                driver.manage().deleteAllCookies();
+//            }
+//        }
+//        return driver;
+
+
+        //firefox
+        if (driver == null) {
+            synchronized (SeleniumFetchClient.class) {
+                if (driver == null) {
+                    //chrome
+                    //ChromeOptions options = new ChromeOptions();
+                    //driver = new ChromeDriver(options);
+
+                    //firefox
+                    FirefoxOptions options = new FirefoxOptions();
+
+                    options.addPreference("network.proxy.type", 1);
+                    options.addPreference("network.proxy.http", "202.77.131.218");
+                    options.addPreference("network.proxy.http_port", "9156");
+                    options.addPreference("network.proxy.no_proxies_on", "localhost");
+
+                    options.addCapabilities()
+
+
+
+
+                    driver = new FirefoxDriver(options);
+                }
+            }
+        }
+        return driver;
+
+
+        //phantomJS
+//        DesiredCapabilities dc = new DesiredCapabilities();
+//        dc.setJavascriptEnabled(true);
+//
+//        dc.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, Config.INIT_PHANTOMJS_PATH);
+//        dc.setCapability(PhantomJSDriverService.PHANTOMJS_PAGE_CUSTOMHEADERS_PREFIX + "User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36");
+//        return new PhantomJSDriver(dc);
+    }
+
 
     @Override
-    public void execute(FetchRequest request, FutureCallback<FetchResponse> callback) {
+    public void execute(Request request, Rule rule, FetchCallback callback) {
         workers.execute(() -> {
-            Rule rule = request.getRule();
             DriverSetting setting = rule != null ? rule.driver() : null;
 
-            PhantomJSDriver driver = new PhantomJSDriver(initDesiredCapabilities(request));
             try {
                 String url = request.url().toString();
+
+                WebDriver driver = createDriver();
 
                 List<HttpCookie> cookies = cookieStore.get(request.url().toURI());
 
@@ -58,7 +129,8 @@ public class SeleniumFetchClient implements FetchClient {
 
 
                 //driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
-                driver.manage().timeouts().pageLoadTimeout(5, TimeUnit.SECONDS);
+                driver.manage().window().maximize();
+                driver.manage().timeouts().pageLoadTimeout(setting == null || setting.getTimeout() <= 0 ? 15 : setting.getTimeout(), TimeUnit.SECONDS);
 
                 driver.get(url);
 
@@ -67,9 +139,10 @@ public class SeleniumFetchClient implements FetchClient {
                     List<Script> scripts = setting.scripts();
 
                     scripts.forEach(x -> {
+                        System.out.println(x.operator());
                         switch (x.operator()) {
                             case CUSTOM:
-                                driver.executeScript((String) x.args()[0]);
+                                ((JavascriptExecutor) driver).executeScript((String) x.args()[0]);
                                 break;
                             case WAIT: {
                                 long duration = ((Number) x.args()[0]).longValue();
@@ -98,20 +171,23 @@ public class SeleniumFetchClient implements FetchClient {
                     });
                 }
 
+                //((PhantomJSDriver) driver).getScreenshotAs(OutputType.FILE);
+
                 cookies = driver.manage().getCookies().stream().map(this::toHttpCookie).collect(Collectors.toList());
                 cookies.forEach(x -> cookieStore.add(null, x));
 
                 FetchResponse response = new FetchResponse(200, driver.getPageSource().getBytes()
                         , null, cookies.stream().map(FetchCookieAdapter::new).collect(Collectors.toList()));
-                callback.completed(response);
-            } catch (TimeoutException e) {
+                callback.completed(response, rule);
+            } catch (WebDriverException e) {
                 callback.failed(e);
+
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error(e.getMessage());
 
             } finally {
-                driver.close();
+
 
             }
 
@@ -132,9 +208,10 @@ public class SeleniumFetchClient implements FetchClient {
     }
 
 
-    private DesiredCapabilities initDesiredCapabilities(FetchRequest request) {
+    private DesiredCapabilities initDesiredCapabilities(Request request) {
         DesiredCapabilities dc = new DesiredCapabilities();
         dc.setJavascriptEnabled(true);
+
         dc.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY,
                 Config.INIT_PHANTOMJS_PATH);
 

@@ -6,6 +6,7 @@ import java.util.List;
 public class DriverSetting {
 
     private boolean allow;
+    private long timeout;
     private List<Script> scripts = new LinkedList<>();
 
 
@@ -15,6 +16,14 @@ public class DriverSetting {
 
     public void setAllow(boolean allow) {
         this.allow = allow;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(long timeout) {
+        this.timeout = timeout;
     }
 
     public List<Script> scripts() {

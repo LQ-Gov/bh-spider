@@ -1,5 +1,5 @@
 package com.bh.spider.fetch;
 
-public enum  Behaviour {
-    CANCEL,CONTINUE
+public enum Behaviour {
+    SKIP, TERMINATION
 }

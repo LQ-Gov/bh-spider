@@ -1,17 +1,15 @@
 package com.bh.spider.client.context;
 
 import com.bh.spider.doc.Document;
-import com.bh.spider.fetch.Cookie;
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.Response;
-import com.bh.spider.fetch.impl.FetchRequest;
+import com.bh.spider.fetch.*;
+import com.bh.spider.fetch.impl.RequestBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +17,9 @@ import java.util.Map;
 public class ClientFetchContext implements FetchContext {
     private Request request;
 
-    public ClientFetchContext(Request request){
+    private Map<String, Object> fields = new HashMap<>();
+
+    public ClientFetchContext(Request request) {
         this.request = request;
     }
 
@@ -28,12 +28,12 @@ public class ClientFetchContext implements FetchContext {
 
     @Override
     public URL url() {
-        return null;
+        return request().url();
     }
 
     @Override
     public Request request() {
-        return null;
+        return request;
     }
 
     @Override
@@ -63,22 +63,29 @@ public class ClientFetchContext implements FetchContext {
 
     @Override
     public void set(String key, Object value) {
+        fields.put(key, value);
 
     }
 
     @Override
     public void set(Map<String, Object> collection) {
+        fields.putAll(collection);
 
     }
 
     @Override
     public Object get(String key) {
-        return null;
+        return fields.get(key);
+    }
+
+    @Override
+    public Object get(String key, Object defaultValue) {
+        return fields.getOrDefault(key, defaultValue);
     }
 
     @Override
     public void scheduler(FetchContext ctx, Request req, boolean local) {
-        logger.info("submit url to {}:{},", local ? "local" : "origin", req.url());
+        logger.info("submit new request scheduler local:{},url:{}", local, FetchContextUtils.instance().toURL(req));
     }
 
     @Override
@@ -93,7 +100,7 @@ public class ClientFetchContext implements FetchContext {
 
     @Override
     public void scheduler(FetchContext ctx, String url, boolean local) throws MalformedURLException {
-        scheduler(ctx, new FetchRequest(url), local);
+        scheduler(ctx, RequestBuilder.create(url).build(), local);
     }
 
     @Override
@@ -107,7 +114,13 @@ public class ClientFetchContext implements FetchContext {
     }
 
     @Override
-    public void cancel() {
+    public void skip() throws ExtractorChainException {
 
     }
+
+    @Override
+    public void termination() throws ExtractorChainException {
+
+    }
+
 }

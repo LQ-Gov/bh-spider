@@ -1,45 +1,22 @@
 package com.bh.spider.scheduler.watch;
 
-import com.bh.spider.scheduler.context.Context;
 import io.netty.util.internal.ConcurrentSet;
 
-import java.util.Iterator;
 import java.util.Set;
 
 public class WatchContainer extends WatchPoint {
     private WatchPoint point;
 
-    private final Set<Context> contexts = new ConcurrentSet<>();
+    private final Set<Watcher> watchers = new ConcurrentSet<>();
 
     public WatchContainer(WatchPoint point) {
         super();
         this.point = point;
     }
 
-
-    public void bind(Context ctx) {
-        this.contexts.add(ctx);
-    }
-
-
-    public void unbind(Context ctx) {
-
-    }
-
-
-    public void flush() {
-        if (!this.isValid()) return;
-
-
-        Iterator<Context> iterator = contexts.iterator();
-        while (iterator.hasNext()) {
-            Context ctx = iterator.next();
-            if (!ctx.isWriteEnable())
-                iterator.remove();
-
-            else
-                ctx.write(point);
-        }
+    @Override
+    public String key() {
+        return this.point.key();
     }
 
     @Override
@@ -80,6 +57,17 @@ public class WatchContainer extends WatchPoint {
     @Override
     public Object reversal() {
         return this.point.reversal();
+    }
+
+
+    public void bind(Watcher watcher) {
+        assert watcher != null;
+        if (watcher.match(this)) {
+
+            watcher.register(Watcher.DESTROY_EVENT, watchers::remove);
+            watchers.add(watcher);
+        }
+
     }
 
 

@@ -4,6 +4,7 @@ import com.bh.spider.transfer.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +79,11 @@ public class ClientContext implements Context {
                 exception(e);
             }
         }
+    }
+
+
+    public ChannelId channelId(){
+        return source.channel().id();
     }
 
 }

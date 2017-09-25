@@ -2,9 +2,8 @@ package com.bh.spider.scheduler.component;
 
 import com.bh.spider.fetch.Extractor;
 import com.bh.spider.query.Query;
-import com.bh.spider.scheduler.persist.Service;
+import com.bh.spider.store.service.Service;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.ModuleType;
 import groovy.lang.GroovyClassLoader;
 
 import java.io.File;
@@ -20,7 +19,7 @@ public class ExtractorComponentProxy extends ComponentProxy {
     private final static Map<String, Extractor> moduleObjects = new ConcurrentHashMap<>();
 
     public ExtractorComponentProxy(CommonComponentProxy commonProxy, Service<Component> service, Path path) {
-        super(ModuleType.EXTRACTOR, service, path);
+        super(Component.Type.EXTRACTOR, service, path);
         this.commonProxy = commonProxy;
         this.service = service;
     }
@@ -38,7 +37,7 @@ public class ExtractorComponentProxy extends ComponentProxy {
     }
 
     @Override
-    public Component save(byte[] data, String name, ModuleType type, String description, boolean override) throws Exception {
+    public Component save(byte[] data, String name, Component.Type type, String description, boolean override) throws Exception {
         Component component = super.save(data, name, type, description, override);
 
         Extractor extractor = moduleObjects.remove(name);

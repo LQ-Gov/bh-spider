@@ -1,15 +1,13 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.scheduler.config.Config;
-import com.bh.spider.scheduler.persist.Service;
 import com.bh.spider.fetch.Extractor;
+import com.bh.spider.scheduler.config.Config;
+import com.bh.spider.store.service.Service;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.ModuleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 
 /**
@@ -22,11 +20,10 @@ public class ComponentCoreFactory {
 
     private GlobalComponentProxy globalProxy;
     private CommonComponentProxy commonProxy;
-    private ComponentProxy jsProxy;
     private ExtractorComponentProxy extractorProxy;
 
 
-    public ComponentCoreFactory(Service<Component> service) throws IOException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public ComponentCoreFactory(Service<Component> service) throws IOException {
 
         this.service = service;
 
@@ -34,17 +31,13 @@ public class ComponentCoreFactory {
 
         extractorProxy = new ExtractorComponentProxy(commonProxy, service, Paths.get(Config.INIT_DATA_PATH, "extractor"));
 
-        jsProxy = new ComponentProxy(ModuleType.JS,service,Paths.get(Config.INIT_DATA_PATH,"js"));
-
         globalProxy = new GlobalComponentProxy(this, service);
-
-
 
 
     }
 
 
-    public ComponentProxy proxy(ModuleType type) {
+    public ComponentProxy proxy(Component.Type type) {
         switch (type) {
             case COMMON:
                 return commonProxy;
@@ -64,9 +57,5 @@ public class ComponentCoreFactory {
     public Extractor extractorComponent(String componentName) throws IOException, ComponentBuildException {
 
         return extractorProxy.component(componentName);
-    }
-
-    public Component javascritComponent(String componentName) throws IOException {
-        return jsProxy.get(componentName);
     }
 }

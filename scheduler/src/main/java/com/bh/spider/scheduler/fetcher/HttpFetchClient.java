@@ -1,28 +1,22 @@
 package com.bh.spider.scheduler.fetcher;
 
+import com.bh.spider.fetch.FetchContextUtils;
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchRequest;
 import com.bh.spider.fetch.impl.FetchResponse;
+import com.bh.spider.transfer.entity.Rule;
 import org.apache.http.*;
-import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.GzipCompressingEntity;
 import org.apache.http.client.entity.GzipDecompressingEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.cookie.BasicClientCookie2;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
-import java.net.CookieManager;
-import java.net.HttpCookie;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -35,10 +29,6 @@ public class HttpFetchClient implements FetchClient {
     private volatile static CloseableHttpAsyncClient client = null;
 
 
-    static {
-
-
-    }
 
     private static CloseableHttpAsyncClient clientInstance() throws KeyManagementException, NoSuchAlgorithmException {
         if (client == null) {
@@ -47,7 +37,12 @@ public class HttpFetchClient implements FetchClient {
                     client = HttpAsyncClientBuilder.create()
                             .setDefaultCookieStore(new HttpClientCookieStoreAdapter(CookieStoreFactory.get()))
                             .setSSLContext(SSLContextBuilder.create().build())
+                            .setDefaultRequestConfig(RequestConfig.custom()
+                                    .setCookieSpec(CookieSpecs.STANDARD)//解决invalid cookie header问题
+                                    .build())
                             .build();
+
+
 
 
                     client.start();
@@ -59,10 +54,9 @@ public class HttpFetchClient implements FetchClient {
     }
 
     @Override
-    public void execute(FetchRequest request, FutureCallback<FetchResponse> callback) throws FetchExecuteException {
+    public void execute(Request request, Rule rule, FetchCallback callback) throws FetchExecuteException {
         try {
             HttpRequestBase base = toHttpRequest(request);
-
 
 
             clientInstance().execute(base, new FutureCallback<HttpResponse>() {
@@ -91,7 +85,7 @@ public class HttpFetchClient implements FetchClient {
 
                         FetchResponse fr = new FetchResponse(code, data, headerMap,
                                 cookies.stream().map(FetchCookieAdapter::new).collect(Collectors.toList()));
-                        callback.completed(fr);
+                        callback.completed(fr,rule);
                     } catch (IOException | URISyntaxException e) {
                         e.printStackTrace();
                     }
@@ -110,7 +104,7 @@ public class HttpFetchClient implements FetchClient {
         } catch (URISyntaxException e) {
             throw new FetchExecuteException(e);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new FetchExecuteException("http client build failed",e);
+            throw new FetchExecuteException("http client build failed", e);
         }
 
 
@@ -123,9 +117,12 @@ public class HttpFetchClient implements FetchClient {
         URI uri = original.url().toURI();
 
         switch (original.method()) {
-            case GET:
+            case GET: {
+                uri = FetchContextUtils.instance().toURL(original).toURI();
                 base = new HttpGet(uri);
-                break;
+
+            }
+            break;
             case POST:
                 base = new HttpPost(uri);
                 break;
@@ -154,6 +151,7 @@ public class HttpFetchClient implements FetchClient {
                 throw new RuntimeException("not support this type");
         }
         original.headers().forEach(base::setHeader);
+
         return base;
     }
 }

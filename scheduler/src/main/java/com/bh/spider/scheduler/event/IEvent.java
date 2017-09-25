@@ -3,6 +3,6 @@ package com.bh.spider.scheduler.event;
 /**
  * Created by lq on 17-3-16.
  */
-public interface IEvent {
+public interface IEvent extends IAssist {
     boolean isClosed();
 }

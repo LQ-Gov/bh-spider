@@ -27,7 +27,7 @@ public class Config {
         public static final String INIT_PHANTOMJS_PATH="init.phantomjs.path";
 
         //数据库存储配置
-        public static final String INIT_STORE_DATABASE = "init.store.database"; //数据库存储类型
+        public static final String INIT_STORE_BUILDER = "init.store.builder"; //数据库存储类型
         public static final String INIT_STORE_URL = "init.store.url";
         public static final String INIT_STORE_USER = "init.store.user";
         public static final String INIT_STORE_PASSWORD = "init.store.password";
@@ -47,7 +47,7 @@ public class Config {
     public static String INIT_DATA_PATH;
     public static String INIT_RULE_PATH;
     public static String INIT_PHANTOMJS_PATH;
-    public static String INIT_STORE_DATABASE;
+    public static String INIT_STORE_BUILDER;
     public static String INIT_STORE_URL;
     public static String INIT_STORE_USER;
     public static String INIT_STORE_PASSWORD;
@@ -57,7 +57,7 @@ public class Config {
 
     public static Properties getStoreProperties() {
         Properties properties = new Properties();
-        properties.put(Field.INIT_STORE_DATABASE, INIT_STORE_DATABASE);
+        properties.put(Field.INIT_STORE_BUILDER, INIT_STORE_BUILDER);
         properties.put(Field.INIT_STORE_URL, INIT_STORE_URL);
         properties.put(Field.INIT_STORE_USER, INIT_STORE_USER);
         properties.put(Field.INIT_STORE_PASSWORD, INIT_STORE_PASSWORD);
@@ -78,7 +78,7 @@ public class Config {
         INIT_DATA_PATH = properties.getProperty(Field.INIT_DATA_PATH, "data/");
         INIT_RULE_PATH = properties.getProperty(Field.INIT_RULE_PATH, "conf/rule");
         INIT_PHANTOMJS_PATH=properties.getProperty(Field.INIT_PHANTOMJS_PATH,"/var/phantomjs-2.1.1-linux-x86_64/bin/phantomjs");
-        INIT_STORE_DATABASE = properties.getProperty(Field.INIT_STORE_DATABASE, "SQLite");
+        INIT_STORE_BUILDER = properties.getProperty(Field.INIT_STORE_BUILDER, "com.bh.spider.store.sqlite.SQLiteStoreBuilder");
         INIT_STORE_URL = properties.getProperty(Field.INIT_STORE_URL, "jdbc:sqlite:" + INIT_DATA_PATH + "spider.store.db");
         INIT_STORE_DRIVER = properties.getProperty(Field.INIT_STORE_DRIVER, "org.sqlite.JDBC");
         INIT_STORE_USER = properties.getProperty(Field.INIT_STORE_USER, "root");

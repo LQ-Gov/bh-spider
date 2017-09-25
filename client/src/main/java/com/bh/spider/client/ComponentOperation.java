@@ -2,7 +2,6 @@ package com.bh.spider.client;
 
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.ModuleType;
 import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
 import com.google.common.base.Preconditions;
@@ -61,15 +60,15 @@ public class ComponentOperation {
 
     }
 
-    public void submit(String name, Class<?> cls, ModuleType type) throws IOException {
+    public void submit(String name, Class<?> cls, Component.Type type) throws IOException {
         submit(name, cls, type, null);
     }
 
 
-    public void submit(String name, Class<?> cls, ModuleType type, String desc) throws IOException {
+    public void submit(String name, Class<?> cls, Component.Type type, String desc) throws IOException {
 
         Preconditions.checkArgument(cls != null, "you must special a valid class");
-        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid component type");
+        Preconditions.checkArgument(type != null && type != Component.Type.UNKNOWN, "you must special a valid component type");
 
 
         URL url = cls.getResource("");
@@ -95,12 +94,12 @@ public class ComponentOperation {
         submit(Paths.get(path));
     }
 
-    public void submit(String path,ModuleType type) throws IOException {
-        submit(path,type,null);
+    public void submit(String path, Component.Type type) throws IOException {
+        submit(path, type, null);
     }
 
-    public void submit(String path,ModuleType type,String desc) throws IOException {
-        submit(Paths.get(path),type,desc);
+    public void submit(String path, Component.Type type, String desc) throws IOException {
+        submit(Paths.get(path), type, desc);
     }
 
     public void submit(Path path) throws IOException {
@@ -109,14 +108,14 @@ public class ComponentOperation {
         submit(name, path);
     }
 
-    public void submit(Path path,ModuleType type) throws IOException {
-        submit(path,type,null);
+    public void submit(Path path, Component.Type type) throws IOException {
+        submit(path, type, null);
     }
 
-    public void submit(Path path,ModuleType type,String desc) throws IOException {
+    public void submit(Path path, Component.Type type, String desc) throws IOException {
         String name = path.getFileName().toString();
         name = FilenameUtils.getBaseName(name);
-        submit(name, path,type,desc);
+        submit(name, path, type, desc);
     }
 
 
@@ -138,22 +137,22 @@ public class ComponentOperation {
     public void submit(String name, Path path, String desc) throws IOException {
         String extension = FilenameUtils.getExtension(path.getFileName().toString());
 
-        ModuleType type = ModuleType.EXTRACTOR;
+        Component.Type type = Component.Type.EXTRACTOR;
 
         submit(name, path, type, desc);
 
 
     }
 
-    public void submit(String name, String path, ModuleType type, String desc) throws IOException {
+    public void submit(String name, String path, Component.Type type, String desc) throws IOException {
         submit(name, Paths.get(path), type, desc);
     }
 
-    public void submit(String name, Path path, ModuleType type, String desc) throws IOException {
+    public void submit(String name, Path path, Component.Type type, String desc) throws IOException {
 
         assert path != null;
 
-        Preconditions.checkArgument(type != null && type != ModuleType.UNKNOWN, "you must special a valid component type");
+        Preconditions.checkArgument(type != null && type != Component.Type.UNKNOWN, "you must special a valid component type");
 
         Preconditions.checkState(Files.exists(path), "file not exists");
 
@@ -188,8 +187,8 @@ public class ComponentOperation {
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
-    public void delete(Query query){
-        client.write(CommandCode.DELETE_MODULE,null,query);
+    public void delete(Query query) {
+        client.write(CommandCode.DELETE_MODULE, null, query);
     }
 
 

@@ -1,5 +1,6 @@
 package com.bh.spider.transfer.entity;
 
+import java.nio.file.PathMatcher;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,8 @@ public class Rule {
     private String host;
 
     private String pattern;
+
+    private transient PathMatcher matcher = null;
 
     private boolean exact;
 

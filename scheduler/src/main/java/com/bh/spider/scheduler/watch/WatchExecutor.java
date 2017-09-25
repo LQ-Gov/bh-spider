@@ -5,36 +5,47 @@ import com.bh.spider.transfer.CommandCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Consumer;
 
 public class WatchExecutor extends Thread {
-    private Logger logger = LoggerFactory.getLogger(WatchExecutor.class);
 
-    static {
-        Analyst.register("event loop for {}, execute command:{},params bytes size:{}", WatchExecutor::eventLoopAnalysis);
+    private final static Logger logger = LoggerFactory.getLogger(WatchExecutor.class);
+
+    private final Map<String, Analysts> analyses = new HashMap<>();
+
+    private BlockingQueue<ILoggingEvent> events = new LinkedBlockingQueue<>();
+
+    private boolean isClosed = false;
+
+    public WatchExecutor() {
+        register("event loop for {}, execute command:{},params bytes size:{}", WatchExecutor::eventLoopAnalysis);
+        register("scheduler is closed", args -> isClosed = true);
+    }
+
+    private synchronized void register(String format, Consumer<Object[]> consumer) {
+        analyses.put(format, new Analysts(format, consumer));
     }
 
 
     private static void eventLoopAnalysis(Object[] params) {
         CommandCode cmd = (CommandCode) params[1];
-        WatchStore.get("event.loop." + cmd.toString()).increment();
+        WatcherStore.get("event.loop." + cmd.toString()).increment();
 
 
         switch (cmd) {
             case SUBMIT_REQUEST:
-                WatchStore.get("request.submit.count").increment();
+                WatcherStore.get("request.submit.count").increment();
                 break;
 
             case FETCH:
-                WatchStore.get("request.fetch.count").increment();
+                WatcherStore.get("request.fetch.count").increment();
                 break;
         }
     }
-
-
-    private BlockingQueue<ILoggingEvent> events = new LinkedBlockingQueue<>();
-
 
     public void submit(ILoggingEvent event) {
         this.events.add(event);
@@ -43,13 +54,18 @@ public class WatchExecutor extends Thread {
 
     @Override
     public void run() {
-        while (true) {
+        while (events.isEmpty() && !isClosed) {
             try {
                 ILoggingEvent event = events.take();
                 String format = event.getMessage();
-                if (!Analyst.analysis(format, event.getArgumentArray())) {
+
+                Analysts aly = analyses.get(format);
+
+                if (aly == null)
                     logger.warn("the analysis message not found any analyst to explain");
-                }
+
+                else
+                    aly.analysis(event.getMessage(), event.getArgumentArray());
 
 
             } catch (InterruptedException e) {

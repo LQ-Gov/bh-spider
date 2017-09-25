@@ -2,9 +2,8 @@ package com.bh.spider.scheduler.component;
 
 import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
-import com.bh.spider.scheduler.persist.Service;
+import com.bh.spider.store.service.Service;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.ModuleType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
@@ -17,9 +16,9 @@ public class ComponentProxy {
 
     private Path base;
     private Service<Component> service;
-    private ModuleType componentType;
+    private Component.Type componentType;
 
-    public ComponentProxy(ModuleType type, Service<Component> service, Path basePath) {
+    public ComponentProxy(Component.Type type, Service<Component> service, Path basePath) {
         this.base = basePath;
 
         this.componentType = type;
@@ -27,7 +26,9 @@ public class ComponentProxy {
         this.service = service;
     }
 
-    protected Service<Component> service(){return service;}
+    protected Service<Component> service() {
+        return service;
+    }
 
 
     public Component get(String name) throws IOException {
@@ -53,7 +54,7 @@ public class ComponentProxy {
     }
 
 
-    public Component save(byte[] data, String name, ModuleType type, String description, boolean override) throws Exception {
+    public Component save(byte[] data, String name, Component.Type type, String description, boolean override) throws Exception {
         Path path = Paths.get(base.toString(), name);
         Path old = Paths.get(path.toString(), "data");
         Path tmp = Paths.get(path.toString(), "data.tmp");
@@ -111,7 +112,7 @@ public class ComponentProxy {
     public Component delete(Query query) throws IOException {
         Component component = service.single(query);
 
-        if (component !=null&& component.getState() != Component.State.NULL) {
+        if (component != null && component.getState() != Component.State.NULL) {
             int count = service.delete(query);
 
             if (count == 1) {
@@ -122,7 +123,7 @@ public class ComponentProxy {
         return component;
     }
 
-    protected Component buildModule(String name, ModuleType type, String path, String hash, String desc) {
+    protected Component buildModule(String name, Component.Type type, String path, String hash, String desc) {
         Component component = new Component();
         component.setName(name);
         component.setPath(path);

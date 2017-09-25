@@ -5,10 +5,9 @@ import com.bh.spider.fetch.impl.FetchRequest;
 import com.bh.spider.fetch.impl.FetchState;
 import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
-import com.bh.spider.scheduler.persist.RequestService;
-import com.bh.spider.scheduler.persist.Service;
-import com.bh.spider.transfer.entity.Rule;
 import com.bh.spider.scheduler.job.JobExecutor;
+import com.bh.spider.store.service.FetchService;
+import com.bh.spider.transfer.entity.Rule;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.SchedulerException;
 
@@ -26,7 +25,7 @@ public class RuleDecorator extends Rule {
 
     private final static int QUEUE_CACHE_SIZE = 1000;
 
-    private transient Queue<Request> requests = new LinkedBlockingQueue<>();
+    private transient Queue<FetchRequest> queueCache = new LinkedBlockingQueue<>();
 
     private transient Rule rule = null;
 
@@ -34,14 +33,14 @@ public class RuleDecorator extends Rule {
 
     private transient JobExecutor executor;
 
-    private transient Service<FetchRequest> service;
+    private transient FetchService service;
 
     private transient boolean initialization;
 
     private transient long queueLength;
 
 
-    public RuleDecorator(Service<FetchRequest> service, Rule rule, JobExecutor executor) {
+    public RuleDecorator(FetchService service, Rule rule, JobExecutor executor) {
         assert rule != null;
 
         this.service = service;
@@ -51,20 +50,19 @@ public class RuleDecorator extends Rule {
     }
 
 
-    public boolean bind(Request req) throws MultiInQueueException, RuleBindException {
-
-        FetchRequest fr = (FetchRequest) req;
-
-        if (!checkValid(fr)) return false;
+    public boolean bind(FetchRequest req) throws RuleBindException {
 
 
         if (match(req)) {
 
-            fr.setRule(this.original());
-            fr.setState(FetchState.QUEUE);
-            service.insert(fr);
-            if (requests.size() == queueLength && requests.size() < QUEUE_CACHE_SIZE)
-                requests.add(fr);
+
+            if (exists(req))
+                throw new MultiInQueueException(this);
+
+            service.insert(req, this);
+
+            if (queueCache.size() == queueLength && queueCache.size() < QUEUE_CACHE_SIZE)
+                queueCache.add(req);
             queueLength++;
             return true;
         }
@@ -73,14 +71,11 @@ public class RuleDecorator extends Rule {
     }
 
 
-    protected boolean checkValid(FetchRequest req) throws MultiInQueueException {
-        Query query = Query.Condition(Condition.where("state").is(FetchState.QUEUE));
-        query.addCondition(Condition.where("rule_id").is(this.getId()));
+    protected boolean exists(FetchRequest req) {
+        Query query = Query.Condition(Condition.where("state").is(Request.State.QUEUE));
         query.addCondition(Condition.where("hash").is(req.hash()));
-        if (service.count(query) > 0)
-            throw new MultiInQueueException(this);
 
-        return true;
+        return service.count(query) > 0;
     }
 
     public boolean match(Request req) {
@@ -135,16 +130,16 @@ public class RuleDecorator extends Rule {
 
         else {
             String pretty = pattern.replaceAll("/{2,}", "/");
-            if (!this.isExact()) {
-                if (pretty.startsWith("**")) {
-                } else if (pretty.startsWith("*")) pretty = "*" + pretty;
-                else pretty = "**" + pretty;
-
-                if (pretty.endsWith("**")) {
-                } else if (pretty.endsWith("*")) pretty = pretty + "*";
-                else pretty = pretty + "**";
-
-            }
+//            if (!this.isExact()) {
+//                if (pretty.startsWith("**")) {
+//                } else if (pretty.startsWith("*")) pretty = "*" + pretty;
+//                else pretty = "**" + pretty;
+//
+//                if (pretty.endsWith("**")) {
+//                } else if (pretty.endsWith("*")) pretty = pretty + "*";
+//                else pretty = pretty + "**";
+//
+//            }
             matcher = FileSystems.getDefault().getPathMatcher("glob:" + pretty);
         }
 
@@ -159,7 +154,7 @@ public class RuleDecorator extends Rule {
 
     public synchronized JobExecutor.State exec() throws SchedulerException {
         if (!initialization) {
-            Query query = Query.Condition(Condition.where("state").is(FetchState.QUEUE));
+            Query query = Query.Condition(Condition.where("state").is(Request.State.QUEUE));
             query.addCondition(Condition.where("rule_id").is(this.getId()));
             queueLength = service.count(query);
 
@@ -191,44 +186,42 @@ public class RuleDecorator extends Rule {
     public synchronized List<? extends Request> poll(int size) {
 
         if (queueLength == 0) return null;
-        List<Request> list = new LinkedList<>();
-        if (requests.size() > size) {
+        List<FetchRequest> list = new LinkedList<>();
+        if (queueCache.size() > size) {
             for (int i = 0; i < size; i++) {
-                list.add(requests.poll());
+                list.add(queueCache.poll());
             }
 
-        } else if (requests.size() == size || (requests.size() < size && requests.size() == queueLength)) {
-            list.addAll(requests);
-            requests.clear();
+        } else if (queueCache.size() == size || (queueCache.size() < size && queueCache.size() == queueLength)) {
+            list.addAll(queueCache);
+            queueCache.clear();
         } else {
 
-            Query query = Query.Condition(Condition.where("state").is(FetchState.QUEUE));
+            Query query = Query.Condition(Condition.where("state").is(Request.State.QUEUE));
             query.addCondition(Condition.where("rule_id").is(this.getId()));
 
-            long diff = Math.min(size, queueLength) - requests.size();
+            long diff = Math.min(size, queueLength) - queueCache.size();
             query.limit(QUEUE_CACHE_SIZE + diff);
             List<FetchRequest> result = service.select(query);
 
-            list.addAll(requests);
+            list.addAll(queueCache);
             list.addAll(result.subList(0, (int) diff));
-            requests.clear();
-            requests.addAll(result.subList((int) diff, result.size()));
+            queueCache.clear();
+            queueCache.addAll(result.subList((int) diff, result.size()));
         }
 
 
         List ids = list.stream()
-                .map(x -> ((FetchRequest) x).getId())
+                .map(FetchRequest::id)
                 .collect(Collectors.toList());
 
 
         Condition condition = Condition.where("rule_id").is(this.getId());
-        condition = condition.and(Condition.where("state").is(FetchState.QUEUE));
+        condition = condition.and(Condition.where("state").is(Request.State.QUEUE));
         condition = condition.and(Condition.where("id").in(ids));
 
 
-        queueLength -= ((RequestService) service).
-
-                updateState(FetchState.GOING, null, condition);
+        queueLength -= service.update(condition, FetchState.going());
 
         return list;
     }
@@ -274,7 +267,7 @@ public class RuleDecorator extends Rule {
     }
 
 
-    public Rule original(){
+    public Rule original() {
         return this.rule;
     }
 }

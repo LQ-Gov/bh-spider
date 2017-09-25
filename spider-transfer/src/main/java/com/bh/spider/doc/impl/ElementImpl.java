@@ -1,22 +1,23 @@
 package com.bh.spider.doc.impl;
 
 import com.bh.spider.doc.Element;
-import org.jsoup.select.Elements;
+import com.bh.spider.doc.Elements;
 import us.codecraft.xsoup.Xsoup;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ElementImpl implements Element {
 
     private org.jsoup.nodes.Element base;
 
-    public ElementImpl(){}
+    public ElementImpl() {
+    }
 
 
-    ElementImpl(org.jsoup.nodes.Element el){
+    ElementImpl(org.jsoup.nodes.Element el) {
         this.base = el;
     }
 
@@ -34,16 +35,14 @@ public class ElementImpl implements Element {
     public List<String> links(Pattern pattern) {
         List<String> list = links();
 
-        Iterator iterator = list.iterator();
-        while (iterator.hasNext()){
-            String link = (String) iterator.next();
-            if(!pattern.matcher(link).find())
-                iterator.remove();
-        }
+        list = list.stream().filter(x -> pattern.matcher(x).find())
+                .collect(Collectors.toList());
+
 
         return list;
 
     }
+
 
     @Override
     public String html() {
@@ -56,30 +55,51 @@ public class ElementImpl implements Element {
     }
 
     @Override
-    public List<Element> $(String selector) {
-        Elements elements = el().select(selector);
-        List<Element> result = new LinkedList<>();
-
-        for(org.jsoup.nodes.Element it:elements){
-            result.add(new ElementImpl(it));
-        }
-
-        return result;
+    public String data() {
+        return el().data();
     }
 
     @Override
-    public List<Element> xpath(String xpath) {
-        Elements elements = Xsoup.compile(xpath).evaluate(el()).getElements();
-        List<Element> result = new LinkedList<>();
-
-        for(org.jsoup.nodes.Element it:elements){
-            result.add(new ElementImpl(it));
-        }
-
-        return result;
+    public Elements $(String selector) {
+        org.jsoup.select.Elements elements = el().select(selector);
+        return new ElementsImpl(elements);
     }
 
-    protected org.jsoup.nodes.Element el(){
+    @Override
+    public Elements xpath(String xpath) {
+        org.jsoup.select.Elements elements = Xsoup.compile(xpath).evaluate(el()).getElements();
+
+        return new ElementsImpl(elements);
+    }
+
+    @Override
+    public Element getElementById(String id) {
+        org.jsoup.nodes.Element element = el().getElementById(id);
+
+        return element == null ? null : new ElementImpl(el().getElementById(id));
+    }
+
+    @Override
+    public String attr(String attributeName) {
+        return el().attr(attributeName);
+    }
+
+    @Override
+    public Elements children() {
+        return new ElementsImpl(el().children());
+    }
+
+    @Override
+    public boolean hasAttr(String attributeName) {
+        return el().hasAttr(attributeName);
+    }
+
+    @Override
+    public String nodeName() {
+        return el().nodeName();
+    }
+
+    protected org.jsoup.nodes.Element el() {
         return base;
     }
 }

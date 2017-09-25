@@ -2,30 +2,22 @@ package com.bh.spider.scheduler;
 
 import com.bh.spider.fetch.Extractor;
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchRequest;
-import com.bh.spider.query.Query;
-import com.bh.spider.query.condition.Condition;
+import com.bh.spider.scheduler.component.ComponentBuildException;
 import com.bh.spider.scheduler.config.Config;
-import com.bh.spider.scheduler.config.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IEvent;
-import com.bh.spider.scheduler.fetcher.FetchExecuteException;
-import com.bh.spider.scheduler.fetcher.Fetcher;
-import com.bh.spider.scheduler.job.*;
-import com.bh.spider.scheduler.component.ComponentBuildException;
-import com.bh.spider.scheduler.component.ComponentCoreFactory;
-import com.bh.spider.scheduler.component.ComponentProxy;
-import com.bh.spider.scheduler.persist.Store;
-import com.bh.spider.scheduler.persist.StoreBuilder;
+import com.bh.spider.scheduler.job.ExceptionRuleObject;
+import com.bh.spider.scheduler.job.JobCoreFactory;
+import com.bh.spider.scheduler.job.JobExecutor;
+import com.bh.spider.scheduler.job.RuleExecuteObject;
 import com.bh.spider.scheduler.rule.*;
-import com.bh.spider.scheduler.watch.WatchStore;
+import com.bh.spider.store.base.Store;
+import com.bh.spider.store.base.StoreBuilder;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.ModuleType;
 import com.bh.spider.transfer.entity.Rule;
-import com.google.common.base.Preconditions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -53,17 +45,22 @@ public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
     private volatile boolean closed = true;
     private EventLoop loop = null;
-    private Fetcher fetcher = null;
     private JobCoreFactory jobFactory = null;
-    private ComponentCoreFactory componentCoreFactory = null;
     private RuleFactory ruleFactory = null;
     private Store store = null;
+
+    private SchedulerComponentHandler schedulerComponentHandler;
 
 
     private Domain domain = new RootDomain();
 
 
     public BasicScheduler() {
+
+    }
+
+    public Store store() {
+        return store;
     }
 
 
@@ -72,18 +69,15 @@ public class BasicScheduler implements IEvent {
         closed = false;
         //init_system_signal_handles();
         initJobFactory();
-        initEventLoop();
         //先初始化存储，其他模块依赖存储
         initStore();
-        initWatch();
-        initFetcher();
+        initEventLoop();
 
-
-        initModuleFactory();//初始化模块工厂
 
         initRuleFactory();//初始化规则工厂
         initLocalListen();//初始化本地端口坚挺
     }
+
 
     public boolean isClosed() {
         return closed;
@@ -100,17 +94,16 @@ public class BasicScheduler implements IEvent {
         //process(Commands.CLOSE);
     }
 
-
     public Extractor extractorComponent(String componentName) throws IOException, ComponentBuildException {
-        return componentCoreFactory.extractorComponent(componentName);
+        return schedulerComponentHandler.extractorComponent(componentName);
     }
 
-    public Component component(ModuleType type, String componentName) throws IOException {
-        return componentCoreFactory.proxy(type).get(componentName);
+    public Component component(Component.Type type, String componentName) throws IOException {
+        return schedulerComponentHandler.component(type, componentName);
     }
 
 
-    public void submit(Context ctx, FetchRequest req) {
+    public void submit(Context ctx, Request req) {
         Command cmd = new Command(CommandCode.SUBMIT_REQUEST, ctx, new Object[]{req});
         this.process(cmd);
     }
@@ -123,22 +116,11 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    protected void initFetcher() {
-        fetcher = new Fetcher(this);
-        logger.info("init component of fetcher");
-    }
-
-
     //初始化数据库数据
     protected void initStore() throws Exception {
-        StoreBuilder builder = Store.builder(Config.INIT_STORE_DATABASE);
+        StoreBuilder builder = Store.builder(Config.INIT_STORE_BUILDER);
 
-        assert builder != null;
         store = builder.build(Config.getStoreProperties());
-
-//        store.register(Component.class, "charles_spider_module");
-//        store.register(FetchRequest.class, "charles_spider_request");
-//        store.connect();
 
         logger.info("init database store");
 
@@ -153,14 +135,10 @@ public class BasicScheduler implements IEvent {
             executeRule(rule, true);
         }
 
-        JobExecutor je = jobFactory.build(ErrorRefreshObject.class);
-        RuleDecorator errorRule = new ErrorRuleDecorator(store.request(), je);
-        domain.addRule(errorRule);
-    }
-
-    protected void initWatch() throws SchedulerException {
-        JobExecutor watchJobExecutor = jobFactory.build(WatchExecuteObject.class);
-        watchJobExecutor.exec("*/5 * * * * ?", null);
+        RuleDecorator defaultRule = new DefaultRuleDecorator(store.request(), jobFactory.build(RuleExecuteObject.class));
+        RuleDecorator exceptionRule = new ExceptionRuleDecorator(store.request(), jobFactory.build(ExceptionRuleObject.class));
+        domain.addRule(defaultRule);
+        domain.addRule(exceptionRule);
     }
 
 
@@ -192,19 +170,14 @@ public class BasicScheduler implements IEvent {
         }
     }
 
-    protected void initEventLoop() {
-//        JobExecutor executor = jobFactory.build(WatchExecuteObject.class);
-//        Monitor watch = new MonitorImpl(executor);
+    protected void initEventLoop() throws IOException {
 
-        loop = new EventLoop(this);
+        schedulerComponentHandler = new SchedulerComponentHandler(this);
+
+        loop = new EventLoop(this, schedulerComponentHandler,
+                new SchedulerFetchHandler(this, this.domain),
+                new SchedulerWatchHandler());
         loop.start();
-    }
-
-    protected void initModuleFactory() throws Exception {
-
-        Preconditions.checkNotNull(store, "the data store not init");
-
-        this.componentCoreFactory = new ComponentCoreFactory(store.module());
     }
 
 
@@ -237,21 +210,6 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, ModuleType type, String description) {
-
-        ComponentProxy proxy = componentCoreFactory.proxy(type);
-
-        try {
-            if (proxy == null)
-                throw new Exception("unknown component type");
-            proxy.save(data, name, type, description, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    @EventMapping
     protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws SchedulerException, IOException, RuleBindException {
 
 
@@ -265,56 +223,6 @@ public class BasicScheduler implements IEvent {
         rule.setId(UUID.randomUUID().toString());
         ruleFactory.save(rule);
         executeRule(rule, false);
-    }
-
-
-    @EventMapping
-    protected void SUBMIT_REQUEST_HANDLER(Context ctx, FetchRequest req) {
-
-        String host = req.url().getHost();
-        Domain matcher = domain.match(host, false);
-
-        try {
-
-            if (!(matcher != null && bindRequestToDomain(matcher, req))) {
-
-                bindRequestToDomain(domain, req);
-            }
-        } catch (MultiInQueueException e) {
-            String ruleId = e.getRule().getId();
-            logger.info(Markers.ANALYSIS, "submit failed,the request is already in  queue of rule:{}", ruleId);
-        } catch (RuleBindException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    protected boolean bindRequestToDomain(Domain d, Request req) throws MultiInQueueException, RuleBindException {
-
-
-        List<Rule> rules = d.rules();
-
-        if (rules != null && !rules.isEmpty()) {
-            for (Rule it : rules) {
-                if (it instanceof RuleDecorator) {
-                    RuleDecorator decorator = (RuleDecorator) it;
-                    if (decorator.bind(req)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-
-    @EventMapping
-    protected void GET_MODULE_LIST_HANDLER(Context ctx, Query query) {
-
-        ComponentProxy proxy = componentCoreFactory.proxy();
-        List<Component> list = proxy.select(query);
-        ctx.write(list);
     }
 
 
@@ -346,15 +254,6 @@ public class BasicScheduler implements IEvent {
         rules = rules.subList(skip, Math.min(skip + size, rules.size()));
 
         ctx.write(rules);
-    }
-
-    @EventMapping
-    protected void GET_HOST_LIST_HANDLER(Context ctx) {
-
-
-        RootDomain top = (RootDomain) domain;
-
-        ctx.write(top.hosts());
     }
 
 
@@ -429,52 +328,10 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    @EventMapping
-    protected void DELETE_MODULE_HANDLER(Context ctx, Query query) throws IOException {
-        componentCoreFactory.proxy().delete(query);
-    }
-
-    @EventMapping(autoComplete = false)
-    protected void WATCH_HANDLER(Context ctx, String key) throws Exception {
-
-        WatchStore.get(key).bind(ctx);
-    }
-
-    //未实现
-    @EventMapping
-    protected void WATCH_CANCEL_HANDLER(Context ctx, String key) throws Exception {
-        WatchStore.get(key);
-    }
-
-
-    @EventMapping(autoComplete = false)
-    protected void FETCH_HANDLER(Context ctx, FetchRequest req) throws FetchExecuteException {
-        fetcher.fetch(ctx, req);
-    }
-
-
-    @EventMapping
-    protected void REPORT_HANDLER(Context ctx, FetchRequest req) {
-        String ruleId = req.getRule() != null && req.getRule().getId() != null ? req.getRule().getId() : null;
-
-        if (req.getRule() != null && req.getRule().getId() != null) {
-
-            Condition condition = Condition.where("id").is(req.getId());
-
-            store.request().update(req, condition);
-
-            logger.info(Markers.ANALYSIS, "the report of request,rule:{},state:{},message:{}", ruleId, req.getState(), req.getMessage());
-        }
-
-
-    }
 
     @EventMapping
     protected synchronized void SCHEDULER_CLOSE_HANDLER() {
         if (isClosed()) return;
-
-        if (fetcher != null)
-            fetcher.close();
 
         try {
             jobFactory.close();

@@ -10,16 +10,24 @@ public class Component implements Serializable {
     public enum State {
         NULL, TMP, VALID
     }
+
+    public enum Type {
+        UNKNOWN,
+        CONFIG,
+        COMMON,
+        EXTRACTOR,
+        SYSTEM
+    }
+
     private long id;
     private String name;
     private String path;
     private String hash;
-    private ModuleType type;
+    private Type type;
     private String detail;
     private Date updateTime;
 
     private State state = State.NULL;
-
 
 
     public long getId() {
@@ -54,11 +62,11 @@ public class Component implements Serializable {
         this.hash = hash;
     }
 
-    public ModuleType getType() {
+    public Type getType() {
         return type;
     }
 
-    public void setType(ModuleType type) {
+    public void setType(Type type) {
         this.type = type;
     }
 

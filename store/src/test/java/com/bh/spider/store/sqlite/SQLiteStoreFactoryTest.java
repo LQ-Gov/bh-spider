@@ -21,7 +21,7 @@ public class SQLiteStoreFactoryTest {
         SQLiteStoreFactory factory = new SQLiteStoreFactory(properties);
         SQLiteStore store = factory.build();
 
-        String productName = store.getConnection().getMetaData().getDatabaseProductName();
+        String productName = store.connection().getMetaData().getDatabaseProductName();
         Assert.assertEquals(productName,"SQLite");
     }
 

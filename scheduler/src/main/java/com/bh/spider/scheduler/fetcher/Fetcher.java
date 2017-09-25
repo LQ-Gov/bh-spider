@@ -45,10 +45,7 @@ public class Fetcher implements IEvent {
         return false;
     }
 
-    public void fetch(Context ctx, FetchRequest req) throws FetchExecuteException {
-
-        Rule rule = req.getRule();
-
+    public void fetch(Context ctx, FetchRequest req, Rule rule) throws FetchExecuteException {
 
         FetchClientBuilder builder =
                 (rule == null || rule.driver() == null || !rule.driver().isAllow()) ?
@@ -62,7 +59,7 @@ public class Fetcher implements IEvent {
         initHeaders(req);
         //这里还需执行component yeah!!!
 
-        client.execute(req, new FetchCallback(ctx, this.scheduler, this, context));
+        client.execute(req,rule, new FetchCallback(ctx, this.scheduler, this, context));
 
     }
 
@@ -89,7 +86,7 @@ public class Fetcher implements IEvent {
     }
 
     protected void exec_request_prepare_modules(Request req, HttpRequestBase request, BasicScheduler context) {
-        String[] prepare = req.extractor("prepare");
+        //String[] prepare = req.extractor("prepare");
 //        if (!ArrayUtils.isEmpty(prepare)) {
 //            //scheduler.
 //        }

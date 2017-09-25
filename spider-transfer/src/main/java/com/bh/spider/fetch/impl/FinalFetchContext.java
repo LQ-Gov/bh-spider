@@ -1,14 +1,9 @@
 package com.bh.spider.fetch.impl;
 
-import com.bh.spider.fetch.Cookie;
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.Response;
 import com.bh.spider.doc.Document;
 import com.bh.spider.doc.impl.DocumentImpl;
+import com.bh.spider.fetch.*;
 
-
-import java.net.HttpCookie;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -26,6 +21,7 @@ public class FinalFetchContext implements FetchContext {
         this.response = response;
 
     }
+
 
     @Override
     public URL url() {
@@ -52,6 +48,7 @@ public class FinalFetchContext implements FetchContext {
         return response.cookies();
     }
 
+
     @Override
     public Document document() {
         return new DocumentImpl(this.response.data());
@@ -77,6 +74,11 @@ public class FinalFetchContext implements FetchContext {
     @Override
     public Object get(String key) {
         return this.parent.get(key);
+    }
+
+    @Override
+    public Object get(String key, Object defaultValue) {
+        return parent.get(key,defaultValue);
     }
 
     @Override
@@ -112,8 +114,14 @@ public class FinalFetchContext implements FetchContext {
     }
 
     @Override
-    public void cancel() {
-
+    public void skip() throws ExtractorChainException {
+        throw new ExtractorChainException(Behaviour.SKIP);
     }
+
+    @Override
+    public void termination() throws ExtractorChainException {
+        throw new ExtractorChainException(Behaviour.TERMINATION);
+    }
+
 
 }

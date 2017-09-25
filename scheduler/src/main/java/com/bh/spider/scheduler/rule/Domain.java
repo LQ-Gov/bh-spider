@@ -130,9 +130,12 @@ public class Domain {
 
     }
 
-    public List<Domain> children(){
+    public List<Domain> children() {
         return new LinkedList<>(child.values());
     }
 
 
+    public Domain parent() {
+        return parent;
+    }
 }

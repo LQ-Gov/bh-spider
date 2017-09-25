@@ -14,6 +14,11 @@ public class WatchPoint {
     }
 
 
+    public String key(){
+        return key;
+    }
+
+
     public Object get() {
         return value;
     }

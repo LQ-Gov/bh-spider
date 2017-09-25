@@ -21,7 +21,7 @@ public class ClientTest {
 
     @Test
     public void submit() throws Exception {
-        client.module().submit("target/client-1.0-SNAPSHOT.jar");
+        client.component().submit("target/client-1.0-SNAPSHOT.jar");
     }
 
 }

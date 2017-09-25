@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler.event;
 
 import com.bh.spider.scheduler.Command;
-import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.config.Markers;
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.token.Token;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -11,9 +11,12 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by lq on 17-3-16.
@@ -24,12 +27,14 @@ public class EventLoop extends Thread {
 
     private IEvent parent = null;
     private BlockingQueue<Command> queue = new LinkedBlockingQueue<>();
-    private Map<String, MethodExecutor> resolvers = new HashMap<>();
+    private Map<String, CommandHandler> executors = new HashMap<>();
 
 
-    public EventLoop(IEvent parent) {
+    public EventLoop(IEvent parent, IAssist... assists) {
         this.parent = parent;
-        init_process_methods(this.parent);
+        initObjectHandlers(this.parent);
+
+        Arrays.stream(assists).forEach(this::initObjectHandlers);
 
     }
 
@@ -50,7 +55,7 @@ public class EventLoop extends Thread {
                 logger.info(Markers.ANALYSIS, "event loop for {}, execute command:{},params bytes size:{}",
                         this.parent.getClass().getName(), cmd.key(), 0);
 
-                MethodExecutor executor = resolvers.get(cmd.key().toString());
+                CommandHandler executor = executors.get(cmd.key().toString());
 
                 if (executor == null) throw new RuntimeException("executor not found");
 
@@ -114,7 +119,7 @@ public class EventLoop extends Thread {
     }
 
 
-    protected void init_process_methods(Object o) {
+    protected void initObjectHandlers(Object o) {
         Method[] methods = o.getClass().getDeclaredMethods();
 
         for (Method method : methods) {
@@ -127,12 +132,16 @@ public class EventLoop extends Thread {
                         key = key.substring(0, key.length() - "_HANDLER".length());
                 }
                 if (StringUtils.isBlank(key))
-                    throw new RuntimeException("error method event mapping for " + method.getName());
+                    throw new Error("error method event mapping for " + method.getName());
+
+                if (executors.containsKey(key))
+                    throw new Error("the " + key + " handler is already exists");
 
 
-                resolvers.put(key, new MethodExecutor(o, method, mapping));
+                executors.put(key, new CommandHandler(o, method, mapping));
             }
         }
+
     }
 
 }
