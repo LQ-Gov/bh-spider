@@ -36,6 +36,10 @@ public class Config {
         //抓取参数陪配置
         public static final String INIT_PROCESSOR_THREADS_COUNT = "init.processor.threads.count";
 
+        public static final String SPIDER_CLUSTER_PREFIX ="spider.cluster.";
+
+        public static final String MY_ID = "my.id";
+
 
     }
 

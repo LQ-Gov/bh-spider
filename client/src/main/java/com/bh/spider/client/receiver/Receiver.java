@@ -49,8 +49,8 @@ public class Receiver extends Thread {
 
                 if (remove) callbacks.remove(id);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        catch (IOException e) {
             callbacks.forEach((k, v) -> v.exception(e));
             callbacks.clear();
         }

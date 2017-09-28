@@ -7,3 +7,5 @@ monitor/**/node_modules
 
 client-test
 
+/phantomjsdriver.log
+/scheduler.log

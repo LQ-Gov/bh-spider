@@ -7,6 +7,7 @@ import com.bh.spider.transfer.entity.DriverSetting;
 import com.bh.spider.transfer.entity.Rule;
 import com.bh.spider.transfer.entity.Script;
 import org.openqa.selenium.*;
+import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.phantomjs.PhantomJSDriverService;
@@ -84,14 +85,16 @@ public class SeleniumFetchClient implements FetchClient {
                     //driver = new ChromeDriver(options);
 
                     //firefox
+
+                    System.setProperty("webdriver.gecko.driver","D:\\geckodriver.exe");
                     FirefoxOptions options = new FirefoxOptions();
 
                     options.addPreference("network.proxy.type", 1);
                     options.addPreference("network.proxy.http", "202.77.131.218");
                     options.addPreference("network.proxy.http_port", "9156");
                     options.addPreference("network.proxy.no_proxies_on", "localhost");
+                    options.setBinary("D:\\Mozilla Firefox\\firefox.exe");
 
-                    options.addCapabilities()
 
 
 
@@ -139,7 +142,6 @@ public class SeleniumFetchClient implements FetchClient {
                     List<Script> scripts = setting.scripts();
 
                     scripts.forEach(x -> {
-                        System.out.println(x.operator());
                         switch (x.operator()) {
                             case CUSTOM:
                                 ((JavascriptExecutor) driver).executeScript((String) x.args()[0]);

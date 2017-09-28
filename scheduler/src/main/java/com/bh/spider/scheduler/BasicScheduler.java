@@ -75,6 +75,7 @@ public class BasicScheduler implements IEvent {
 
 
         initRuleFactory();//初始化规则工厂
+
         initLocalListen();//初始化本地端口坚挺
     }
 
