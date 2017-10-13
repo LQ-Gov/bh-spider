@@ -30,7 +30,7 @@ public class RuleFactory {
 
         this.base = Paths.get(p);
 
-        Preconditions.checkState(Files.exists(base), "the path of {} not exists", p);
+        Preconditions.checkState(Files.exists(base), "the path of %s not exists", p);
 
         File file = new File(base.toString());
         if (file.isDirectory())

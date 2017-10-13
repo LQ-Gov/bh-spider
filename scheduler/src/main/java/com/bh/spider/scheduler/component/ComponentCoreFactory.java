@@ -16,23 +16,21 @@ import java.nio.file.Paths;
 public class ComponentCoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(ComponentCoreFactory.class);
 
-    private Service<Component> service;
 
     private GlobalComponentProxy globalProxy;
     private CommonComponentProxy commonProxy;
     private ExtractorComponentProxy extractorProxy;
 
+    public ComponentCoreFactory(Config cfg, Service<Component> service) throws IOException {
 
-    public ComponentCoreFactory(Service<Component> service) throws IOException {
+        String dataPath = (String) cfg.get(Config.INIT_DATA_PATH);
 
-        this.service = service;
 
-        commonProxy = new CommonComponentProxy(service, Paths.get(Config.INIT_DATA_PATH, "common"));
+        commonProxy = new CommonComponentProxy(service, Paths.get(dataPath, "common"));
 
-        extractorProxy = new ExtractorComponentProxy(commonProxy, service, Paths.get(Config.INIT_DATA_PATH, "extractor"));
+        extractorProxy = new ExtractorComponentProxy(commonProxy, service, Paths.get(dataPath, "extractor"));
 
         globalProxy = new GlobalComponentProxy(this, service);
-
 
     }
 

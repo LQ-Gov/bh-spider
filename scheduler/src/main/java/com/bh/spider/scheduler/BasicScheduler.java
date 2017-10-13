@@ -27,6 +27,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -34,6 +35,9 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -54,8 +58,10 @@ public class BasicScheduler implements IEvent {
 
     private Domain domain = new RootDomain();
 
+    protected Config cfg;
 
-    public BasicScheduler() {
+    public BasicScheduler(Config config) {
+        this.cfg = config;
 
     }
 
@@ -67,6 +73,8 @@ public class BasicScheduler implements IEvent {
     public synchronized void exec() throws Exception {
         if (!closed) return;
         closed = false;
+
+        initDirectory();
         //init_system_signal_handles();
         initJobFactory();
         //先初始化存储，其他模块依赖存储
@@ -117,11 +125,23 @@ public class BasicScheduler implements IEvent {
     }
 
 
+    protected void initDirectory() throws IOException {
+        Path dataPath = Paths.get((String) cfg.get(Config.INIT_DATA_PATH));
+
+        boolean exists;
+        if ((exists = Files.exists(dataPath)) && !Files.isDirectory(dataPath))
+            throw new Error("the " + dataPath + "must be a directory");
+
+        if (!exists)
+            FileUtils.forceMkdir(dataPath.toFile());
+    }
+
+
     //初始化数据库数据
     protected void initStore() throws Exception {
-        StoreBuilder builder = Store.builder(Config.INIT_STORE_BUILDER);
+        StoreBuilder builder = Store.builder((String) cfg.get(Config.INIT_STORE_BUILDER));
 
-        store = builder.build(Config.getStoreProperties());
+        store = builder.build(cfg.aboutStore());
 
         logger.info("init database store");
 
@@ -129,7 +149,12 @@ public class BasicScheduler implements IEvent {
 
 
     protected void initRuleFactory() throws IOException, SchedulerException {
-        ruleFactory = new RuleFactory(Config.INIT_RULE_PATH);
+        String dataPath = (String) cfg.get(Config.INIT_DATA_PATH);
+        Path path = Paths.get(dataPath,"rule");
+        if(!Files.exists(path))
+            Files.createDirectories(path);
+
+        ruleFactory = new RuleFactory(path.toString());
         List<Rule> rules = ruleFactory.get();
 
         for (Rule rule : rules) {
@@ -164,7 +189,7 @@ public class BasicScheduler implements IEvent {
 
             logger.info("init command listen server:{}", Config.INIT_LISTEN_PORT);
 
-            ChannelFuture local = server.bind(Config.INIT_LISTEN_PORT).sync();
+            ChannelFuture local = server.bind((int) cfg.get(Config.INIT_LISTEN_PORT)).sync();
             local.channel().closeFuture().sync();
         } finally {
             group.shutdownGracefully();
@@ -173,7 +198,7 @@ public class BasicScheduler implements IEvent {
 
     protected void initEventLoop() throws IOException {
 
-        schedulerComponentHandler = new SchedulerComponentHandler(this);
+        schedulerComponentHandler = new SchedulerComponentHandler(cfg, this);
 
         loop = new EventLoop(this, schedulerComponentHandler,
                 new SchedulerFetchHandler(this, this.domain),
@@ -327,7 +352,6 @@ public class BasicScheduler implements IEvent {
             }
         }
     }
-
 
 
     @EventMapping

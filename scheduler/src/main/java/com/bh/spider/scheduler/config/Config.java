@@ -1,113 +1,86 @@
 package com.bh.spider.scheduler.config;
 
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by lq on 17-3-29.
  */
 public class Config {
 
-    public class Field {
+    private final Properties GLOBAL = new Properties();
 
-        //public static final String INIT_MASTER_PORT = "init.master.port";
-        //运行配置
-        public static final String INIT_RUN_MODE = "init.run.mode";
-        public static final String INIT_LISTEN_PORT = "init.listen.port";
+    //运行配置
+    public static final String INIT_RUN_MODE = "init.run.mode";
+    public static final String INIT_LISTEN_PORT = "init.listen.port";
 
-        //数据/配置存储路径
-        public static final String INIT_RULE_PATH = "init.rules.path";
-        public static final String INIT_DATA_PATH = "init.data.path";
-        public static final String INIT_PHANTOMJS_PATH="init.phantomjs.path";
+    //数据/配置存储路径
+    public static final String INIT_RULE_PATH = "init.rules.path";
+    public static final String INIT_DATA_PATH = "init.data.path";
+    public static final String INIT_PHANTOMJS_PATH = "init.phantomjs.path";
 
-        //数据库存储配置
-        public static final String INIT_STORE_BUILDER = "init.store.builder"; //数据库存储类型
-        public static final String INIT_STORE_URL = "init.store.url";
-        public static final String INIT_STORE_USER = "init.store.user";
-        public static final String INIT_STORE_PASSWORD = "init.store.password";
-        public static final String INIT_STORE_DRIVER = "init.store.driver";
+    //数据库存储配置
+    public static final String INIT_STORE_BUILDER = "init.store.builder"; //数据库存储类型
+    public static final String INIT_STORE_URL = "init.store.url";
+    public static final String INIT_STORE_USER = "init.store.user";
+    public static final String INIT_STORE_PASSWORD = "init.store.password";
+    public static final String INIT_STORE_DRIVER = "init.store.driver";
 
-        //抓取参数陪配置
-        public static final String INIT_PROCESSOR_THREADS_COUNT = "init.processor.threads.count";
+    //抓取参数陪配置
+    public static final String INIT_PROCESSOR_THREADS_COUNT = "init.processor.threads.count";
 
-        public static final String SPIDER_CLUSTER_PREFIX ="spider.cluster.";
+    public static final String SPIDER_CLUSTER_PREFIX = "spider.cluster.";
 
-        public static final String MY_ID = "my.id";
+    public static final String MY_ID = "my.id";
 
+    private static Config build0() {
+        Config config = new Config();
+        config.GLOBAL.put(INIT_DATA_PATH, "data/");
+        config.GLOBAL.put(INIT_LISTEN_PORT, 8033);
+        config.GLOBAL.put(INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors() * 2);
+        config.GLOBAL.put(INIT_STORE_BUILDER, "com.bh.spider.store.sqlite.SQLiteStoreBuilder");
+        config.GLOBAL.put(INIT_STORE_URL, "jdbc:sqlite:" + Paths.get(config.GLOBAL.get(INIT_DATA_PATH).toString(), "spider.store.db"));
+        config.GLOBAL.put(INIT_STORE_DRIVER, "org.sqlite.JDBC");
+        config.GLOBAL.put(INIT_STORE_USER, "root");
+        config.GLOBAL.put(INIT_STORE_PASSWORD, "root");
+        config.GLOBAL.put(INIT_RUN_MODE, "stand-alone");
 
+        return config;
     }
 
-    public static Map<String, Chain> defaultChains = new ConcurrentHashMap<>();
-    private List<Proxy> proxies = null;
 
-    public static int INIT_PROCESSOR_THREADS_COUNT;
-    public static int INIT_LISTEN_PORT;
-    public static String INIT_DATA_PATH;
-    public static String INIT_RULE_PATH;
-    public static String INIT_PHANTOMJS_PATH;
-    public static String INIT_STORE_BUILDER;
-    public static String INIT_STORE_URL;
-    public static String INIT_STORE_USER;
-    public static String INIT_STORE_PASSWORD;
-    public static String INIT_STORE_DRIVER;
-    public static String INIT_RUN_MODE;
+    public Properties aboutStore() {
 
-
-    public static Properties getStoreProperties() {
         Properties properties = new Properties();
-        properties.put(Field.INIT_STORE_BUILDER, INIT_STORE_BUILDER);
-        properties.put(Field.INIT_STORE_URL, INIT_STORE_URL);
-        properties.put(Field.INIT_STORE_USER, INIT_STORE_USER);
-        properties.put(Field.INIT_STORE_PASSWORD, INIT_STORE_PASSWORD);
-        properties.put(Field.INIT_STORE_DRIVER, INIT_STORE_DRIVER);
-        properties.put(Field.INIT_DATA_PATH, INIT_DATA_PATH);
-
+        properties.put(INIT_STORE_DRIVER, GLOBAL.get(INIT_STORE_DRIVER));
+        properties.put(INIT_STORE_URL, GLOBAL.get(INIT_STORE_URL));
+        properties.put(INIT_STORE_BUILDER, GLOBAL.get(INIT_STORE_BUILDER));
+        properties.put(INIT_STORE_USER, GLOBAL.get(INIT_STORE_USER));
+        properties.put(INIT_STORE_PASSWORD, GLOBAL.get(INIT_STORE_PASSWORD));
 
         return properties;
-    }
-
-
-    static {
-        Properties properties = System.getProperties();
-
-        INIT_RUN_MODE = properties.getProperty(Field.INIT_RUN_MODE, "stand-alone");
-        INIT_PROCESSOR_THREADS_COUNT = (int) properties.getOrDefault(Field.INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors());
-        INIT_LISTEN_PORT = (int) properties.getOrDefault(Field.INIT_LISTEN_PORT, 8033);
-        INIT_DATA_PATH = properties.getProperty(Field.INIT_DATA_PATH, "data/");
-        INIT_RULE_PATH = properties.getProperty(Field.INIT_RULE_PATH, "conf/rule");
-        INIT_PHANTOMJS_PATH=properties.getProperty(Field.INIT_PHANTOMJS_PATH,"/var/phantomjs-2.1.1-linux-x86_64/bin/phantomjs");
-        INIT_STORE_BUILDER = properties.getProperty(Field.INIT_STORE_BUILDER, "com.bh.spider.store.sqlite.SQLiteStoreBuilder");
-        INIT_STORE_URL = properties.getProperty(Field.INIT_STORE_URL, "jdbc:sqlite:" + INIT_DATA_PATH + "spider.store.db");
-        INIT_STORE_DRIVER = properties.getProperty(Field.INIT_STORE_DRIVER, "org.sqlite.JDBC");
-        INIT_STORE_USER = properties.getProperty(Field.INIT_STORE_USER, "root");
-        INIT_STORE_PASSWORD = properties.getProperty(Field.INIT_STORE_PASSWORD, "root");
-
-
-        try {
-            init();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
-    static void init() throws IOException {
 
-        try {
-            Files.createDirectories(Paths.get(INIT_DATA_PATH));
-            Files.createDirectories(Paths.get(INIT_RULE_PATH));
-        } catch (FileAlreadyExistsException ignored) {
+    public static Config build(Properties properties) {
+        Config config = build0();
+        if (properties != null)
+            config.GLOBAL.putAll(properties);
 
-        }
+        return config;
+    }
 
 
+    public Object get(String name) {
+        return GLOBAL.get(name);
+    }
 
+
+    public Collection<Map.Entry<Object, Object>> toCollection() {
+        return GLOBAL.entrySet();
     }
 
 

@@ -5,6 +5,7 @@ import com.bh.spider.query.Query;
 import com.bh.spider.scheduler.component.ComponentBuildException;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
 import com.bh.spider.scheduler.component.ComponentProxy;
+import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
@@ -19,10 +20,9 @@ public class SchedulerComponentHandler implements IAssist {
     private ComponentCoreFactory factory = null;
 
 
-    public SchedulerComponentHandler(BasicScheduler scheduler) throws IOException {
-        factory = new ComponentCoreFactory(scheduler.store().component());
+    public SchedulerComponentHandler(Config cfg, BasicScheduler scheduler) throws IOException {
+        factory = new ComponentCoreFactory(cfg, scheduler.store().component());
     }
-
 
 
     @EventMapping
