@@ -18,18 +18,20 @@ public class Program {
 
         String file = args.length > 0 ? args[0] : "spider.properties";
 
-        Config config;
+
+        Properties properties = new Properties();
         InputStream stream = Program.class.getResourceAsStream(file);
         if (stream != null) {
-            Properties properties = new Properties();
             properties.load(stream);
-            config = Config.build(properties);
             logger.info("load config from {}", file);
-        } else {
-            config = Config.build(null);
+        } else
             logger.warn("the config file {} not exists,program start with default config", file);
-        }
 
+        System.setProperty("init.run.mode","cluster-master");
+
+        properties.putAll(System.getProperties());
+
+        Config config = Config.build(properties);
 
         Class<?> mode = RunModeClassFactory.get(config.get(Config.INIT_RUN_MODE).toString());
         if (mode == null)

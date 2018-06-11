@@ -38,7 +38,7 @@ public class Script {
         return args;
     }
 
-    public static enum Operator {
+    public enum Operator {
         WAIT, CUSTOM, CAN_CLICK,WAIT_UNTIL
     }
 }

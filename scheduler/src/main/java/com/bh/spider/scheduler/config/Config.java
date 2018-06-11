@@ -47,6 +47,10 @@ public class Config {
         config.GLOBAL.put(INIT_STORE_PASSWORD, "root");
         config.GLOBAL.put(INIT_RUN_MODE, "stand-alone");
 
+        config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"1","127.0.0.1:30051");
+        config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"2","127.0.0.1:30052");
+        config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"3","127.0.0.1:30053");
+
         return config;
     }
 
