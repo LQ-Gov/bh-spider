@@ -45,24 +45,21 @@ public class Client {
     private final AtomicLong ID = new AtomicLong(0);
 
 
-    public Client(String server) throws IOException, URISyntaxException {
+    public Client(String server) {
         this.server = server;
-
-
-        if (open()) {
-            ruleOperation = new RuleOperation(this);
-            moduleOperation = new ComponentOperation(this);
-            requestOperation = new RequestOperation(this);
-            receiver = new Receiver(socket);
-            receiver.start();
-        }
     }
 
 
-    private boolean open() throws URISyntaxException, IOException {
+    public boolean open() throws URISyntaxException, IOException {
         URI uri = new URI("tcp://" + server);
         socket = new Socket(uri.getHost(), uri.getPort());
         out = new DataOutputStream(socket.getOutputStream());
+
+        ruleOperation = new RuleOperation(this);
+        moduleOperation = new ComponentOperation(this);
+        requestOperation = new RequestOperation(this);
+        receiver = new Receiver(socket);
+        receiver.start();
         return true;
     }
 
