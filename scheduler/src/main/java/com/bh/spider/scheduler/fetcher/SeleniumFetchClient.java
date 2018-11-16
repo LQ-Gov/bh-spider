@@ -9,7 +9,6 @@ import com.bh.spider.transfer.entity.Script;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
@@ -19,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.CookieStore;
 import java.net.HttpCookie;
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -148,9 +149,8 @@ public class SeleniumFetchClient implements FetchClient {
                             case WAIT: {
                                 long duration = ((Number) x.args()[0]).longValue();
                                 try {
-                                    new FluentWait<WebDriver>(driver)
-                                            .withTimeout(duration, TimeUnit.SECONDS)
-                                            .pollingEvery(duration, TimeUnit.SECONDS)
+                                    new FluentWait<>(driver)
+                                            .withTimeout(Duration.ofSeconds(duration))
                                             .ignoring(NoSuchElementException.class)
                                             .ignoring(TimeoutException.class)
                                             .until(ExpectedConditions.presenceOfElementLocated(By.id(UUID.randomUUID().toString())));
@@ -209,31 +209,31 @@ public class SeleniumFetchClient implements FetchClient {
     }
 
 
-    private DesiredCapabilities initDesiredCapabilities(Request request) {
-        DesiredCapabilities dc = new DesiredCapabilities();
-        dc.setJavascriptEnabled(true);
-
-        dc.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY,
-                Config.INIT_PHANTOMJS_PATH);
-
-
+//    private DesiredCapabilities initDesiredCapabilities(Request request) {
+//        DesiredCapabilities dc = new DesiredCapabilities();
+//        dc.setJavascriptEnabled(true);
+//
+//        dc.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY,
+//                Config.INIT_PHANTOMJS_PATH);
+//
+//
 //        Proxy proxy = new Proxy();
 //        proxy.setHttpProxy("127.0.0.1:1080");
 //        dc.setCapability(CapabilityType.PROXY,proxy);
+//
+//
+//        Map<String, String> headers = request.headers();
+//
+//        if (headers != null) {
+//            headers.forEach((k, v) -> setHeader(dc, k, v));
+//        }
+//
+//        return dc;
+//    }
 
-
-        Map<String, String> headers = request.headers();
-
-        if (headers != null) {
-            headers.forEach((k, v) -> setHeader(dc, k, v));
-        }
-
-        return dc;
-    }
-
-    private void setHeader(DesiredCapabilities dc, String name, String value) {
-        if (name.equalsIgnoreCase("host") || name.equalsIgnoreCase("accept-encoding"))
-            return;
-        dc.setCapability(PhantomJSDriverService.PHANTOMJS_PAGE_CUSTOMHEADERS_PREFIX + name, value);
-    }
+//    private void setHeader(DesiredCapabilities dc, String name, String value) {
+//        if (name.equalsIgnoreCase("host") || name.equalsIgnoreCase("accept-encoding"))
+//            return;
+//        dc.setCapability(PhantomJSDriverService.PHANTOMJS_PAGE_CUSTOMHEADERS_PREFIX + name, value);
+//    }
 }

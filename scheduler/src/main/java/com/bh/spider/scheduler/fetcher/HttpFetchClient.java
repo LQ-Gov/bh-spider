@@ -77,7 +77,6 @@ public class HttpFetchClient implements FetchClient {
 
                         Header[] headers = result.getAllHeaders();
                         Map<String, String> headerMap = new HashMap<>();
-
                         Arrays.stream(headers).forEach(x -> headerMap.put(x.getName(), x.getValue()));
 
 
@@ -120,7 +119,6 @@ public class HttpFetchClient implements FetchClient {
             case GET: {
                 uri = FetchContextUtils.instance().toURL(original).toURI();
                 base = new HttpGet(uri);
-
             }
             break;
             case POST:

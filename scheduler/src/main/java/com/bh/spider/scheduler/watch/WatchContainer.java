@@ -1,13 +1,12 @@
 package com.bh.spider.scheduler.watch;
 
-import io.netty.util.internal.ConcurrentSet;
-
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WatchContainer extends WatchPoint {
     private WatchPoint point;
 
-    private final Set<Watcher> watchers = new ConcurrentSet<>();
+    private final Set<Watcher> watchers = ConcurrentHashMap.newKeySet();
 
     public WatchContainer(WatchPoint point) {
         super();

@@ -41,7 +41,6 @@ public class FetchCallback {
 
             if (rule != null) {
 
-
                 Request req = ctx.request();
 
                 String[] chain = rule.extractor(String.valueOf(code));
@@ -56,8 +55,6 @@ public class FetchCallback {
                 this.scheduler.process(cmd);
             }
             this.trackContext.complete();
-
-
         });
 
     }

@@ -19,7 +19,7 @@
     </modules>
 
     <properties>
-        <httpclient.version>4.1.3</httpclient.version>
+        <httpclient.version>4.1.4</httpclient.version>
         <slf4j.version>1.7.25</slf4j.version>
         <logback.version>1.2.3</logback.version>
         <fastjson.version>1.2.29</fastjson.version>
@@ -27,11 +27,8 @@
         <commons-io.version>2.5</commons-io.version>
         <commons-codec.version>1.10</commons-codec.version>
         <junit.version>4.12</junit.version>
-        <spring.version>4.3.7.RELEASE</spring.version>
-        <jetty.version>9.4.6.v20170531</jetty.version>
-        <jackson.version>2.8.8</jackson.version>
         <google.guava.version>22.0</google.guava.version>
-        <jaskson.version>2.8.9</jaskson.version>
+        <jackson.version>2.9.7</jackson.version>
         <spring.boot.version>2.1.0.RELEASE</spring.boot.version>
     </properties>
 
@@ -53,6 +50,13 @@
                 <artifactId>httpasyncclient</artifactId>
                 <version>${httpclient.version}</version>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.6</version>
+            </dependency>
+
 
 
             <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->

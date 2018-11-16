@@ -48,8 +48,8 @@ import java.util.stream.Collectors;
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
     protected Config cfg;
-
     private Store store = null;
+    ServerBootstrap server;
 
     private volatile boolean closed = true;
     private EventLoop loop = null;
@@ -91,7 +91,7 @@ public class BasicScheduler implements IEvent {
 
 
     public boolean isClosed() {
-        return closed;
+        return false;
     }
 
 
@@ -167,28 +167,23 @@ public class BasicScheduler implements IEvent {
     protected void initLocalListen() throws InterruptedException {
 
         EventLoopGroup group = new NioEventLoopGroup(1);
-        EventLoopGroup worker = new NioEventLoopGroup();
         BasicScheduler me = this;
-        try {
-            ServerBootstrap server = new ServerBootstrap().group(group, worker)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
-                        @Override
-                        public void initChannel(SocketChannel ch) {
-                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
-                            ch.pipeline().addLast(new CommandDecoder());
-                            ch.pipeline().addLast(new CommandReceiveHandler(me));
+        server = new ServerBootstrap().group(group, new NioEventLoopGroup())
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
+                    @Override
+                    public void initChannel(SocketChannel ch) {
+                        ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
+                        ch.pipeline().addLast(new CommandDecoder());
+                        ch.pipeline().addLast(new CommandReceiveHandler(me));
 
-                        }
-                    })
-                    .option(ChannelOption.SO_REUSEADDR, true);
+                    }
+                })
+                .option(ChannelOption.SO_REUSEADDR, true);
 
-            logger.info("init command listen server:{}", Config.INIT_LISTEN_PORT);
-
-            ChannelFuture local = server.bind(Integer.valueOf(cfg.get(Config.INIT_LISTEN_PORT))).sync();
-        } finally {
-            group.shutdownGracefully();
-        }
+        int port = Integer.valueOf(cfg.get(Config.INIT_LISTEN_PORT));
+        ChannelFuture local = server.bind(port).sync();
+        logger.info("init command listen server:{}", port);
     }
 
     protected void initEventLoop() throws IOException, InterruptedException {
@@ -198,6 +193,7 @@ public class BasicScheduler implements IEvent {
         loop = new EventLoop(this, schedulerComponentHandler,
                 new SchedulerFetchHandler(this, this.domain),
                 new SchedulerWatchHandler());
+        logger.info("事件循环线程启动");
         loop.listen().join();
     }
 

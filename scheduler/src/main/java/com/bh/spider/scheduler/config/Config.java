@@ -45,15 +45,22 @@ public class Config {
     private static Config init0() {
         Config config = new Config();
         config.GLOBAL.put(INIT_DATA_PATH, "data/");
-        config.GLOBAL.put(INIT_LISTEN_PORT, 8033);
-        config.GLOBAL.put(INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors() * 2);
-        config.GLOBAL.put(INIT_STORE_BUILDER, "com.bh.spider.store.sqlite.SQLiteStoreBuilder");
-        config.GLOBAL.put(INIT_STORE_URL, "jdbc:sqlite:" + Paths.get(config.GLOBAL.get(INIT_DATA_PATH).toString(), "spider.store.db"));
-        config.GLOBAL.put(INIT_STORE_DRIVER, "org.sqlite.JDBC");
-        config.GLOBAL.put(INIT_STORE_USER, "root");
-        config.GLOBAL.put(INIT_STORE_PASSWORD, "root");
         config.GLOBAL.put(INIT_RUN_MODE, "stand-alone");
+        config.GLOBAL.put(INIT_LISTEN_PORT, "8033");
+        config.GLOBAL.put(INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors() * 2);
 
+
+
+        config.GLOBAL.put(INIT_STORE_BUILDER, "com.bh.spider.store.sqlite.SQLiteStoreBuilder");
+        //存储引擎默认动态配置
+        config.GLOBAL.put(INIT_STORE_PROPERTIES+"url","jdbc:sqlite:" + Paths.get(config.get(INIT_DATA_PATH), "spider.store.db"));
+        config.GLOBAL.put(INIT_STORE_PROPERTIES+"driver","org.sqlite.JDBC");
+        config.GLOBAL.put(INIT_STORE_PROPERTIES+"user","root");
+        config.GLOBAL.put(INIT_STORE_PROPERTIES+"password","root");
+
+
+
+        //集群默认动态配置
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"1","127.0.0.1:30051");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"2","127.0.0.1:30052");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"3","127.0.0.1:30053");

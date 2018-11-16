@@ -18,14 +18,14 @@ public class SQLiteStoreFactory {
     private String user;
     private String password;
     private String url;
-    private String dataPath;
+//    private String dataPath;
 
     public SQLiteStoreFactory(Properties properties){
-        this.driver = properties.getProperty("init.store.driver");
-        this.url = properties.getProperty("init.store.url");
-        this.user = properties.getProperty("init.store.user");
-        this.password = properties.getProperty("init.store.password");
-        this.dataPath = properties.getProperty("init.data.path");
+        this.driver = properties.getProperty("driver");
+        this.url = properties.getProperty("url");
+        this.user = properties.getProperty("user");
+        this.password = properties.getProperty("password");
+    //    this.dataPath = properties.getProperty("path");
 
         Preconditions.checkNotNull(this.driver,"the %s can't null or empty","init.store.driver");
         Preconditions.checkNotNull(this.url,"the %s can't null or empty","init.store.url");
@@ -46,7 +46,6 @@ public class SQLiteStoreFactory {
 //        Connection moduleConnection = DriverManager.getConnection("jdbc:sqlite:"+this.dataPath+"component.db", config);
 
         SQLiteStore store = new SQLiteStore(connection, null);
-
         return store;
     }
 }

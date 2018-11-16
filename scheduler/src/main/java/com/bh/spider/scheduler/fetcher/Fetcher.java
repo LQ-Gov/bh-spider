@@ -45,6 +45,13 @@ public class Fetcher implements IEvent {
         return false;
     }
 
+    /**
+     * 主要的抓取方法
+     * @param ctx 从客户端或其他端跟踪过来的Context
+     * @param req 要抓取的请求
+     * @param rule 定义规则
+     * @throws FetchExecuteException
+     */
     public void fetch(Context ctx, FetchRequest req, Rule rule) throws FetchExecuteException {
 
         FetchClientBuilder builder =
@@ -54,6 +61,7 @@ public class Fetcher implements IEvent {
 
         FetchClient client = builder.build();
 
+        //抓取上下文
         FetchContext context = new BasicFetchContext(this.scheduler, req);
 
         initHeaders(req);

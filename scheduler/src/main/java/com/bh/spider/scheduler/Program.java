@@ -30,11 +30,12 @@ public class Program {
         } else
             logger.warn("the config file {} not exists,program start with default config", file);
 
-//        System.setProperty("init.run.mode","cluster-master");
-//
+
 
 
         Config config = Config.init(properties);
+
+        System.setProperty("init.run.mode","cluster-master");
 
         Class<?> mode = RunModeClassFactory.get(config.get(Config.INIT_RUN_MODE));
         if (mode == null)
