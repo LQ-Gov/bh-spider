@@ -4,11 +4,10 @@ import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Command;
 import com.bh.spider.scheduler.config.Config;
 import io.atomix.cluster.Node;
+import io.atomix.cluster.discovery.BootstrapDiscoveryProvider;
 import io.atomix.core.Atomix;
+import io.atomix.core.AtomixBuilder;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Future;
 
@@ -29,32 +28,21 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     @Override
-    public synchronized void exec() throws Exception {
+    public synchronized void exec() {
 
-        mid = Objects.toString(cfg.get(Config.MY_ID));
+        mid = cfg.get(Config.MY_ID);
 
-        Atomix.Builder builder = Atomix.builder();
+        String address = cfg.get(Config.SPIDER_CLUSTER_PREFIX + mid);
 
-        String address = cfg.get(Config.SPIDER_CLUSTER_PREFIX + mid).toString();
+        AtomixBuilder builder = Atomix.builder();
 
-        builder.withLocalNode(
-                Node.builder(mid).withType(Node.Type.CORE).withAddress(address).build());
+        builder.withMemberId(mid).withAddress(address);
 
+        Node[] nodes = cfg.all(Config.SPIDER_CLUSTER_PREFIX).entrySet().stream().map(
+                x -> Node.builder().withId(Objects.toString(x.getKey())).withAddress(Objects.toString(x.getValue())).build()
+        ).toArray(Node[]::new);
 
-        cfg.toCollection();
-
-
-        List<Node> nodes = new LinkedList<>();
-        for (Map.Entry<Object, Object> entry : cfg.toCollection()) {
-            String key = entry.getKey().toString();
-            if (!key.startsWith(Config.SPIDER_CLUSTER_PREFIX)) continue;
-
-            String nid = key.substring(Config.SPIDER_CLUSTER_PREFIX.length());
-
-            Node node = Node.builder(nid).withAddress(Objects.toString(cfg.get(key))).build();
-
-            nodes.add(node);
-        }
+        builder.withMembershipProvider(BootstrapDiscoveryProvider.builder().withNodes(nodes).build());
 
 
         Atomix atomix = builder.build();

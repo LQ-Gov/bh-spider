@@ -144,4 +144,9 @@ public class EventLoop extends Thread {
 
     }
 
+
+    public EventLoop listen(){
+        this.start();
+        return this;
+    }
 }

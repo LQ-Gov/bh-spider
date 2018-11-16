@@ -26,7 +26,7 @@ public class SQLiteStoreBuilder implements StoreBuilder {
     @Override
     public Store build(Properties properties) throws SQLException, ClassNotFoundException {
 
-        String url = properties.getProperty("init.store.url", "jdbc:sqlite:spider.store.db");
+        String url = properties.getProperty( "init.store.url", "jdbc:sqlite:spider.store.db");
         String driver = properties.getProperty("init.store.sqlite.driver", "org.sqlite.JDBC");
 
         Class.forName(driver);

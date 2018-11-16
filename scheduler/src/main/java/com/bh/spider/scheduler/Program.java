@@ -20,20 +20,23 @@ public class Program {
 
 
         Properties properties = new Properties();
-        InputStream stream = Program.class.getResourceAsStream(file);
-        if (stream != null) {
-            properties.load(stream);
-            logger.info("load config from {}", file);
-        } else
-            logger.warn("the config file {} not exists,program start with default config", file);
-
-        System.setProperty("init.run.mode","cluster-master");
 
         properties.putAll(System.getProperties());
 
-        Config config = Config.build(properties);
+        InputStream stream = Program.class.getResourceAsStream(file);
+        if (stream != null) {
+            properties.load(stream);
+            logger.info("load config file from {}", file);
+        } else
+            logger.warn("the config file {} not exists,program start with default config", file);
 
-        Class<?> mode = RunModeClassFactory.get(config.get(Config.INIT_RUN_MODE).toString());
+//        System.setProperty("init.run.mode","cluster-master");
+//
+
+
+        Config config = Config.init(properties);
+
+        Class<?> mode = RunModeClassFactory.get(config.get(Config.INIT_RUN_MODE));
         if (mode == null)
             throw new Exception("not valid run mode");
 
@@ -42,7 +45,5 @@ public class Program {
                 .newInstance(config);
 
         scheduler.exec();
-
-
     }
 }

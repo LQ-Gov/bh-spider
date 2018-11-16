@@ -47,18 +47,22 @@ import java.util.stream.Collectors;
  */
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
+    protected Config cfg;
+
+    private Store store = null;
+
     private volatile boolean closed = true;
     private EventLoop loop = null;
     private JobCoreFactory jobFactory = null;
     private RuleFactory ruleFactory = null;
-    private Store store = null;
+
 
     private SchedulerComponentHandler schedulerComponentHandler;
 
 
     private Domain domain = new RootDomain();
 
-    protected Config cfg;
+
 
     public BasicScheduler(Config config) {
         this.cfg = config;
@@ -71,20 +75,18 @@ public class BasicScheduler implements IEvent {
 
 
     public synchronized void exec() throws Exception {
-        if (!closed) return;
-        closed = false;
-
+        //初始化存储文件夹
         initDirectory();
-        //init_system_signal_handles();
-        initJobFactory();
         //先初始化存储，其他模块依赖存储
         initStore();
+        //init_system_signal_handles();
+        initJobFactory();
+        //初始化规则工厂
+        initRuleFactory();
+        //初始化本地端口监听
+        initLocalListen();
+        //初始化事件循环线程
         initEventLoop();
-
-
-        initRuleFactory();//初始化规则工厂
-
-        initLocalListen();//初始化本地端口坚挺
     }
 
 
@@ -126,22 +128,16 @@ public class BasicScheduler implements IEvent {
 
 
     protected void initDirectory() throws IOException {
-        Path dataPath = Paths.get((String) cfg.get(Config.INIT_DATA_PATH));
-
-        boolean exists;
-        if ((exists = Files.exists(dataPath)) && !Files.isDirectory(dataPath))
-            throw new Error("the " + dataPath + "must be a directory");
-
-        if (!exists)
-            FileUtils.forceMkdir(dataPath.toFile());
+        Path dataPath = Paths.get(cfg.get(Config.INIT_DATA_PATH));
+        FileUtils.forceMkdir(dataPath.toFile());
     }
 
 
     //初始化数据库数据
     protected void initStore() throws Exception {
-        StoreBuilder builder = Store.builder((String) cfg.get(Config.INIT_STORE_BUILDER));
+        StoreBuilder builder = Store.builder(cfg.get(Config.INIT_STORE_BUILDER));
 
-        store = builder.build(cfg.aboutStore());
+        store = builder.build(cfg.all(Config.INIT_STORE_PROPERTIES));
 
         logger.info("init database store");
 
@@ -149,7 +145,7 @@ public class BasicScheduler implements IEvent {
 
 
     protected void initRuleFactory() throws IOException, SchedulerException {
-        String dataPath = (String) cfg.get(Config.INIT_DATA_PATH);
+        String dataPath = cfg.get(Config.INIT_DATA_PATH);
         Path path = Paths.get(dataPath,"rule");
         if(!Files.exists(path))
             Files.createDirectories(path);
@@ -178,7 +174,7 @@ public class BasicScheduler implements IEvent {
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
-                        public void initChannel(SocketChannel ch) throws Exception {
+                        public void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
                             ch.pipeline().addLast(new CommandDecoder());
                             ch.pipeline().addLast(new CommandReceiveHandler(me));
@@ -189,21 +185,20 @@ public class BasicScheduler implements IEvent {
 
             logger.info("init command listen server:{}", Config.INIT_LISTEN_PORT);
 
-            ChannelFuture local = server.bind((int) cfg.get(Config.INIT_LISTEN_PORT)).sync();
-            local.channel().closeFuture().sync();
+            ChannelFuture local = server.bind(Integer.valueOf(cfg.get(Config.INIT_LISTEN_PORT))).sync();
         } finally {
             group.shutdownGracefully();
         }
     }
 
-    protected void initEventLoop() throws IOException {
+    protected void initEventLoop() throws IOException, InterruptedException {
 
         schedulerComponentHandler = new SchedulerComponentHandler(cfg, this);
 
         loop = new EventLoop(this, schedulerComponentHandler,
                 new SchedulerFetchHandler(this, this.domain),
                 new SchedulerWatchHandler());
-        loop.start();
+        loop.listen().join();
     }
 
 

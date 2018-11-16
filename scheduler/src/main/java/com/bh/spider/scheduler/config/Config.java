@@ -1,9 +1,12 @@
 package com.bh.spider.scheduler.config;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Created by lq on 17-3-29.
@@ -22,7 +25,11 @@ public class Config {
     public static final String INIT_PHANTOMJS_PATH = "init.phantomjs.path";
 
     //数据库存储配置
-    public static final String INIT_STORE_BUILDER = "init.store.builder"; //数据库存储类型
+    public static final String INIT_STORE_BUILDER = "init.store.builder"; //存储引擎类型
+    public static final String INIT_STORE_PROPERTIES="init.store.properties.";//存储引擎类型配置前缀
+
+
+
     public static final String INIT_STORE_URL = "init.store.url";
     public static final String INIT_STORE_USER = "init.store.user";
     public static final String INIT_STORE_PASSWORD = "init.store.password";
@@ -35,7 +42,7 @@ public class Config {
 
     public static final String MY_ID = "my.id";
 
-    private static Config build0() {
+    private static Config init0() {
         Config config = new Config();
         config.GLOBAL.put(INIT_DATA_PATH, "data/");
         config.GLOBAL.put(INIT_LISTEN_PORT, 8033);
@@ -69,8 +76,8 @@ public class Config {
     }
 
 
-    public static Config build(Properties properties) {
-        Config config = build0();
+    public static Config init(Properties properties) {
+        Config config = init0();
         if (properties != null)
             config.GLOBAL.putAll(properties);
 
@@ -78,8 +85,26 @@ public class Config {
     }
 
 
-    public Object get(String name) {
-        return GLOBAL.get(name);
+    public String get(String name) {
+        return String.valueOf(GLOBAL.get(name));
+    }
+
+
+    public Properties all(){
+        return GLOBAL;
+    }
+
+    public Properties all(String prefix) {
+        if (StringUtils.isBlank(prefix)) return GLOBAL;
+
+        Properties properties = new Properties();
+
+        GLOBAL.entrySet().stream()
+                .filter(x -> String.valueOf(x.getKey()).startsWith(prefix))
+                .forEach(x -> properties.put(String.valueOf(x.getKey()).substring(prefix.length()), x.getValue()));
+
+        return properties;
+
     }
 
 
