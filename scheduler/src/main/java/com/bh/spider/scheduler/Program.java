@@ -21,6 +21,7 @@ public class Program {
 
         Properties properties = new Properties();
 
+        System.setProperty("init.run.mode","cluster-master");
         properties.putAll(System.getProperties());
 
         InputStream stream = Program.class.getResourceAsStream(file);
@@ -34,8 +35,6 @@ public class Program {
 
 
         Config config = Config.init(properties);
-
-        System.setProperty("init.run.mode","cluster-master");
 
         Class<?> mode = RunModeClassFactory.get(config.get(Config.INIT_RUN_MODE));
         if (mode == null)

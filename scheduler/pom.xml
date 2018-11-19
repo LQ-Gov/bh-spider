@@ -154,6 +154,14 @@
             </exclusions>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/io.atomix/atomix-raft -->
+        <dependency>
+            <groupId>io.atomix</groupId>
+            <artifactId>atomix-raft</artifactId>
+            <version>3.0.8</version>
+        </dependency>
+
+
     </dependencies>
 
 
