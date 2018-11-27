@@ -3,13 +3,20 @@ package com.bh.spider.scheduler.cluster;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Command;
 import com.bh.spider.scheduler.config.Config;
+import io.atomix.cluster.MemberId;
 import io.atomix.cluster.Node;
 import io.atomix.cluster.discovery.BootstrapDiscoveryProvider;
 import io.atomix.core.Atomix;
 import io.atomix.core.AtomixBuilder;
-import io.atomix.primitive.partition.PartitionGroup;
+import io.atomix.core.election.LeaderElection;
+import io.atomix.protocols.backup.partition.PrimaryBackupPartitionGroup;
 import io.atomix.protocols.raft.partition.RaftPartitionGroup;
+import io.atomix.utils.serializer.Namespace;
+import io.atomix.utils.serializer.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.Future;
@@ -18,10 +25,14 @@ import java.util.concurrent.Future;
  * Created by lq on 17-3-17.
  */
 public class ClusterScheduler extends BasicScheduler {
-    private String mid = null;
+    private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
+    private String mid;
 
-    public ClusterScheduler(Config cfg){
+    private Atomix atomix;
+
+    public ClusterScheduler(Config cfg) {
         super(cfg);
+        mid = cfg.get(Config.MY_ID);
     }
 
     @Override
@@ -31,10 +42,17 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     @Override
-    public synchronized void exec() {
+    protected void initOthers() {
+        initAtomix();
+    }
 
-        mid = cfg.get(Config.MY_ID);
 
+    @Override
+    public synchronized void exec() throws Exception {
+        initAtomix();
+    }
+
+    private void initAtomix() {
         String address = cfg.get(Config.SPIDER_CLUSTER_PREFIX + mid);
 
         AtomixBuilder builder = Atomix.builder();
@@ -48,14 +66,40 @@ public class ClusterScheduler extends BasicScheduler {
 
         String[] memberIds = Arrays.stream(nodes).map(x -> x.id().id()).toArray(String[]::new);
 
-        builder.withManagementGroup(RaftPartitionGroup.builder("data")
-                .withNumPartitions(1).withMembers(memberIds).build());
 
+        RaftPartitionGroup raftPartitionGroup = RaftPartitionGroup.builder("system")
+                .withNumPartitions(1)
+                .withMembers(memberIds)
+                .withDataDirectory(Paths.get(cfg.get(Config.INIT_DATA_PATH), "consensus-" + mid).toFile()).build();
+
+        //配置数据分区
+        builder.withManagementGroup(raftPartitionGroup);
+
+
+        builder.withPartitionGroups(PrimaryBackupPartitionGroup.builder("data")
+                .withNumPartitions(3)
+                .build());
 
         builder.withMembershipProvider(BootstrapDiscoveryProvider.builder().withNodes(nodes).build());
 
+        atomix = builder.build();
 
-        Atomix atomix = builder.build();
         atomix.start().join();
+
+
+        LeaderElection<MemberId> leaderElection = atomix.<MemberId>leaderElectionBuilder("atomix-election")
+                .withSerializer(Serializer.using(Namespace.builder().register(MemberId.class).build()))
+                .build();
+
+        leaderElection.addListener(event -> {
+            logger.info("选举了新的leader:{}", event.newLeadership().leader().id());
+        });
+
+        leaderElection.run(MemberId.from(mid));
+
+
+        logger.info("过去了join");
+
     }
+
 }

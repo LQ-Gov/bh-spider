@@ -85,6 +85,9 @@ public class BasicScheduler implements IEvent {
         initRuleFactory();
         //初始化本地端口监听
         initLocalListen();
+
+        //初始化其它
+        initOthers();
         //初始化事件循环线程
         initEventLoop();
     }
@@ -125,6 +128,9 @@ public class BasicScheduler implements IEvent {
         logger.info("init component of handle system signal");
 
     }
+
+
+    protected void initOthers(){}
 
 
     protected void initDirectory() throws IOException {
