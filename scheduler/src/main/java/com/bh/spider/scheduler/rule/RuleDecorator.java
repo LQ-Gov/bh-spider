@@ -7,7 +7,7 @@ import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
 import com.bh.spider.scheduler.job.JobExecutor;
 import com.bh.spider.store.service.FetchService;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.SchedulerException;
 

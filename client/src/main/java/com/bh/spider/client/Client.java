@@ -11,7 +11,7 @@ import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.JsonFactory;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.DataOutputStream;

@@ -2,6 +2,10 @@ package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Command;
+import com.bh.spider.scheduler.cluster.domain.DistributedDomain;
+import com.bh.spider.scheduler.cluster.domain.DistributedDomainBuilder;
+import com.bh.spider.scheduler.cluster.domain.DistributedDomainType;
+import com.bh.spider.scheduler.cluster.domain.impl.DomainImpl;
 import com.bh.spider.scheduler.config.Config;
 import io.atomix.cluster.MemberId;
 import io.atomix.cluster.Node;
@@ -9,7 +13,9 @@ import io.atomix.cluster.discovery.BootstrapDiscoveryProvider;
 import io.atomix.core.Atomix;
 import io.atomix.core.AtomixBuilder;
 import io.atomix.core.election.LeaderElection;
+import io.atomix.protocols.backup.MultiPrimaryProtocol;
 import io.atomix.protocols.backup.partition.PrimaryBackupPartitionGroup;
+import io.atomix.protocols.raft.MultiRaftProtocol;
 import io.atomix.protocols.raft.partition.RaftPartitionGroup;
 import io.atomix.utils.serializer.Namespace;
 import io.atomix.utils.serializer.Serializer;
@@ -87,7 +93,13 @@ public class ClusterScheduler extends BasicScheduler {
         atomix.start().join();
 
 
-        LeaderElection<MemberId> leaderElection = atomix.<MemberId>leaderElectionBuilder("atomix-election")
+        DistributedDomain domain=atomix.primitiveBuilder("cluster-com.bh.spider.scheduler.domain", DistributedDomainType.instance())
+                .withProtocol(MultiPrimaryProtocol.builder().build())
+                .build();
+
+
+
+        LeaderElection<MemberId> leaderElection = atomix.<MemberId>leaderElectionBuilder("cluster-election")
                 .withSerializer(Serializer.using(Namespace.builder().register(MemberId.class).build()))
                 .build();
 
@@ -97,8 +109,17 @@ public class ClusterScheduler extends BasicScheduler {
 
         leaderElection.run(MemberId.from(mid));
 
+        if("3".equals(mid)) {
+            logger.info("设置名称");
+        }
 
-        logger.info("过去了join");
+//        if("3".equals(mid))
+//            logger.info("测试用的nodeName:{}", com.bh.spider.scheduler.domain.nodeName());
+
+
+
+
+
 
     }
 

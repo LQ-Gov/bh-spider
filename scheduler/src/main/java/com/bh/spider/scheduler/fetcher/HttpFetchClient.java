@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.fetcher;
 import com.bh.spider.fetch.FetchContextUtils;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.apache.http.*;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;

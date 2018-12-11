@@ -1,6 +1,6 @@
 package com.bh.spider.client;
 
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.junit.Before;
 import org.junit.Test;
 

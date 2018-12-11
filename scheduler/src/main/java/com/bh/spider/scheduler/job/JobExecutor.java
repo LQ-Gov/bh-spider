@@ -14,7 +14,7 @@ public class JobExecutor {
 
     public enum State {RUNNING, STOP, BLOCK, ERROR}
 
-    private JobCoreFactory factory;
+    private JobCoreScheduler factory;
     private String id;
     private JobDetail detail;
 
@@ -22,7 +22,7 @@ public class JobExecutor {
 
     private BasicScheduler scheduler;
 
-    public JobExecutor(JobCoreFactory factory, JobDetail detail, BasicScheduler scheduler) {
+    public JobExecutor(JobCoreScheduler factory, JobDetail detail, BasicScheduler scheduler) {
 
         this.factory = factory;
         this.detail = detail;
@@ -48,7 +48,7 @@ public class JobExecutor {
 
         map.put("basic-scheduler", scheduler);
 
-        factory.scheduler(this);
+       // factory.scheduler(this);
     }
 
 

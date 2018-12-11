@@ -4,7 +4,7 @@ import com.bh.spider.fetch.Extractor;
 import com.bh.spider.query.Query;
 import com.bh.spider.scheduler.component.ComponentBuildException;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
-import com.bh.spider.scheduler.component.ComponentProxy;
+import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.EventMapping;
@@ -21,40 +21,35 @@ public class SchedulerComponentHandler implements IAssist {
 
 
     public SchedulerComponentHandler(Config cfg, BasicScheduler scheduler) throws IOException {
-        factory = new ComponentCoreFactory(cfg, scheduler.store().component());
+        factory = new ComponentCoreFactory(cfg);
     }
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) {
+    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
 
-        ComponentProxy proxy = factory.proxy(type);
+        ComponentRepository proxy = factory.proxy(type);
+        if (proxy == null)
+            throw new Exception("unknown component type");
+        proxy.save(data, name, description, true);
 
-        try {
-            if (proxy == null)
-                throw new Exception("unknown component type");
-            proxy.save(data, name, type, description, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @EventMapping
-    protected void GET_MODULE_LIST_HANDLER(Context ctx, Query query) {
+    protected void GET_MODULE_LIST_HANDLER(Context ctx,Component.Type type) {
 
-        ComponentProxy proxy = factory.proxy();
-        List<Component> list = proxy.select(query);
-        ctx.write(list);
+        ComponentRepository proxy = factory.proxy(type);
+        ctx.write(proxy.all());
     }
 
     @EventMapping
-    protected void DELETE_MODULE_HANDLER(Context ctx, Query query) throws IOException {
-        factory.proxy().delete(query);
+    protected void DELETE_MODULE_HANDLER(Context ctx, String name,Component.Type type) throws IOException {
+        factory.proxy(type).delete(name);
     }
 
-    public Extractor extractorComponent(String componentName) throws IOException, ComponentBuildException {
-        return factory.extractorComponent(componentName);
-    }
+//    public Extractor extractorComponent(String componentName) throws IOException, ComponentBuildException {
+//        return factory.extractorComponent(componentName);
+//    }
 
     public Component component(Component.Type type, String componentName) throws IOException {
         return factory.proxy(type).get(componentName);

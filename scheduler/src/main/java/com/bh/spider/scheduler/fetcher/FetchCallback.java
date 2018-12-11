@@ -8,7 +8,7 @@ import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Command;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.apache.commons.lang3.ArrayUtils;
 
 /**

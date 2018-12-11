@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.rule;
 
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;

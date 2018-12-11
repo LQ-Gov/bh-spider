@@ -2,22 +2,20 @@ package com.bh.spider.scheduler;
 
 import com.bh.spider.fetch.Extractor;
 import com.bh.spider.fetch.Request;
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.component.ComponentBuildException;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.domain.BasicDomain;
+import com.bh.spider.scheduler.domain.RuleController;
 import com.bh.spider.scheduler.event.EventLoop;
-import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IEvent;
-import com.bh.spider.scheduler.job.ExceptionRuleObject;
-import com.bh.spider.scheduler.job.JobCoreFactory;
-import com.bh.spider.scheduler.job.JobExecutor;
-import com.bh.spider.scheduler.job.RuleExecuteObject;
-import com.bh.spider.scheduler.rule.*;
+import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.store.base.StoreBuilder;
 import com.bh.spider.transfer.CommandCode;
+import com.bh.spider.transfer.JsonFactory;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.transfer.entity.Rule;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -28,7 +26,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +35,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -47,20 +45,26 @@ import java.util.stream.Collectors;
  */
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
+    private final static String RULE_DIR="rule";
+    private final static String DEPENDENT_DIR="jar";
+    private final static String SCRIPT_DIR="groovy";
+
     protected Config cfg;
+
     private Store store = null;
-    ServerBootstrap server;
+
+    private ServerBootstrap server;
 
     private volatile boolean closed = true;
-    private EventLoop loop = null;
-    private JobCoreFactory jobFactory = null;
-    private RuleFactory ruleFactory = null;
 
+    private EventLoop loop = null;
+
+    private JobCoreScheduler jobCoreScheduler = null;
 
     private SchedulerComponentHandler schedulerComponentHandler;
 
 
-    private Domain domain = new RootDomain();
+    private com.bh.spider.scheduler.domain.Domain domain = null;
 
 
 
@@ -76,13 +80,15 @@ public class BasicScheduler implements IEvent {
 
     public synchronized void exec() throws Exception {
         //初始化存储文件夹
-        initDirectory();
+        initDirectories();
         //先初始化存储，其他模块依赖存储
         initStore();
+        //初始化domain tree
+        initDomainTree();
         //init_system_signal_handles();
-        initJobFactory();
-        //初始化规则工厂
-        initRuleFactory();
+        initJobScheduler();
+        //初始化历史规则控制器
+        initRuleController();
         //初始化本地端口监听
         initLocalListen();
 
@@ -100,7 +106,6 @@ public class BasicScheduler implements IEvent {
 
     public Future process(Command cmd) {
         return loop.execute(cmd);
-
     }
 
 
@@ -133,9 +138,17 @@ public class BasicScheduler implements IEvent {
     protected void initOthers(){}
 
 
-    protected void initDirectory() throws IOException {
+    protected void initDirectories() throws IOException {
         Path dataPath = Paths.get(cfg.get(Config.INIT_DATA_PATH));
+        //创建基础文件夹
         FileUtils.forceMkdir(dataPath.toFile());
+        //创建规则文件夹
+        FileUtils.forceMkdir(Paths.get(dataPath.toString(), RULE_DIR).toFile());
+        //创建依赖包文件夹(jar)
+        FileUtils.forceMkdir(Paths.get(dataPath.toString(), DEPENDENT_DIR).toFile());
+        //创建解析脚本文件夹(groovy)
+        FileUtils.forceMkdir(Paths.get(dataPath.toString(), SCRIPT_DIR).toFile());
+
     }
 
 
@@ -149,24 +162,27 @@ public class BasicScheduler implements IEvent {
 
     }
 
+    protected void initDomainTree() {
+        domain = new BasicDomain(".", null);
+    }
 
-    protected void initRuleFactory() throws IOException, SchedulerException {
-        String dataPath = cfg.get(Config.INIT_DATA_PATH);
-        Path path = Paths.get(dataPath,"rule");
-        if(!Files.exists(path))
-            Files.createDirectories(path);
 
-        ruleFactory = new RuleFactory(path.toString());
-        List<Rule> rules = ruleFactory.get();
+    protected void initRuleController() throws Exception {
+        Path ruleDirectory = Paths.get(cfg.get(Config.INIT_DATA_PATH), "rule");
 
-        for (Rule rule : rules) {
-            executeRule(rule, true);
+        List<Path> filePaths = Files.list(ruleDirectory).filter(x -> x.endsWith(".json")).collect(Collectors.toList());
+
+        for(Path filePath:filePaths ) {
+            List<Rule> rules = JsonFactory.get().readValue(filePath.toFile(),
+                    JsonFactory.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
+
+            for (Rule rule : rules) {
+                com.bh.spider.scheduler.domain.Domain d = domain.put(rule.getHost());
+                RuleController controller = RuleController.build(rule, this, d);
+                com.bh.spider.scheduler.domain.RuleDecorator decorator = new com.bh.spider.scheduler.domain.RuleDecorator(rule, controller,d);
+                d.bindRule(decorator);
+            }
         }
-
-        RuleDecorator defaultRule = new DefaultRuleDecorator(store.request(), jobFactory.build(RuleExecuteObject.class));
-        RuleDecorator exceptionRule = new ExceptionRuleDecorator(store.request(), jobFactory.build(ExceptionRuleObject.class));
-        domain.addRule(defaultRule);
-        domain.addRule(exceptionRule);
     }
 
 
@@ -197,170 +213,18 @@ public class BasicScheduler implements IEvent {
         schedulerComponentHandler = new SchedulerComponentHandler(cfg, this);
 
         loop = new EventLoop(this, schedulerComponentHandler,
-                new SchedulerFetchHandler(this, this.domain),
+                new SchedulerRuleHandler(this, this.jobCoreScheduler, domain),
+                new SchedulerFetchHandler(this, null),
                 new SchedulerWatchHandler());
         logger.info("事件循环线程启动");
         loop.listen().join();
     }
 
 
-    protected void initJobFactory() throws SchedulerException {
-        jobFactory = new JobCoreFactory(this);
-        jobFactory.start();
-    }
-
-    protected void executeRule(Rule rule, boolean loadStore) throws SchedulerException {
-        String host = rule.getHost();
-
-        Domain matcher;
-
-        if (".".equals(rule.getHost())) matcher = domain;
-
-        else {
-            matcher = domain.match(host, true);
-
-            if (matcher == null)
-                matcher = domain.add(host);
-        }
-
-        JobExecutor je = jobFactory.build(RuleExecuteObject.class);
-
-        RuleDecorator decorator = new RuleDecorator(store.request(), rule, je);
-        matcher.addRule(decorator);
-        decorator.exec();
-
+    protected void initJobScheduler() throws SchedulerException {
+        jobCoreScheduler = new JobCoreScheduler(this);
+        jobCoreScheduler.start();
     }
 
 
-    @EventMapping
-    protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws SchedulerException, IOException, RuleBindException {
-
-
-        String host = rule.getHost();
-        if (StringUtils.isNotBlank(host)) {
-
-            host = host.trim();
-            if ("exception".equals(host))
-                throw new RuleBindException("can't bind rule for exception");
-        }
-        rule.setId(UUID.randomUUID().toString());
-        ruleFactory.save(rule);
-        executeRule(rule, false);
-    }
-
-
-    @EventMapping
-    protected void GET_RULE_LIST_HANDLER(Context ctx, String host, int skip, int size) {
-
-        List<Rule> rules = new LinkedList<>();
-
-        if (StringUtils.isBlank(host)) {
-            Stack<Domain> stack = new Stack<>();
-            stack.add(domain);
-
-            while (!stack.isEmpty()) {
-                Domain it = stack.pop();
-                rules.addAll(it.rules().stream().map(x -> ((RuleDecorator) x).original()).collect(Collectors.toList()));
-                stack.addAll(it.children());
-
-            }
-
-        } else {
-
-            Domain matcher = domain.match(host, true);
-
-            rules = matcher == null ? rules : matcher.rules();
-        }
-
-        if (size < 0) size = Math.max(rules.size() - skip, 0);
-
-        rules = rules.subList(skip, Math.min(skip + size, rules.size()));
-
-        ctx.write(rules);
-    }
-
-
-    //edit 暂时不开放
-    @EventMapping
-    protected void EDIT_RULE_HANDLER(Context ctx, String host, String id, Rule rule) throws Exception {
-//        Domain matcher = domain.match(host,true);
-//
-//        if(matcher==null) throw new Exception("");
-//        List<Rule> rules = matcher.rules();
-//
-//        for(Rule it:rules){
-//            if(it.getId().equals(id)){
-//                RuleDecorator decorator = (RuleDecorator) it;
-//                decorator.pause();
-//
-//                decorator.setCron(rule.getCron());
-//                decorator.setValid(rule.isValid());
-//
-//                decorator.exec();
-//            }
-//        }
-
-    }
-
-
-    @EventMapping
-    protected void DELETE_RULE_HANDLER(Context ctx, String host, String id) throws Exception {
-        Domain matcher = domain.match(host, true);
-        if (matcher == null) throw new Exception("");
-
-        List<Rule> rules = matcher.rules();
-
-        if (rules != null) {
-            Iterator<Rule> it = rules.iterator();
-
-            while (it.hasNext()) {
-                Rule rule = it.next();
-                if (rule.getId().equals(id)) {
-                    RuleDecorator decorator = (RuleDecorator) rule;
-                    decorator.destroy();
-                    it.remove();
-                    ruleFactory.delete(rule);
-                    break;
-                }
-            }
-        }
-    }
-
-
-    @EventMapping
-    protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, String host, String id, boolean valid) throws Exception {
-        Domain matcher = domain.match(host, true);
-        if (matcher == null) throw new Exception("");
-
-        List<Rule> rules = matcher.rules();
-
-        if (rules != null) {
-
-            for (Rule it : rules) {
-                if (it.getId().equals(id)) {
-                    RuleDecorator decorator = (RuleDecorator) it;
-                    JobExecutor.State state = valid ? decorator.exec() : decorator.pause();
-
-                    if (state == JobExecutor.State.ERROR)
-                        throw new Exception("scheduler rule executor error");
-
-                    break;
-                }
-            }
-        }
-    }
-
-
-    @EventMapping
-    protected synchronized void SCHEDULER_CLOSE_HANDLER() {
-        if (isClosed()) return;
-
-        try {
-            jobFactory.close();
-        } catch (SchedulerException e) {
-            e.printStackTrace();
-        }
-
-        closed = true;
-    }
 }

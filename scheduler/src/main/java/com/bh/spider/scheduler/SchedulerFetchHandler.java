@@ -11,7 +11,7 @@ import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.fetcher.FetchExecuteException;
 import com.bh.spider.scheduler.fetcher.Fetcher;
 import com.bh.spider.scheduler.rule.*;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,19 +78,16 @@ public class SchedulerFetchHandler implements IAssist {
     @EventMapping
     protected void REPORT_HANDLER(Context ctx, FetchRequest req, Rule rule, FetchState state) {
 
-        String ruleId = rule==null?null:rule.getId();
+        String ruleId = rule == null ? null : rule.id();
 
-        if(ruleId!=null&&req!=null&&req.id()>0){
+        if (ruleId != null && req != null && req.id() > 0) {
             Condition condition = Condition.where("id").is(req.id());
 
             condition.and(Condition.where("hash").is(req.hash()));
 
-            scheduler.store().request().update(condition,state);
+            scheduler.store().request().update(condition, state);
 
             logger.info(Markers.ANALYSIS, "the report of request,rule:{},state:{},message:{}", ruleId, state.getState(), state.getMessage());
         }
-
-
-
     }
 }

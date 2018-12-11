@@ -12,7 +12,7 @@ public class FetchCookie implements Cookie {
     private String comment;     // Comment=VALUE ... describes cookie's use
     private String commentURL;  // CommentURL="http URL" ... describes cookie's use
     private boolean discard;  // Discard ... discard cookie unconditionally
-    private String domain;      // Domain=VALUE ... domain that sees cookie
+    private String domain;      // Domain=VALUE ... com.bh.spider.scheduler.domain that sees cookie
     private long maxAge = MAX_AGE_UNSPECIFIED;  // Max-Age=VALUE ... cookies auto-expire
     private String path;        // Path=VALUE ... URLs that see the cookie
     private boolean secure;     // Secure ... e.g. use SSL

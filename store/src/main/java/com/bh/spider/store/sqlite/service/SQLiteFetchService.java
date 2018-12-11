@@ -12,7 +12,7 @@ import com.bh.spider.store.sqlite.SQLiteIndex;
 import com.bh.spider.store.sqlite.SQLiteQueryInterpreter;
 import com.bh.spider.store.sqlite.SQLiteStore;
 import com.bh.spider.transfer.JsonFactory;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

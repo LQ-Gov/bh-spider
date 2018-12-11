@@ -23,9 +23,10 @@
         <slf4j.version>1.7.25</slf4j.version>
         <logback.version>1.2.3</logback.version>
         <fastjson.version>1.2.29</fastjson.version>
-        <commons-lang3.version>3.6</commons-lang3.version>
+        <commons-lang3.version>3.8.1</commons-lang3.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-codec.version>1.10</commons-codec.version>
+        <commons-collections4.version>4.2</commons-collections4.version>
         <junit.version>4.12</junit.version>
         <google.guava.version>22.0</google.guava.version>
         <jackson.version>2.9.7</jackson.version>
@@ -86,6 +87,13 @@
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
+            </dependency>
+
 
 
             <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->

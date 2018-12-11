@@ -6,7 +6,7 @@ import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
 import com.bh.spider.scheduler.job.JobExecutor;
 import com.bh.spider.store.service.FetchService;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 
 import java.util.List;
 import java.util.UUID;

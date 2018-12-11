@@ -16,26 +16,25 @@ public class Component implements Serializable {
         CONFIG,
         COMMON,
         EXTRACTOR,
-        SYSTEM
+        SYSTEM,
+        JAR,
+        GROOVY
+
+
+
     }
 
-    private long id;
     private String name;
-    private String path;
     private String hash;
     private Type type;
-    private String detail;
-    private Date updateTime;
+    private String description;
 
-    private State state = State.NULL;
+    public Component(){}
 
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
+    public Component(String name,Type type){
+        this.name = name;
+        this.type = type;
     }
 
     public String getName() {
@@ -46,13 +45,6 @@ public class Component implements Serializable {
         this.name = name;
     }
 
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
 
     public String getHash() {
         return hash;
@@ -70,28 +62,11 @@ public class Component implements Serializable {
         this.type = type;
     }
 
-    public Date getUpdateTime() {
-        return updateTime;
+    public String getDescription() {
+        return description;
     }
 
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public String getDetail() {
-        return detail;
-    }
-
-    public void setDetail(String detail) {
-        this.detail = detail;
-    }
-
-
-    public State getState() {
-        return state;
-    }
-
-    public void setState(State state) {
-        this.state = state;
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

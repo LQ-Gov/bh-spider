@@ -6,7 +6,7 @@ import com.bh.spider.fetch.impl.FetchRequest;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.IEvent;
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.util.Collection;

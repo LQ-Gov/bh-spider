@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.rule;
 
-import com.bh.spider.transfer.entity.Rule;
+import com.bh.spider.rule.Rule;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -104,7 +104,7 @@ public class Domain {
 
     public void add(Collection<Domain> domains) {
         for (Domain it : domains)
-            this.add(it);
+        this.add(it);
     }
 
 
