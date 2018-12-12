@@ -2,7 +2,7 @@ package com.bh.spider.scheduler.fetcher;
 
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
-import com.bh.spider.transfer.entity.DriverSetting;
+import com.bh.spider.rule.DriverRule;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.rule.Script;
 import org.openqa.selenium.*;
@@ -115,7 +115,7 @@ public class SeleniumFetchClient implements FetchClient {
     @Override
     public void execute(Request request, Rule rule, FetchCallback callback) {
         workers.execute(() -> {
-            DriverSetting setting = rule != null ? rule.driver() : null;
+            DriverRule driverRule = (DriverRule)rule;
 
             try {
                 String url = request.url().toString();
@@ -129,13 +129,13 @@ public class SeleniumFetchClient implements FetchClient {
 
                 //driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
                 driver.manage().window().maximize();
-                driver.manage().timeouts().pageLoadTimeout(setting == null || setting.getTimeout() <= 0 ? 15 : setting.getTimeout(), TimeUnit.SECONDS);
+                driver.manage().timeouts().pageLoadTimeout(driverRule == null || driverRule.getTimeout() <= 0 ? 15 : driverRule.getTimeout(), TimeUnit.SECONDS);
 
                 driver.get(url);
 
-                if (setting != null) {
+                if (driverRule != null) {
 
-                    List<Script> scripts = setting.scripts();
+                    List<Script> scripts = driverRule.scripts();
 
                     scripts.forEach(x -> {
                         switch (x.operator()) {

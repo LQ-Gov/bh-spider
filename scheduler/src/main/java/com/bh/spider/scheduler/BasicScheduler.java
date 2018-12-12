@@ -1,9 +1,7 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.fetch.Extractor;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.component.ComponentBuildException;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.BasicDomain;
@@ -46,8 +44,6 @@ import java.util.stream.Collectors;
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
     private final static String RULE_DIR="rule";
-    private final static String DEPENDENT_DIR="jar";
-    private final static String SCRIPT_DIR="groovy";
 
     protected Config cfg;
 
@@ -60,9 +56,6 @@ public class BasicScheduler implements IEvent {
     private EventLoop loop = null;
 
     private JobCoreScheduler jobCoreScheduler = null;
-
-    private SchedulerComponentHandler schedulerComponentHandler;
-
 
     private com.bh.spider.scheduler.domain.Domain domain = null;
 
@@ -112,16 +105,6 @@ public class BasicScheduler implements IEvent {
     private void close() {
         //process(Commands.CLOSE);
     }
-
-    public Extractor extractorComponent(String componentName) throws IOException, ComponentBuildException {
-        return schedulerComponentHandler.extractorComponent(componentName);
-    }
-
-    public Component component(Component.Type type, String componentName) throws IOException {
-        return schedulerComponentHandler.component(type, componentName);
-    }
-
-
     public void submit(Context ctx, Request req) {
         Command cmd = new Command(CommandCode.SUBMIT_REQUEST, ctx, new Object[]{req});
         this.process(cmd);
@@ -145,9 +128,9 @@ public class BasicScheduler implements IEvent {
         //创建规则文件夹
         FileUtils.forceMkdir(Paths.get(dataPath.toString(), RULE_DIR).toFile());
         //创建依赖包文件夹(jar)
-        FileUtils.forceMkdir(Paths.get(dataPath.toString(), DEPENDENT_DIR).toFile());
+        FileUtils.forceMkdir(Paths.get(dataPath.toString(), Component.Type.JAR.name()).toFile());
         //创建解析脚本文件夹(groovy)
-        FileUtils.forceMkdir(Paths.get(dataPath.toString(), SCRIPT_DIR).toFile());
+        FileUtils.forceMkdir(Paths.get(dataPath.toString(), Component.Type.GROOVY.name()).toFile());
 
     }
 
@@ -209,10 +192,8 @@ public class BasicScheduler implements IEvent {
     }
 
     protected void initEventLoop() throws IOException, InterruptedException {
-
-        schedulerComponentHandler = new SchedulerComponentHandler(cfg, this);
-
-        loop = new EventLoop(this, schedulerComponentHandler,
+        loop = new EventLoop(this,
+                new SchedulerComponentHandler(cfg,this),
                 new SchedulerRuleHandler(this, this.jobCoreScheduler, domain),
                 new SchedulerFetchHandler(this, null),
                 new SchedulerWatchHandler());

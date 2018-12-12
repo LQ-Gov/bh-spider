@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster.domain.impl;
 
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.cluster.domain.DistributedDomainService;
 import com.bh.spider.scheduler.domain.Domain;
 import com.bh.spider.scheduler.domain.RuleController;
@@ -72,12 +73,12 @@ public class DefaultDistributedDomainService extends AbstractPrimitiveService<Di
     }
 
     @Override
-    public void bindRule(RuleController rule) {
+    public void bindRule(Rule rule) {
         impl.bindRule(rule);
     }
 
     @Override
-    public Collection<RuleController> rules() {
+    public Collection<Rule> rules() {
         return impl.rules();
     }
 

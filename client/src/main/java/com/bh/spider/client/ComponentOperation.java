@@ -38,32 +38,14 @@ public class ComponentOperation {
     }
 
     public void submit(String name, Class<?> cls, String desc) throws IOException {
-        Preconditions.checkArgument(cls != null, "you must special a valid class");
-        URL url = cls.getResource("");
 
-        Preconditions.checkNotNull(url, "can't get path of %s", cls.getName());
-
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + cls.getSimpleName() + ".*");
-        System.out.println(url.getPath());
-        System.out.println(Arrays.toString(new File(url.getPath()).list()));
-        String[] paths = new File(url.getPath()).list((dir, name1) -> matcher.matches(dir.toPath()));
-
-
-        Preconditions.checkState(paths != null && paths.length == 1, "this have multi class file");
-
-        Arrays.stream(paths).forEach(System.out::println);
-
-        name = name == null ? cls.getSimpleName() : name;
-
-        submit(name, paths[0], desc);
-
+        submit(name, cls,null, desc);
 
     }
 
     public void submit(String name, Class<?> cls, Component.Type type) throws IOException {
         submit(name, cls, type, null);
     }
-
 
     public void submit(String name, Class<?> cls, Component.Type type, String desc) throws IOException {
 
@@ -90,23 +72,12 @@ public class ComponentOperation {
     }
 
 
-    public void submit(String path) throws IOException {
-        submit(Paths.get(path));
-    }
-
-    public void submit(String path, Component.Type type) throws IOException {
-        submit(path, type, null);
-    }
-
-    public void submit(String path, Component.Type type, String desc) throws IOException {
-        submit(Paths.get(path), type, desc);
-    }
-
     public void submit(Path path) throws IOException {
         String name = path.getFileName().toString();
         name = FilenameUtils.getBaseName(name);
         submit(name, path);
     }
+
 
     public void submit(Path path, Component.Type type) throws IOException {
         submit(path, type, null);
@@ -118,29 +89,15 @@ public class ComponentOperation {
         submit(name, path, type, desc);
     }
 
-
-    public void submit(String name, String path) throws IOException {
-        submit(name, path, null);
-    }
-
-
     public void submit(String name, Path path) throws IOException {
         submit(name, path, null);
     }
-
-    public void submit(String name, String path, String desc) throws IOException {
-
-        submit(name, Paths.get(path), desc);
-
-    }
-
     public void submit(String name, Path path, String desc) throws IOException {
         String extension = FilenameUtils.getExtension(path.getFileName().toString());
 
         Component.Type type = Component.Type.EXTRACTOR;
 
         submit(name, path, type, desc);
-
 
     }
 
@@ -153,8 +110,7 @@ public class ComponentOperation {
         assert path != null;
 
         Preconditions.checkArgument(type != null && type != Component.Type.UNKNOWN, "you must special a valid component type");
-
-        Preconditions.checkState(Files.exists(path), "file not exists");
+        Preconditions.checkArgument(Files.exists(path),"file not exists");
 
         String filename = path.getFileName().toString();
 
@@ -167,28 +123,18 @@ public class ComponentOperation {
     }
 
 
-    public List<Component> select(Query query) {
-
-
-        ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Component.class}, null);
-
-
-        return client.write(CommandCode.GET_MODULE_LIST, type, query);
-    }
-
-
     public List<Component> select() {
-        return select(null);
+        ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Component.class}, null);
+        return client.write(CommandCode.GET_MODULE_LIST, type);
     }
 
-    public Component get(String name) {
-        List<Component> list = select(Query.Condition(Condition.where("name").is(name)));
+    public Component get(String name,Component.Type type) {
 
-        return list == null || list.isEmpty() ? null : list.get(0);
+        return client.write(CommandCode.GET_MODULE, Component.class, name,type);
     }
 
-    public void delete(Query query) {
-        client.write(CommandCode.DELETE_MODULE, null, query);
+    public void delete(String name,Component.Type type) {
+        client.write(CommandCode.DELETE_MODULE, null, name,type);
     }
 
 

@@ -32,6 +32,4 @@ public interface Store {
 
     FetchService request();
 
-    Service<Component> component();
-
 }

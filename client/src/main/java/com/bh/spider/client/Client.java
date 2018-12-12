@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,7 +39,7 @@ public class Client {
     private DataOutputStream out = null;
 
     private RuleOperation ruleOperation = null;
-    private ComponentOperation moduleOperation = null;
+    private ComponentOperation componentOperation = null;
     private RequestOperation requestOperation = null;
 
     private Receiver receiver = null;
@@ -50,14 +51,22 @@ public class Client {
     }
 
 
+    public Client(String server, Properties properties){
+        this.server = server;
+        ruleOperation = new RuleOperation(this);
+        componentOperation = new ComponentOperation(this);
+        requestOperation = new RequestOperation(this);
+
+    }
+
+
     public boolean open() throws URISyntaxException, IOException {
         URI uri = new URI("tcp://" + server);
         socket = new Socket(uri.getHost(), uri.getPort());
         out = new DataOutputStream(socket.getOutputStream());
 
-        ruleOperation = new RuleOperation(this);
-        moduleOperation = new ComponentOperation(this);
-        requestOperation = new RequestOperation(this);
+
+
         receiver = new Receiver(socket);
         receiver.start();
         return true;
@@ -110,7 +119,7 @@ public class Client {
 
 
     public ComponentOperation component() {
-        return moduleOperation;
+        return componentOperation;
     }
 
     public RuleOperation rule() {

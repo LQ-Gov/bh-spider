@@ -33,7 +33,6 @@ public class RequestBuilder {
 
 
     public RequestBuilder setId(long id) {
-        request.setId(id);
         return this;
     }
 

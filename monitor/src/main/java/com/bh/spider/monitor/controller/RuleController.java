@@ -38,7 +38,7 @@ public class RuleController {
     @RequestMapping(value = "/rule",method = RequestMethod.PUT)
     public String add(HttpServletResponse response, @RequestBody Rule rule) {
         client.rule().submit(rule);
-        return rule.getId();
+        return rule.id();
     }
 
 

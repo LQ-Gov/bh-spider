@@ -36,7 +36,7 @@ public class ComponentController {
     @RequestMapping(value = "/module/{name}", method = RequestMethod.DELETE)
     public String delete(@PathVariable("name") String name, String hash) {
 
-        Component component = client.component().get(name);
+        Component component = client.component().get(name,null);
         if (component == null) {
             return null;
             //module不存在
@@ -46,11 +46,7 @@ public class ComponentController {
             return null;
             //版本不一致
         }
-
-
-        Query query = Query.Condition(Condition.where("name").is(name));
-        query.addCondition(Condition.where("hash").is(hash));
-        client.component().delete(query);
+        client.component().delete(name,null);
         return "ok";
     }
 

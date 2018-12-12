@@ -8,17 +8,11 @@ public class RuleDecorator extends Rule {
 
     private transient Domain domain;
 
-
-
-
-
     public RuleDecorator(Rule rule,RuleController controller,Domain domain) {
         this.controller = controller;
         this.rule = rule;
         this.domain = domain;
     }
-
-
 
     public RuleController controller(){
         return controller;
@@ -32,6 +26,14 @@ public class RuleDecorator extends Rule {
     public Domain domain(){
         return domain;
     }
+
+
+
+
+
+
+
+
 
 
 

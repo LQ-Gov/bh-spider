@@ -32,9 +32,9 @@ public class EventLoop extends Thread {
 
     public EventLoop(IEvent parent, IAssist... assists) {
         this.parent = parent;
-        initObjectHandlers(this.parent);
+        initHandlers(this.parent);
 
-        Arrays.stream(assists).forEach(this::initObjectHandlers);
+        Arrays.stream(assists).forEach(this::initHandlers);
 
     }
 
@@ -119,7 +119,7 @@ public class EventLoop extends Thread {
     }
 
 
-    protected void initObjectHandlers(Object o) {
+    protected void initHandlers(Object o) {
         Method[] methods = o.getClass().getDeclaredMethods();
 
         for (Method method : methods) {

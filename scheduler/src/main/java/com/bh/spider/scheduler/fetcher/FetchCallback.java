@@ -76,7 +76,8 @@ public class FetchCallback {
 
                     componentName = it;
 
-                    Extractor extractor = scheduler.extractorComponent(componentName);
+
+                    Extractor extractor = null; // scheduler.extractorComponent(componentName);
 
                     try {
                         extractor.run(ctx);

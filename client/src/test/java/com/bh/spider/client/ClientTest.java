@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 
 /**
  * Created by lq on 17-3-26.
@@ -22,7 +23,7 @@ public class ClientTest {
 
     @Test
     public void submit() throws Exception {
-        client.component().submit("target/client-1.0-SNAPSHOT.jar");
+        client.component().submit(Paths.get("target/client-1.0-SNAPSHOT.jar"));
     }
 
 }

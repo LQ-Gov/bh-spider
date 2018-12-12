@@ -36,7 +36,7 @@ public class ExceptionRuleDecorator extends RuleDecorator {
     public synchronized List<? extends Request> poll(int size) {
 
         Query query = Query.Condition(Condition.where("state").is(Request.State.EXCEPTION));
-        query.addCondition(Condition.where("rule_id").is(this.getId()));
+        query.addCondition(Condition.where("rule_id").is(this.id()));
 
         long count = service.count(query);
 

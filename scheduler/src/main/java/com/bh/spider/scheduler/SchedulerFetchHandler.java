@@ -64,15 +64,9 @@ public class SchedulerFetchHandler implements IAssist {
         List<FetchRequest> list = scheduler.store().request().select(query);
         ctx.write(list);
     }
-
-    @EventMapping
-    protected void GET_HOST_LIST_HANDLER(Context ctx) {
-        ctx.write(((RootDomain)root).hosts());
-    }
-
     @EventMapping(autoComplete = false)
     protected void FETCH_HANDLER(Context ctx, FetchRequest req, Rule rule) throws FetchExecuteException {
-        fetcher.fetch(ctx, req, rule);
+        fetcher.fetch(ctx, req, null);
     }
 
     @EventMapping

@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster.domain.impl;
 
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.cluster.domain.AsyncDistributedDomain;
 import com.bh.spider.scheduler.cluster.domain.DistributedDomain;
 import com.google.common.base.Throwables;
@@ -14,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 public class BlockingDistributedDomain extends Synchronous<AsyncDistributedDomain> implements DistributedDomain {
     private final AsyncDistributedDomain async;
@@ -56,9 +58,10 @@ public class BlockingDistributedDomain extends Synchronous<AsyncDistributedDomai
     }
 
     @Override
-    public void put(String path) {
-        async.put(path).join();
+    public Domain put(String path) {
+        return null;
     }
+
 
     @Override
     public void delete(String path, boolean force) throws Exception {
@@ -76,13 +79,23 @@ public class BlockingDistributedDomain extends Synchronous<AsyncDistributedDomai
     }
 
     @Override
-    public void bindRule(RuleController rule) {
+    public void bindRule(Rule rule) {
 
     }
 
     @Override
-    public Collection<RuleController> rules() {
+    public void unbindRule(Rule rule) {
+
+    }
+
+    @Override
+    public Collection<Rule> rules() {
         return null;
+    }
+
+    @Override
+    public void ruleListener(Consumer<Rule> consumer) {
+
     }
 
 

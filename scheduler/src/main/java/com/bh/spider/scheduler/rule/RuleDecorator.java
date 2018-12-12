@@ -83,12 +83,6 @@ public class RuleDecorator extends Rule {
         if (StringUtils.isBlank(url)) return false;
         return matcher != null && matcher.matches(Paths.get(url));
     }
-
-    @Override
-    public String getId() {
-        return this.rule.getId();
-    }
-
     @Override
     public String[] extractor(String key) {
         return this.rule.extractor(key);
@@ -155,7 +149,7 @@ public class RuleDecorator extends Rule {
     public synchronized JobExecutor.State exec() throws SchedulerException {
         if (!initialization) {
             Query query = Query.Condition(Condition.where("state").is(Request.State.QUEUE));
-            query.addCondition(Condition.where("rule_id").is(this.getId()));
+            query.addCondition(Condition.where("rule_id").is(this.id()));
             queueLength = service.count(query);
 
         }
@@ -198,7 +192,7 @@ public class RuleDecorator extends Rule {
         } else {
 
             Query query = Query.Condition(Condition.where("state").is(Request.State.QUEUE));
-            query.addCondition(Condition.where("rule_id").is(this.getId()));
+            query.addCondition(Condition.where("rule_id").is(this.id()));
 
             long diff = Math.min(size, queueLength) - queueCache.size();
             query.limit(QUEUE_CACHE_SIZE + diff);
@@ -216,7 +210,7 @@ public class RuleDecorator extends Rule {
                 .collect(Collectors.toList());
 
 
-        Condition condition = Condition.where("rule_id").is(this.getId());
+        Condition condition = Condition.where("rule_id").is(this.id());
         condition = condition.and(Condition.where("state").is(Request.State.QUEUE));
         condition = condition.and(Condition.where("id").in(ids));
 

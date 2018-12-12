@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster.domain;
 
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.domain.Domain;
 import com.bh.spider.scheduler.domain.RuleController;
 
@@ -25,7 +26,7 @@ public interface DistributedDomainService {
 
     String host();
 
-    void bindRule(RuleController rule);
+    void bindRule(Rule rule);
 
-    Collection<RuleController> rules();
+    Collection<Rule> rules();
 }

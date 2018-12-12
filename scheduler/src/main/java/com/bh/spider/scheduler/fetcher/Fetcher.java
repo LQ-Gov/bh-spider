@@ -3,8 +3,10 @@ package com.bh.spider.scheduler.fetcher;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchRequest;
+import com.bh.spider.rule.DriverRule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.domain.RuleDecorator;
 import com.bh.spider.scheduler.event.IEvent;
 import com.bh.spider.rule.Rule;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -49,15 +51,13 @@ public class Fetcher implements IEvent {
      * 主要的抓取方法
      * @param ctx 从客户端或其他端跟踪过来的Context
      * @param req 要抓取的请求
-     * @param rule 定义规则
      * @throws FetchExecuteException
      */
-    public void fetch(Context ctx, FetchRequest req, Rule rule) throws FetchExecuteException {
+    public void fetch(Context ctx, FetchRequest req, RuleDecorator decorator) throws FetchExecuteException {
 
-        FetchClientBuilder builder =
-                (rule == null || rule.driver() == null || !rule.driver().isAllow()) ?
-                        new HttpFetchClientBuilder() : new SeleniumFetchClientBuilder();
 
+        FetchClientBuilder builder = decorator.original() instanceof DriverRule ?
+                new SeleniumFetchClientBuilder() : new HttpFetchClientBuilder();
 
         FetchClient client = builder.build();
 
@@ -67,7 +67,7 @@ public class Fetcher implements IEvent {
         initHeaders(req);
         //这里还需执行component yeah!!!
 
-        client.execute(req,rule, new FetchCallback(ctx, this.scheduler, this, context));
+        client.execute(req, decorator, new FetchCallback(ctx, this.scheduler, this, context));
 
     }
 

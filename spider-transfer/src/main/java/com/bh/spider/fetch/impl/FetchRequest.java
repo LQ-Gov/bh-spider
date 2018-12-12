@@ -14,7 +14,6 @@ public class FetchRequest implements Request {
 
     private long id;
     private FetchState state;
-
     private URL base;
     private HttpMethod method;
 
@@ -25,7 +24,7 @@ public class FetchRequest implements Request {
     private transient String hash;
     private Date createTime;
 
-    FetchRequest() {
+    private FetchRequest() {
     }
 
     FetchRequest(String url) throws MalformedURLException {
@@ -47,11 +46,6 @@ public class FetchRequest implements Request {
     public long id() {
         return id;
     }
-
-    void setId(long id) {
-        this.id = id;
-    }
-
     public URL url() {
         return base;
     }

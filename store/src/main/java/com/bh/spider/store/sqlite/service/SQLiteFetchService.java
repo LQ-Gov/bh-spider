@@ -54,7 +54,7 @@ public class SQLiteFetchService implements FetchService {
             statement.setString(3, JsonFactory.get().writeValueAsString(req.headers()));
             statement.setString(4, null);
             statement.setString(5, JsonFactory.get().writeValueAsString(req.extra()));
-            statement.setObject(6, rule == null ? null : rule.getId());
+            statement.setObject(6, rule == null ? null : rule.id());
             statement.setString(7, req.hash());
             statement.setString(8, state.getState().toString());
             statement.setString(9, null);
