@@ -47,14 +47,15 @@ public class Client {
 
 
     public Client(String server) {
-        this.server = server;
+        this(server,null);
     }
 
 
-    public Client(String server, Properties properties){
+    public Client(String server, Properties properties) {
+        properties = properties==null?new Properties():properties;
         this.server = server;
         ruleOperation = new RuleOperation(this);
-        componentOperation = new ComponentOperation(this);
+        componentOperation = new ComponentOperation(this,properties);
         requestOperation = new RequestOperation(this);
 
     }
@@ -79,10 +80,10 @@ public class Client {
     }
 
     private synchronized void write0(long id, CommandCode cmd, Object... params) throws IOException {
-        short type = (short) cmd.ordinal();
+        short cmdCode = (short) cmd.ordinal();
         byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
 
-        out.writeShort(type);
+        out.writeShort(cmdCode);
         out.writeLong(id);
         out.writeInt(data.length);
         out.write(data);

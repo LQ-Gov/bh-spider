@@ -37,7 +37,7 @@ public class ComponentRepository {
         return metadata;
     }
 
-    public Component get(String name) throws IOException {
+    public Component get(String name) {
         return metadata.get(name);
     }
 

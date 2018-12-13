@@ -4,7 +4,7 @@ import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.job.JobContext;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
-import com.bh.spider.scheduler.job.JobImpl;
+import com.bh.spider.scheduler.job.QuartzJobImpl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,12 +16,12 @@ public interface RuleController {
     default void execute(JobCoreScheduler jobScheduler) throws Exception {
         Map<String, Object> params = new HashMap<String, Object>() {
             {
-                put(JobImpl.RULE_CONTROLLER, this);
+                put(QuartzJobImpl.RULE_CONTROLLER, this);
             }
         };
 
 
-        JobContext ctx = jobScheduler.scheduler(rule().id(), rule().getCron(), params);
+        JobContext ctx = jobScheduler.scheduler(String.valueOf(rule().id()), rule().getCron(), params);
         ctx.exec();
     }
 

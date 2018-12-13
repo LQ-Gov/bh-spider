@@ -2,6 +2,8 @@ package com.bh.spider.scheduler.domain;
 
 import com.bh.spider.rule.Rule;
 
+import java.net.URL;
+
 public class RuleDecorator extends Rule {
     private transient RuleController controller;
     private Rule rule;
@@ -12,6 +14,7 @@ public class RuleDecorator extends Rule {
         this.controller = controller;
         this.rule = rule;
         this.domain = domain;
+
     }
 
     public RuleController controller(){
@@ -25,6 +28,15 @@ public class RuleDecorator extends Rule {
 
     public Domain domain(){
         return domain;
+    }
+
+
+    public boolean match(String url){
+        return true;
+    }
+
+    public boolean match(URL url){
+        return true;
     }
 
 

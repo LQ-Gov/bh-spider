@@ -1,6 +1,7 @@
 package com.bh.spider.store.sqlite;
 
 import com.bh.spider.store.base.Store;
+import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.store.service.FetchService;
 import com.bh.spider.store.sqlite.service.SQLiteFetchService;
 
@@ -24,18 +25,16 @@ public class SQLiteStore implements Store {
 
     private SQLiteFetchService rs = null;
 
+    private SQLiteStoreAccessor accessor;
 
-    public SQLiteStore(Connection connection, Properties properties) {
+
+    public SQLiteStore(Connection connection, Properties properties) throws SQLException {
         this.connection = connection;
-
-        rs = new SQLiteFetchService(this, PROPERTIES.getProperty("request.table.name"));
-
-
+        this.accessor = new SQLiteStoreAccessor(this);
+        this.accessor.init();
     }
 
-    public void init() throws SQLException {
-        rs.init();
-    }
+
 
 
     @Override
@@ -52,6 +51,11 @@ public class SQLiteStore implements Store {
     @Override
     public Properties config() {
         return PROPERTIES;
+    }
+
+    @Override
+    public StoreAccessor accessor() {
+        return null;
     }
 
     @Override

@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by lq on 7/10/17.
@@ -17,20 +18,24 @@ public class ComponentOperationTest {
 
     @Before
     public void before() throws IOException, URISyntaxException {
-        client = new Client("127.0.0.1:8033");
+        Properties properties = new Properties();
+        properties.setProperty("class.file.base.path",System.getProperty("user.dir")+"/src/test/java");
+        client = new Client("127.0.0.1:8033",properties);
+        client.open();
     }
 
 
     @Test
     public void select() throws Exception {
 
-         List<Component> list = client.component().select();
-
-         System.out.println(list.get(0).getName());
+//         List<Component> list = client.component().select();
+//
+//         System.out.println(list.get(0).getName());
     }
 
     @Test
     public void select1() throws Exception {
+        client.component().submit(ZhiHuCrawler.class);
     }
 
 

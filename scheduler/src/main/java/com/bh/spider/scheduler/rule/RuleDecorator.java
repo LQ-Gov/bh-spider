@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.rule;
 
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchRequest;
+import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.fetch.impl.FetchState;
 import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
@@ -25,7 +25,7 @@ public class RuleDecorator extends Rule {
 
     private final static int QUEUE_CACHE_SIZE = 1000;
 
-    private transient Queue<FetchRequest> queueCache = new LinkedBlockingQueue<>();
+    private transient Queue<RequestImpl> queueCache = new LinkedBlockingQueue<>();
 
     private transient Rule rule = null;
 
@@ -50,7 +50,7 @@ public class RuleDecorator extends Rule {
     }
 
 
-    public boolean bind(FetchRequest req) throws RuleBindException {
+    public boolean bind(RequestImpl req) throws RuleBindException {
 
 
         if (match(req)) {
@@ -71,7 +71,7 @@ public class RuleDecorator extends Rule {
     }
 
 
-    protected boolean exists(FetchRequest req) {
+    protected boolean exists(RequestImpl req) {
         Query query = Query.Condition(Condition.where("state").is(Request.State.QUEUE));
         query.addCondition(Condition.where("hash").is(req.hash()));
 
@@ -180,7 +180,7 @@ public class RuleDecorator extends Rule {
     public synchronized List<? extends Request> poll(int size) {
 
         if (queueLength == 0) return null;
-        List<FetchRequest> list = new LinkedList<>();
+        List<RequestImpl> list = new LinkedList<>();
         if (queueCache.size() > size) {
             for (int i = 0; i < size; i++) {
                 list.add(queueCache.poll());
@@ -196,7 +196,7 @@ public class RuleDecorator extends Rule {
 
             long diff = Math.min(size, queueLength) - queueCache.size();
             query.limit(QUEUE_CACHE_SIZE + diff);
-            List<FetchRequest> result = service.select(query);
+            List<RequestImpl> result = service.select(query);
 
             list.addAll(queueCache);
             list.addAll(result.subList(0, (int) diff));
@@ -206,7 +206,7 @@ public class RuleDecorator extends Rule {
 
 
         List ids = list.stream()
-                .map(FetchRequest::id)
+                .map(RequestImpl::id)
                 .collect(Collectors.toList());
 
 

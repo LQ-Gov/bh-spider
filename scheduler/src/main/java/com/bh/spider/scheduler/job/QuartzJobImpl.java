@@ -6,7 +6,7 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-public class JobImpl implements Job {
+public class QuartzJobImpl implements Job {
     public final static String RULE_CONTROLLER="RULE-CONTROLLER";
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {

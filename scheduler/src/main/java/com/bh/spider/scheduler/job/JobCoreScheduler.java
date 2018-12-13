@@ -49,7 +49,7 @@ public class JobCoreScheduler {
 //    }
 
     public synchronized JobContext scheduler(String id,String cron,Map<String,Object> params) throws SchedulerException {
-        JobDetail detail = newJob(JobImpl.class).withIdentity(id).build();
+        JobDetail detail = newJob(QuartzJobImpl.class).withIdentity(id).build();
         if(params!=null)
             detail.getJobDataMap().putAll(params);
 
@@ -61,7 +61,7 @@ public class JobCoreScheduler {
         return new QuartzJobContext(id,quartz,detail,trigger);
     }
 
-    public JobExecutor build(Class<? extends JobImpl> job) {
+    public JobExecutor build(Class<? extends QuartzJobImpl> job) {
 
         String id = UUID.randomUUID().toString();
 

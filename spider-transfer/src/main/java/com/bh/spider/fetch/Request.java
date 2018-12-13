@@ -12,10 +12,12 @@ public interface Request extends Cloneable {
         QUEUE, GOING, EXCEPTION, FINISHED, FAILED
     }
 
+    long id();
+
 
     URL url();
 
-    HttpMethod method();
+    FetchMethod method();
 
     /**
      * 请求头设置
@@ -33,15 +35,24 @@ public interface Request extends Cloneable {
 
 
     /**
-     * 框架内消息传递附带的数据
+     * 框架内消息传递附带的数据,这部分内容不参与实际请求，但可以在extractor中获取到
      *
      * @return
      */
     Map<String, Object> extra();
+
+    /**
+     * 对应的规则ID
+     * @return
+     */
+    long ruleId();
+
+    String hash();
 
 
     Date createTime();
 
 
     Object clone() throws CloneNotSupportedException;
+
 }

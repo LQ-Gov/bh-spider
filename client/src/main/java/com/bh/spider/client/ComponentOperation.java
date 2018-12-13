@@ -15,8 +15,11 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.file.*;
+import java.rmi.server.ExportException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Created by lq on 7/9/17.
@@ -24,13 +27,24 @@ import java.util.List;
 public class ComponentOperation {
     private Client client = null;
 
+    private String classBasePath;
 
-    ComponentOperation(Client client) {
+
+    ComponentOperation(Client client, Properties properties) {
         this.client = client;
+        classBasePath = properties.getProperty("class.file.base.path");
     }
 
     public void submit(Class<?> cls) throws Exception {
-        submit(null, cls);
+        submit(cls,null);
+    }
+
+    public void submit(Class<?> cls,Component.Type type) throws IOException {
+        submit(cls,type, null);
+    }
+
+    public void submit(Class<?> cls,Component.Type type,String desc) throws IOException {
+        submit(null,cls,type,desc);
     }
 
     public void submit(String name, Class<?> cls) throws IOException {
@@ -50,25 +64,27 @@ public class ComponentOperation {
     public void submit(String name, Class<?> cls, Component.Type type, String desc) throws IOException {
 
         Preconditions.checkArgument(cls != null, "you must special a valid class");
-        Preconditions.checkArgument(type != null && type != Component.Type.UNKNOWN, "you must special a valid component type");
 
+        String clsPath = String.join(File.separator, cls.getName().split("\\."));
 
-        URL url = cls.getResource("");
+        final Path path = StringUtils.isBlank(classBasePath) ? Paths.get(clsPath) : Paths.get(classBasePath, clsPath);
 
-        Preconditions.checkNotNull(url, "can't get path of %s", cls.getName());
+        if (type == null) {
+            final String prefix = path.toString();
+            List<Path> list = Files.list(path.getParent())
+                    .filter(x -> x.toString().startsWith(prefix))
+                    .collect(Collectors.toList());
 
+            if (list.size() > 1)
+                throw new RuntimeException("有多个文件匹配,请手动指定type");
 
-        String path = url.getPath() + cls.getSimpleName();
-
-        String extension = type.toString();
-
-        if (!StringUtils.isBlank(extension)) {
-            extension = StringUtils.lowerCase(extension);
-            if (extension.startsWith(".")) path += extension;
-            else path += "." + extension;
+            type = Component.Type.textOf(FilenameUtils.getExtension(list.get(0).toString()));
         }
+        if (type == null)
+            throw new RuntimeException("无法找到有效的文件类型");
 
-        submit(name, path, type, desc);
+
+        submit(name, Paths.get(path.toString() + "." + type.text()), type, desc);
     }
 
 
@@ -118,23 +134,23 @@ public class ComponentOperation {
 
         byte[] data = Files.readAllBytes(path);
 
-        client.write(CommandCode.SUBMIT_MODULE, null, data, name, type, desc);
+        client.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
 
     }
 
 
     public List<Component> select() {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Component.class}, null);
-        return client.write(CommandCode.GET_MODULE_LIST, type);
+        return client.write(CommandCode.GET_COMPONENT_LIST, type);
     }
 
     public Component get(String name,Component.Type type) {
 
-        return client.write(CommandCode.GET_MODULE, Component.class, name,type);
+        return client.write(CommandCode.GET_COMPONENT, Component.class, name,type);
     }
 
     public void delete(String name,Component.Type type) {
-        client.write(CommandCode.DELETE_MODULE, null, name,type);
+        client.write(CommandCode.DELETE_COMPONENT, null, name,type);
     }
 
 

@@ -1,7 +1,7 @@
 package com.bh.spider.client;
 
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchRequest;
+import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.fetch.impl.RequestBuilder;
 import com.bh.spider.query.Query;
 import com.bh.spider.transfer.CommandCode;
@@ -35,7 +35,7 @@ public class RequestOperation {
     }
 
     public List<Request> select(Query query) {
-        ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{FetchRequest.class}, null);
+        ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{RequestImpl.class}, null);
         return client.write(CommandCode.GET_REQUEST_LIST, type, query);
     }
 }

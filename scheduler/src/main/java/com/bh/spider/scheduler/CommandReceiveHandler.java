@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler;
 
+import com.bh.spider.scheduler.event.Command;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 

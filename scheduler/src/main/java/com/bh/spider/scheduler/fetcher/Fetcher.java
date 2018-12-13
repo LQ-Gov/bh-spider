@@ -2,13 +2,11 @@ package com.bh.spider.scheduler.fetcher;
 
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchRequest;
+import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.rule.DriverRule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.RuleDecorator;
-import com.bh.spider.scheduler.event.IEvent;
-import com.bh.spider.rule.Rule;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.util.Collection;
@@ -20,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * Created by lq on 17-3-17.
  */
-public class Fetcher implements IEvent {
+public class Fetcher {
     private BasicScheduler scheduler = null;
 
 
@@ -42,10 +40,10 @@ public class Fetcher implements IEvent {
         return workers;
     }
 
-    @Override
-    public boolean isClosed() {
-        return false;
-    }
+//    @Override
+//    public boolean isClosed() {
+//        return false;
+//    }
 
     /**
      * 主要的抓取方法
@@ -53,7 +51,7 @@ public class Fetcher implements IEvent {
      * @param req 要抓取的请求
      * @throws FetchExecuteException
      */
-    public void fetch(Context ctx, FetchRequest req, RuleDecorator decorator) throws FetchExecuteException {
+    public void fetch(Context ctx, RequestImpl req, RuleDecorator decorator) throws FetchExecuteException {
 
 
         FetchClientBuilder builder = decorator.original() instanceof DriverRule ?
@@ -72,7 +70,7 @@ public class Fetcher implements IEvent {
     }
 
 
-    protected void initHeaders(FetchRequest req) {
+    protected void initHeaders(RequestImpl req) {
         Set<String> keys = req.headers().keySet()
                 .stream().map(String::toLowerCase)
                 .collect(Collectors.toSet());
@@ -88,7 +86,7 @@ public class Fetcher implements IEvent {
 
     }
 
-    protected void setHeader(Collection<String> lowerKey, FetchRequest req, String key, String value) {
+    protected void setHeader(Collection<String> lowerKey, RequestImpl req, String key, String value) {
         if (!lowerKey.contains(key.toLowerCase()))
             req.headers().put(key, value);
     }

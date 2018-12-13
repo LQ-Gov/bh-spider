@@ -26,7 +26,7 @@ public class SchedulerComponentHandler implements IAssist {
 
 
     @EventMapping
-    protected void SUBMIT_MODULE_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
+    protected void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
 
         ComponentRepository proxy = factory.proxy(type);
         if (proxy == null)
@@ -36,14 +36,14 @@ public class SchedulerComponentHandler implements IAssist {
     }
 
     @EventMapping
-    protected void GET_MODULE_LIST_HANDLER(Context ctx,Component.Type type) {
+    protected void GET_COMPONENT_LIST_HANDLER(Context ctx,Component.Type type) {
 
         ComponentRepository proxy = factory.proxy(type);
         ctx.write(proxy.all());
     }
 
     @EventMapping
-    protected void DELETE_MODULE_HANDLER(Context ctx, String name,Component.Type type) throws IOException {
+    protected void DELETE_COMPONENT_HANDLER(Context ctx, String name,Component.Type type) throws IOException {
         factory.proxy(type).delete(name);
     }
 

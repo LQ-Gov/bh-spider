@@ -19,6 +19,7 @@ public class RuleOperationTest {
     @Before
     public void before() throws IOException, URISyntaxException {
         client = new Client("127.0.0.1:8033");
+        client.open();
     }
 
     @Test
@@ -34,6 +35,14 @@ public class RuleOperationTest {
         List<Rule> rules = client.rule().select();
 
         System.out.println(rules);
+    }
+
+
+    @Test
+    public void submit0(){
+        Rule rule = new Rule("http://www.zhihu.com/**","www.zhihu.com","0 0 12 * * ?");
+
+        client.rule().submit(rule);
     }
 
 }

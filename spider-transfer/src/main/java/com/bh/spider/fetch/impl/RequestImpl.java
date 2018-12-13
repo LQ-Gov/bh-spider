@@ -1,8 +1,9 @@
 package com.bh.spider.fetch.impl;
 
-import com.bh.spider.fetch.HttpMethod;
+import com.bh.spider.fetch.FetchMethod;
 import com.bh.spider.fetch.Request;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jsoup.helper.HttpConnection;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,36 +11,53 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FetchRequest implements Request {
+public class RequestImpl implements Request {
 
     private long id;
     private FetchState state;
     private URL base;
-    private HttpMethod method;
+
+    private FetchMethod method;
 
     private Map<String, String> headers = new HashMap<>();
 
     private Map<String, Object> extra = new HashMap<>();
 
     private transient String hash;
+
+    private long ruleId;
+
     private Date createTime;
 
-    private FetchRequest() {
+    private RequestImpl() {
     }
 
-    FetchRequest(String url) throws MalformedURLException {
-        this(url, HttpMethod.GET);
+    public RequestImpl(String url) throws MalformedURLException {
+        this(url, FetchMethod.GET);
     }
 
-    FetchRequest(String url, HttpMethod method) throws MalformedURLException {
-        this(new URL(url), method);
+    public RequestImpl(String url, FetchMethod method) throws MalformedURLException {
+        this(0,url, method);
+    }
+
+    public RequestImpl(long id, String url, FetchMethod method) throws MalformedURLException {
+        this(0, new URL(url), method);
+    }
+
+    public RequestImpl(URL url){
+        this(url,FetchMethod.GET);
     }
 
 
-    FetchRequest(URL url, HttpMethod method) {
+    public RequestImpl(URL url, FetchMethod method) {
+        this(0,url,method);
+    }
+
+    public RequestImpl(long id, URL url, FetchMethod method) {
         assert url != null;
+        this.id=id;
         this.base = url;
-        this.method = method == null ? HttpMethod.GET : method;
+        this.method = method == null ? FetchMethod.GET : method;
         this.createTime = new Date();
     }
 
@@ -50,7 +68,7 @@ public class FetchRequest implements Request {
         return base;
     }
 
-    public HttpMethod method() {
+    public FetchMethod method() {
         return method;
     }
 
@@ -73,7 +91,17 @@ public class FetchRequest implements Request {
         return extra;
     }
 
+    @Override
+    public long ruleId() {
+        return ruleId;
+    }
 
+    public void setRuleId(long ruleId){
+        this.ruleId = ruleId;
+    }
+
+
+    @Override
     public String hash() {
         String h = hash;
         if (h == null) {
@@ -98,13 +126,13 @@ public class FetchRequest implements Request {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof FetchRequest && url().equals(((FetchRequest) obj).url());
+        return obj instanceof RequestImpl && url().equals(((RequestImpl) obj).url());
 
     }
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        FetchRequest cloneObject = (FetchRequest) super.clone();
+        RequestImpl cloneObject = (RequestImpl) super.clone();
 
         return cloneObject;
     }

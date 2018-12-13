@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler;
+package com.bh.spider.scheduler.event;
 
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.transfer.CommandCode;

@@ -5,7 +5,7 @@ import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FetchState;
 import com.bh.spider.fetch.impl.FinalFetchContext;
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.Command;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.rule.Rule;

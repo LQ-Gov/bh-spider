@@ -1,8 +1,8 @@
 package com.bh.spider.store.sqlite.service;
 
-import com.bh.spider.fetch.HttpMethod;
+import com.bh.spider.fetch.FetchMethod;
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchRequest;
+import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.fetch.impl.FetchState;
 import com.bh.spider.fetch.impl.RequestBuilder;
 import com.bh.spider.query.Query;
@@ -41,36 +41,7 @@ public class SQLiteFetchService implements FetchService {
 
 
     @Override
-    public FetchState insert(FetchRequest req, Rule rule) {
-        String sql = "INSERT INTO " + tableName + "(url,method,headers,params," +
-                "extra,rule_id,hash,state,message,create_time,update_time) " +
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
-        try {
-
-            FetchState state = FetchState.queue();
-            PreparedStatement statement = store.connection().prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
-            statement.setString(1, req.url().toString());
-            statement.setString(2, req.method().toString());
-            statement.setString(3, JsonFactory.get().writeValueAsString(req.headers()));
-            statement.setString(4, null);
-            statement.setString(5, JsonFactory.get().writeValueAsString(req.extra()));
-            statement.setObject(6, rule == null ? null : rule.id());
-            statement.setString(7, req.hash());
-            statement.setString(8, state.getState().toString());
-            statement.setString(9, null);
-            statement.setObject(10, req.createTime());
-            statement.setObject(11, null);
-
-            statement.execute();
-
-            ResultSet result = statement.getGeneratedKeys();
-            long id = result.next() ? result.getLong(1) : req.id();
-
-            new RequestBuilder(req).setId(id).setState(state).build();
-            return state;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public FetchState insert(RequestImpl req, Rule rule) {
         return null;
     }
 
@@ -97,36 +68,8 @@ public class SQLiteFetchService implements FetchService {
         return -1;
     }
 
-    public void init() throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS " + tableName + "(" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "url TEXT," +
-                "method TEXT," +
-                "headers TEXT," +
-                "params TEXT," +
-                "extra TEXT," +
-                "hash TEXT," +
-                "rule_id TEXT," +
-                "state TEXT," +
-                "message TEXT," +
-                "create_time TIMESTAMP default CURRENT_TIMESTAMP," +
-                "update_time TIMESTAMP)";
-
-        store.connection().prepareStatement(sql).execute();
-
-        SQLiteIndex[] indexes = new SQLiteIndex[3];
-
-        indexes[0] = new SQLiteIndex(store.connection(), tableName, "request_rule_index", "rule_id");
-        indexes[1] = new SQLiteIndex(store.connection(), tableName, "request_state_index", "state");
-        indexes[2] = new SQLiteIndex(store.connection(), tableName, "request_hash_index", "hash");
-
-        for (SQLiteIndex index : indexes) {
-            if (!index.exists()) index.create();
-        }
-    }
-
     @Override
-    public FetchRequest insert(FetchRequest o) {
+    public RequestImpl insert(RequestImpl o) {
         return null;
     }
 
@@ -144,24 +87,24 @@ public class SQLiteFetchService implements FetchService {
     }
 
     @Override
-    public List<FetchRequest> select(Query query) {
+    public List<RequestImpl> select(Query query) {
         String sql = interpreter.explain("SELECT * FROM " + tableName, query);
 
         try {
             ResultSet result = store.connection().prepareStatement(sql).executeQuery();
 
-            List<FetchRequest> collection = new LinkedList<>();
+            List<RequestImpl> collection = new LinkedList<>();
             while (result.next()) {
 
                 String url = result.getString("url");
-                HttpMethod method = HttpMethod.valueOf(result.getString("method"));
+                FetchMethod method = FetchMethod.valueOf(result.getString("method"));
 
                 FetchState state = new FetchState();
                 state.setState(Request.State.valueOf(result.getString("state")));
                 state.setMessage(result.getString("message"));
                 state.setUpdateTime(result.getDate("update_time"));
 
-                FetchRequest request = (FetchRequest) RequestBuilder.create(url, method)
+                RequestImpl request = (RequestImpl) RequestBuilder.create(url, method)
                         .setId(result.getLong("id"))
                         .setCreateTime(result.getDate("create_time"))
                         .setState(state)
@@ -190,11 +133,11 @@ public class SQLiteFetchService implements FetchService {
     }
 
     @Override
-    public FetchRequest single(Query query) {
+    public RequestImpl single(Query query) {
 
         query.limit(1);
 
-        List<FetchRequest> list = select(query);
+        List<RequestImpl> list = select(query);
 
         return list.isEmpty() ? null : list.get(0);
     }
@@ -212,7 +155,7 @@ public class SQLiteFetchService implements FetchService {
     }
 
     @Override
-    public int update(FetchRequest o, Condition condition) {
+    public int update(RequestImpl o, Condition condition) {
         throw new Error("not support this function");
     }
 

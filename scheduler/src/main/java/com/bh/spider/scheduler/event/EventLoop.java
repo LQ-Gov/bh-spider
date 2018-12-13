@@ -1,11 +1,11 @@
 package com.bh.spider.scheduler.event;
 
-import com.bh.spider.scheduler.Command;
 import com.bh.spider.scheduler.config.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.token.Token;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,19 +14,16 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 /**
  * Created by lq on 17-3-16.
  */
 public class EventLoop extends Thread {
-
     private Logger logger = LoggerFactory.getLogger(EventLoop.class);
+    private IEvent parent;
+    private BlockingQueue<Pair<Command,CompletableFuture>> queue = new LinkedBlockingQueue<>();
 
-    private IEvent parent = null;
-    private BlockingQueue<Command> queue = new LinkedBlockingQueue<>();
     private Map<String, CommandHandler> executors = new HashMap<>();
 
 
@@ -38,43 +35,50 @@ public class EventLoop extends Thread {
 
     }
 
-    public Future execute(Command cmd) {
-        queue.offer(cmd);
-        return null;
-
+    public <R> Future<R> execute(Command cmd) {
+        CompletableFuture<R> future = new CompletableFuture<R>();
+        queue.offer(Pair.of(cmd, future));
+        return future;
     }
 
     @Override
     public void run() {
         while (!this.parent.isClosed()) {
             try {
-                Command cmd = queue.take();
-                if (this.parent.isClosed()) break;
-                if (cmd == null) continue;
+                Pair<Command, CompletableFuture> pair = queue.take();
 
+                Command cmd = pair.getLeft();
+                CompletableFuture future = pair.getRight();
                 logger.info(Markers.ANALYSIS, "event loop for {}, execute command:{},params bytes size:{}",
                         this.parent.getClass().getName(), cmd.key(), 0);
 
-                CommandHandler executor = executors.get(cmd.key().toString());
+                try {
+                    CommandHandler executor = executors.get(cmd.key().toString());
 
-                if (executor == null) throw new RuntimeException("executor not found");
+                    if (executor == null) throw new RuntimeException("executor not found");
 
-                Class<?>[] parameters = executor.parameters();
+                    Class<?>[] parameters = executor.parameters();
 
-                Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
+                    Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
 
-                executor.invoke(args);
+                    future.complete(executor.invoke(args));
 
-                if (cmd.context() != null && executor.mapping().autoComplete())
-                    cmd.context().complete();
+                    if (cmd.context() != null && executor.mapping().autoComplete())
+                        cmd.context().complete();
+                }catch (Exception e){
+                    future.completeExceptionally(e);
+                    e.printStackTrace();
+                }
 
-            } catch (InterruptedException | IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 logger.error("eventLoop execute error,mss:{}", e.getMessage());
-                e.printStackTrace();
             } catch (Exception e) {
                 logger.error("eventLoop execute error,mss:{}", e.getMessage());
                 e.printStackTrace();
+            }
+            finally {
+
             }
         }
     }

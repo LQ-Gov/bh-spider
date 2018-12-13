@@ -30,10 +30,10 @@ public class CommandHandler {
     }
 
 
-    public void invoke(Object[] args) throws InvocationTargetException, IllegalAccessException {
+    public Object invoke(Object[] args) throws InvocationTargetException, IllegalAccessException {
         try {
             method.setAccessible(true);
-            method.invoke(bean, args);
+            return method.invoke(bean, args);
         } finally {
             method.setAccessible(false);
         }

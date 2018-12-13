@@ -38,8 +38,6 @@ public class SQLiteStoreBuilder implements StoreBuilder {
 
         SQLiteStore store = new SQLiteStore(connection, properties);
 
-        store.init();
-
         return store;
 
 

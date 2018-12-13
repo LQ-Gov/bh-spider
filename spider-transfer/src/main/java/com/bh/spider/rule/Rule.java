@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public class Rule {
 
-    private String id;
+    private long id;
 
     private Map<String, String[]> extractors = new HashMap<>();
 
@@ -46,15 +46,15 @@ public class Rule {
     public Rule() {
     }
 
-    public Rule(String id) {
+    public Rule(long id) {
         this(id, null, null, null);
     }
 
     public Rule(String pattern, String host, String cron) {
-        this(null, pattern, host, cron);
+        this(0, pattern, host, cron);
     }
 
-    public Rule(String id, String pattern, String host, String cron) {
+    public Rule(long id, String pattern, String host, String cron) {
         this.id = id;
         this.pattern = pattern;
         this.host = host;
@@ -62,11 +62,11 @@ public class Rule {
         this.valid = true;
     }
 
-    public void setId(String id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public String id() {
+    public long id() {
         return id;
     }
 
@@ -134,7 +134,7 @@ public class Rule {
     @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
-        return obj instanceof Rule && (this == obj || this.id().equals(((Rule) obj).id()));
+        return obj instanceof Rule && (this == obj || this.id() == ((Rule) obj).id());
     }
 
     public String getDispatcher() {

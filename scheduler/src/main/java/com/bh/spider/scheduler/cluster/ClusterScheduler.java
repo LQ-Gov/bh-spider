@@ -1,11 +1,9 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.Command;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.cluster.domain.DistributedDomain;
-import com.bh.spider.scheduler.cluster.domain.DistributedDomainBuilder;
 import com.bh.spider.scheduler.cluster.domain.DistributedDomainType;
-import com.bh.spider.scheduler.cluster.domain.impl.DomainImpl;
 import com.bh.spider.scheduler.config.Config;
 import io.atomix.cluster.MemberId;
 import io.atomix.cluster.Node;
@@ -15,7 +13,6 @@ import io.atomix.core.AtomixBuilder;
 import io.atomix.core.election.LeaderElection;
 import io.atomix.protocols.backup.MultiPrimaryProtocol;
 import io.atomix.protocols.backup.partition.PrimaryBackupPartitionGroup;
-import io.atomix.protocols.raft.MultiRaftProtocol;
 import io.atomix.protocols.raft.partition.RaftPartitionGroup;
 import io.atomix.utils.serializer.Namespace;
 import io.atomix.utils.serializer.Serializer;

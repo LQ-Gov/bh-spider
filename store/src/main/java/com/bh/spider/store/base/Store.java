@@ -1,8 +1,6 @@
 package com.bh.spider.store.base;
 
 import com.bh.spider.store.service.FetchService;
-import com.bh.spider.store.service.Service;
-import com.bh.spider.transfer.entity.Component;
 
 import java.util.Properties;
 
@@ -29,6 +27,9 @@ public interface Store {
     void close() throws Exception;
 
     Properties config();
+
+
+    StoreAccessor accessor();
 
     FetchService request();
 

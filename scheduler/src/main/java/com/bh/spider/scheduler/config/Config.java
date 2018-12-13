@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -13,15 +14,15 @@ import java.util.stream.Collectors;
  */
 public class Config {
 
-    private final Properties GLOBAL = new Properties();
+    private final Map<Object,Object> GLOBAL = new HashMap<>();
 
     //运行配置
     public static final String INIT_RUN_MODE = "init.run.mode";
     public static final String INIT_LISTEN_PORT = "init.listen.port";
 
     //数据/配置存储路径
-    public static final String INIT_RULE_PATH = "init.rules.path";
     public static final String INIT_DATA_PATH = "init.data.path";
+    public static final String INIT_DATA_RULE_PATH = "init.data.rule.path";
     public static final String INIT_PHANTOMJS_PATH = "init.phantomjs.path";
 
     //数据库存储配置
@@ -45,6 +46,7 @@ public class Config {
     private static Config init0() {
         Config config = new Config();
         config.GLOBAL.put(INIT_DATA_PATH, "data/");
+        config.GLOBAL.put(INIT_DATA_RULE_PATH,"data/rule");
         config.GLOBAL.put(INIT_RUN_MODE, "stand-alone");
         config.GLOBAL.put(INIT_LISTEN_PORT, "8033");
         config.GLOBAL.put(INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors() * 2);
@@ -69,20 +71,6 @@ public class Config {
     }
 
 
-    public Properties aboutStore() {
-
-        Properties properties = new Properties();
-        properties.put(INIT_STORE_DRIVER, GLOBAL.get(INIT_STORE_DRIVER));
-        properties.put(INIT_STORE_URL, GLOBAL.get(INIT_STORE_URL));
-        properties.put(INIT_STORE_BUILDER, GLOBAL.get(INIT_STORE_BUILDER));
-        properties.put(INIT_STORE_USER, GLOBAL.get(INIT_STORE_USER));
-        properties.put(INIT_STORE_PASSWORD, GLOBAL.get(INIT_STORE_PASSWORD));
-
-        return properties;
-
-    }
-
-
     public static Config init(Properties properties) {
         Config config = init0();
         if (properties != null)
@@ -97,18 +85,21 @@ public class Config {
     }
 
 
-    public Properties all(){
-        return GLOBAL;
+    public Properties all() {
+        return all(null);
     }
 
     public Properties all(String prefix) {
-        if (StringUtils.isBlank(prefix)) return GLOBAL;
-
         Properties properties = new Properties();
 
-        GLOBAL.entrySet().stream()
-                .filter(x -> String.valueOf(x.getKey()).startsWith(prefix))
-                .forEach(x -> properties.put(String.valueOf(x.getKey()).substring(prefix.length()), x.getValue()));
+        if(StringUtils.isNotBlank(prefix)) {
+            GLOBAL.forEach((k, v) -> {
+                String key = String.valueOf(k);
+                if (key.startsWith(prefix))
+                    properties.put(key.substring(prefix.length()), v);
+            });
+        }
+        else properties.putAll(GLOBAL);
 
         return properties;
 

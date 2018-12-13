@@ -1,6 +1,6 @@
 package com.bh.spider.fetch.impl;
 
-import com.bh.spider.fetch.HttpMethod;
+import com.bh.spider.fetch.FetchMethod;
 import com.bh.spider.fetch.Request;
 
 import java.net.MalformedURLException;
@@ -8,9 +8,9 @@ import java.net.URL;
 import java.util.Date;
 
 public class RequestBuilder {
-    private FetchRequest request;
+    private RequestImpl request;
 
-    public RequestBuilder(FetchRequest request) {
+    public RequestBuilder(RequestImpl request) {
         this.request = request;
     }
 
@@ -18,7 +18,7 @@ public class RequestBuilder {
         return create(url, null);
     }
 
-    public static RequestBuilder create(String url, HttpMethod method) throws MalformedURLException {
+    public static RequestBuilder create(String url, FetchMethod method) throws MalformedURLException {
         return create(new URL(url), method);
     }
 
@@ -27,8 +27,8 @@ public class RequestBuilder {
         return create(url, null);
     }
 
-    public static RequestBuilder create(URL url, HttpMethod method) {
-        return new RequestBuilder(new FetchRequest(url, method));
+    public static RequestBuilder create(URL url, FetchMethod method) {
+        return new RequestBuilder(new RequestImpl(url, method));
     }
 
 

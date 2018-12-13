@@ -21,7 +21,8 @@ public class Program {
 
         Properties properties = new Properties();
 
-        System.setProperty("init.run.mode","cluster-master");
+        //System.setProperty("init.run.mode","cluster-master");
+        System.setProperty("init.run.mode","stand-alone");
         properties.putAll(System.getProperties());
 
         InputStream stream = Program.class.getResourceAsStream(file);

@@ -1,5 +1,7 @@
 package com.bh.spider.transfer.entity;
 
+import com.sun.org.apache.bcel.internal.generic.RET;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -12,13 +14,32 @@ public class Component implements Serializable {
     }
 
     public enum Type {
-        UNKNOWN,
-        CONFIG,
-        COMMON,
-        EXTRACTOR,
-        SYSTEM,
-        JAR,
-        GROOVY
+        UNKNOWN("unknown"),
+        CONFIG("config"),
+        COMMON("common"),
+        EXTRACTOR("extractor"),
+        SYSTEM("system"),
+        JAR("jar"),
+        GROOVY("groovy");
+
+
+        private String text;
+
+        Type(String text){
+            this.text = text;
+        }
+
+
+        public String text(){return text;}
+
+
+        public static Type textOf(String text){
+            switch (text.toLowerCase()){
+                case "jar": return JAR;
+                case "groovy": return GROOVY;
+            }
+            return null;
+        }
 
 
 

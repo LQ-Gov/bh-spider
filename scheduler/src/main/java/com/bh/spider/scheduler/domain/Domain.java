@@ -10,6 +10,14 @@ public interface Domain {
 
     Domain find(String path);
 
+    /**
+     * 如果exact=false,则返回与其最匹配的一个，否则返回null
+     * @param path
+     * @param exact
+     * @return
+     */
+    Domain find(String path,boolean exact);
+
     Collection<Domain> children();
 
     Domain children(String name);

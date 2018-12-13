@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.rule.Rule;
+import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.Domain;
 import com.bh.spider.scheduler.domain.RuleController;
@@ -8,51 +9,81 @@ import com.bh.spider.scheduler.domain.RuleDecorator;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
-import com.bh.spider.scheduler.rule.RuleBindException;
+import com.bh.spider.transfer.JsonFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SchedulerRuleHandler implements IAssist {
     private BasicScheduler scheduler;
     private JobCoreScheduler jobCoreScheduler;
     private Domain root;
-    private Map<String,RuleDecorator> ruleCache = new HashMap<>();
+    private Map<Long,RuleDecorator> ruleCache = new HashMap<>();
+
+    private Config cfg;
 
 
-
-    public SchedulerRuleHandler(BasicScheduler scheduler, JobCoreScheduler jobCoreScheduler, Domain domain){
-        this.scheduler=scheduler;
+    public SchedulerRuleHandler(BasicScheduler scheduler, JobCoreScheduler jobCoreScheduler, Domain domain, Config config) throws IOException {
+        this.scheduler = scheduler;
         this.root = domain;
         this.jobCoreScheduler = jobCoreScheduler;
+        this.cfg = config;
 
-        foreachRules(root);
+        initLocalRuleController();
     }
 
 
-    private void foreachRules(Domain domain) {
-        if (domain == null) return;
+    protected void initLocalRuleController() throws IOException {
+        Path ruleDirectory = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH));
 
-        Collection<Rule> rules = domain.rules();
-        if (rules != null) {
+        List<Path> filePaths = Files.list(ruleDirectory).filter(x -> x.endsWith(".json")).collect(Collectors.toList());
+
+        for(Path filePath:filePaths ) {
+            List<Rule> rules = JsonFactory.get().readValue(filePath.toFile(),
+                    JsonFactory.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
+
             for (Rule rule : rules) {
-                RuleDecorator decorator = (RuleDecorator) rule;
-                ruleCache.put(decorator.id(), decorator);
+                com.bh.spider.scheduler.domain.Domain d = root.put(rule.getHost());
+                RuleController controller = RuleController.build(rule, this.scheduler, d);
+                RuleDecorator decorator = new RuleDecorator(rule, controller,d);
+                d.bindRule(decorator);
+
+                ruleCache.put(decorator.id(),decorator);
             }
         }
-        if (domain.children() != null)
-            domain.children().forEach(this::foreachRules);
+    }
+
+    private void backup(Domain domain) throws IOException {
+        String host = domain.host();
+        host = host == null ? "__ROOT__" : host;
+        Path path = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH), host + ".json");
+        List<Rule> rules = new ArrayList<>(domain.rules());
+
+        for (int i = 0; i < rules.size(); i++) {
+            Rule rule = rules.get(i);
+            if (rule instanceof RuleDecorator)
+                rules.set(i, ((RuleDecorator) rule).original());
+        }
+        Files.write(path, JsonFactory.get().writeValueAsBytes(rules));
     }
 
 
 
     @EventMapping
-    protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws RuleBindException {
+    protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws IOException {
+        if(rule.id()<=0)
+            rule.setId(IdGenerator.instance.nextId());
+
         Domain domain = root.put(rule.getHost());
         RuleController controller = RuleController.build(rule, scheduler, domain);
         RuleDecorator decorator = new RuleDecorator(rule, controller,domain);
         domain.bindRule(decorator);
+
+        backup(domain);
     }
 
     @EventMapping
@@ -94,7 +125,7 @@ public class SchedulerRuleHandler implements IAssist {
 
 
     @EventMapping
-    protected void DELETE_RULE_HANDLER(Context ctx,String id) {
+    protected void DELETE_RULE_HANDLER(Context ctx,long id) {
         RuleDecorator decorator = ruleCache.get(id);
         if (decorator == null) return;
 
@@ -105,7 +136,7 @@ public class SchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx,String id, boolean valid) throws Exception {
+    protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx,long id, boolean valid) throws Exception {
         RuleDecorator decorator = ruleCache.get(id);
         if (decorator == null) return;
         if (valid)

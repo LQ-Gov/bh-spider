@@ -43,6 +43,11 @@ public class BlockingDistributedDomain extends Synchronous<AsyncDistributedDomai
     }
 
     @Override
+    public Domain find(String path, boolean exact) {
+        return null;
+    }
+
+    @Override
     public Collection<Domain> children() {
         return async.children().join();
     }

@@ -1,10 +1,7 @@
 package com.bh.spider.fetch;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,7 +57,7 @@ public class FetchContextUtils {
     }
 
     public URL toURL(Request req) {
-        if (req.method() == HttpMethod.GET) {
+        if (req.method() == FetchMethod.GET) {
             URL url = req.url();
 //            for (Map.Entry<String, Object> it : req.params().entrySet()) {
 //                if (it.getValue() == null) continue;

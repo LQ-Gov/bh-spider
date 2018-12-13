@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.token.JacksonToken;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.JsonFactory;

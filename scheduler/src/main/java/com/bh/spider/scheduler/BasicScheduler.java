@@ -1,18 +1,16 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.fetch.Request;
-import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.BasicDomain;
-import com.bh.spider.scheduler.domain.RuleController;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.IEvent;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.store.base.StoreBuilder;
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.JsonFactory;
 import com.bh.spider.transfer.entity.Component;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -30,20 +28,15 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 /**
  * Created by lq on 17-3-16.
  */
 public class BasicScheduler implements IEvent {
     private static final Logger logger = LoggerFactory.getLogger(BasicScheduler.class);
-    private final static String RULE_DIR="rule";
 
     protected Config cfg;
 
@@ -65,12 +58,6 @@ public class BasicScheduler implements IEvent {
         this.cfg = config;
 
     }
-
-    public Store store() {
-        return store;
-    }
-
-
     public synchronized void exec() throws Exception {
         //初始化存储文件夹
         initDirectories();
@@ -80,8 +67,6 @@ public class BasicScheduler implements IEvent {
         initDomainTree();
         //init_system_signal_handles();
         initJobScheduler();
-        //初始化历史规则控制器
-        initRuleController();
         //初始化本地端口监听
         initLocalListen();
 
@@ -97,7 +82,7 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public Future process(Command cmd) {
+    public <R> Future<R> process(Command cmd) {
         return loop.execute(cmd);
     }
 
@@ -126,7 +111,7 @@ public class BasicScheduler implements IEvent {
         //创建基础文件夹
         FileUtils.forceMkdir(dataPath.toFile());
         //创建规则文件夹
-        FileUtils.forceMkdir(Paths.get(dataPath.toString(), RULE_DIR).toFile());
+        FileUtils.forceMkdir(Paths.get(Config.INIT_DATA_RULE_PATH).toFile());
         //创建依赖包文件夹(jar)
         FileUtils.forceMkdir(Paths.get(dataPath.toString(), Component.Type.JAR.name()).toFile());
         //创建解析脚本文件夹(groovy)
@@ -146,27 +131,11 @@ public class BasicScheduler implements IEvent {
     }
 
     protected void initDomainTree() {
-        domain = new BasicDomain(".", null);
+        domain = new BasicDomain(null, null);
     }
 
 
-    protected void initRuleController() throws Exception {
-        Path ruleDirectory = Paths.get(cfg.get(Config.INIT_DATA_PATH), "rule");
 
-        List<Path> filePaths = Files.list(ruleDirectory).filter(x -> x.endsWith(".json")).collect(Collectors.toList());
-
-        for(Path filePath:filePaths ) {
-            List<Rule> rules = JsonFactory.get().readValue(filePath.toFile(),
-                    JsonFactory.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
-
-            for (Rule rule : rules) {
-                com.bh.spider.scheduler.domain.Domain d = domain.put(rule.getHost());
-                RuleController controller = RuleController.build(rule, this, d);
-                com.bh.spider.scheduler.domain.RuleDecorator decorator = new com.bh.spider.scheduler.domain.RuleDecorator(rule, controller,d);
-                d.bindRule(decorator);
-            }
-        }
-    }
 
 
     protected void initLocalListen() throws InterruptedException {
@@ -194,8 +163,8 @@ public class BasicScheduler implements IEvent {
     protected void initEventLoop() throws IOException, InterruptedException {
         loop = new EventLoop(this,
                 new SchedulerComponentHandler(cfg,this),
-                new SchedulerRuleHandler(this, this.jobCoreScheduler, domain),
-                new SchedulerFetchHandler(this, null),
+                new SchedulerRuleHandler(this, this.jobCoreScheduler, domain,cfg),
+                new SchedulerFetchHandler(this, domain,store),
                 new SchedulerWatchHandler());
         logger.info("事件循环线程启动");
         loop.listen().join();

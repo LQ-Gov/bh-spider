@@ -35,6 +35,11 @@ public class BasicDomain implements Domain {
 
     @Override
     public Domain find(String path) {
+        return find(path,true);
+    }
+
+    @Override
+    public Domain find(String path, boolean exact) {
         if (StringUtils.isBlank(path)) return null;
 
         String[] nodes = path.split("\\.");
@@ -43,11 +48,12 @@ public class BasicDomain implements Domain {
 
         Domain it = this;
         for (int i = nodes.length - 2; it != null && i >= 0; i--) {
-            it = it.children(nodes[i]);
+            Domain child = it.children(nodes[i]);
+            if (!exact && child == null) break;
+            it = child;
         }
 
         return it;
-
     }
 
     @Override

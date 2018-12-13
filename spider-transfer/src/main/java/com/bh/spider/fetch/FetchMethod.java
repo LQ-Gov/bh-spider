@@ -3,7 +3,7 @@ package com.bh.spider.fetch;
 /**
  * Created by lq on 7/18/17.
  */
-public enum HttpMethod {
+public enum FetchMethod {
 
     OPTIONS("OPTIONS"),
     GET("GET"),
@@ -17,7 +17,7 @@ public enum HttpMethod {
 
     private String content;
 
-    HttpMethod(String content) {
+    FetchMethod(String content) {
         this.content = content;
     }
 
