@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.domain;
 
 import com.bh.spider.rule.Rule;
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -10,7 +11,7 @@ public class BasicDomain implements Domain {
     private final static Domain EMPTY_DOMAIN = new BasicDomain();
 
     private String nodeName;
-    private Map<String, Domain> children;
+    private Map<String, BasicDomain> children;
     private Domain parent;
 
     private List<Rule> rules;
@@ -26,6 +27,7 @@ public class BasicDomain implements Domain {
     public BasicDomain(String nodeName, Domain parent) {
         this.nodeName = nodeName;
         this.parent = (parent == null ? EMPTY_DOMAIN : parent);
+        this.children = new HashMap<>();
     }
 
     @Override
@@ -43,11 +45,11 @@ public class BasicDomain implements Domain {
         if (StringUtils.isBlank(path)) return null;
 
         String[] nodes = path.split("\\.");
-        String last = nodes[nodes.length - 1];
-        if (!(nodeName.equals(last) || "".equals(last))) return null;
+        int last = nodes.length-1;
+        if(nodes[last].equals(nodeName))  last--;
 
         Domain it = this;
-        for (int i = nodes.length - 2; it != null && i >= 0; i--) {
+        for (int i = last; it != null && i >= 0; i--) {
             Domain child = it.children(nodes[i]);
             if (!exact && child == null) break;
             it = child;
@@ -80,15 +82,15 @@ public class BasicDomain implements Domain {
         int last = nodes.length - 1;
         if (nodes[nodes.length - 1].equals(nodeName)) last -= 1;
 
-
-        if (children == null) children = new HashMap<>();
-
-        Domain it = this;
+        BasicDomain it = this;
         for (int i = last; i >= 0; i--) {
+
             String name = nodes[i];
             if (StringUtils.isBlank(name)) continue;
-            final Domain p = it;
-            it = children.computeIfAbsent(name, x -> new BasicDomain(name, p));
+
+            final BasicDomain p = it;
+
+            it = it.children.computeIfAbsent(name, x -> new BasicDomain(name, p));
         }
         return it;
     }

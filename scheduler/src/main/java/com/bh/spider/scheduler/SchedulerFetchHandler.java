@@ -1,9 +1,10 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.fetch.impl.FetchState;
+import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.config.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.Domain;
@@ -12,15 +13,11 @@ import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.fetcher.FetchExecuteException;
 import com.bh.spider.scheduler.fetcher.Fetcher;
-import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.rule.MultiInQueueException;
-import com.bh.spider.scheduler.rule.RuleBindException;
 import com.bh.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.List;
 
 public class SchedulerFetchHandler implements IAssist {
 

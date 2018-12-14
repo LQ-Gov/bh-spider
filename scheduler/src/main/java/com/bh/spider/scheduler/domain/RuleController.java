@@ -5,6 +5,7 @@ import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.job.JobContext;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.scheduler.job.QuartzJobImpl;
+import org.apache.commons.collections4.MapUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,12 +15,8 @@ public interface RuleController {
 
 
     default void execute(JobCoreScheduler jobScheduler) throws Exception {
-        Map<String, Object> params = new HashMap<String, Object>() {
-            {
-                put(QuartzJobImpl.RULE_CONTROLLER, this);
-            }
-        };
-
+        Map<String, Object> params = new HashMap<>();
+        params.put(QuartzJobImpl.RULE_CONTROLLER, this);
 
         JobContext ctx = jobScheduler.scheduler(String.valueOf(rule().id()), rule().getCron(), params);
         ctx.exec();
@@ -34,7 +31,7 @@ public interface RuleController {
 
 
     static RuleController build(Rule rule, BasicScheduler scheduler,Domain domain) {
-        return null;
+        return new BasicRuleController(rule);
     }
 
 }

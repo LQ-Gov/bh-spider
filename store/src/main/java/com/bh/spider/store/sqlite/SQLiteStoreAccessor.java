@@ -59,7 +59,7 @@ public class SQLiteStoreAccessor implements StoreAccessor {
 
         String sql = "INSERT INTO " + TABLE_NAME + "(id,url,method,headers,params," +
                 "extra,rule_id,hash,state,message,create_time,update_time) " +
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
 
             //FetchState state = FetchState.queue();

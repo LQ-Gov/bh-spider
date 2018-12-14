@@ -160,7 +160,7 @@ public class BasicScheduler implements IEvent {
         logger.info("init command listen server:{}", port);
     }
 
-    protected void initEventLoop() throws IOException, InterruptedException {
+    protected void initEventLoop() throws Exception {
         loop = new EventLoop(this,
                 new SchedulerComponentHandler(cfg,this),
                 new SchedulerRuleHandler(this, this.jobCoreScheduler, domain,cfg),

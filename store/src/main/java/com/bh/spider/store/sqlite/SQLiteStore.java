@@ -55,7 +55,7 @@ public class SQLiteStore implements Store {
 
     @Override
     public StoreAccessor accessor() {
-        return null;
+        return accessor;
     }
 
     @Override

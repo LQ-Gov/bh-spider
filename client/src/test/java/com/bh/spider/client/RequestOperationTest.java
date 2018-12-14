@@ -13,11 +13,12 @@ public class RequestOperationTest {
     @Before
     public void before() throws IOException, URISyntaxException {
         client = new Client("127.0.0.1:8033");
+        client.open();
     }
 
     @Test
     public void submit() throws Exception {
-        client.request().submit("http://www.toutiao.com/a6444873109181874445");
+        client.request().submit("http://www.zhihu.com/a6444873109181874445");
 
     }
 }

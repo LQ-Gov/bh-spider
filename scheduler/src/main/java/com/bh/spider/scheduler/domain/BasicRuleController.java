@@ -21,6 +21,6 @@ public class BasicRuleController implements RuleController {
 
     @Override
     public void blast() {
-
+        System.out.println("boom!!!! boom!!!");
     }
 }
