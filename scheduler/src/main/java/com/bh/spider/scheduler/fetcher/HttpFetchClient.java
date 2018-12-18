@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.fetcher;
 
+import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.FetchContextUtils;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
@@ -23,6 +24,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class HttpFetchClient implements FetchClient {
@@ -54,10 +56,12 @@ public class HttpFetchClient implements FetchClient {
     }
 
     @Override
-    public void execute(Request request, Rule rule, FetchCallback callback) throws FetchExecuteException {
+    public CompletableFuture<FetchResponse> execute(FetchContext ctx) throws FetchExecuteException {
         try {
-            HttpRequestBase base = toHttpRequest(request);
+            Request req = ctx.request();
+            HttpRequestBase base = toHttpRequest(req);
 
+            final CompletableFuture<FetchResponse> future = new CompletableFuture<>();
 
             clientInstance().execute(base, new FutureCallback<HttpResponse>() {
                 @Override
@@ -80,11 +84,14 @@ public class HttpFetchClient implements FetchClient {
                         Arrays.stream(headers).forEach(x -> headerMap.put(x.getName(), x.getValue()));
 
 
-                        List<HttpCookie> cookies = CookieStoreFactory.get().get(request.url().toURI());
+                        List<HttpCookie> cookies = CookieStoreFactory.get().get(req.url().toURI());
 
                         FetchResponse fr = new FetchResponse(code, data, headerMap,
                                 cookies.stream().map(FetchCookieAdapter::new).collect(Collectors.toList()));
-                        callback.completed(fr,rule);
+
+
+                        future.complete(fr);
+
                     } catch (IOException | URISyntaxException e) {
                         e.printStackTrace();
                     }
@@ -92,14 +99,17 @@ public class HttpFetchClient implements FetchClient {
 
                 @Override
                 public void failed(Exception ex) {
-                    callback.failed(ex);
+                    future.completeExceptionally(ex);
                 }
 
                 @Override
                 public void cancelled() {
-                    callback.cancelled();
+
                 }
             });
+
+
+            return future;
         } catch (URISyntaxException e) {
             throw new FetchExecuteException(e);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {

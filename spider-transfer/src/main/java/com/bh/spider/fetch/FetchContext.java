@@ -1,6 +1,7 @@
 package com.bh.spider.fetch;
 
 import com.bh.spider.doc.Document;
+import com.bh.spider.rule.Rule;
 
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -14,6 +15,8 @@ public interface FetchContext {
     Request request();
 
     Response response();
+
+    Rule rule();
 
     Cookie cookie(String name);
 

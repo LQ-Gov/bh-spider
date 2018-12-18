@@ -3,6 +3,7 @@ package com.bh.spider.fetch.impl;
 import com.bh.spider.doc.Document;
 import com.bh.spider.doc.impl.DocumentImpl;
 import com.bh.spider.fetch.*;
+import com.bh.spider.rule.Rule;
 
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -36,6 +37,11 @@ public class FinalFetchContext implements FetchContext {
     @Override
     public Response response() {
         return this.response;
+    }
+
+    @Override
+    public Rule rule() {
+        return parent.rule();
     }
 
     @Override

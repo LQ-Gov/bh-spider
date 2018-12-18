@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.context;
 
+import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.transfer.JsonFactory;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
@@ -14,10 +14,12 @@ import org.slf4j.LoggerFactory;
 public class ClientContext implements Context {
     private static final Logger logger = LoggerFactory.getLogger(ClientContext.class);
 
-    private ChannelHandlerContext source = null;
-    private volatile Boolean enable = true;
+    private final static byte EXCEPTION_BYTE=0x02;
+    private final static byte NOT_COMPLETE_BYTE=0x01;
+    private final static byte NOT_COMPLETE_EXCEPTION_BYTE=0x03;
+    private final static byte COMPLETE_BYTE=0x00;
 
-    private Object buffer = null;
+    private ChannelHandlerContext source = null;
 
     private long id;
 
@@ -28,62 +30,60 @@ public class ClientContext implements Context {
 
 
     @Override
-    public synchronized void write(Object data) {
-        flush();
-        buffer = data;
-    }
-
-    @Override
-    public synchronized void complete() {
-
-        if (!isWriteEnable()) return;
-        try {
-            write0(id, (byte) 0, buffer != null ? JsonFactory.get().writeValueAsBytes(buffer) : null);
-            enable = false;
-        } catch (JsonProcessingException e) {
-            exception(e);
-        }
-
+    public  void write(Object data) {
+        write(true,data);
 
     }
 
-    private synchronized void write0(long id, byte flag, byte[] data) {
-        if (data == null) data = new byte[0];
-        ByteBuf buf = source.alloc().buffer(8 + 1 + 4 + (data.length));//id,flag,len,data
+    public void write(boolean complete,Object data){
+        write0(complete,data);
+    }
+
+
+    private synchronized void write0(Throwable e) {
+        ByteBuf buf = source.alloc().buffer(8+1);//id+state
         buf.writeLong(id);
-        buf.writeByte(flag);
-        buf.writeInt(data.length);
-        buf.writeBytes(data);
-        source.writeAndFlush(buf);
+        buf.writeByte(EXCEPTION_BYTE);
+        source.channel().write(buf);
     }
 
-    @Override
-    public synchronized boolean isWriteEnable() {
-        return enable && this.source.channel().isOpen();
+    private synchronized void write0(boolean complete,Object data) {
+        try {
+            byte[] bytes = data == null ? new byte[0] : JsonFactory.get().writeValueAsBytes(data);
+            ByteBuf buf = source.alloc().buffer(8 + 1 + 4 + bytes.length);//id,flag,len,data
+            buf.writeLong(id);
+            buf.writeByte(complete ? COMPLETE_BYTE : NOT_COMPLETE_BYTE);
+            buf.writeInt(bytes.length);
+            buf.writeBytes(bytes);
+            source.channel().write(buf);
+            source.channel().flush();
+        }catch (Exception e){
+            write0(e);
+        }
     }
+
 
     @Override
     public synchronized void exception(Throwable cause) {
-        write0(id, (byte) 0x02, cause.getMessage().getBytes());
-        enable = false;
+        write0(cause);
     }
 
     @Override
-    public synchronized void flush() {
+    public void crawled(FetchContext fetchContext) {
 
-        if (isWriteEnable() && buffer != null) {
-            try {
-                write0(id, (byte) 1, JsonFactory.get().writeValueAsBytes(buffer));
-                buffer = null;
-            } catch (Exception e) {
-                exception(e);
-            }
+        try {
+            write0(true, fetchContext.response());
+        } catch (Exception e) {
+            write0(e);
         }
+
+
     }
 
 
     public ChannelId channelId(){
         return source.channel().id();
     }
+
 
 }

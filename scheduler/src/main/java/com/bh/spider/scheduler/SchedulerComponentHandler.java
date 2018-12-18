@@ -47,11 +47,9 @@ public class SchedulerComponentHandler implements IAssist {
         factory.proxy(type).delete(name);
     }
 
-//    public Extractor extractorComponent(String componentName) throws IOException, ComponentBuildException {
-//        return factory.extractorComponent(componentName);
-//    }
 
-    public Component component(Component.Type type, String componentName) throws IOException {
-        return factory.proxy(type).get(componentName);
+    @EventMapping
+    protected void LOAD_COMPONENT_HANDLER(String name,Component.Type type) throws IOException, ClassNotFoundException {
+        factory.proxy(type).loadClass(name);
     }
 }

@@ -40,4 +40,26 @@ public class ClassLoaderTest {
 
 
     }
+
+
+    public void fn(){
+
+    }
+
+    @Test
+    public void fnTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method method = this.getClass().getMethod("fn");
+
+         System.out.println(method.getReturnType().isAssignableFrom(Void.TYPE));
+
+        ClassLoaderTest t = new ClassLoaderTest();
+
+        Object returnValue = method.invoke(t);
+
+        int a =0;
+
+    }
+
+
+
 }

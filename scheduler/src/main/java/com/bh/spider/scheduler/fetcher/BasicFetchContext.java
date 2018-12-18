@@ -2,6 +2,7 @@ package com.bh.spider.scheduler.fetcher;
 
 import com.bh.spider.fetch.*;
 import com.bh.spider.fetch.impl.RequestBuilder;
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.doc.Document;
 
@@ -16,16 +17,17 @@ import java.util.Map;
 public class BasicFetchContext implements FetchContext {
 
     private Request original;
-
-
     private BasicScheduler sch;
+
+    private Rule rule;
 
     private Map<String, Object> fields = new HashMap<>();
 
-    public BasicFetchContext(BasicScheduler scheduler,Request original) {
+    public BasicFetchContext(BasicScheduler scheduler, Request original, Rule rule) {
 
         this.sch = scheduler;
         this.original = original;
+        this.rule = rule;
 
     }
 
@@ -43,6 +45,11 @@ public class BasicFetchContext implements FetchContext {
     public Response response() {
         return null;
 
+    }
+
+    @Override
+    public Rule rule() {
+        return rule;
     }
 
     @Override

@@ -1,18 +1,16 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.query.Query;
-import com.bh.spider.query.condition.Condition;
-import com.bh.spider.store.service.Service;
 import com.bh.spider.transfer.entity.Component;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.Date;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
-public class ComponentRepository {
+public abstract class ComponentRepository {
 
     private Path base;
     private Component.Type componentType;
@@ -72,4 +70,7 @@ public class ComponentRepository {
             if (Files.exists(tmp)) Files.delete(tmp);
         }
     }
+
+
+    public abstract Class<?> loadClass(String name) throws IOException, ClassNotFoundException;
 }

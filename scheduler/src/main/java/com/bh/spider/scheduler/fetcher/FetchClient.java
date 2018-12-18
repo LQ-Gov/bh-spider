@@ -1,8 +1,10 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.Request;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.fetch.impl.FetchResponse;
+
+import java.util.concurrent.CompletableFuture;
 
 public interface FetchClient {
-    void execute(Request request, Rule rule,FetchCallback callback) throws FetchExecuteException;
+    CompletableFuture<FetchResponse> execute(FetchContext ctx) throws FetchExecuteException;
 }

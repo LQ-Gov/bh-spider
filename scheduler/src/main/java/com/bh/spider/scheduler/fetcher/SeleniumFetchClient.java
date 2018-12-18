@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.fetcher;
 
+import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.rule.DriverRule;
@@ -19,6 +20,7 @@ import java.net.HttpCookie;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -113,16 +115,20 @@ public class SeleniumFetchClient implements FetchClient {
 
 
     @Override
-    public void execute(Request request, Rule rule, FetchCallback callback) {
+    public CompletableFuture<FetchResponse> execute(FetchContext ctx) {
+        Rule rule = ctx.rule();
+        Request req = ctx.request();
+
+        final CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         workers.execute(() -> {
             DriverRule driverRule = (DriverRule)rule;
 
             try {
-                String url = request.url().toString();
+                String url = req.url().toString();
 
                 WebDriver driver = createDriver();
 
-                List<HttpCookie> cookies = cookieStore.get(request.url().toURI());
+                List<HttpCookie> cookies = cookieStore.get(req.url().toURI());
 
                 cookies.forEach(x -> driver.manage().addCookie(new SeleniumCookieAdapter(x)));
 
@@ -175,21 +181,21 @@ public class SeleniumFetchClient implements FetchClient {
 
                 FetchResponse response = new FetchResponse(200, driver.getPageSource().getBytes()
                         , null, cookies.stream().map(FetchCookieAdapter::new).collect(Collectors.toList()));
-                callback.completed(response, rule);
+
+                future.complete(response);
             } catch (WebDriverException e) {
-                callback.failed(e);
+                future.completeExceptionally(e);
 
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error(e.getMessage());
 
-            } finally {
-
-
             }
 
 
         });
+
+        return future;
     }
 
 

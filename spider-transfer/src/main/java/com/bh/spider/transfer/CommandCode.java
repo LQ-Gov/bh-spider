@@ -22,6 +22,9 @@ public enum CommandCode {
     SUBMIT_REQUEST,//提交任务
     GET_REQUEST_LIST,//查询请求列表
 
+
+    LOAD_COMPONENT,
+
     WATCH,
 
     FETCH,

@@ -1,51 +1,53 @@
 package com.bh.spider.scheduler;
 
+import com.bh.spider.scheduler.context.ClientContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.token.JacksonToken;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.JsonFactory;
-import com.bh.spider.scheduler.context.ClientContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by lq on 17-3-26.
- */
-public class CommandDecoder extends ByteToMessageDecoder {
+public class CommandDecoder extends ChannelInboundHandlerAdapter {
     private final static ObjectMapper mapper = JsonFactory.get();
 
-
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ByteBuf buffer = (ByteBuf) msg;
+        try {
+            if (buffer.isReadable()) {
 
-        if (byteBuf.isReadable()) {
+                CommandCode key = CommandCode.values()[buffer.readShort()];
 
-            CommandCode key = CommandCode.values()[byteBuf.readShort()];
+                long id = buffer.readLong();//请求ID
 
-            long id = byteBuf.readLong();
+                int len = buffer.readInt();
 
-            int len = byteBuf.readInt();
+                List<Object> params = new LinkedList<>();
+                if (len > 2) {
+                    byte[] data = new byte[len];
 
-            List<Object> params = new LinkedList<>();
-            if (len > 2) {
+                    buffer.readBytes(data);
 
-                byte[] data = new byte[len];
-                byteBuf.readBytes(data);
-
-                for (JsonNode node : mapper.readTree(data)) {
-                    params.add(new JacksonToken(mapper, node.traverse()));
+                    for (JsonNode node : mapper.readTree(data)) {
+                        params.add(new JacksonToken(mapper, node.traverse()));
+                    }
                 }
-            }
-            Context context = new ClientContext(id, ctx);
 
-            list.add(new Command(key, context, params.toArray()));
+                Context context = new ClientContext(id, ctx);
+                Command cmd = new Command(context, key, params.toArray());
+                super.channelRead(ctx, cmd);
+            }
+
+        }finally {
+            buffer.release();
         }
     }
 }

@@ -66,9 +66,17 @@ public class SchedulerFetchHandler implements IAssist {
 //        List<RequestImpl> list = scheduler.store().request().select(query);
 //        ctx.write(list);
     }
+
+    /**
+     * 重要的 event mapping，正式开始抓取!!!
+     * @param ctx 该ctx可能的来源:1.client,2.平台本身的常规任务调度
+     * @param req
+     * @param rule
+     * @throws FetchExecuteException
+     */
     @EventMapping(autoComplete = false)
     protected void FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) throws FetchExecuteException {
-        fetcher.fetch(ctx, req, null);
+        fetcher.fetch(ctx, req, rule);
     }
 
     @EventMapping

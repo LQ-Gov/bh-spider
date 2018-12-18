@@ -2,8 +2,11 @@ package com.bh.spider.scheduler.fetcher;
 
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
+import com.bh.spider.fetch.impl.FetchResponse;
+import com.bh.spider.fetch.impl.FinalFetchContext;
 import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.rule.DriverRule;
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.RuleDecorator;
@@ -11,6 +14,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -51,21 +55,23 @@ public class Fetcher {
      * @param req 要抓取的请求
      * @throws FetchExecuteException
      */
-    public void fetch(Context ctx, RequestImpl req, RuleDecorator decorator) throws FetchExecuteException {
+    public void fetch(Context ctx, RequestImpl req, Rule rule) throws FetchExecuteException {
 
 
-        FetchClientBuilder builder = decorator.original() instanceof DriverRule ?
+        FetchClientBuilder builder = rule instanceof DriverRule ?
                 new SeleniumFetchClientBuilder() : new HttpFetchClientBuilder();
 
         FetchClient client = builder.build();
 
-        //抓取上下文
-        FetchContext context = new BasicFetchContext(this.scheduler, req);
-
+        //对url进行预处理
         initHeaders(req);
+
+        //抓取上下文
+        final FetchContext context = new BasicFetchContext(this.scheduler, req, rule);
         //这里还需执行component yeah!!!
 
-        client.execute(req, decorator, new FetchCallback(ctx, this.scheduler, this, context));
+        client.execute(context).whenComplete((result, e) -> this.fetchCallback(ctx,context, result, e));
+
 
     }
 
@@ -86,18 +92,27 @@ public class Fetcher {
 
     }
 
-    protected void setHeader(Collection<String> lowerKey, RequestImpl req, String key, String value) {
+    private void setHeader(Collection<String> lowerKey, RequestImpl req, String key, String value) {
         if (!lowerKey.contains(key.toLowerCase()))
             req.headers().put(key, value);
     }
 
-    protected void exec_request_prepare_modules(Request req, HttpRequestBase request, BasicScheduler context) {
-        //String[] prepare = req.extractor("prepare");
-//        if (!ArrayUtils.isEmpty(prepare)) {
-//            //scheduler.
-//        }
-    }
 
+
+    //此方法由CompletableFuture回调调用
+    private void fetchCallback(Context ctx, FetchContext fetchContext, FetchResponse response, Throwable e) {
+        if (e != null)
+            ctx.exception(e);
+        else {
+            try {
+                //进行到此处则抓取完成,接下来则由跟踪过来的context进行处理进行处理
+                fetchContext = new FinalFetchContext(fetchContext, response);
+                ctx.crawled(fetchContext);
+            } catch (Exception ex) {
+                ctx.exception(ex);
+            }
+        }
+    }
 
     public void close() {
     }

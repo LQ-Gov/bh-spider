@@ -8,6 +8,7 @@ import groovy.lang.GroovyClassLoader;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -15,14 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class GroovyComponentRepository extends ComponentRepository {
 
-    private JarComponentRepository commonProxy;
-    private final static Map<String, Extractor> moduleObjects = new ConcurrentHashMap<>();
+    private final static Map<String, WeakReference<Proxy>> classCache = new ConcurrentHashMap<>();
 
     private Path dir;
 
     public GroovyComponentRepository(JarComponentRepository commonProxy, Path path) throws IOException {
         super(Component.Type.GROOVY, path);
-        this.commonProxy = commonProxy;
         this.dir = path;
 
     }
@@ -32,55 +31,72 @@ public class GroovyComponentRepository extends ComponentRepository {
         super.delete(name);
 
 
-        moduleObjects.remove(name);
+        clearCache(name);
+    }
+
+    @Override
+    public Class<?> loadClass(String name) throws IOException {
+
+        Component component = metadata().get(name);
+
+        WeakReference<Proxy> reference = classCache.get(name);
+        Proxy proxy;
+        if (reference != null && (proxy = reference.get()) != null) return proxy.cls();
 
 
+        Path path = Paths.get(dir.toString(), component.getName());
+
+        ExtractorClassLoader classLoader = new ExtractorClassLoader();
+
+
+        Class<?> cls = classLoader.parseClass(path.toFile());
+
+        reference = new WeakReference<>(new Proxy(classLoader,cls,component));
+
+        classCache.put(name,reference);
+
+
+        return cls;
     }
 
     @Override
     public Component save(byte[] data, String name, String description, boolean override) throws Exception {
         Component component = super.save(data, name, description, override);
 
-        Extractor extractor = moduleObjects.remove(name);
-
-        if (extractor != null) {
-            component(name);
-        }
+        clearCache(component.getName());
 
         return component;
     }
 
-    public Extractor component(String name) throws IOException, ComponentBuildException {
 
-        Extractor o = moduleObjects.get(name);
+    private void clearCache(String name) {
+        if(name==null) return;
+        WeakReference<Proxy> reference = classCache.remove(name);
 
-        if (o != null) return o;
+        Proxy proxy;
 
-        synchronized (moduleObjects) {
-            o = moduleObjects.get(name);
-            if (o != null) return o;
-
-            GroovyClassLoader loader = new GroovyClassLoader(commonProxy.classLoader());
-
-            Component component = super.get(name);
-            if (component == null) throw new ComponentBuildException(name, "component not found");
-
-            Class<?> cls = loader.parseClass(Paths.get(dir.toString(), name).toFile());
-
-            if (cls == null) throw new ComponentBuildException(name, "can't find any class");
-
-            try {
-                o = (Extractor) cls.newInstance();
-                moduleObjects.put(name, o);
-
-            } catch (Exception e) {
-                throw new ComponentBuildException(name, e.getMessage());
-            }
-        }
-
-        return o;
-
+        if (reference != null && (proxy = reference.get()) != null)
+            proxy.classLoader().clearCache();
     }
 
+
+    private class Proxy{
+        private GroovyClassLoader classLoader;
+        private Class<?> cls;
+        private Component component;
+
+        public Proxy(GroovyClassLoader classLoader,Class<?> cls,Component component){
+            this.classLoader = classLoader;
+            this.cls = cls;
+            this.component = component;
+        }
+
+
+        public GroovyClassLoader classLoader(){ return this.classLoader;}
+
+        public Class<?> cls(){return cls; }
+
+        public Component component(){return component;}
+    }
 
 }

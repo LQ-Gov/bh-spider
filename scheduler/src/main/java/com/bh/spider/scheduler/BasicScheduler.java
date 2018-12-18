@@ -21,6 +21,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+
 import org.apache.commons.io.FileUtils;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -91,7 +92,7 @@ public class BasicScheduler implements IEvent {
         //process(Commands.CLOSE);
     }
     public void submit(Context ctx, Request req) {
-        Command cmd = new Command(CommandCode.SUBMIT_REQUEST, ctx, new Object[]{req});
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST, new Object[]{req});
         this.process(cmd);
     }
 

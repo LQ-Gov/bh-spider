@@ -9,12 +9,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by lq on 17-3-16.
@@ -61,12 +63,13 @@ public class EventLoop extends Thread {
 
                     Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
+                    Object returnValue = executor.invoke(args);
 
-                    future.complete(executor.invoke(args));
+                    future.complete(returnValue);
 
                     if (cmd.context() != null && executor.mapping().autoComplete())
-                        cmd.context().complete();
-                }catch (Exception e){
+                        cmd.context().write(returnValue);
+                } catch (Exception e) {
                     future.completeExceptionally(e);
                     e.printStackTrace();
                 }
@@ -76,8 +79,7 @@ public class EventLoop extends Thread {
             } catch (Exception e) {
                 logger.error("eventLoop execute error,mss:{}", e.getMessage());
                 e.printStackTrace();
-            }
-            finally {
+            } finally {
 
             }
         }

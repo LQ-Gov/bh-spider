@@ -31,7 +31,7 @@ public interface RuleController {
 
 
     static RuleController build(Rule rule, BasicScheduler scheduler,Domain domain) {
-        return new BasicRuleController(rule);
+        return new BasicRuleController(scheduler,rule);
     }
 
 }

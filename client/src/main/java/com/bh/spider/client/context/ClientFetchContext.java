@@ -3,6 +3,7 @@ package com.bh.spider.client.context;
 import com.bh.spider.doc.Document;
 import com.bh.spider.fetch.*;
 import com.bh.spider.fetch.impl.RequestBuilder;
+import com.bh.spider.rule.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,11 @@ public class ClientFetchContext implements FetchContext {
 
     @Override
     public Response response() {
+        return null;
+    }
+
+    @Override
+    public Rule rule() {
         return null;
     }
 
