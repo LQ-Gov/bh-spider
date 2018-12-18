@@ -86,13 +86,13 @@ public class SQLiteStoreAccessor implements StoreAccessor {
     }
 
     @Override
-    public void update(long ruleId, List<Long> reIdCollection, Request.State state) {
+    public void update(long ruleId, Long[] reIds, Request.State state) {
         String sql = "UPDATE " + TABLE_NAME + " SET state=? WHERE rule_id=? AND id in (?)";
         try {
             PreparedStatement statement = store.connection().prepareStatement(sql);
             statement.setLong(1, ruleId);
             statement.setString(2, state.name());
-            statement.setArray(3, store.connection().createArrayOf("INTEGER", reIdCollection.toArray()));
+            statement.setArray(3, store.connection().createArrayOf("INTEGER", reIds));
 
             statement.execute();
         } catch (Exception e) {

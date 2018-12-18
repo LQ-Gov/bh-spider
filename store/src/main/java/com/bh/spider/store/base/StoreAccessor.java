@@ -9,7 +9,7 @@ public interface StoreAccessor {
 
     void insert(Request request);
 
-    void update(long ruleId,List<Long> reIdCollection,Request.State state);
+    void update(long ruleId,Long[] reIds,Request.State state);
 
     List<Request> find(long ruleId,Request.State state, long size);
 
