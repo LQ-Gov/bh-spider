@@ -1,13 +1,20 @@
 package com.bh.spider.store.sqlite;
 
+import com.bh.spider.fetch.FetchMethod;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchState;
+import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.transfer.JsonFactory;
+import com.fasterxml.jackson.databind.type.MapType;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 public class SQLiteStoreAccessor implements StoreAccessor {
@@ -16,12 +23,6 @@ public class SQLiteStoreAccessor implements StoreAccessor {
 
     public SQLiteStoreAccessor(SQLiteStore store) {
         this.store = store;
-    }
-
-
-    @Override
-    public List<String> uriAboutRule(String ruleId) {
-        return null;
     }
 
 
@@ -83,4 +84,55 @@ public class SQLiteStoreAccessor implements StoreAccessor {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void update(long ruleId, List<Long> reIdCollection, Request.State state) {
+        String sql = "UPDATE " + TABLE_NAME + " SET state=? WHERE rule_id=? AND id in (?)";
+        try {
+            PreparedStatement statement = store.connection().prepareStatement(sql);
+            statement.setLong(1, ruleId);
+            statement.setString(2, state.name());
+            statement.setArray(3, store.connection().createArrayOf("INTEGER", reIdCollection.toArray()));
+
+            statement.execute();
+        } catch (Exception e) {
+
+        }
+    }
+
+    @Override
+    public List<Request> find(long ruleId, Request.State state, long size) {
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE rule_id=? AND state=? LIMIT ?";
+
+        try {
+            PreparedStatement statement = store.connection().prepareStatement(sql);
+            statement.setLong(1,ruleId);
+            statement.setString(2,state.name());
+            statement.setLong(3,size);
+            ResultSet rs = statement.executeQuery();
+
+            List<Request> result =new LinkedList<>();
+            while (rs.next()) {
+
+                Request request = new RequestImpl(
+                        rs.getLong("id"),
+                        rs.getString("url"),
+                        FetchMethod.valueOf(rs.getString("method")));
+
+
+                MapType mapType = JsonFactory.get().getTypeFactory().constructMapType(HashMap.class, String.class, String.class);
+                request.headers().putAll(JsonFactory.get().readValue(StringUtils.defaultString(rs.getString("headers"),""),mapType));
+                request.extra().putAll(JsonFactory.get().readValue(StringUtils.defaultString(rs.getString("extra"),""),mapType));
+                result.add(request);
+            }
+            return result;
+
+        }catch (Exception e){
+        }
+        return Collections.emptyList();
+    }
+
+
+
+
 }

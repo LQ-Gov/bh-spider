@@ -1,15 +1,29 @@
 package com.bh.spider.scheduler.domain;
 
+import com.bh.spider.fetch.Request;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.context.LocalContext;
+import com.bh.spider.scheduler.event.Command;
+import com.bh.spider.store.base.Store;
+import com.bh.spider.transfer.CommandCode;
+
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class BasicRuleController implements RuleController {
     private Rule rule;
     private BasicScheduler scheduler;
+    private Store store;
 
-    public BasicRuleController(BasicScheduler scheduler,Rule rule){
+
+    private long queueLength=0;
+    private Queue<Request> cacheQueue = new LinkedList<>();
+
+    public BasicRuleController(BasicScheduler scheduler, Rule rule, Store store){
         this.rule = rule;
         this.scheduler = scheduler;
+        this.store = store;
     }
 
     @Override
@@ -24,6 +38,21 @@ public class BasicRuleController implements RuleController {
 
     @Override
     public void blast() {
-        System.out.println("boom!!!! boom!!!");
+        if (queueLength == 0) return;
+
+
+        long size = Math.min(queueLength, rule.getTaskCount());
+
+        store.accessor().find(rule.id(), Request.State.QUEUE,size);
+        Request.State.GOING
+
+        Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH);
+
+
+
+
+
+
+                System.out.println("boom!!!! boom!!!");
     }
 }

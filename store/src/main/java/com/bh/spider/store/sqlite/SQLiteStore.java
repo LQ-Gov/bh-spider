@@ -23,7 +23,6 @@ public class SQLiteStore implements Store {
 
     private Connection connection;
 
-    private SQLiteFetchService rs = null;
 
     private SQLiteStoreAccessor accessor;
 
@@ -58,10 +57,6 @@ public class SQLiteStore implements Store {
         return accessor;
     }
 
-    @Override
-    public FetchService request() {
-        return rs;
-    }
 
 
     public Connection connection() {

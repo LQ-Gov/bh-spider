@@ -18,6 +18,10 @@ public class Command {
         this.ctx = ctx;
     }
 
+    public Command(Context ctx,CommandCode key){
+        this(ctx,key,null);
+    }
+
     public CommandCode key() {
         return k;
     }

@@ -20,6 +20,7 @@ public enum CommandCode {
 
     //request operation
     SUBMIT_REQUEST,//提交任务
+
     GET_REQUEST_LIST,//查询请求列表
 
 
@@ -28,6 +29,8 @@ public enum CommandCode {
     WATCH,
 
     FETCH,
+
+    FETCH_BATCH,//批量抓取
 
 
     ALIVE,

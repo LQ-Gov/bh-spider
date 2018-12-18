@@ -30,7 +30,4 @@ public interface Store {
 
 
     StoreAccessor accessor();
-
-    FetchService request();
-
 }
