@@ -56,7 +56,7 @@ public class SQLiteStoreAccessor implements StoreAccessor {
     }
 
     @Override
-    public void insert(Request req) {
+    public boolean insert(Request req,long ruleId) {
 
         String sql = "INSERT INTO " + TABLE_NAME + "(id,url,method,headers,params," +
                 "extra,rule_id,hash,state,message,create_time,update_time) " +
@@ -72,17 +72,18 @@ public class SQLiteStoreAccessor implements StoreAccessor {
             statement.setString(pos++, JsonFactory.get().writeValueAsString(req.headers()));
             statement.setString(pos++, null);
             statement.setString(pos++, JsonFactory.get().writeValueAsString(req.extra()));
-            statement.setLong(pos++, req.ruleId());
+            statement.setLong(pos++, ruleId);
             statement.setString(pos++, req.hash());
             statement.setString(pos++, Request.State.QUEUE.name());
             statement.setString(pos++, null);
             statement.setObject(pos++, req.createTime());
             statement.setObject(pos++, null);
 
-            statement.execute();
+            return statement.execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
 
     @Override

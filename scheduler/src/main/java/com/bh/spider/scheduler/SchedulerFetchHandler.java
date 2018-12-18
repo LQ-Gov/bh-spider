@@ -27,12 +27,10 @@ public class SchedulerFetchHandler implements IAssist {
 
     private Fetcher fetcher;
     private Domain root;
-    private Store store;
 
-    public SchedulerFetchHandler(BasicScheduler scheduler, Domain root, Store store) {
+    public SchedulerFetchHandler(BasicScheduler scheduler, Domain root) {
         this.scheduler = scheduler;
         this.root = root;
-        this.store = store;
 
         this.fetcher = new Fetcher(scheduler);
     }
@@ -49,9 +47,9 @@ public class SchedulerFetchHandler implements IAssist {
             if (rules != null) {
                 for (Rule rule : rules) {
                     RuleDecorator decorator = (RuleDecorator) rule;
+
                     if (decorator.match(req.url())) {
-                        req.setRuleId(decorator.id());
-                        store.accessor().insert(req);
+                        decorator.controller().joinQueue(req);
                         return;
                     }
                 }

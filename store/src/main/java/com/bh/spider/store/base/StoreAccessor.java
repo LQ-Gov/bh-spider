@@ -7,7 +7,7 @@ import java.util.List;
 public interface StoreAccessor {
 
 
-    void insert(Request request);
+    boolean insert(Request request,long ruleId);
 
     void update(long ruleId,Long[] reIds,Request.State state);
 

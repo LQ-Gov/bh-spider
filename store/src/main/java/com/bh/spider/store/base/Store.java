@@ -1,7 +1,5 @@
 package com.bh.spider.store.base;
 
-import com.bh.spider.store.service.FetchService;
-
 import java.util.Properties;
 
 /**

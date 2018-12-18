@@ -109,10 +109,11 @@ public class BasicScheduler implements IEvent {
 
     protected void initDirectories() throws IOException {
         Path dataPath = Paths.get(cfg.get(Config.INIT_DATA_PATH));
+        logger.info("create data directory:{}",dataPath);
         //创建基础文件夹
         FileUtils.forceMkdir(dataPath.toFile());
         //创建规则文件夹
-        FileUtils.forceMkdir(Paths.get(Config.INIT_DATA_RULE_PATH).toFile());
+        FileUtils.forceMkdir(Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH)).toFile());
         //创建依赖包文件夹(jar)
         FileUtils.forceMkdir(Paths.get(dataPath.toString(), Component.Type.JAR.name()).toFile());
         //创建解析脚本文件夹(groovy)
@@ -165,7 +166,7 @@ public class BasicScheduler implements IEvent {
         loop = new EventLoop(this,
                 new SchedulerComponentHandler(cfg,this),
                 new SchedulerRuleHandler(this, this.jobCoreScheduler, domain,cfg),
-                new SchedulerFetchHandler(this, domain,store),
+                new SchedulerFetchHandler(this, domain),
                 new SchedulerWatchHandler());
         logger.info("事件循环线程启动");
         loop.listen().join();

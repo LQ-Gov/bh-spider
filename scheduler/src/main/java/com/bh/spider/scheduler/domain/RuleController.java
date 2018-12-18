@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.domain;
 
+import com.bh.spider.fetch.Request;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.job.JobContext;
@@ -30,8 +31,11 @@ public interface RuleController {
     void blast();
 
 
+    void joinQueue(Request request);
+
+
     static RuleController build(Rule rule, BasicScheduler scheduler,Domain domain) {
-        return new BasicRuleController(scheduler,rule);
+        return new BasicRuleController(scheduler,rule,null);
     }
 
 }

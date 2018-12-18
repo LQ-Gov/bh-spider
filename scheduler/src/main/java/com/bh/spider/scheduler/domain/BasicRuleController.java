@@ -55,7 +55,16 @@ public class BasicRuleController implements RuleController {
 
             scheduler.process(cmd);
 
+            queueLength -= requests.size();
+
             System.out.println("boom!!!! boom!!!");
+        }
+    }
+
+    @Override
+    public void joinQueue(Request request) {
+        if (store.accessor().insert(request, rule.id())) {
+            queueLength++;
         }
     }
 }

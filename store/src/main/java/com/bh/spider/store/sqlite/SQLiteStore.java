@@ -2,8 +2,6 @@ package com.bh.spider.store.sqlite;
 
 import com.bh.spider.store.base.Store;
 import com.bh.spider.store.base.StoreAccessor;
-import com.bh.spider.store.service.FetchService;
-import com.bh.spider.store.sqlite.service.SQLiteFetchService;
 
 import java.sql.Connection;
 import java.sql.SQLException;

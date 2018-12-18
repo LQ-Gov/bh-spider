@@ -1,12 +1,8 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.fetch.Extractor;
-import com.bh.spider.query.Query;
-import com.bh.spider.store.service.Service;
 import com.bh.spider.transfer.entity.Component;
 import groovy.lang.GroovyClassLoader;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
