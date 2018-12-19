@@ -32,7 +32,7 @@ public class Rule {
      */
     private boolean exact;
 
-    private int taskCount;
+    private int parallelCount;
 
     private String dispatcher;
 
@@ -145,11 +145,11 @@ public class Rule {
         this.dispatcher = dispatcher;
     }
 
-    public int getTaskCount() {
-        return taskCount;
+    public int getParallelCount() {
+        return parallelCount;
     }
 
-    public void setTaskCount(int taskCount) {
-        this.taskCount = taskCount;
+    public void setParallelCount(int parallelCount) {
+        this.parallelCount = parallelCount;
     }
 }

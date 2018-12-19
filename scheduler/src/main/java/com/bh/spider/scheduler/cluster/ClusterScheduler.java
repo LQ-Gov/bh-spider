@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 /**
@@ -39,7 +40,7 @@ public class ClusterScheduler extends BasicScheduler {
     }
 
     @Override
-    public Future process(Command cmd) {
+    public <R> CompletableFuture<R> process(Command cmd) {
         return super.process(cmd);
     }
 

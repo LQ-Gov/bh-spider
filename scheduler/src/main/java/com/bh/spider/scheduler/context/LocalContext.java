@@ -10,6 +10,8 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public class LocalContext implements Context {
+    private final static Logger logger = LoggerFactory.getLogger(LocalContext.class);
     private BasicScheduler scheduler;
 
     public LocalContext(BasicScheduler scheduler) {
@@ -42,6 +45,8 @@ public class LocalContext implements Context {
     @Override
     public void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException {
         int code = fetchContext.response().code();
+
+        logger.info("抓取完成:URI:{},RESPONSE CODE:{}",fetchContext.url(),code);
 
         Rule rule = fetchContext.rule();
         if (rule == null) return;

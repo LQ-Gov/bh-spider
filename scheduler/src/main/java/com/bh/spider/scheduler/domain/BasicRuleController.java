@@ -7,24 +7,34 @@ import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class BasicRuleController implements RuleController {
+    private final static Logger logger = LoggerFactory.getLogger(BasicRuleController.class);
     private Rule rule;
     private BasicScheduler scheduler;
     private Store store;
 
 
-    private long queueLength=0;
+    private long unfinishedIndex;
+    private long unfinishedCount;
+    private AtomicLong waitingCount;
     private Queue<Request> cacheQueue = new LinkedList<>();
 
-    public BasicRuleController(BasicScheduler scheduler, Rule rule, Store store){
+    public BasicRuleController(BasicScheduler scheduler, Rule rule, Store store) {
         this.rule = rule;
         this.scheduler = scheduler;
         this.store = store;
+        this.unfinishedIndex=0;
+        this.unfinishedCount = store.accessor().count(rule.id(), Request.State.GOING);
+        this.waitingCount = new AtomicLong(store.accessor().count(rule.id(), Request.State.QUEUE));
     }
 
     @Override
@@ -38,33 +48,64 @@ public class BasicRuleController implements RuleController {
     }
 
     @Override
-    public void blast() {
-        if (queueLength == 0) return;
+    public void blast() throws ExecutionException, InterruptedException {
+
+        boolean unfinished=unfinishedIndex< unfinishedCount;
+        if (waitingCount.get() <= 0 && !unfinished) return;
+
+        //当前队列里的任务总数
+        long count = unfinished?(unfinishedCount-unfinishedIndex):waitingCount.get();
+
+        //如果parallelCount为0，则为自动分配大小,这里暂时写死为10
+        long size =Math.min(rule.getParallelCount()==0?10:rule.getParallelCount(),count);
 
 
-        long size = Math.min(queueLength, rule.getTaskCount());
+        //先处理上次未完成的url
+        if (unfinished) {
+            Collection<Request> requests = cacheQueue.isEmpty() ?
+                    store.accessor().find(rule.id(), Request.State.GOING,unfinishedIndex, size) :
+                    cacheQueue;
 
-        List<Request> requests = store.accessor().find(rule.id(), Request.State.QUEUE, size);
+            Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests,rule});
 
-        if (!requests.isEmpty()) {
+            boolean ok = scheduler.<Boolean>process(cmd).get();
+            if (ok)
+                unfinishedIndex+=size;
+            setCacheQueue(ok ? null : requests);
 
+        } else {
+            Collection<Request> requests = cacheQueue.isEmpty() ?
+                    store.accessor().find(rule.id(), Request.State.QUEUE, size) :
+                    cacheQueue;
 
-            store.accessor().update(rule.id(), requests.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);
+            if (!requests.isEmpty()) {
+                Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests,rule});
 
-            Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests});
-
-            scheduler.process(cmd);
-
-            queueLength -= requests.size();
-
-            System.out.println("boom!!!! boom!!!");
+                boolean ok = scheduler.<Boolean>process(cmd).get();
+                logger.info("任务提交完成，并且已返回，返回结果:{}",ok);
+                if (ok) {
+                    store.accessor().update(rule.id(),
+                            requests.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);
+                    waitingCount.addAndGet(-1 * size);
+                }
+                setCacheQueue(ok ? null : requests);
+            }
         }
     }
 
     @Override
     public void joinQueue(Request request) {
         if (store.accessor().insert(request, rule.id())) {
-            queueLength++;
+            waitingCount.incrementAndGet();
+        }
+    }
+
+
+    private void setCacheQueue(Collection<Request> collection) {
+        if (cacheQueue != collection) {
+            cacheQueue.clear();
+            if (collection != null)
+                cacheQueue.addAll(collection);
         }
     }
 }

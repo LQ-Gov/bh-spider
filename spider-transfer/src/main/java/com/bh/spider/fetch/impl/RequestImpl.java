@@ -41,7 +41,7 @@ public class RequestImpl implements Request {
     }
 
     public RequestImpl(long id, String url, FetchMethod method) throws MalformedURLException {
-        this(0, new URL(url), method);
+        this(id, new URL(url), method);
     }
 
     public RequestImpl(URL url){
@@ -92,16 +92,6 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public long ruleId() {
-        return ruleId;
-    }
-
-    public void setRuleId(long ruleId){
-        this.ruleId = ruleId;
-    }
-
-
-    @Override
     public String hash() {
         String h = hash;
         if (h == null) {
@@ -141,9 +131,6 @@ public class RequestImpl implements Request {
         return state;
     }
 
-    void setState(FetchState state) {
-        this.state = state;
-    }
 
 
 }

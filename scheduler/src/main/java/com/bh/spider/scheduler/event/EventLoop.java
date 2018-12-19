@@ -37,7 +37,7 @@ public class EventLoop extends Thread {
 
     }
 
-    public <R> Future<R> execute(Command cmd) {
+    public <R> CompletableFuture<R> execute(Command cmd) {
         CompletableFuture<R> future = new CompletableFuture<R>();
         queue.offer(Pair.of(cmd, future));
         return future;

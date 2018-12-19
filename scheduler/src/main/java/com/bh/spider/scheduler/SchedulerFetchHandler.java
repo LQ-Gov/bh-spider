@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler;
 
+import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchState;
 import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.query.Query;
@@ -11,9 +12,9 @@ import com.bh.spider.scheduler.domain.Domain;
 import com.bh.spider.scheduler.domain.RuleDecorator;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
+import com.bh.spider.scheduler.fetcher.FetchContent;
 import com.bh.spider.scheduler.fetcher.FetchExecuteException;
 import com.bh.spider.scheduler.fetcher.Fetcher;
-import com.bh.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,17 +40,17 @@ public class SchedulerFetchHandler implements IAssist {
     protected void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
         String host = req.url().getHost();
 
-        Domain d = root.find(host,false);
+        Domain d = root.find(host, false);
 
 
-        while (d!=root.parent()) {
+        while (d != root.parent()) {
             Collection<Rule> rules = d.rules();
             if (rules != null) {
                 for (Rule rule : rules) {
                     RuleDecorator decorator = (RuleDecorator) rule;
 
                     if (decorator.match(req.url())) {
-                        decorator.controller().joinQueue(req);
+                        decorator.controller().joinQueue(new FetchContent(req));
                         return;
                     }
                 }
@@ -73,8 +74,15 @@ public class SchedulerFetchHandler implements IAssist {
      * @throws FetchExecuteException
      */
     @EventMapping(autoComplete = false)
-    protected void FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) throws FetchExecuteException {
+    protected boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) throws FetchExecuteException {
         fetcher.fetch(ctx, req, rule);
+        return true;
+    }
+
+    @EventMapping(autoComplete = false)
+    protected boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests,Rule rule) throws FetchExecuteException {
+        fetcher.fetch(ctx,requests,rule);
+        return true;
     }
 
     @EventMapping

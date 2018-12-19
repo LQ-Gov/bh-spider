@@ -6,10 +6,12 @@ import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.job.JobContext;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.scheduler.job.QuartzJobImpl;
+import com.bh.spider.store.base.Store;
 import org.apache.commons.collections4.MapUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public interface RuleController {
     Rule rule();
@@ -28,14 +30,14 @@ public interface RuleController {
     /**
      * 终于到了最终读数据库的产生URL的阶段了
      */
-    void blast();
+    void blast() throws ExecutionException, InterruptedException;
 
 
     void joinQueue(Request request);
 
 
-    static RuleController build(Rule rule, BasicScheduler scheduler,Domain domain) {
-        return new BasicRuleController(scheduler,rule,null);
+    static RuleController build(Rule rule, BasicScheduler scheduler, Store store) {
+        return new BasicRuleController(scheduler,rule,store);
     }
 
 }

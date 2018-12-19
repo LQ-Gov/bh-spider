@@ -13,6 +13,10 @@ public interface StoreAccessor {
 
     List<Request> find(long ruleId,Request.State state, long size);
 
+    List<Request> find(long ruleId,Request.State state,long offset, long size);
+
+    long count(long ruleId, Request.State state);
+
 
 
 }

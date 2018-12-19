@@ -42,7 +42,6 @@ public class RequestBuilder {
     }
 
     public RequestBuilder setState(FetchState state){
-        request.setState(state);
         return this;
     }
 

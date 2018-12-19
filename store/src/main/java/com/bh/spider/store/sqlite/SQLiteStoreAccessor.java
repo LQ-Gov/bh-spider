@@ -7,17 +7,18 @@ import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.transfer.JsonFactory;
 import com.fasterxml.jackson.databind.type.MapType;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class SQLiteStoreAccessor implements StoreAccessor {
+    private final static Logger logger = LoggerFactory.getLogger(SQLiteStoreAccessor.class);
     private SQLiteStore store;
     private final static String TABLE_NAME="bh_spider_url";
 
@@ -79,7 +80,7 @@ public class SQLiteStoreAccessor implements StoreAccessor {
             statement.setObject(pos++, req.createTime());
             statement.setObject(pos++, null);
 
-            return statement.execute();
+            return statement.executeUpdate()>0;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -87,29 +88,32 @@ public class SQLiteStoreAccessor implements StoreAccessor {
     }
 
     @Override
-    public void update(long ruleId, Long[] reIds, Request.State state) {
-        String sql = "UPDATE " + TABLE_NAME + " SET state=? WHERE rule_id=? AND id in (?)";
+    public void update(long ruleId, Long[] ids, Request.State state) {
+
+        String sql = String.format("UPDATE %s SET state=? WHERE rule_id=? AND id in (%s)",
+                TABLE_NAME, StringUtils.join(ids, ","));
+
+        logger.info(sql);
         try {
             PreparedStatement statement = store.connection().prepareStatement(sql);
-            statement.setLong(1, ruleId);
-            statement.setString(2, state.name());
-            statement.setArray(3, store.connection().createArrayOf("INTEGER", reIds));
-
+            statement.setString(1, state.name());
+            statement.setLong(2, ruleId);
             statement.execute();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
     @Override
-    public List<Request> find(long ruleId, Request.State state, long size) {
-        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE rule_id=? AND state=? LIMIT ?";
+    public List<Request> find(long ruleId, Request.State state, long offset, long size) {
+        String sql = "SELECT * FROM " + TABLE_NAME + " WHERE rule_id=? AND state=? LIMIT ?,?";
 
         try {
             PreparedStatement statement = store.connection().prepareStatement(sql);
             statement.setLong(1,ruleId);
             statement.setString(2,state.name());
-            statement.setLong(3,size);
+            statement.setLong(3,offset);
+            statement.setLong(4,size);
             ResultSet rs = statement.executeQuery();
 
             List<Request> result =new LinkedList<>();
@@ -133,7 +137,26 @@ public class SQLiteStoreAccessor implements StoreAccessor {
         return Collections.emptyList();
     }
 
+    @Override
+    public List<Request> find(long ruleId, Request.State state, long size) {
+        return find(ruleId, state, 0, size);
+    }
 
+    @Override
+    public long count(long ruleId, Request.State state) {
+        String sql = "SELECT COUNT(id) FROM "+TABLE_NAME+" WHERE rule_id=? AND state=?";
+        try {
+            PreparedStatement statement = store.connection().prepareStatement(sql);
+            statement.setLong(1, ruleId);
+            statement.setString(2, state.name());
+
+            ResultSet rs = statement.executeQuery();
+            return rs.next()?rs.getLong(1):0;
+        } catch (Exception e) {
+
+        }
+        return 0;
+    }
 
 
 }

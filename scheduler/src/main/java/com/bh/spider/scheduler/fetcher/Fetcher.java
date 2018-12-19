@@ -55,7 +55,7 @@ public class Fetcher {
      * @param req 要抓取的请求
      * @throws FetchExecuteException
      */
-    public void fetch(Context ctx, RequestImpl req, Rule rule) throws FetchExecuteException {
+    public void fetch(Context ctx, Request req, Rule rule) throws FetchExecuteException {
 
 
         FetchClientBuilder builder = rule instanceof DriverRule ?
@@ -76,7 +76,13 @@ public class Fetcher {
     }
 
 
-    protected void initHeaders(RequestImpl req) {
+    public void fetch(Context ctx,Collection<Request> requests,Rule rule) throws FetchExecuteException {
+        for(Request req:requests)
+            fetch(ctx,req,rule);
+    }
+
+
+    protected void initHeaders(Request req) {
         Set<String> keys = req.headers().keySet()
                 .stream().map(String::toLowerCase)
                 .collect(Collectors.toSet());
@@ -92,7 +98,7 @@ public class Fetcher {
 
     }
 
-    private void setHeader(Collection<String> lowerKey, RequestImpl req, String key, String value) {
+    private void setHeader(Collection<String> lowerKey, Request req, String key, String value) {
         if (!lowerKey.contains(key.toLowerCase()))
             req.headers().put(key, value);
     }

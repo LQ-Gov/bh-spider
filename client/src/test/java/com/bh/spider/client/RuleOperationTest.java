@@ -40,7 +40,7 @@ public class RuleOperationTest {
 
     @Test
     public void submit0(){
-        Rule rule = new Rule("http://www.zhihu.com/**","www.zhihu.com","0 0 12 * * ?");
+        Rule rule = new Rule("http://www.toutiao.com/**","www.toutiao.com","*/5 * * * * ?");
 
         client.rule().submit(rule);
     }

@@ -41,11 +41,6 @@ public interface Request extends Cloneable {
      */
     Map<String, Object> extra();
 
-    /**
-     * 对应的规则ID
-     * @return
-     */
-    long ruleId();
 
     String hash();
 

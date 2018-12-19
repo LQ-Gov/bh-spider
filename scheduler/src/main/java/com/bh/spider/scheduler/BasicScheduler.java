@@ -21,7 +21,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-
 import org.apache.commons.io.FileUtils;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -31,7 +30,7 @@ import sun.misc.Signal;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by lq on 17-3-16.
@@ -83,7 +82,7 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    public <R> Future<R> process(Command cmd) {
+    public <R> CompletableFuture<R> process(Command cmd) {
         return loop.execute(cmd);
     }
 
@@ -164,8 +163,8 @@ public class BasicScheduler implements IEvent {
 
     protected void initEventLoop() throws Exception {
         loop = new EventLoop(this,
-                new SchedulerComponentHandler(cfg,this),
-                new SchedulerRuleHandler(this, this.jobCoreScheduler, domain,cfg),
+                new SchedulerComponentHandler(cfg, this),
+                new SchedulerRuleHandler(cfg, this, this.store, this.jobCoreScheduler, domain),
                 new SchedulerFetchHandler(this, domain),
                 new SchedulerWatchHandler());
         logger.info("事件循环线程启动");

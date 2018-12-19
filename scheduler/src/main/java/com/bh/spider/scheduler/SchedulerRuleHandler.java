@@ -9,6 +9,7 @@ import com.bh.spider.scheduler.domain.RuleDecorator;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
+import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.JsonFactory;
 
 import java.io.IOException;
@@ -23,15 +24,17 @@ public class SchedulerRuleHandler implements IAssist {
     private JobCoreScheduler jobCoreScheduler;
     private Domain root;
     private Map<Long,RuleDecorator> ruleCache = new HashMap<>();
+    private Store store;
 
     private Config cfg;
 
 
-    public SchedulerRuleHandler(BasicScheduler scheduler, JobCoreScheduler jobCoreScheduler, Domain domain, Config config) throws Exception {
+    public SchedulerRuleHandler(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, Domain domain) throws Exception {
         this.scheduler = scheduler;
         this.root = domain;
         this.jobCoreScheduler = jobCoreScheduler;
         this.cfg = config;
+        this.store = store;
 
         initLocalRuleController();
     }
@@ -57,10 +60,10 @@ public class SchedulerRuleHandler implements IAssist {
 
 
     private void bindRule(Domain domain,Rule rule) throws Exception {
-        RuleController controller = RuleController.build(rule, this.scheduler, domain);
-        RuleDecorator decorator = new RuleDecorator(rule, controller,domain);
+        RuleController controller = RuleController.build(rule, this.scheduler, this.store);
+        RuleDecorator decorator = new RuleDecorator(rule, controller, domain);
         domain.bindRule(decorator);
-        ruleCache.put(decorator.id(),decorator);
+        ruleCache.put(decorator.id(), decorator);
         decorator.controller().execute(jobCoreScheduler);
     }
 
