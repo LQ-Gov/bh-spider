@@ -15,5 +15,5 @@ public interface Context {
 
     void exception(Throwable cause);
 
-    void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException;
+    void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException;
 }

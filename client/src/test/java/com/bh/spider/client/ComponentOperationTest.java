@@ -35,7 +35,7 @@ public class ComponentOperationTest {
 
     @Test
     public void select1() throws Exception {
-        client.component().submit(ZhiHuCrawler.class);
+        client.component().submit(TouTiaoExtractor.class);
     }
 
 

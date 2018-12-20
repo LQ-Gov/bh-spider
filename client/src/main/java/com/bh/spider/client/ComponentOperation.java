@@ -126,11 +126,11 @@ public class ComponentOperation {
         assert path != null;
 
         Preconditions.checkArgument(type != null && type != Component.Type.UNKNOWN, "you must special a valid component type");
-        Preconditions.checkArgument(Files.exists(path),"file not exists");
+        Preconditions.checkArgument(Files.exists(path), "file not exists");
 
         String filename = path.getFileName().toString();
 
-        name = name == null ? filename : name;
+        name = name == null ? FilenameUtils.getBaseName(filename) : name;
 
         byte[] data = Files.readAllBytes(path);
 

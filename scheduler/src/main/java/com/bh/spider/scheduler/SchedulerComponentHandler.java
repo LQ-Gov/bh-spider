@@ -49,7 +49,7 @@ public class SchedulerComponentHandler implements IAssist {
 
 
     @EventMapping
-    protected void LOAD_COMPONENT_HANDLER(String name,Component.Type type) throws IOException, ClassNotFoundException {
-        factory.proxy(type).loadClass(name);
+    protected Class<?> LOAD_COMPONENT_HANDLER(String name,Component.Type type) throws IOException, ClassNotFoundException {
+        return factory.proxy(type).loadClass(name);
     }
 }

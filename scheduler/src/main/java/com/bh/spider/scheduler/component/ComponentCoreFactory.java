@@ -22,9 +22,11 @@ public class ComponentCoreFactory {
     public ComponentCoreFactory(Config cfg) throws IOException {
         String dataPath = cfg.get(Config.INIT_DATA_PATH);
 
-        componentRepositories.put(Component.Type.JAR, new JarComponentRepository(Paths.get(dataPath, Component.Type.JAR.name())));
+        JarComponentRepository jarComponentRepository = new JarComponentRepository(Paths.get(dataPath, Component.Type.JAR.name()));
+
+        componentRepositories.put(Component.Type.JAR, jarComponentRepository);
         componentRepositories.put(Component.Type.GROOVY,
-                new GroovyComponentRepository(null, Paths.get(dataPath, Component.Type.GROOVY.name())));
+                new GroovyComponentRepository(jarComponentRepository.classLoader(), Paths.get(dataPath, Component.Type.GROOVY.name())));
 
 
     }

@@ -19,7 +19,7 @@ public class RequestOperationTest {
     @Test
     public void submit() throws Exception {
         //client.request().submit("http://www.zhihu.com/a6444873109181874445");
-        client.request().submit("https://www.toutiao.com/a6636321046444114437");
+        client.request().submit("https://www.toutiao.com/a6636321046444114436");
 
     }
 }

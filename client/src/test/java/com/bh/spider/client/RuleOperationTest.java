@@ -41,6 +41,7 @@ public class RuleOperationTest {
     @Test
     public void submit0(){
         Rule rule = new Rule("http://www.toutiao.com/**","www.toutiao.com","*/5 * * * * ?");
+        rule.extractor("200",new String[]{"TouTiaoExtractor"});
 
         client.rule().submit(rule);
     }

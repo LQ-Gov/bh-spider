@@ -15,10 +15,12 @@ public class GroovyComponentRepository extends ComponentRepository {
     private final static Map<String, WeakReference<Proxy>> classCache = new ConcurrentHashMap<>();
 
     private Path dir;
+    private ClassLoader parentClassLoader;
 
-    public GroovyComponentRepository(JarComponentRepository commonProxy, Path path) throws IOException {
+    public GroovyComponentRepository(ClassLoader parentClassLoader, Path path) throws IOException {
         super(Component.Type.GROOVY, path);
         this.dir = path;
+        this.parentClassLoader = parentClassLoader;
 
     }
 
@@ -42,7 +44,7 @@ public class GroovyComponentRepository extends ComponentRepository {
 
         Path path = Paths.get(dir.toString(), component.getName());
 
-        ExtractorClassLoader classLoader = new ExtractorClassLoader();
+        GroovyComponentClassLoader classLoader = new GroovyComponentClassLoader(parentClassLoader);
 
 
         Class<?> cls = classLoader.parseClass(path.toFile());

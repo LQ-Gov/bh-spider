@@ -46,6 +46,7 @@ public class Component implements Serializable {
     }
 
     private String name;
+    private String extension;
     private String hash;
     private Type type;
     private String description;
@@ -89,5 +90,13 @@ public class Component implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getExtension() {
+        return extension;
+    }
+
+    public void setExtension(String extension) {
+        this.extension = extension;
     }
 }

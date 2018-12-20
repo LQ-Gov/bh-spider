@@ -43,7 +43,7 @@ public class LocalContext implements Context {
     }
 
     @Override
-    public void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException {
+    public void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException {
         int code = fetchContext.response().code();
 
         logger.info("抓取完成:URI:{},RESPONSE CODE:{}",fetchContext.url(),code);
@@ -60,10 +60,12 @@ public class LocalContext implements Context {
         //检查并load extractor
         for (String extractor : extractors) {
 
-            Future<Extractor> future = scheduler.process(new Command(this, CommandCode.LOAD_COMPONENT,
+            Future<Class<Extractor>> future = scheduler.process(new Command(this, CommandCode.LOAD_COMPONENT,
                     new Object[]{extractor, Component.Type.GROOVY}));
 
-            extractorObjects.add(future.get());
+            Extractor obj = future.get().newInstance();
+
+            extractorObjects.add(obj);
         }
 
 
