@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class BasicDomain implements Domain {
@@ -27,7 +28,7 @@ public class BasicDomain implements Domain {
     public BasicDomain(String nodeName, Domain parent) {
         this.nodeName = nodeName;
         this.parent = (parent == null ? EMPTY_DOMAIN : parent);
-        this.children = new HashMap<>();
+        this.children = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -125,18 +126,18 @@ public class BasicDomain implements Domain {
     }
 
     @Override
-    public void bindRule(Rule rule) {
+    public synchronized void bindRule(Rule rule) {
         if (rules == null) rules = new ArrayList<>();
         rules.add(rule);
     }
 
     @Override
-    public void unbindRule(Rule rule) {
+    public synchronized void unbindRule(Rule rule) {
 
     }
 
     @Override
-    public Collection<Rule> rules() {
+    public synchronized Collection<Rule> rules() {
         return rules;
     }
 
