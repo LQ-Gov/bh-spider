@@ -28,15 +28,18 @@ public enum CommandCode {
 
     WATCH,
 
-    FETCH,
-
+    /*******抓取命令*******/
+    FETCH,//单个抓取
     FETCH_BATCH,//批量抓取
+
+    REPORT,//正常抓取完成报告
+
+    REPORT_EXCEPTION,//异常抓取完成报告
 
 
     ALIVE,
     TASK,
     PROCESS,
-    REPORT,
     CLOSE;
 
 }

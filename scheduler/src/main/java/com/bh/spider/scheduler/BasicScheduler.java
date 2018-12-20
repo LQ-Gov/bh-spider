@@ -165,7 +165,7 @@ public class BasicScheduler implements IEvent {
         loop = new EventLoop(this,
                 new SchedulerComponentHandler(cfg, this),
                 new SchedulerRuleHandler(cfg, this, this.store, this.jobCoreScheduler, domain),
-                new SchedulerFetchHandler(this, domain),
+                new SchedulerFetchHandler(this, domain,store),
                 new SchedulerWatchHandler());
         logger.info("事件循环线程启动");
         loop.listen().join();

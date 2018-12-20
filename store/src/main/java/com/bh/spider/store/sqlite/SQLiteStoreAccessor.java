@@ -2,12 +2,10 @@ package com.bh.spider.store.sqlite;
 
 import com.bh.spider.fetch.FetchMethod;
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchState;
 import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.transfer.JsonFactory;
 import com.fasterxml.jackson.databind.type.MapType;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +13,10 @@ import org.slf4j.LoggerFactory;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SQLiteStoreAccessor implements StoreAccessor {
     private final static Logger logger = LoggerFactory.getLogger(SQLiteStoreAccessor.class);
@@ -39,6 +40,7 @@ public class SQLiteStoreAccessor implements StoreAccessor {
                 "hash TEXT," +
                 "rule_id TEXT," +
                 "state TEXT," +
+                "code INTEGER,"+
                 "message TEXT," +
                 "create_time TIMESTAMP default CURRENT_TIMESTAMP," +
                 "update_time TIMESTAMP)";
@@ -93,7 +95,6 @@ public class SQLiteStoreAccessor implements StoreAccessor {
         String sql = String.format("UPDATE %s SET state=? WHERE rule_id=? AND id in (%s)",
                 TABLE_NAME, StringUtils.join(ids, ","));
 
-        logger.info(sql);
         try {
             PreparedStatement statement = store.connection().prepareStatement(sql);
             statement.setString(1, state.name());
@@ -102,6 +103,23 @@ public class SQLiteStoreAccessor implements StoreAccessor {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void update(long id, Integer code, Request.State state,String message) {
+        String sql = String.format("UPDATE %s SET state=?,code=?,message=? WHERE id=?",TABLE_NAME);
+        try {
+            PreparedStatement statement = store.connection().prepareStatement(sql);
+            statement.setString(1, state.name());
+            statement.setInt(2, code);
+            statement.setString(3,message);
+            statement.setLong(4,id);
+
+            statement.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override

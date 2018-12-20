@@ -11,6 +11,8 @@ public interface StoreAccessor {
 
     void update(long ruleId,Long[] reIds,Request.State state);
 
+    void update(long id,Integer code,Request.State state,String message);
+
     List<Request> find(long ruleId,Request.State state, long size);
 
     List<Request> find(long ruleId,Request.State state,long offset, long size);

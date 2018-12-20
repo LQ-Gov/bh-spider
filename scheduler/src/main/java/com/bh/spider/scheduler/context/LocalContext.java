@@ -46,7 +46,7 @@ public class LocalContext implements Context {
     public void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException {
         int code = fetchContext.response().code();
 
-        logger.info("抓取完成:URI:{},RESPONSE CODE:{}",fetchContext.url(),code);
+        logger.info("抓取完成:URI:{},RESPONSE CODE:{}", fetchContext.url(), code);
 
         Rule rule = fetchContext.rule();
         if (rule == null) return;
@@ -75,8 +75,13 @@ public class LocalContext implements Context {
                 extractorObject.run(fetchContext);
             } catch (ExtractorChainException e) {
                 if (e.result() == Behaviour.TERMINATION) break;
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                scheduler.process(
+                        new Command(this,CommandCode.REPORT_EXCEPTION,new Object[]{fetchContext.request().id(),e.getMessage()}));
+                return;
             }
         }
+        //提交报告
+        scheduler.process(new Command(this, CommandCode.REPORT, new Object[]{fetchContext.request().id(),code}));
     }
 }

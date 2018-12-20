@@ -69,7 +69,7 @@ public class Fetcher {
     }
 
 
-    public void fetch(Context ctx,Collection<Request> requests,Rule rule) throws FetchExecuteException {
+    public void fetch(Context ctx,Collection<Request> requests,Rule rule) {
         for(Request req:requests)
             fetch(ctx,req,rule);
     }

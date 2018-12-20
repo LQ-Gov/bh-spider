@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -31,9 +30,9 @@ public class EventLoop extends Thread {
 
     public EventLoop(IEvent parent, IAssist... assists) {
         this.parent = parent;
-        initHandlers(this.parent);
+        bindAssist(this.parent);
 
-        Arrays.stream(assists).forEach(this::initHandlers);
+        Arrays.stream(assists).forEach(this::bindAssist);
 
     }
 
@@ -63,12 +62,9 @@ public class EventLoop extends Thread {
 
                     Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
-                    Object returnValue = executor.invoke(args);
+                    executor.invoke(cmd.context(),args,future);
 
-                    future.complete(returnValue);
 
-                    if (cmd.context() != null && executor.mapping().autoComplete())
-                        cmd.context().write(returnValue);
                 } catch (Exception e) {
                     future.completeExceptionally(e);
                     e.printStackTrace();
@@ -79,8 +75,6 @@ public class EventLoop extends Thread {
             } catch (Exception e) {
                 logger.error("eventLoop execute error,mss:{}", e.getMessage());
                 e.printStackTrace();
-            } finally {
-
             }
         }
     }
@@ -125,12 +119,19 @@ public class EventLoop extends Thread {
     }
 
 
-    protected void initHandlers(Object o) {
+    private void bindAssist(IAssist o) {
+
+
         Method[] methods = o.getClass().getDeclaredMethods();
 
-        for (Method method : methods) {
-            EventMapping mapping = method.getDeclaredAnnotation(EventMapping.class);
-            if (mapping != null) {
+        methods = Arrays.stream(methods).filter(x -> x.getDeclaredAnnotation(EventMapping.class) != null).toArray(Method[]::new);
+
+        if (methods.length > 0) {
+
+            AssistPool pool = new AssistPool(o);
+            for (Method method : methods) {
+                EventMapping mapping = method.getDeclaredAnnotation(EventMapping.class);
+
                 String key = mapping.value();
                 if (StringUtils.isBlank(key)) {
                     key = method.getName();
@@ -144,7 +145,8 @@ public class EventLoop extends Thread {
                     throw new Error("the " + key + " handler is already exists");
 
 
-                executors.put(key, new CommandHandler(o, method, mapping));
+                executors.put(key, new CommandHandler(o, method, mapping, pool));
+
             }
         }
 

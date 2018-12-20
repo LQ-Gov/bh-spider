@@ -1,39 +1,40 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchState;
 import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.query.Query;
-import com.bh.spider.query.condition.Condition;
 import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.config.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.Domain;
 import com.bh.spider.scheduler.domain.RuleDecorator;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.fetcher.FetchContent;
-import com.bh.spider.scheduler.fetcher.FetchExecuteException;
 import com.bh.spider.scheduler.fetcher.Fetcher;
+import com.bh.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SchedulerFetchHandler implements IAssist {
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulerFetchHandler.class);
 
     private BasicScheduler scheduler;
-
     private Fetcher fetcher;
     private Domain root;
+    private Store store;
 
-    public SchedulerFetchHandler(BasicScheduler scheduler, Domain root) {
+    private Map<Long,Request> fetchContextTable = new ConcurrentHashMap<>();
+
+    public SchedulerFetchHandler(BasicScheduler scheduler, Domain root, Store store) {
         this.scheduler = scheduler;
         this.root = root;
-
         this.fetcher = new Fetcher(scheduler);
+        this.store = store;
     }
 
     @EventMapping
@@ -71,33 +72,38 @@ public class SchedulerFetchHandler implements IAssist {
      * @param ctx 该ctx可能的来源:1.client,2.平台本身的常规任务调度
      * @param req
      * @param rule
-     * @throws FetchExecuteException
      */
     @EventMapping(autoComplete = false)
-    protected boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) throws FetchExecuteException {
+    protected boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
         fetcher.fetch(ctx, req, rule);
         return true;
     }
 
     @EventMapping(autoComplete = false)
-    protected boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests,Rule rule) throws FetchExecuteException {
-        fetcher.fetch(ctx,requests,rule);
+    protected boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests,Rule rule) {
+
+        requests.removeIf(req -> fetchContextTable.containsKey(req.id()));
+        requests.forEach(x -> fetchContextTable.put(x.id(), x));
+        fetcher.fetch(ctx, requests, rule);
         return true;
     }
 
     @EventMapping
-    protected void REPORT_HANDLER(Context ctx, RequestImpl req, Rule rule, FetchState state) {
+    protected void REPORT_HANDLER(Context ctx, long id,int code) {
+        if(fetchContextTable.containsKey(id)) {
+            store.accessor().update(id, code, Request.State.FINISHED,null);
+            fetchContextTable.remove(id);
+        }
 
-        long ruleId = rule == null ? null : rule.id();
+        logger.info("{}抓取完成,生成报告",id);
+    }
 
-        if (req != null) {
-            Condition condition = Condition.where("id").is(req.id());
 
-            condition.and(Condition.where("hash").is(req.hash()));
-
-            //scheduler.store().request().update(condition, state);
-
-            logger.info(Markers.ANALYSIS, "the report of request,rule:{},state:{},message:{}", ruleId, state.getState(), state.getMessage());
+    @EventMapping
+    protected void REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
+        if (fetchContextTable.containsKey(id)) {
+            store.accessor().update(id, null, Request.State.EXCEPTION, message);
+            fetchContextTable.remove(id);
         }
     }
 }
