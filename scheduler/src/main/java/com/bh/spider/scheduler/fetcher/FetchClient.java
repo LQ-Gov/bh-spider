@@ -6,5 +6,5 @@ import com.bh.spider.fetch.impl.FetchResponse;
 import java.util.concurrent.CompletableFuture;
 
 public interface FetchClient {
-    CompletableFuture<FetchResponse> execute(FetchContext ctx) throws FetchExecuteException;
+    FetchResponse execute(FetchContext ctx) throws FetchExecuteException;
 }

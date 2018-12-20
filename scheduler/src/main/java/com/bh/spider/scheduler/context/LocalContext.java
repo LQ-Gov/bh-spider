@@ -39,7 +39,7 @@ public class LocalContext implements Context {
 
     @Override
     public void exception(Throwable cause) {
-
+        cause.printStackTrace();
     }
 
     @Override

@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
 /**
@@ -40,22 +41,13 @@ public class Fetcher {
         this(scheduler, 0);
     }
 
-    protected ExecutorService service() {
-        return workers;
-    }
-
-//    @Override
-//    public boolean isClosed() {
-//        return false;
-//    }
 
     /**
      * 主要的抓取方法
      * @param ctx 从客户端或其他端跟踪过来的Context
      * @param req 要抓取的请求
-     * @throws FetchExecuteException
      */
-    public void fetch(Context ctx, Request req, Rule rule) throws FetchExecuteException {
+    public void fetch(Context ctx, Request req, Rule rule) {
 
 
         FetchClientBuilder builder = rule instanceof DriverRule ?
@@ -70,7 +62,8 @@ public class Fetcher {
         final FetchContext context = new BasicFetchContext(this.scheduler, req, rule);
         //这里还需执行component yeah!!!
 
-        client.execute(context).whenComplete((result, e) -> this.fetchCallback(ctx,context, result, e));
+
+        execute(client, context).whenComplete((result, e) -> this.fetchCallback(ctx, context, result, e));
 
 
     }
@@ -118,6 +111,20 @@ public class Fetcher {
                 ctx.exception(ex);
             }
         }
+    }
+
+
+
+    private CompletableFuture<FetchResponse> execute(FetchClient client,FetchContext ctx) {
+        CompletableFuture<FetchResponse> future = new CompletableFuture<>();
+        this.workers.execute(() -> {
+            try {
+                future.complete(client.execute(ctx));
+            } catch (FetchExecuteException e) {
+                future.completeExceptionally(e);
+            }
+        });
+        return future;
     }
 
     public void close() {
