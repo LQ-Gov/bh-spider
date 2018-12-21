@@ -16,6 +16,8 @@
         <module>monitor</module>
         <module>store-query</module>
         <module>spider-transfer</module>
+        <module>scheduler-cluster</module>
+        <module>raft</module>
     </modules>
 
     <properties>

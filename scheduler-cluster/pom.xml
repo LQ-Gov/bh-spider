@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>spider</artifactId>
+        <groupId>com.bh</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>scheduler-cluster</artifactId>
+
+    <properties>
+        <atomix.version>3.1.0-rc1</atomix.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.bh</groupId>
+            <artifactId>scheduler</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/io.atomix/atomix -->
+        <dependency>
+            <groupId>io.atomix</groupId>
+            <artifactId>atomix</artifactId>
+            <version>${atomix.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.atomix/atomix-raft -->
+        <dependency>
+            <groupId>io.atomix</groupId>
+            <artifactId>atomix-raft</artifactId>
+            <version>${atomix.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.atomix/atomix-primary-backup -->
+        <dependency>
+            <groupId>io.atomix</groupId>
+            <artifactId>atomix-primary-backup</artifactId>
+            <version>${atomix.version}</version>
+        </dependency>
+    </dependencies>
+
+
+</project>

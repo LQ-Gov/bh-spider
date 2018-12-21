@@ -1,7 +1,5 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.scheduler.cluster.ClusterScheduler;
-
 /**
  * Created by lq on 17-6-27.
  */
@@ -13,8 +11,8 @@ public class RunModeClassFactory {
         switch (mode) {
             case STAND_ALONE:
                 return BasicScheduler.class;
-            case CLUSTER_MASTER:
-                return ClusterScheduler.class;
+//            case CLUSTER_MASTER:
+//                return ClusterScheduler.class;
         }
 
         return null;

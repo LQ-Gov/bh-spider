@@ -13,7 +13,7 @@ public interface AsyncDistributedDomain extends AsyncPrimitive {
 
     @Override
     default DistributedDomain sync() {
-        return sync(Duration.ofMillis(DistributedPrimitive.DEFAULT_OPERATION_TIMEOUT_MILLIS));
+        return sync(Duration.ofMillis(DEFAULT_OPERATION_TIMEOUT_MILLIS));
     }
     @Override
     DistributedDomain sync(Duration duration);

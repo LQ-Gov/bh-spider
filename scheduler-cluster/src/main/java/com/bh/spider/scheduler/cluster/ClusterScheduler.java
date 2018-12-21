@@ -1,10 +1,10 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.cluster.domain.DistributedDomain;
 import com.bh.spider.scheduler.cluster.domain.DistributedDomainType;
 import com.bh.spider.scheduler.config.Config;
+import com.bh.spider.scheduler.event.Command;
 import io.atomix.cluster.MemberId;
 import io.atomix.cluster.Node;
 import io.atomix.cluster.discovery.BootstrapDiscoveryProvider;
@@ -23,11 +23,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
-/**
- * Created by lq on 17-3-17.
- */
 public class ClusterScheduler extends BasicScheduler {
     private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
     private String mid;
@@ -91,10 +87,9 @@ public class ClusterScheduler extends BasicScheduler {
         atomix.start().join();
 
 
-        DistributedDomain domain=atomix.primitiveBuilder("cluster-com.bh.spider.scheduler.domain", DistributedDomainType.instance())
+        DistributedDomain domain = atomix.primitiveBuilder("cluster-com.bh.spider.scheduler.domain", DistributedDomainType.instance())
                 .withProtocol(MultiPrimaryProtocol.builder().build())
                 .build();
-
 
 
         LeaderElection<MemberId> leaderElection = atomix.<MemberId>leaderElectionBuilder("cluster-election")
@@ -107,7 +102,7 @@ public class ClusterScheduler extends BasicScheduler {
 
         leaderElection.run(MemberId.from(mid));
 
-        if("3".equals(mid)) {
+        if ("3".equals(mid)) {
             logger.info("设置名称");
         }
 
@@ -115,10 +110,5 @@ public class ClusterScheduler extends BasicScheduler {
 //            logger.info("测试用的nodeName:{}", com.bh.spider.scheduler.domain.nodeName());
 
 
-
-
-
-
     }
-
 }

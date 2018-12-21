@@ -146,31 +146,7 @@
         </dependency>
 
 
-        <!-- https://mvnrepository.com/artifact/io.atomix/atomix -->
-        <dependency>
-            <groupId>io.atomix</groupId>
-            <artifactId>atomix</artifactId>
-            <version>3.0.8</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.netty</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
-        <!-- https://mvnrepository.com/artifact/io.atomix/atomix-raft -->
-        <dependency>
-            <groupId>io.atomix</groupId>
-            <artifactId>atomix-raft</artifactId>
-            <version>3.0.8</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/io.atomix/atomix-primary-backup -->
-        <dependency>
-            <groupId>io.atomix</groupId>
-            <artifactId>atomix-primary-backup</artifactId>
-            <version>3.0.8</version>
-        </dependency>
 
 
 
