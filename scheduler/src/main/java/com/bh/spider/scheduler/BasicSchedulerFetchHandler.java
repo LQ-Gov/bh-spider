@@ -19,9 +19,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SchedulerFetchHandler implements IAssist {
+public class BasicSchedulerFetchHandler implements IAssist {
 
-    private static final Logger logger = LoggerFactory.getLogger(SchedulerFetchHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(BasicSchedulerFetchHandler.class);
 
     private BasicScheduler scheduler;
     private Fetcher fetcher;
@@ -30,10 +30,15 @@ public class SchedulerFetchHandler implements IAssist {
 
     private Map<Long,Request> fetchContextTable = new ConcurrentHashMap<>();
 
-    public SchedulerFetchHandler(BasicScheduler scheduler, Domain root, Store store) {
+    public BasicSchedulerFetchHandler(BasicScheduler scheduler, Domain root, Store store) {
+        this(scheduler, new Fetcher(scheduler), root, store);
+    }
+
+
+    public BasicSchedulerFetchHandler(BasicScheduler scheduler,Fetcher fetcher,Domain root,Store store){
         this.scheduler = scheduler;
+        this.fetcher = fetcher;
         this.root = root;
-        this.fetcher = new Fetcher(scheduler);
         this.store = store;
     }
 

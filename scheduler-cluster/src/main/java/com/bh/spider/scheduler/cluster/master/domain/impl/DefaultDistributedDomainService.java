@@ -1,9 +1,8 @@
-package com.bh.spider.scheduler.cluster.domain.impl;
+package com.bh.spider.scheduler.cluster.master.domain.impl;
 
 import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.cluster.domain.DistributedDomainService;
+import com.bh.spider.scheduler.cluster.master.domain.DistributedDomainService;
 import com.bh.spider.scheduler.domain.Domain;
-import com.bh.spider.scheduler.domain.RuleController;
 import io.atomix.primitive.PrimitiveType;
 import io.atomix.primitive.service.AbstractPrimitiveService;
 import io.atomix.primitive.service.BackupInput;

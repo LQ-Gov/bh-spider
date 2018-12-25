@@ -19,7 +19,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SchedulerRuleHandler implements IAssist {
+public class BasicSchedulerRuleHandler implements IAssist {
     private BasicScheduler scheduler;
     private JobCoreScheduler jobCoreScheduler;
     private Domain root;
@@ -29,7 +29,7 @@ public class SchedulerRuleHandler implements IAssist {
     private Config cfg;
 
 
-    public SchedulerRuleHandler(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, Domain domain) throws Exception {
+    public BasicSchedulerRuleHandler(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, Domain domain) throws Exception {
         this.scheduler = scheduler;
         this.root = domain;
         this.jobCoreScheduler = jobCoreScheduler;

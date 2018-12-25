@@ -1,8 +1,8 @@
-package com.bh.spider.scheduler.cluster.domain.impl;
+package com.bh.spider.scheduler.cluster.master.domain.impl;
 
-import com.bh.spider.scheduler.cluster.domain.AsyncDistributedDomain;
-import com.bh.spider.scheduler.cluster.domain.DistributedDomain;
-import com.bh.spider.scheduler.cluster.domain.DistributedDomainService;
+import com.bh.spider.scheduler.cluster.master.domain.AsyncDistributedDomain;
+import com.bh.spider.scheduler.cluster.master.domain.DistributedDomain;
+import com.bh.spider.scheduler.cluster.master.domain.DistributedDomainService;
 import com.bh.spider.scheduler.domain.Domain;
 import io.atomix.primitive.AbstractAsyncPrimitive;
 import io.atomix.primitive.PrimitiveRegistry;

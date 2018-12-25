@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.domain.impl;
+package com.bh.spider.scheduler.cluster.master.domain.impl;
 
 import com.bh.spider.scheduler.domain.BasicDomain;
 import com.bh.spider.scheduler.domain.Domain;

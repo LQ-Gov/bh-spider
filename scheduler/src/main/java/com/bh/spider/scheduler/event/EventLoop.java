@@ -10,9 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,17 +21,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class EventLoop extends Thread {
     private Logger logger = LoggerFactory.getLogger(EventLoop.class);
     private IEvent parent;
+    private List< IAssist> assists;
     private BlockingQueue<Pair<Command,CompletableFuture>> queue = new LinkedBlockingQueue<>();
 
     private Map<String, CommandHandler> executors = new HashMap<>();
 
+    private boolean closed = false;
+
 
     public EventLoop(IEvent parent, IAssist... assists) {
         this.parent = parent;
-        bindAssist(this.parent);
-
-        Arrays.stream(assists).forEach(this::bindAssist);
-
+        this.assists = new LinkedList<>(Arrays.asList(assists));
     }
 
     public <R> CompletableFuture<R> execute(Command cmd) {
@@ -119,7 +117,7 @@ public class EventLoop extends Thread {
     }
 
 
-    private void bindAssist(IAssist o) {
+    private void initAssist(IAssist o) {
 
 
         Method[] methods = o.getClass().getDeclaredMethods();
@@ -149,12 +147,17 @@ public class EventLoop extends Thread {
 
             }
         }
-
     }
 
 
-    public EventLoop listen(){
-        this.start();
+    public synchronized EventLoop listen(){
+
+        if(closed) {
+            initAssist(this.parent);
+            assists.forEach(this::initAssist);
+            this.start();
+            closed = false;
+        }
         return this;
     }
 }

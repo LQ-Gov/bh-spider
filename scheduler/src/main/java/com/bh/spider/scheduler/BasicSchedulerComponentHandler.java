@@ -15,12 +15,12 @@ import java.io.IOException;
 import java.util.List;
 
 
-public class SchedulerComponentHandler implements IAssist {
+public class BasicSchedulerComponentHandler implements IAssist {
 
     private ComponentCoreFactory factory = null;
 
 
-    public SchedulerComponentHandler(Config cfg, BasicScheduler scheduler) throws IOException {
+    public BasicSchedulerComponentHandler(Config cfg, BasicScheduler scheduler) throws IOException {
         factory = new ComponentCoreFactory(cfg);
     }
 
@@ -51,5 +51,9 @@ public class SchedulerComponentHandler implements IAssist {
     @EventMapping
     protected Class<?> LOAD_COMPONENT_HANDLER(String name,Component.Type type) throws IOException, ClassNotFoundException {
         return factory.proxy(type).loadClass(name);
+    }
+
+    protected ComponentCoreFactory componentCoreFactory(){
+        return factory;
     }
 }

@@ -11,7 +11,7 @@ import io.netty.channel.ChannelId;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SchedulerWatchHandler implements IAssist {
+public class BasicSchedulerWatchHandler implements IAssist {
     private static Map<ChannelId, Map<String, Watcher>> watchedContext = new ConcurrentHashMap<>();
 
     @EventMapping(autoComplete = false)

@@ -4,6 +4,7 @@ import com.bh.spider.fetch.Request;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.BasicDomain;
+import com.bh.spider.scheduler.domain.Domain;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.IEvent;
@@ -40,17 +41,17 @@ public class BasicScheduler implements IEvent {
 
     protected Config cfg;
 
-    private Store store = null;
+    protected Store store = null;
 
-    private ServerBootstrap server;
+    protected ServerBootstrap server;
 
     private volatile boolean closed = true;
 
-    private EventLoop loop = null;
+    protected EventLoop loop = null;
 
-    private JobCoreScheduler jobCoreScheduler = null;
+    protected JobCoreScheduler jobCoreScheduler = null;
 
-    private com.bh.spider.scheduler.domain.Domain domain = null;
+    protected Domain domain = null;
 
 
 
@@ -62,7 +63,7 @@ public class BasicScheduler implements IEvent {
         //初始化存储文件夹
         initDirectories();
         //先初始化存储，其他模块依赖存储
-        initStore();
+        store = initStore();
         //初始化domain tree
         initDomainTree();
         //init_system_signal_handles();
@@ -70,10 +71,9 @@ public class BasicScheduler implements IEvent {
         //初始化本地端口监听
         initLocalListen();
 
-        //初始化其它
-        initOthers();
         //初始化事件循环线程
-        initEventLoop();
+        loop = initEventLoop();
+        loop.listen().join();
     }
 
 
@@ -103,9 +103,6 @@ public class BasicScheduler implements IEvent {
     }
 
 
-    protected void initOthers(){}
-
-
     protected void initDirectories() throws IOException {
         Path dataPath = Paths.get(cfg.get(Config.INIT_DATA_PATH));
         logger.info("create data directory:{}",dataPath);
@@ -122,13 +119,14 @@ public class BasicScheduler implements IEvent {
 
 
     //初始化数据库数据
-    protected void initStore() throws Exception {
+    protected Store initStore() throws Exception {
         StoreBuilder builder = Store.builder(cfg.get(Config.INIT_STORE_BUILDER));
 
-        store = builder.build(cfg.all(Config.INIT_STORE_PROPERTIES));
+
 
         logger.info("init database store");
 
+        return builder.build(cfg.all(Config.INIT_STORE_PROPERTIES));
     }
 
     protected void initDomainTree() {
@@ -161,14 +159,12 @@ public class BasicScheduler implements IEvent {
         logger.info("init command listen server:{}", port);
     }
 
-    protected void initEventLoop() throws Exception {
-        loop = new EventLoop(this,
-                new SchedulerComponentHandler(cfg, this),
-                new SchedulerRuleHandler(cfg, this, this.store, this.jobCoreScheduler, domain),
-                new SchedulerFetchHandler(this, domain,store),
-                new SchedulerWatchHandler());
-        logger.info("事件循环线程启动");
-        loop.listen().join();
+    protected EventLoop initEventLoop() throws Exception {
+        return new EventLoop(this,
+                new BasicSchedulerComponentHandler(cfg, this),
+                new BasicSchedulerRuleHandler(cfg, this, this.store, this.jobCoreScheduler, domain),
+                new BasicSchedulerFetchHandler(this, domain, store),
+                new BasicSchedulerWatchHandler());
     }
 
 

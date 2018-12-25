@@ -1,8 +1,8 @@
-package com.bh.spider.scheduler.cluster;
+package com.bh.spider.scheduler.cluster.master;
 
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.cluster.domain.DistributedDomain;
-import com.bh.spider.scheduler.cluster.domain.DistributedDomainType;
+import com.bh.spider.scheduler.cluster.master.domain.DistributedDomain;
+import com.bh.spider.scheduler.cluster.master.domain.DistributedDomainType;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.event.Command;
 import io.atomix.cluster.MemberId;
@@ -24,13 +24,13 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-public class ClusterScheduler extends BasicScheduler {
-    private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
+public class ClusterScheduler2 extends BasicScheduler {
+    private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler2.class);
     private String mid;
 
     private Atomix atomix;
 
-    public ClusterScheduler(Config cfg) {
+    public ClusterScheduler2(Config cfg) {
         super(cfg);
         mid = cfg.get(Config.MY_ID);
     }
@@ -41,10 +41,10 @@ public class ClusterScheduler extends BasicScheduler {
     }
 
 
-    @Override
-    protected void initOthers() {
-        initAtomix();
-    }
+//    @Override
+//    protected void initOthers() {
+//        initAtomix();
+//    }
 
 
     @Override

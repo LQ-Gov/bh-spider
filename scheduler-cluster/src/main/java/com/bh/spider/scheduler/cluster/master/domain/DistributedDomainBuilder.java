@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.domain;
+package com.bh.spider.scheduler.cluster.master.domain;
 
 import io.atomix.primitive.PrimitiveBuilder;
 import io.atomix.primitive.PrimitiveManagementService;

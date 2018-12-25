@@ -1,8 +1,7 @@
-package com.bh.spider.scheduler.cluster.domain;
+package com.bh.spider.scheduler.cluster.master.domain;
 
 import com.bh.spider.scheduler.domain.Domain;
 import io.atomix.primitive.AsyncPrimitive;
-import io.atomix.primitive.DistributedPrimitive;
 
 import java.time.Duration;
 import java.util.Collection;

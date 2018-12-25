@@ -1,9 +1,8 @@
-package com.bh.spider.scheduler.cluster.domain;
+package com.bh.spider.scheduler.cluster.master.domain;
 
-import com.bh.spider.scheduler.cluster.domain.impl.BlockingDistributedDomain;
-import com.bh.spider.scheduler.cluster.domain.impl.DefaultDistributedDomainBuilder;
-import com.bh.spider.scheduler.cluster.domain.impl.DefaultDistributedDomainService;
-import com.bh.spider.scheduler.cluster.domain.impl.DomainImpl;
+import com.bh.spider.scheduler.cluster.master.domain.impl.BlockingDistributedDomain;
+import com.bh.spider.scheduler.cluster.master.domain.impl.DefaultDistributedDomainBuilder;
+import com.bh.spider.scheduler.cluster.master.domain.impl.DefaultDistributedDomainService;
 import io.atomix.primitive.PrimitiveManagementService;
 import io.atomix.primitive.PrimitiveType;
 import io.atomix.primitive.service.PrimitiveService;

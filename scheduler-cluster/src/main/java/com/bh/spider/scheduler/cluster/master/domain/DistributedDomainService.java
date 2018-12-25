@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.domain;
+package com.bh.spider.scheduler.cluster.master.domain;
 
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.domain.Domain;

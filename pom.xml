@@ -18,6 +18,7 @@
         <module>spider-transfer</module>
         <module>scheduler-cluster</module>
         <module>raft</module>
+        <module>consistent</module>
     </modules>
 
     <properties>
