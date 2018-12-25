@@ -41,7 +41,12 @@ public class Config {
 
     public static final String SPIDER_CLUSTER_PREFIX = "spider.cluster.";
 
+
+    //节点信息配置
     public static final String MY_ID = "my.id";
+    public static final String INIT_CLUSTER_MASTER_ADDRESS="init.cluster.master.address.";
+    public static final String INIT_CLUSTER_MASTER_LISTEN_PORT="init.cluster.master.listen.port";
+    public static final String INIT_CLUSTER_MASTER_SYNC_PORT="init.cluster.master.sync.port";
 
     private static Config init0() {
         Config config = new Config();
@@ -62,10 +67,14 @@ public class Config {
 
 
 
-        //集群默认动态配置
+        //集群默认配置
+        config.GLOBAL.put(INIT_CLUSTER_MASTER_LISTEN_PORT,"8070");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"1","127.0.0.1:30051");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"2","127.0.0.1:30052");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"3","127.0.0.1:30053");
+
+        config.GLOBAL.put(INIT_CLUSTER_MASTER_ADDRESS+"1","127.0.0.01:");
+
 
         return config;
     }

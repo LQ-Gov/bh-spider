@@ -2,10 +2,16 @@ package com.bh.spider.scheduler.cluster.worker.store;
 
 import com.bh.spider.fetch.Request;
 import com.bh.spider.store.base.StoreAccessor;
+import io.netty.channel.Channel;
 
 import java.util.List;
 
 public class RemoteStoreAccessor implements StoreAccessor {
+    private Channel channel;
+    public RemoteStoreAccessor(Channel channel){
+        this.channel = channel;
+    }
+
     @Override
     public boolean insert(Request request, long ruleId) {
         return false;

@@ -18,8 +18,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.net.URISyntaxException;
 
 public class ClusterScheduler extends BasicScheduler {
     private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
@@ -42,7 +41,7 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     @Override
-    protected void initLocalListen() throws InterruptedException {
+    protected void initLocalListen() throws InterruptedException, URISyntaxException {
         //监听来自worker交互端口
         initWorkerListen();
 
@@ -66,16 +65,18 @@ public class ClusterScheduler extends BasicScheduler {
                 })
                 .option(ChannelOption.SO_REUSEADDR, true);
 
-        int port = Integer.valueOf(cfg.get(Config.INIT_LISTEN_PORT));
+        int port = Integer.valueOf(cfg.get(Config.INIT_CLUSTER_MASTER_LISTEN_PORT));
         ChannelFuture local = workerServer.bind(port).sync();
         logger.info("init command listen server:{}", port);
     }
 
     @Override
-    protected EventLoop initEventLoop() throws Exception {
-        return new EventLoop(this,
+    protected void initEventLoop() throws Exception {
+        loop = new EventLoop(this,
                 new ClusterSchedulerComponentHandler(cfg, this),
                 new ClusterSchedulerFetchHandler(this, domain, store));
+
+        loop.listen().join();
 
     }
 
@@ -83,6 +84,12 @@ public class ClusterScheduler extends BasicScheduler {
     @EventMapping
     private void SESSION_CONNECT_HANDLER(Context ctx,Session session) {
         workers.add(session);
+    }
+
+
+    @EventMapping
+    private void SYNC_SESSION_INFO_HANDLER(Context ctx,long sessionId){
+
     }
 
 

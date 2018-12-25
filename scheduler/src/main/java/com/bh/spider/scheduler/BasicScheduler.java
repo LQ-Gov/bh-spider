@@ -29,8 +29,10 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -45,25 +47,26 @@ public class BasicScheduler implements IEvent {
 
     protected ServerBootstrap server;
 
-    private volatile boolean closed = true;
-
     protected EventLoop loop = null;
 
     protected JobCoreScheduler jobCoreScheduler = null;
 
     protected Domain domain = null;
 
+    private volatile boolean closed = true;
 
 
     public BasicScheduler(Config config) {
         this.cfg = config;
+
+
 
     }
     public synchronized void exec() throws Exception {
         //初始化存储文件夹
         initDirectories();
         //先初始化存储，其他模块依赖存储
-        store = initStore();
+        initStore();
         //初始化domain tree
         initDomainTree();
         //init_system_signal_handles();
@@ -72,8 +75,8 @@ public class BasicScheduler implements IEvent {
         initLocalListen();
 
         //初始化事件循环线程
-        loop = initEventLoop();
-        loop.listen().join();
+        initEventLoop();
+
     }
 
 
@@ -119,14 +122,13 @@ public class BasicScheduler implements IEvent {
 
 
     //初始化数据库数据
-    protected Store initStore() throws Exception {
+    protected void initStore() throws Exception {
         StoreBuilder builder = Store.builder(cfg.get(Config.INIT_STORE_BUILDER));
-
 
 
         logger.info("init database store");
 
-        return builder.build(cfg.all(Config.INIT_STORE_PROPERTIES));
+        store = builder.build(cfg.all(Config.INIT_STORE_PROPERTIES));
     }
 
     protected void initDomainTree() {
@@ -137,7 +139,7 @@ public class BasicScheduler implements IEvent {
 
 
 
-    protected void initLocalListen() throws InterruptedException {
+    protected void initLocalListen() throws InterruptedException, URISyntaxException {
 
         EventLoopGroup group = new NioEventLoopGroup(1);
         BasicScheduler me = this;
@@ -159,18 +161,27 @@ public class BasicScheduler implements IEvent {
         logger.info("init command listen server:{}", port);
     }
 
-    protected EventLoop initEventLoop() throws Exception {
-        return new EventLoop(this,
+    protected void initEventLoop() throws Exception {
+        loop = new EventLoop(this,
                 new BasicSchedulerComponentHandler(cfg, this),
                 new BasicSchedulerRuleHandler(cfg, this, this.store, this.jobCoreScheduler, domain),
                 new BasicSchedulerFetchHandler(this, domain, store),
                 new BasicSchedulerWatchHandler());
+
+        loop.listen().join();
     }
 
 
     protected void initJobScheduler() throws SchedulerException {
-        jobCoreScheduler = new JobCoreScheduler(this);
+        jobCoreScheduler  = new JobCoreScheduler(this);
         jobCoreScheduler.start();
+    }
+
+
+
+    protected interface Initializer{
+
+        void run() throws Exception;
     }
 
 
