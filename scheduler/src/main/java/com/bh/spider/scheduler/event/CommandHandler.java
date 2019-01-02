@@ -15,6 +15,7 @@ public class CommandHandler {
     private Class<?>[] parameters;
     private EventMapping mapping;
     private AssistPool pool;
+    private boolean returnVoid=false;
 
     public CommandHandler(Object bean, Method method, EventMapping mapping, AssistPool pool) {
         this.bean = bean;
@@ -22,6 +23,8 @@ public class CommandHandler {
         this.mapping = mapping;
         this.parameters = this.method.getParameterTypes();
         this.pool = pool;
+
+        this.returnVoid = method.getReturnType().equals(Void.TYPE);
     }
 
 
@@ -46,7 +49,7 @@ public class CommandHandler {
                 future.complete(returnValue);
 
                 if (ctx != null && mapping.autoComplete())
-                    ctx.write(returnValue);
+                    ctx.commandCompleted(returnValue);
             } catch (Exception e) {
                 future.completeExceptionally(e);
             } finally {

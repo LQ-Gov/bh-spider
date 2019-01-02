@@ -13,6 +13,8 @@ import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.JsonFactory;
 import com.bh.spider.rule.Rule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -31,6 +33,7 @@ import java.util.function.Consumer;
  * Created by lq on 17-3-25.
  */
 public class Client {
+    private final static Logger logger = LoggerFactory.getLogger(Client.class);
 
     private final static ObjectMapper mapper = JsonFactory.get();
 
@@ -65,11 +68,10 @@ public class Client {
         URI uri = new URI("tcp://" + server);
         socket = new Socket(uri.getHost(), uri.getPort());
         out = new DataOutputStream(socket.getOutputStream());
-
-
-
         receiver = new Receiver(socket);
         receiver.start();
+
+        logger.info("与调度平台建立了连接");
         return true;
     }
 

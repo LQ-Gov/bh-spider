@@ -21,7 +21,11 @@ public class BasicSchedulerComponentHandler implements IAssist {
 
 
     public BasicSchedulerComponentHandler(Config cfg, BasicScheduler scheduler) throws IOException {
-        factory = new ComponentCoreFactory(cfg);
+        this(cfg,scheduler,new ComponentCoreFactory(cfg));
+    }
+
+    public BasicSchedulerComponentHandler(Config cfg,BasicScheduler scheduler,ComponentCoreFactory factory){
+        this.factory = factory;
     }
 
 
@@ -36,10 +40,10 @@ public class BasicSchedulerComponentHandler implements IAssist {
     }
 
     @EventMapping
-    protected void GET_COMPONENT_LIST_HANDLER(Context ctx,Component.Type type) {
+    protected List<Component> GET_COMPONENT_LIST_HANDLER(Context ctx,Component.Type type) {
 
         ComponentRepository proxy = factory.proxy(type);
-        ctx.write(proxy.all());
+        return proxy == null ? null : proxy.all();
     }
 
     @EventMapping
@@ -56,4 +60,5 @@ public class BasicSchedulerComponentHandler implements IAssist {
     protected ComponentCoreFactory componentCoreFactory(){
         return factory;
     }
+
 }

@@ -10,10 +10,9 @@ import java.util.concurrent.ExecutionException;
 public interface Context {
     void write(Object data);
 
-    void write(boolean complete,Object data);
-
-
     void exception(Throwable cause);
 
     void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException;
+
+    void commandCompleted(Object data);
 }

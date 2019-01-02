@@ -11,7 +11,7 @@ public class Rule {
 
     private long id;
 
-    private Map<String, String[]> extractors = new HashMap<>();
+    private Map<String, ExtractorGroup[]> extractors = new HashMap<>();
 
     /**
      * 定时器
@@ -24,8 +24,6 @@ public class Rule {
      * URL匹配规则
      */
     private String pattern;
-
-    private transient PathMatcher matcher = null;
 
     /**
      * 精确匹配?
@@ -70,17 +68,6 @@ public class Rule {
         return id;
     }
 
-    public String[] extractor(String key) {
-        return extractors.get(key);
-    }
-
-    public void extractor(String key, String[] chains) {
-        this.extractors.put(key, chains);
-    }
-
-    public Map<String, String[]> extractors() {
-        return extractors;
-    }
 
     public String getCron() {
         return cron;

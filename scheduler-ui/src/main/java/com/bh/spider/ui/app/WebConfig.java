@@ -1,4 +1,4 @@
-package com.bh.spider.monitor.app;
+package com.bh.spider.ui.app;
 
 import com.bh.spider.client.Client;
 import org.springframework.context.annotation.Bean;

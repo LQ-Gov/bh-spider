@@ -31,13 +31,10 @@ public class ClientContext implements Context {
 
     @Override
     public  void write(Object data) {
-        write(true,data);
+        write0(false,data);
 
     }
 
-    public void write(boolean complete,Object data){
-        write0(complete,data);
-    }
 
 
     private synchronized void write0(Throwable e) {
@@ -78,6 +75,11 @@ public class ClientContext implements Context {
         }
 
 
+    }
+
+    @Override
+    public void commandCompleted(Object data) {
+        write0(true,data);
     }
 
 

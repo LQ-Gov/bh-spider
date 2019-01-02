@@ -1,4 +1,4 @@
-package com.bh.spider.monitor.app;
+package com.bh.spider.ui.app;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

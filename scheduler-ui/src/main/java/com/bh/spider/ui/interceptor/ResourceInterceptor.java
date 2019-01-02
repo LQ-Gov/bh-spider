@@ -1,4 +1,4 @@
-package com.bh.spider.monitor.interceptor;
+package com.bh.spider.ui.interceptor;
 
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;

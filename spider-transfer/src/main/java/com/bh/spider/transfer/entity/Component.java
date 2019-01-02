@@ -50,6 +50,7 @@ public class Component implements Serializable {
     private String hash;
     private Type type;
     private String description;
+    private boolean valid;
 
     public Component(){}
 

@@ -31,12 +31,6 @@ public class LocalContext implements Context {
     public void write(Object data) {
 
     }
-
-    @Override
-    public void write(boolean complete, Object data) {
-
-    }
-
     @Override
     public void exception(Throwable cause) {
         cause.printStackTrace();
@@ -83,5 +77,10 @@ public class LocalContext implements Context {
         }
         //提交报告
         scheduler.process(new Command(this, CommandCode.REPORT, new Object[]{fetchContext.request().id(),code}));
+    }
+
+    @Override
+    public void commandCompleted(Object data) {
+
     }
 }

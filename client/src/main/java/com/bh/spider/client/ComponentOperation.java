@@ -6,11 +6,11 @@ import com.bh.spider.query.Query;
 import com.bh.spider.query.condition.Condition;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -139,9 +139,16 @@ public class ComponentOperation {
     }
 
 
-    public List<Component> select() {
-        ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Component.class}, null);
-        return client.write(CommandCode.GET_COMPONENT_LIST, type);
+    public void submit(String name, InputStream in,Component.Type type,String desc) throws IOException {
+        byte[] data = IOUtils.toByteArray(in);
+
+        client.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
+    }
+
+
+    public List<Component> select(Component.Type type) {
+        ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{Component.class}, null);
+        return client.write(CommandCode.GET_COMPONENT_LIST, returnType,type);
     }
 
     public Component get(String name,Component.Type type) {

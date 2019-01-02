@@ -1,4 +1,4 @@
-package com.bh.spider.monitor.controller;
+package com.bh.spider.ui.controller;
 
 import com.bh.spider.client.Client;
 import com.bh.spider.rule.Rule;
@@ -15,8 +15,17 @@ import java.util.List;
 @RestController
 public class RuleController {
 
+    private final Client client;
+
     @Autowired
-    private Client client;
+    public RuleController(Client client) {
+        this.client = client;
+    }
+
+
+    public void insert(Rule rule){
+
+    }
 
 
     @RequestMapping(value = "/rules",method = RequestMethod.GET)
@@ -36,7 +45,7 @@ public class RuleController {
 
 
     @RequestMapping(value = "/rule",method = RequestMethod.PUT)
-    public String add(HttpServletResponse response, @RequestBody Rule rule) {
+    public long add(HttpServletResponse response, @RequestBody Rule rule) {
         client.rule().submit(rule);
         return rule.id();
     }

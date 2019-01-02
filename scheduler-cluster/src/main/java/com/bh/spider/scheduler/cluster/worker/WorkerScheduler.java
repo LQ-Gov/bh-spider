@@ -1,8 +1,9 @@
 package com.bh.spider.scheduler.cluster.worker;
 
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.worker.store.RemoteStoreBuilder;
 import com.bh.spider.scheduler.config.Config;
+import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import io.netty.bootstrap.Bootstrap;
@@ -21,10 +22,8 @@ import java.util.Properties;
 
 public class WorkerScheduler extends BasicScheduler {
     private Channel channel;
-    public WorkerScheduler(Config config) throws URISyntaxException, InterruptedException {
+    public WorkerScheduler(Config config) {
         super(config);
-
-
     }
 
 
@@ -61,6 +60,17 @@ public class WorkerScheduler extends BasicScheduler {
 
 
         return future.channel();
+    }
+
+
+    @Override
+    protected void initEventLoop() throws Exception {
+        loop = new EventLoop(this,
+                new WorkerSchedulerComponentHandler(cfg, this),
+                new BasicSchedulerFetchHandler(this, domain, store),
+                new BasicSchedulerWatchHandler());
+
+        loop.listen().join();
     }
 
     @Override

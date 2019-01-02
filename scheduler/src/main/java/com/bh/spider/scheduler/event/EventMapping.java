@@ -11,5 +11,7 @@ import java.lang.annotation.*;
 public @interface EventMapping {
     String value() default "";
 
+    boolean disabled() default false;
+
     boolean autoComplete() default true;
 }

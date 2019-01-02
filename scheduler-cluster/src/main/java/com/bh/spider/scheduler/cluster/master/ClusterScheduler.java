@@ -74,7 +74,8 @@ public class ClusterScheduler extends BasicScheduler {
     protected void initEventLoop() throws Exception {
         loop = new EventLoop(this,
                 new ClusterSchedulerComponentHandler(cfg, this),
-                new ClusterSchedulerFetchHandler(this, domain, store));
+                new ClusterSchedulerFetchHandler(this, domain, store),
+                new ClusterSchedulerWatchHandler());
 
         loop.listen().join();
 

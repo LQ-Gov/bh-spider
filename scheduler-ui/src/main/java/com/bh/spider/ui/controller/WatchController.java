@@ -1,4 +1,4 @@
-package com.bh.spider.monitor.controller;
+package com.bh.spider.ui.controller;
 
 import com.bh.spider.client.Client;
 import org.springframework.beans.factory.annotation.Autowired;

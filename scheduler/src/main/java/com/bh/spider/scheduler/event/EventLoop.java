@@ -26,7 +26,7 @@ public class EventLoop extends Thread {
 
     private Map<String, CommandHandler> executors = new HashMap<>();
 
-    private boolean closed = false;
+    private boolean closed = true;
 
 
     public EventLoop(IEvent parent, IAssist... assists) {
@@ -85,8 +85,12 @@ public class EventLoop extends Thread {
 
         for (int i = 0, x = 0; i < parameters.length; i++) {
 
-            if (Context.class.isAssignableFrom(parameters[i]))
+            if (Context.class.isAssignableFrom(parameters[i])) {
                 args[i] = ctx;//赋值给其context
+                continue;
+            }
+            if (inputs == null || inputs.length <= x)
+                args[i] = null;
             else if (inputs[x] == null || parameters[i].isAssignableFrom(inputs[x].getClass()))
                 args[i] = inputs[x++];
 
@@ -129,6 +133,7 @@ public class EventLoop extends Thread {
             AssistPool pool = new AssistPool(o);
             for (Method method : methods) {
                 EventMapping mapping = method.getDeclaredAnnotation(EventMapping.class);
+                if(mapping.disabled()) continue;
 
                 String key = mapping.value();
                 if (StringUtils.isBlank(key)) {

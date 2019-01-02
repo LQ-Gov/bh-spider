@@ -28,14 +28,20 @@ public class ComponentOperationTest {
     @Test
     public void select() throws Exception {
 
-//         List<Component> list = client.component().select();
-//
-//         System.out.println(list.get(0).getName());
+         List<Component> list = client.component().select(Component.Type.GROOVY);
+
+         System.out.println(list.get(0).getName());
     }
 
     @Test
     public void select1() throws Exception {
         client.component().submit(TouTiaoExtractor.class);
+    }
+
+
+    @Test
+    public void select2(){
+        client.component().select(Component.Type.JAR);
     }
 
 
