@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.job;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.*;
 

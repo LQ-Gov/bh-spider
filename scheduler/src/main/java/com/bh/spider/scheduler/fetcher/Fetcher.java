@@ -4,20 +4,16 @@ import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
-import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.rule.DriverRule;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.domain.RuleDecorator;
-import org.apache.http.client.methods.HttpRequestBase;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
 /**

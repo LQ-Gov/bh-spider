@@ -4,11 +4,13 @@ import com.bh.spider.fetch.Behaviour;
 import com.bh.spider.fetch.Extractor;
 import com.bh.spider.fetch.ExtractorChainException;
 import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.rule.ExtractorGroup;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,39 +46,36 @@ public class LocalContext implements Context {
 
         Rule rule = fetchContext.rule();
         if (rule == null) return;
+        List<ExtractorGroup> groups = rule.extractorGroups();
+        if (CollectionUtils.isEmpty(groups)) return;
 
-        String[] extractors = rule.extractor(String.valueOf(code));
-        if (ArrayUtils.isEmpty(extractors)) return;
+        for (ExtractorGroup group : groups) {
+            List<Extractor> extractors = new LinkedList<>();
 
+            //遍历并load extractor
+            for (String it : group) {
+                Future<Class<Extractor>> future = scheduler.process(new Command(this, CommandCode.LOAD_COMPONENT,
+                        new Object[]{it, Component.Type.GROOVY}));
 
-        List<Extractor> extractorObjects = new LinkedList<>();
+                Extractor obj = future.get().newInstance();
 
-        //检查并load extractor
-        for (String extractor : extractors) {
+                extractors.add(obj);
+            }
 
-            Future<Class<Extractor>> future = scheduler.process(new Command(this, CommandCode.LOAD_COMPONENT,
-                    new Object[]{extractor, Component.Type.GROOVY}));
-
-            Extractor obj = future.get().newInstance();
-
-            extractorObjects.add(obj);
-        }
-
-
-        //正式开始抽取
-        for (Extractor extractorObject : extractorObjects) {
-            try {
-                extractorObject.run(fetchContext);
-            } catch (ExtractorChainException e) {
-                if (e.result() == Behaviour.TERMINATION) break;
-            } catch (Exception e) {
-                scheduler.process(
-                        new Command(this,CommandCode.REPORT_EXCEPTION,new Object[]{fetchContext.request().id(),e.getMessage()}));
-                return;
+            for (Extractor extractor : extractors) {
+                try {
+                    extractor.run(fetchContext);
+                } catch (ExtractorChainException e) {
+                    if (e.result() == Behaviour.TERMINATION) break;
+                } catch (Exception e) {
+                    scheduler.process(
+                            new Command(this, CommandCode.REPORT_EXCEPTION, new Object[]{fetchContext.request().id(), e.getMessage()}));
+                    return;
+                }
             }
         }
         //提交报告
-        scheduler.process(new Command(this, CommandCode.REPORT, new Object[]{fetchContext.request().id(),code}));
+        scheduler.process(new Command(this, CommandCode.REPORT, new Object[]{fetchContext.request().id(), code}));
     }
 
     @Override

@@ -1,8 +1,7 @@
 package com.bh.spider.rule;
 
-import java.nio.file.PathMatcher;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by lq on 17-6-7.
@@ -11,29 +10,17 @@ public class Rule {
 
     private long id;
 
-    private Map<String, ExtractorGroup[]> extractors = new HashMap<>();
-
+    private List<ExtractorGroup> extractors = new ArrayList<>();
     /**
      * 定时器
      */
     private String cron;
-
-    private String host;
-
     /**
      * URL匹配规则
      */
     private String pattern;
 
-    /**
-     * 精确匹配?
-     */
-    private boolean exact;
-
     private int parallelCount;
-
-    private String dispatcher;
-
     /**
      * 对此规则的描述
      */
@@ -45,17 +32,16 @@ public class Rule {
     }
 
     public Rule(long id) {
-        this(id, null, null, null);
+        this(id, null, null);
     }
 
-    public Rule(String pattern, String host, String cron) {
-        this(0, pattern, host, cron);
+    public Rule(String pattern, String cron) {
+        this(0, pattern, cron);
     }
 
-    public Rule(long id, String pattern, String host, String cron) {
+    public Rule(long id, String pattern, String cron) {
         this.id = id;
         this.pattern = pattern;
-        this.host = host;
         this.cron = cron;
         this.valid = true;
     }
@@ -77,28 +63,12 @@ public class Rule {
         this.cron = cron;
     }
 
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
     public String getPattern() {
         return pattern;
     }
 
     public void setPattern(String pattern) {
         this.pattern = pattern;
-    }
-
-    public boolean isExact() {
-        return exact;
-    }
-
-    public void setExact(boolean exact) {
-        this.exact = exact;
     }
 
     public String getDescription() {
@@ -124,14 +94,6 @@ public class Rule {
         return obj instanceof Rule && (this == obj || this.id() == ((Rule) obj).id());
     }
 
-    public String getDispatcher() {
-        return dispatcher;
-    }
-
-    public void setDispatcher(String dispatcher) {
-        this.dispatcher = dispatcher;
-    }
-
     public int getParallelCount() {
         return parallelCount;
     }
@@ -139,4 +101,18 @@ public class Rule {
     public void setParallelCount(int parallelCount) {
         this.parallelCount = parallelCount;
     }
+
+
+    public ExtractorGroup extractorGroup(int index){
+        return extractors.get(index);
+    }
+
+    public List<ExtractorGroup> extractorGroups(){return extractors;}
+
+
+    public void addExtractorGroup(ExtractorGroup group){
+        extractors.add(group);
+    }
+
+
 }

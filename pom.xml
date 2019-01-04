@@ -13,11 +13,10 @@
         <module>common</module>
         <module>store</module>
         <module>client</module>
-        <module>monitor</module>
+        <module>scheduler-ui</module>
         <module>store-query</module>
         <module>spider-transfer</module>
         <module>scheduler-cluster</module>
-        <module>raft</module>
         <module>consistent</module>
     </modules>
 
@@ -29,7 +28,7 @@
         <commons-io.version>2.5</commons-io.version>
         <commons-codec.version>1.10</commons-codec.version>
         <commons-collections4.version>4.2</commons-collections4.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>5.3.2</junit.version>
         <google.guava.version>22.0</google.guava.version>
         <jackson.version>2.9.7</jackson.version>
         <spring.boot.version>2.1.0.RELEASE</spring.boot.version>
@@ -122,13 +121,14 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
