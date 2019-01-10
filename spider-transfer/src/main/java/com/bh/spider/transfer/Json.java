@@ -1,8 +1,10 @@
 package com.bh.spider.transfer;
 
+import com.bh.spider.rule.SeleniumRule;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.type.MapType;
 
 import java.util.HashMap;
@@ -10,12 +12,14 @@ import java.util.HashMap;
 /**
  * Created by lq on 7/17/17.
  */
-public class JsonFactory {
+public class Json {
     private final static ObjectMapper mapper = new ObjectMapper();
 
     static {
         mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
         mapper.setVisibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE);
+
+        mapper.registerSubtypes(SeleniumRule.class);
     }
 
 

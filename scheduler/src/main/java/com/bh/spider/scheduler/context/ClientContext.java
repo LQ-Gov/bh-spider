@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.context;
 
 import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
@@ -46,7 +46,7 @@ public class ClientContext implements Context {
 
     private synchronized void write0(boolean complete,Object data) {
         try {
-            byte[] bytes = data == null ? new byte[0] : JsonFactory.get().writeValueAsBytes(data);
+            byte[] bytes = data == null ? new byte[0] : Json.get().writeValueAsBytes(data);
             ByteBuf buf = source.alloc().buffer(8 + 1 + 4 + bytes.length);//id,flag,len,data
             buf.writeLong(id);
             buf.writeByte(complete ? COMPLETE_BYTE : NOT_COMPLETE_BYTE);

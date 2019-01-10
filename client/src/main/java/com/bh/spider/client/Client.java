@@ -10,7 +10,7 @@ import com.bh.spider.fetch.impl.RequestBuilder;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import com.bh.spider.rule.Rule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 public class Client {
     private final static Logger logger = LoggerFactory.getLogger(Client.class);
 
-    private final static ObjectMapper mapper = JsonFactory.get();
+    private final static ObjectMapper mapper = Json.get();
 
     private String server = null;
     private Socket socket = null;

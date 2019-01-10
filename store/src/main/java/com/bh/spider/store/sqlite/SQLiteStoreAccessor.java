@@ -4,7 +4,7 @@ import com.bh.spider.fetch.FetchMethod;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.store.base.StoreAccessor;
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.type.MapType;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -72,9 +72,9 @@ public class SQLiteStoreAccessor implements StoreAccessor {
             statement.setLong(pos++, req.id());
             statement.setString(pos++, req.url().toString());
             statement.setString(pos++, req.method().toString());
-            statement.setString(pos++, JsonFactory.get().writeValueAsString(req.headers()));
+            statement.setString(pos++, Json.get().writeValueAsString(req.headers()));
             statement.setString(pos++, null);
-            statement.setString(pos++, JsonFactory.get().writeValueAsString(req.extra()));
+            statement.setString(pos++, Json.get().writeValueAsString(req.extra()));
             statement.setLong(pos++, ruleId);
             statement.setString(pos++, req.hash());
             statement.setString(pos++, Request.State.QUEUE.name());
@@ -143,9 +143,9 @@ public class SQLiteStoreAccessor implements StoreAccessor {
                         FetchMethod.valueOf(rs.getString("method")));
 
 
-                MapType mapType = JsonFactory.get().getTypeFactory().constructMapType(HashMap.class, String.class, String.class);
-                request.headers().putAll(JsonFactory.get().readValue(StringUtils.defaultString(rs.getString("headers"),""),mapType));
-                request.extra().putAll(JsonFactory.get().readValue(StringUtils.defaultString(rs.getString("extra"),""),mapType));
+                MapType mapType = Json.get().getTypeFactory().constructMapType(HashMap.class, String.class, String.class);
+                request.headers().putAll(Json.get().readValue(StringUtils.defaultString(rs.getString("headers"),""),mapType));
+                request.extra().putAll(Json.get().readValue(StringUtils.defaultString(rs.getString("extra"),""),mapType));
                 result.add(request);
             }
             return result;

@@ -10,7 +10,7 @@ import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 
 import java.io.IOException;
 import java.net.URL;
@@ -48,8 +48,8 @@ public class BasicSchedulerRuleHandler implements IAssist {
         List<Path> filePaths = Files.list(ruleDirectory).filter(x -> x.toString().endsWith(".json")).collect(Collectors.toList());
 
         for(Path filePath:filePaths ) {
-            List<Rule> rules = JsonFactory.get().readValue(filePath.toFile(),
-                    JsonFactory.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
+            List<Rule> rules = Json.get().readValue(filePath.toFile(),
+                    Json.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
 
             for (Rule rule : rules)
                 enhance(rule);
@@ -99,7 +99,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
             if (rule instanceof RuleEnhance)
                 rules.set(i, ((RuleEnhance) rule).original());
         }
-        Files.write(path, JsonFactory.get().writeValueAsBytes(rules));
+        Files.write(path, Json.get().writeValueAsBytes(rules));
     }
 
 

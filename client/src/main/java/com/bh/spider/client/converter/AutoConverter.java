@@ -1,6 +1,6 @@
 package com.bh.spider.client.converter;
 
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -18,7 +18,7 @@ public class AutoConverter<T> implements Converter<byte[],T> {
 
         Type type = variables.get(this.getClass().getTypeParameters()[0]);
 
-        ObjectMapper mapper = JsonFactory.get();
+        ObjectMapper mapper = Json.get();
 
         return mapper.readValue(data,mapper.constructType(type));
     }

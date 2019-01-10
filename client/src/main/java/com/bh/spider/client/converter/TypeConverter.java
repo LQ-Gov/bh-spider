@@ -1,7 +1,7 @@
 package com.bh.spider.client.converter;
 
 
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ public class TypeConverter<T> implements Converter<byte[], T> {
 
     @Override
     public T convert(byte[] data) throws IOException {
-        ObjectMapper mapper = JsonFactory.get();
+        ObjectMapper mapper = Json.get();
 
         return type==null?null: mapper.readValue(data, mapper.constructType(type));
     }

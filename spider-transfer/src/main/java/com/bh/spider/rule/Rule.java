@@ -1,11 +1,14 @@
 package com.bh.spider.rule;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by lq on 17-6-7.
  */
+@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS)
 public class Rule {
 
     private long id;

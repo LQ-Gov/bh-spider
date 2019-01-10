@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.fetcher;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
-import com.bh.spider.rule.DriverRule;
+import com.bh.spider.rule.SeleniumRule;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.rule.Script;
 import org.openqa.selenium.*;
@@ -20,9 +20,6 @@ import java.net.HttpCookie;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -112,7 +109,7 @@ public class SeleniumFetchClient implements FetchClient {
         Rule rule = ctx.rule();
         Request req = ctx.request();
 
-        DriverRule driverRule = (DriverRule) rule;
+        SeleniumRule driverRule = (SeleniumRule) rule;
 
         try {
             String url = req.url().toString();

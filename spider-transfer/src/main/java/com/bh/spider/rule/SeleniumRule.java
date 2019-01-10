@@ -3,7 +3,7 @@ package com.bh.spider.rule;
 import java.util.LinkedList;
 import java.util.List;
 
-public class DriverRule extends Rule {
+public class SeleniumRule extends Rule {
     private long timeout;
     private List<Script> scripts = new LinkedList<>();
 

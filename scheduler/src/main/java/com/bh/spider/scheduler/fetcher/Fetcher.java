@@ -4,7 +4,7 @@ import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
-import com.bh.spider.rule.DriverRule;
+import com.bh.spider.rule.SeleniumRule;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
@@ -46,7 +46,7 @@ public class Fetcher {
     public void fetch(Context ctx, Request req, Rule rule) {
 
 
-        FetchClientBuilder builder = rule instanceof DriverRule ?
+        FetchClientBuilder builder = rule instanceof SeleniumRule ?
                 new SeleniumFetchClientBuilder() : new HttpFetchClientBuilder();
 
         FetchClient client = builder.build();

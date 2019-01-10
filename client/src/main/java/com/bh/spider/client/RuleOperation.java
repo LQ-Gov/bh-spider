@@ -1,7 +1,7 @@
 package com.bh.spider.client;
 
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import com.bh.spider.rule.Rule;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
@@ -23,7 +23,7 @@ public class RuleOperation {
 
 
     public void submit(String rule) throws IOException {
-        Rule o = JsonFactory.get().readValue(rule, Rule.class);
+        Rule o = Json.get().readValue(rule, Rule.class);
 
         submit(o);
     }

@@ -5,7 +5,7 @@ import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.token.JacksonToken;
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CommandDecoder extends ChannelInboundHandlerAdapter {
-    private final static ObjectMapper mapper = JsonFactory.get();
+    private final static ObjectMapper mapper = Json.get();
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {

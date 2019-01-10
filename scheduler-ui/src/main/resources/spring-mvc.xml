@@ -23,7 +23,7 @@
         <mvc:message-converters>
             <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
                 <property name="objectMapper">
-                    <bean factory-method="get" class="com.bh.spider.transfer.JsonFactory">
+                    <bean factory-method="get" class="com.bh.spider.transfer.Json">
                     </bean>
                 </property>
             </bean>

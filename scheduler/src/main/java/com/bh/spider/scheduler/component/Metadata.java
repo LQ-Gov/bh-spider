@@ -1,9 +1,8 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.transfer.JsonFactory;
+import com.bh.spider.transfer.Json;
 import com.bh.spider.transfer.entity.Component;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -11,7 +10,6 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,7 +40,7 @@ public class Metadata {
                     }
                     String line = accessor.readLine();
                     if (StringUtils.isBlank(line)) break;
-                    Component component = JsonFactory.get().readValue(line, Component.class);
+                    Component component = Json.get().readValue(line, Component.class);
                     components.put(component.getName(), new Position<>(component, pos));
                 } while (true);
             } catch (EOFException e) {
@@ -60,7 +58,7 @@ public class Metadata {
     public void write(Component component) throws IOException {
         long pos = accessor.getFilePointer();
         accessor.writeBoolean(true);
-        accessor.write(JsonFactory.get().writeValueAsBytes(component));
+        accessor.write(Json.get().writeValueAsBytes(component));
         accessor.write("\n".getBytes());
 
         components.put(component.getName(), new Position<>(component, pos));
