@@ -1,7 +1,10 @@
 package com.bh.spider.transfer;
 
+import com.bh.spider.rule.Rule;
 import com.bh.spider.rule.SeleniumRule;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
@@ -18,7 +21,7 @@ public class Json {
     static {
         mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
         mapper.setVisibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE);
-
+        mapper.registerSubtypes(Rule.class);
         mapper.registerSubtypes(SeleniumRule.class);
     }
 

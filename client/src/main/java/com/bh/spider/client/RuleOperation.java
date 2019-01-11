@@ -34,13 +34,13 @@ public class RuleOperation {
     }
 
     public List<Rule> select() {
-        return select(null, 0, -1);
+        return select(null);
 
     }
 
-    public List<Rule> select(String host, int skip, int size) {
+    public List<Rule> select(String host) {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Rule.class}, null);
-        return client.write(CommandCode.GET_RULE_LIST, type, host, skip, size);
+        return client.write(CommandCode.GET_RULE_LIST, type, host);
     }
 
     /**

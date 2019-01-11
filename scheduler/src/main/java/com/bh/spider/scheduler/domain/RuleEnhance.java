@@ -21,6 +21,11 @@ public class RuleEnhance extends Rule {
 
     }
 
+    @Override
+    public long id() {
+        return original().id();
+    }
+
     public RuleController controller(){
         return controller;
     }

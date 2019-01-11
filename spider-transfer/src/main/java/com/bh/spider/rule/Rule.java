@@ -1,15 +1,20 @@
 package com.bh.spider.rule;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by lq on 17-6-7.
  */
-@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS)
-public class Rule {
+@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS,include = JsonTypeInfo.As.EXISTING_PROPERTY,property = "_class")
+public class Rule implements Serializable {
+
+    private Class<?> _class = Rule.class;
 
     private long id;
 

@@ -37,6 +37,7 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
                     buffer.readBytes(data);
 
                     for (JsonNode node : mapper.readTree(data)) {
+                        System.out.println(node.toString());
                         params.add(new JacksonToken(mapper, node.traverse()));
                     }
                 }

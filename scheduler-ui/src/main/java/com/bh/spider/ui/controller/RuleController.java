@@ -13,6 +13,7 @@ import java.util.List;
  */
 
 @RestController
+@RequestMapping("/rule")
 public class RuleController {
 
     private final Client client;
@@ -23,36 +24,34 @@ public class RuleController {
     }
 
 
-    public void insert(Rule rule){
+    public void insert(Rule rule) {
 
     }
 
 
-    @RequestMapping(value = "/rules",method = RequestMethod.GET)
-    public List<Rule> list(String host,int skip,int size) {
+    @GetMapping("/list")
+    public List<Rule> list() {
 
-        List<Rule> rules = client.rule().select();
-
-        return rules;
+        return client.rule().select();
     }
 
 
-    @RequestMapping(value = "/rules/hosts",method = RequestMethod.GET)
-    public List<String> hosts(){
+    @RequestMapping(value = "/rules/hosts", method = RequestMethod.GET)
+    public List<String> hosts() {
         return client.rule().hosts();
         //return new ArrayList<>();
     }
 
 
-    @RequestMapping(value = "/rule",method = RequestMethod.PUT)
+    @RequestMapping(value = "/rule", method = RequestMethod.PUT)
     public long add(HttpServletResponse response, @RequestBody Rule rule) {
         client.rule().submit(rule);
         return rule.id();
     }
 
 
-    @RequestMapping(value = "/rule/state/{host}/{id}",method = RequestMethod.PATCH)
-    public void state(@PathVariable("host") String host, @PathVariable("id") String id,boolean state){
+    @RequestMapping(value = "/rule/state/{host}/{id}", method = RequestMethod.PATCH)
+    public void state(@PathVariable("host") String host, @PathVariable("id") String id, boolean state) {
 
         if (state) {
             client.rule().run(host, id);
@@ -63,9 +62,14 @@ public class RuleController {
 
     }
 
-    @RequestMapping(value = "/rule/{host}/{uuid}",method = RequestMethod.DELETE)
-    public void delete(@PathVariable("host") String host, @PathVariable("uuid")String uuid) {
+    @RequestMapping(value = "/rule/{host}/{uuid}", method = RequestMethod.DELETE)
+    public void delete(@PathVariable("host") String host, @PathVariable("uuid") String uuid) {
         client.rule().delete(host, uuid);
+    }
+
+    @PostMapping
+    public void create(@RequestBody Rule rule) {
+        client.rule().submit(rule);
     }
 
 

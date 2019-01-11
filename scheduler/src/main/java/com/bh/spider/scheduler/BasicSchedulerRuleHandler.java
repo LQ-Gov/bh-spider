@@ -47,7 +47,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
         List<Path> filePaths = Files.list(ruleDirectory).filter(x -> x.toString().endsWith(".json")).collect(Collectors.toList());
 
-        for(Path filePath:filePaths ) {
+        for (Path filePath : filePaths) {
             List<Rule> rules = Json.get().readValue(filePath.toFile(),
                     Json.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
 
@@ -64,15 +64,16 @@ public class BasicSchedulerRuleHandler implements IAssist {
         try {
             URL u = new URL(rule.getPattern());
             host = u.getHost();
-        }catch (Exception ignored){}
+        } catch (Exception ignored) {
+        }
 
-        Domain d = host==null?root: root.put(host);
+        Domain d = host == null ? root : root.put(host);
 
         RuleController controller = RuleController.build(rule, this.scheduler, this.store);
-        RuleEnhance eh = new RuleEnhance(rule, controller,d);
+        RuleEnhance eh = new RuleEnhance(rule, controller, d);
 
         d.bindRule(eh);
-        ruleCache.put(eh.id(),eh);
+        ruleCache.put(eh.id(), eh);
 
         eh.controller().execute(jobCoreScheduler);
 
@@ -80,12 +81,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
         return eh;
 
 
-
-
     }
-
-
-
 
 
     private void backup(Domain domain) throws IOException {
@@ -103,7 +99,6 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
 
-
     @EventMapping
     protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (rule.id() <= 0)
@@ -113,45 +108,22 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected void GET_RULE_LIST_HANDLER(Context ctx, String host, int skip, int size) {
+    protected List<Rule> GET_RULE_LIST_HANDLER(Context ctx, String host) {
 
+        Iterator<RuleEnhance> iterator = ruleCache.values().iterator();
 
-        ctx.write(ruleCache.values());
+        List<Rule> result = new LinkedList<>();
 
-//        List<Rule> rules = new LinkedList<>();
-//
-//        if (StringUtils.isBlank(host)) {
-//            Stack<Domain> stack = new Stack<>();
-//            stack.add(root);
-//
-//            while (!stack.isEmpty()) {
-//                com.bh.spider.scheduler.rule.Domain it = stack.pop();
-//                rules.addAll(it.rules().stream().map(x -> ((com.bh.spider.scheduler.rule.RuleDecorator) x).original()).collect(Collectors.toList()));
-//                stack.addAll(it.children());
-//
-//            }
-//
-//        } else {
-//
-//            Domain domain = root.find(host);
-//
-//             domain.rules()
-//
-//            com.bh.spider.scheduler.rule.Domain matcher = domain.match(host, true);
-//
-//            rules = matcher == null ? rules : matcher.rules();
-//        }
-//
-//        if (size < 0) size = Math.max(rules.size() - skip, 0);
-//
-//        rules = rules.subList(skip, Math.min(skip + size, rules.size()));
-//
-//        ctx.write(rules);
+        while (iterator.hasNext()) {
+            result.add(iterator.next().original());
+        }
+
+        return result;
     }
 
 
     @EventMapping
-    protected void DELETE_RULE_HANDLER(Context ctx,long id) {
+    protected void DELETE_RULE_HANDLER(Context ctx, long id) {
         RuleEnhance decorator = ruleCache.get(id);
         if (decorator == null) return;
 
@@ -162,7 +134,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx,long id, boolean valid) throws Exception {
+    protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean valid) throws Exception {
         RuleEnhance decorator = ruleCache.get(id);
         if (decorator == null) return;
         if (valid)
