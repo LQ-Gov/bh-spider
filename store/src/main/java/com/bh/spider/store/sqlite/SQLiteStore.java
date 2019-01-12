@@ -32,7 +32,10 @@ public class SQLiteStore implements Store {
     }
 
 
-
+    @Override
+    public String name() {
+        return "SQLite";
+    }
 
     @Override
     public void connect() throws Exception {

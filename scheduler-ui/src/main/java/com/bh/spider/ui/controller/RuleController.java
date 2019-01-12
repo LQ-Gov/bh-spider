@@ -24,11 +24,6 @@ public class RuleController {
     }
 
 
-    public void insert(Rule rule) {
-
-    }
-
-
     @GetMapping("/list")
     public List<Rule> list() {
 
@@ -41,14 +36,6 @@ public class RuleController {
         return client.rule().hosts();
         //return new ArrayList<>();
     }
-
-
-    @RequestMapping(value = "/rule", method = RequestMethod.PUT)
-    public long add(HttpServletResponse response, @RequestBody Rule rule) {
-        client.rule().submit(rule);
-        return rule.id();
-    }
-
 
     @RequestMapping(value = "/rule/state/{host}/{id}", method = RequestMethod.PATCH)
     public void state(@PathVariable("host") String host, @PathVariable("id") String id, boolean state) {

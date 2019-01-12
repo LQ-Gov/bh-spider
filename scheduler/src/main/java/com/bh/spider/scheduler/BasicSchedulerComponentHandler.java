@@ -1,8 +1,5 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.fetch.Extractor;
-import com.bh.spider.query.Query;
-import com.bh.spider.scheduler.component.ComponentBuildException;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
 import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.config.Config;

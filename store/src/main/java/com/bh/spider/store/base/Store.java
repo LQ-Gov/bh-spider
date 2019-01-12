@@ -13,6 +13,8 @@ public interface Store {
 
     }
 
+    String name();
+
     /**
      * 打开连接
      * @throws Exception

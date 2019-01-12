@@ -16,6 +16,11 @@ public class RemoteStore implements Store {
 
 
     @Override
+    public String name() {
+        return "Remote Store";
+    }
+
+    @Override
     public void connect() throws Exception {
     }
 

@@ -7,12 +7,14 @@ import com.bh.spider.scheduler.domain.BasicDomain;
 import com.bh.spider.scheduler.domain.Domain;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
+import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IEvent;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.store.base.StoreBuilder;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.transfer.entity.Node;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -29,10 +31,13 @@ import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -53,11 +58,20 @@ public class BasicScheduler implements IEvent {
 
     protected Domain domain = null;
 
+    protected Node me;
+
     private volatile boolean closed = true;
 
 
-    public BasicScheduler(Config config) {
+    public BasicScheduler(Config config) throws UnknownHostException {
         this.cfg = config;
+
+        InetAddress local = Inet4Address.getLocalHost();
+
+        this.me = new Node();
+        this.me.setIp(local.getHostAddress());
+        this.me.setHostname(local.getHostName());
+        this.me.setType("DEFAULT");
 
 
 
@@ -175,6 +189,20 @@ public class BasicScheduler implements IEvent {
     protected void initJobScheduler() throws SchedulerException {
         jobCoreScheduler  = new JobCoreScheduler(this);
         jobCoreScheduler.start();
+    }
+
+    @EventMapping
+    protected Map<String,String> PROFILE_HANDLER(){
+        Map<String,String> map  = new HashMap<>();
+        map.put("mode",RunModeClassFactory.STAND_ALONE);
+        map.put("store",store.name());
+        return map;
+    }
+
+
+    @EventMapping
+    protected List<Node> GET_NODE_LIST_HANDLER(){
+        return Collections.singletonList(me);
     }
 
 

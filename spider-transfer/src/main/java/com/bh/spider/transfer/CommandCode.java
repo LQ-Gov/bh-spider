@@ -1,6 +1,10 @@
 package com.bh.spider.transfer;
 
 public enum CommandCode {
+    PROFILE,
+    GET_NODE_LIST,
+
+
     //component operation
     SUBMIT_COMPONENT,//提交component
     GET_COMPONENT_LIST,//获取所有的component

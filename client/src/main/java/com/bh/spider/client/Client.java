@@ -12,17 +12,23 @@ import com.bh.spider.fetch.impl.FinalFetchContext;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
 import com.bh.spider.rule.Rule;
+import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.transfer.entity.Node;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -182,6 +188,18 @@ public class Client {
 
     public void watch(String point, Consumer<String> consumer) throws IOException {
         stream(CommandCode.WATCH, consumer, new StringConverter(), point);
+    }
+
+
+    public Map<String,String> profile() {
+        Type returnType = Json.mapType(String.class, String.class);
+        return write(CommandCode.PROFILE, returnType);
+    }
+
+
+    public List<Node> nodes() {
+        ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{Node.class}, null);
+        return write(CommandCode.GET_NODE_LIST, returnType);
     }
 
 
