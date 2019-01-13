@@ -41,4 +41,7 @@ public interface Domain {
 
     void ruleListener(Consumer<Rule> consumer);
 
+
+
+
 }

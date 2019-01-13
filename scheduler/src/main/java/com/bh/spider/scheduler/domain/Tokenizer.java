@@ -76,7 +76,7 @@ import java.lang.*;
  * @see java.io.StreamTokenizer
  * @since JDK1.0
  */
-public class StringTokenizer implements Enumeration<Object> {
+public class Tokenizer implements Enumeration<Object> {
     private int currentPosition;
     private int newPosition;
     private int maxPosition;
@@ -167,7 +167,7 @@ public class StringTokenizer implements Enumeration<Object> {
      *                     as tokens.
      * @throws NullPointerException if str is <CODE>null</CODE>
      */
-    public StringTokenizer(String str, String delim, boolean returnDelims) {
+    public Tokenizer(String str, String delim, boolean returnDelims) {
         currentPosition = 0;
         newPosition = -1;
         delimsChanged = false;
@@ -193,7 +193,7 @@ public class StringTokenizer implements Enumeration<Object> {
      * @param delim the delimiters.
      * @throws NullPointerException if str is <CODE>null</CODE>
      */
-    public StringTokenizer(String str, String delim) {
+    public Tokenizer(String str, String delim) {
         this(str, delim, false);
     }
 
@@ -208,7 +208,7 @@ public class StringTokenizer implements Enumeration<Object> {
      * @param str a string to be parsed.
      * @throws NullPointerException if str is <CODE>null</CODE>
      */
-    public StringTokenizer(String str) {
+    public Tokenizer(String str) {
         this(str, " \t\n\r\f", false);
     }
 
