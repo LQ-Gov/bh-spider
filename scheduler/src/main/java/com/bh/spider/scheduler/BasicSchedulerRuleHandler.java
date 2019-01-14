@@ -3,9 +3,9 @@ package com.bh.spider.scheduler;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.domain.Domain;
-import com.bh.spider.scheduler.domain.RuleController;
-import com.bh.spider.scheduler.domain.RuleEnhance;
+import com.bh.spider.scheduler.domain.DefaultRuleScheduleController;
+import com.bh.spider.scheduler.domain.DomainIndex;
+import com.bh.spider.scheduler.domain.RuleBoost;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
@@ -13,7 +13,6 @@ import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.Json;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,16 +22,16 @@ import java.util.stream.Collectors;
 public class BasicSchedulerRuleHandler implements IAssist {
     private BasicScheduler scheduler;
     private JobCoreScheduler jobCoreScheduler;
-    private Domain root;
-    private Map<Long, RuleEnhance> ruleCache = new HashMap<>();
+    private DomainIndex domainIndex;
+    private Map<Long, RuleBoost> ruleCache = new HashMap<>();
     private Store store;
 
     private Config cfg;
 
 
-    public BasicSchedulerRuleHandler(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, Domain domain) throws Exception {
+    public BasicSchedulerRuleHandler(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, DomainIndex domainIndex) throws Exception {
         this.scheduler = scheduler;
-        this.root = domain;
+        this.domainIndex = domainIndex;
         this.jobCoreScheduler = jobCoreScheduler;
         this.cfg = config;
         this.store = store;
@@ -53,64 +52,53 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
             for (Rule rule : rules)
                 enhance(rule);
-
         }
     }
 
 
-    private RuleEnhance enhance(Rule rule) throws Exception {
-
-        String host = null;
-        try {
-            URL u = new URL(rule.getPattern());
-            host = u.getHost();
-        } catch (Exception ignored) {
-        }
-
-        Domain d = host == null ? root : root.put(host);
-
-        RuleController controller = RuleController.build(rule, this.scheduler, this.store);
-        RuleEnhance eh = new RuleEnhance(rule, controller, d);
-
-        d.bindRule(eh);
-        ruleCache.put(eh.id(), eh);
-
-        eh.controller().execute(jobCoreScheduler);
 
 
-        return eh;
+
+    private RuleBoost enhance(Rule rule) throws Exception {
+
+        RuleBoost boost = new RuleBoost(rule,new DefaultRuleScheduleController(this.scheduler,rule,store));
+        boost.link(this.domainIndex);
+
+
+
+        ruleCache.put(boost.id(), boost);
+
+        boost.controller().execute(jobCoreScheduler);
+
+
+        return boost;
 
 
     }
 
 
-    private void backup(Domain domain) throws IOException {
-        String host = domain.host();
+    private void backup(DomainIndex.Node node) throws IOException {
+        String host = node.host();
         host = host == null ? "__ROOT__" : host;
         Path path = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH), host + ".json");
-        List<Rule> rules = new ArrayList<>(domain.rules());
 
-        for (int i = 0; i < rules.size(); i++) {
-            Rule rule = rules.get(i);
-            if (rule instanceof RuleEnhance)
-                rules.set(i, ((RuleEnhance) rule).original());
-        }
+        List<Rule> rules = node.rules().stream().map(RuleBoost::original).collect(Collectors.toList());
+
         Files.write(path, Json.get().writeValueAsBytes(rules));
     }
 
 
     @EventMapping
     protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
-        if (rule.id() <= 0)
-            rule.setId(IdGenerator.instance.nextId());
-        RuleEnhance eh = enhance(rule);
-        backup(eh.domain());
+        RuleBoost boost = enhance(rule);
+
+        backup(boost.domainNode());
     }
 
     @EventMapping
     protected List<Rule> GET_RULE_LIST_HANDLER(Context ctx, String host) {
 
-        Iterator<RuleEnhance> iterator = ruleCache.values().iterator();
+        Iterator<RuleBoost> iterator = ruleCache.values().iterator();
 
         List<Rule> result = new LinkedList<>();
 
@@ -123,19 +111,20 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
 
     @EventMapping
-    protected void DELETE_RULE_HANDLER(Context ctx, long id) {
-        RuleEnhance decorator = ruleCache.get(id);
-        if (decorator == null) return;
+    protected void DELETE_RULE_HANDLER(Context ctx, long id) throws IOException {
+        RuleBoost boost = ruleCache.get(id);
+        if (boost == null) return;
 
-
-        decorator.domain().unbindRule(decorator);
-        decorator.controller().close();
+        boost.destory();
+        boost.controller().close();
         ruleCache.remove(id);
+
+        backup(boost.domainNode());
     }
 
     @EventMapping
     protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean valid) throws Exception {
-        RuleEnhance decorator = ruleCache.get(id);
+        RuleBoost decorator = ruleCache.get(id);
         if (decorator == null) return;
         if (valid)
             decorator.controller().execute(jobCoreScheduler);

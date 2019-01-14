@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.domain;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.rule.ExtractorGroup;
 
-public class ExtractorGroupEnhance extends ExtractorGroup {
+public class ExtractorGroup2 extends com.bh.spider.rule.ExtractorGroup {
 
     @Override
     public void extract(FetchContext context) {

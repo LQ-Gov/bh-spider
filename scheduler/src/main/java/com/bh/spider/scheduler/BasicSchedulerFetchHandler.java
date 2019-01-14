@@ -5,8 +5,8 @@ import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.query.Query;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.domain.Domain;
-import com.bh.spider.scheduler.domain.RuleEnhance;
+import com.bh.spider.scheduler.domain.DomainIndex;
+import com.bh.spider.scheduler.domain.RuleBoost;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.fetcher.FetchContent;
@@ -25,20 +25,20 @@ public class BasicSchedulerFetchHandler implements IAssist {
 
     private BasicScheduler scheduler;
     private Fetcher fetcher;
-    private Domain root;
+    private DomainIndex domainIndex;
     private Store store;
 
     private Map<Long,Request> fetchContextTable = new ConcurrentHashMap<>();
 
-    public BasicSchedulerFetchHandler(BasicScheduler scheduler, Domain root, Store store) {
-        this(scheduler, new Fetcher(scheduler), root, store);
+    public BasicSchedulerFetchHandler(BasicScheduler scheduler, DomainIndex domainIndex, Store store) {
+        this(scheduler, new Fetcher(scheduler), domainIndex, store);
     }
 
 
-    public BasicSchedulerFetchHandler(BasicScheduler scheduler,Fetcher fetcher,Domain root,Store store){
+    public BasicSchedulerFetchHandler(BasicScheduler scheduler,Fetcher fetcher,DomainIndex domainIndex,Store store){
         this.scheduler = scheduler;
         this.fetcher = fetcher;
-        this.root = root;
+        this.domainIndex = domainIndex;
         this.store = store;
     }
 
@@ -46,22 +46,21 @@ public class BasicSchedulerFetchHandler implements IAssist {
     protected void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
         String host = req.url().getHost();
 
-        Domain d = root.find(host, false);
+        DomainIndex.Node node = domainIndex.match(host,false);
 
 
-        while (d != root.parent()) {
-            Collection<Rule> rules = d.rules();
+        while (node != domainIndex.root()) {
+            Collection<RuleBoost> rules = node.rules();
             if (rules != null) {
-                for (Rule rule : rules) {
-                    RuleEnhance decorator = (RuleEnhance) rule;
+                for (RuleBoost rule : rules) {
 
-                    if (decorator.match(req.url())) {
-                        decorator.controller().joinQueue(new FetchContent(req));
+                    if (rule.match(req)) {
+                        rule.controller().joinQueue(new FetchContent(req));
                         return;
                     }
                 }
             }
-            d = root.parent();
+            node = node.parent();
         }
         throw new Exception("绑定请求失败");
     }

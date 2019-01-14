@@ -4,8 +4,13 @@ public class BasicDomainIndex implements DomainIndex {
     private Node root = new Node(null,null);
 
     @Override
+    public Node root() {
+        return root;
+    }
+
+    @Override
     public Node match(String path) {
-        return null;
+        return match(path,true);
     }
 
     @Override
@@ -13,10 +18,10 @@ public class BasicDomainIndex implements DomainIndex {
         Tokenizer tokenizer = new Tokenizer(path,".");
         Node node = root;
 
-        while (tokenizer.hasMoreTokens()){
+        while (tokenizer.hasMoreTokens()&&node!=null) {
             String token = tokenizer.nextToken();
             Node child = root.children(token);
-            if(child==null)
+            if (child == null && !exact)
                 return node;
             node = child;
         }
@@ -25,25 +30,13 @@ public class BasicDomainIndex implements DomainIndex {
 
     @Override
     public Node matchOrCreate(String path) {
-        Tokenizer tokenizer = new Tokenizer(path,".");
+        Tokenizer tokenizer = new Tokenizer(path, ".");
         Node node = root;
 
-        while (tokenizer.hasMoreTokens()){
+        while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
-            node = root.children(token,new Node(token,root));
+            node = root.children(token, new Node(token, root));
         }
         return node;
-    }
-
-    @Override
-    public void delete(String path, boolean force) throws Exception {
-        Tokenizer tokenizer = new Tokenizer(path,".");
-        Node node = match(path);
-
-    }
-
-    @Override
-    public void delete(String path) throws Exception {
-
     }
 }

@@ -5,19 +5,20 @@ import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
+import com.bh.spider.scheduler.job.JobContext;
+import com.bh.spider.scheduler.job.JobCoreScheduler;
+import com.bh.spider.scheduler.job.QuartzJobImpl;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class BasicRuleController implements RuleController {
-    private final static Logger logger = LoggerFactory.getLogger(BasicRuleController.class);
+public class DefaultRuleScheduleController implements RuleScheduleController {
+    private final static Logger logger = LoggerFactory.getLogger(DefaultRuleScheduleController.class);
     private Rule rule;
     private BasicScheduler scheduler;
     private Store store;
@@ -28,18 +29,13 @@ public class BasicRuleController implements RuleController {
     private AtomicLong waitingCount;
     private Queue<Request> cacheQueue = new LinkedList<>();
 
-    public BasicRuleController(BasicScheduler scheduler, Rule rule, Store store) {
+    public DefaultRuleScheduleController(BasicScheduler scheduler, Rule rule, Store store) {
         this.rule = rule;
         this.scheduler = scheduler;
         this.store = store;
         this.unfinishedIndex=0;
         this.unfinishedCount = store.accessor().count(rule.id(), Request.State.GOING);
         this.waitingCount = new AtomicLong(store.accessor().count(rule.id(), Request.State.QUEUE));
-    }
-
-    @Override
-    public Rule rule() {
-        return rule;
     }
 
     @Override
@@ -107,5 +103,13 @@ public class BasicRuleController implements RuleController {
             if (collection != null)
                 cacheQueue.addAll(collection);
         }
+    }
+
+    public void execute(JobCoreScheduler jobScheduler) throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put(QuartzJobImpl.RULE_CONTROLLER, this);
+
+        JobContext ctx = jobScheduler.scheduler(String.valueOf(rule.id()), rule.getCron(), params);
+        ctx.exec();
     }
 }

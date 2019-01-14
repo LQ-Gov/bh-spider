@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.job;
 
-import com.bh.spider.scheduler.domain.RuleController;
+import com.bh.spider.scheduler.domain.RuleScheduleController;
 import org.quartz.*;
 
 import java.util.concurrent.ExecutionException;
@@ -11,7 +11,7 @@ public class QuartzJobImpl implements Job {
     public void execute(JobExecutionContext jobExecutionContext) {
 
         JobDetail detail = jobExecutionContext.getJobDetail();
-        RuleController controller = (RuleController)detail.getJobDataMap().get(RULE_CONTROLLER);
+        RuleScheduleController controller = (RuleScheduleController)detail.getJobDataMap().get(RULE_CONTROLLER);
         if (controller != null) {
             try {
                 controller.blast();

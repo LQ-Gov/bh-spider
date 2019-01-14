@@ -1,8 +1,6 @@
 package com.bh.spider.scheduler.cluster.master;
 
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.cluster.master.domain.DistributedDomain;
-import com.bh.spider.scheduler.cluster.master.domain.DistributedDomainType;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.event.Command;
 import io.atomix.cluster.MemberId;
@@ -11,7 +9,6 @@ import io.atomix.cluster.discovery.BootstrapDiscoveryProvider;
 import io.atomix.core.Atomix;
 import io.atomix.core.AtomixBuilder;
 import io.atomix.core.election.LeaderElection;
-import io.atomix.protocols.backup.MultiPrimaryProtocol;
 import io.atomix.protocols.backup.partition.PrimaryBackupPartitionGroup;
 import io.atomix.protocols.raft.partition.RaftPartitionGroup;
 import io.atomix.utils.serializer.Namespace;
@@ -19,6 +16,7 @@ import io.atomix.utils.serializer.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
@@ -30,8 +28,9 @@ public class ClusterScheduler2 extends BasicScheduler {
 
     private Atomix atomix;
 
-    public ClusterScheduler2(Config cfg) {
+    public ClusterScheduler2(Config cfg) throws UnknownHostException {
         super(cfg);
+
         mid = cfg.get(Config.MY_ID);
     }
 
@@ -87,9 +86,9 @@ public class ClusterScheduler2 extends BasicScheduler {
         atomix.start().join();
 
 
-        DistributedDomain domain = atomix.primitiveBuilder("cluster-com.bh.spider.scheduler.domain", DistributedDomainType.instance())
-                .withProtocol(MultiPrimaryProtocol.builder().build())
-                .build();
+//        DistributedDomain domain = atomix.primitiveBuilder("cluster-com.bh.spider.scheduler.domain", DistributedDomainType.instance())
+//                .withProtocol(MultiPrimaryProtocol.builder().build())
+//                .build();
 
 
         LeaderElection<MemberId> leaderElection = atomix.<MemberId>leaderElectionBuilder("cluster-election")

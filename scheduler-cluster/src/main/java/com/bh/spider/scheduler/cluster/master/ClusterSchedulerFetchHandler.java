@@ -8,7 +8,7 @@ import com.bh.spider.scheduler.cluster.master.choose.RandomWorkerChoose;
 import com.bh.spider.scheduler.cluster.master.choose.WorkerChoose;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.context.LocalContext;
-import com.bh.spider.scheduler.domain.Domain;
+import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.store.base.Store;
@@ -20,8 +20,8 @@ public class ClusterSchedulerFetchHandler extends BasicSchedulerFetchHandler {
 
     private ClusterScheduler scheduler;
 
-    public ClusterSchedulerFetchHandler(ClusterScheduler scheduler, Domain root, Store store) {
-        super(scheduler, null, root, store);
+    public ClusterSchedulerFetchHandler(ClusterScheduler scheduler, DomainIndex domainIndex, Store store) {
+        super(scheduler, null, domainIndex, store);
 
         this.scheduler = scheduler;
     }

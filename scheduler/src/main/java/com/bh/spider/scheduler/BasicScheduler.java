@@ -3,8 +3,8 @@ package com.bh.spider.scheduler;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.domain.BasicDomain;
-import com.bh.spider.scheduler.domain.Domain;
+import com.bh.spider.scheduler.domain.BasicDomainIndex;
+import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.EventMapping;
@@ -37,7 +37,10 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -56,7 +59,7 @@ public class BasicScheduler implements IEvent {
 
     protected JobCoreScheduler jobCoreScheduler = null;
 
-    protected Domain domain = null;
+    protected DomainIndex domainIndex = null;
 
     protected Node me;
 
@@ -82,7 +85,7 @@ public class BasicScheduler implements IEvent {
         //先初始化存储，其他模块依赖存储
         initStore();
         //初始化domain tree
-        initDomainTree();
+        initDomainIndex();
         //init_system_signal_handles();
         initJobScheduler();
         //初始化本地端口监听
@@ -145,8 +148,8 @@ public class BasicScheduler implements IEvent {
         store = builder.build(cfg.all(Config.INIT_STORE_PROPERTIES));
     }
 
-    protected void initDomainTree() {
-        domain = new BasicDomain(null, null);
+    protected void initDomainIndex() {
+        domainIndex = new BasicDomainIndex();
     }
 
 
@@ -178,8 +181,8 @@ public class BasicScheduler implements IEvent {
     protected void initEventLoop() throws Exception {
         loop = new EventLoop(this,
                 new BasicSchedulerComponentHandler(cfg, this),
-                new BasicSchedulerRuleHandler(cfg, this, this.store, this.jobCoreScheduler, domain),
-                new BasicSchedulerFetchHandler(this, domain, store),
+                new BasicSchedulerRuleHandler(cfg, this, this.store, this.jobCoreScheduler, domainIndex),
+                new BasicSchedulerFetchHandler(this, domainIndex, store),
                 new BasicSchedulerWatchHandler());
 
         loop.listen().join();

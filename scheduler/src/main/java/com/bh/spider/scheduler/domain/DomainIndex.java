@@ -1,12 +1,12 @@
 package com.bh.spider.scheduler.domain;
 
-import com.bh.spider.rule.Rule;
-
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public interface DomainIndex {
+    Node root();
 
     Node match(String path);
 
@@ -14,17 +14,13 @@ public interface DomainIndex {
 
     Node matchOrCreate(String path);
 
-    void delete(String path, boolean force) throws Exception;
-
-    void delete(String path) throws Exception;
-
 
     public static class Node {
         private String name;
         private Node parent;
         private Map<String, Node> children;
 
-        private List<Rule> rules;
+        private List<RuleBoost> rules;
 
 
         public Node(String name, Node parent) {
@@ -41,14 +37,17 @@ public interface DomainIndex {
             return parent;
         }
 
-        public void bind(Rule rule) {
+        public void bind(RuleBoost rule) {
+            if (rules == null)
+                rules = new LinkedList<>();
+            rules.add(rule);
         }
 
 
-        public void unbind(Rule rule) {
+        public void unbind(RuleBoost rule) {
         }
 
-        public Collection<Rule> rules() {
+        public Collection<RuleBoost> rules() {
             return null;
         }
 
