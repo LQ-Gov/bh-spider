@@ -1,6 +1,8 @@
 package com.bh.spider.scheduler.domain;
 
-public class BasicDomainIndex implements DomainIndex {
+import java.util.StringTokenizer;
+
+public class DefaultDomainIndex implements DomainIndex {
     private Node root = new Node(null,null);
 
     @Override
@@ -15,7 +17,7 @@ public class BasicDomainIndex implements DomainIndex {
 
     @Override
     public Node match(String path, boolean exact) {
-        Tokenizer tokenizer = new Tokenizer(path,".");
+        StringTokenizer tokenizer = new StringTokenizer(path,".");
         Node node = root;
 
         while (tokenizer.hasMoreTokens()&&node!=null) {
@@ -30,7 +32,7 @@ public class BasicDomainIndex implements DomainIndex {
 
     @Override
     public Node matchOrCreate(String path) {
-        Tokenizer tokenizer = new Tokenizer(path, ".");
+        StringTokenizer tokenizer = new StringTokenizer(path, ".");
         Node node = root;
 
         while (tokenizer.hasMoreTokens()) {

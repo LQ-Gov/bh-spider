@@ -3,28 +3,23 @@ package com.bh.spider.scheduler.domain;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.IdGenerator;
+import com.bh.spider.scheduler.domain.pattern.AntRulePattern;
 
-public class RuleBoost {
+public class RuleWrapper extends Rule {
     private Rule base;
-    private Pattern pattern;
-    private DomainIndex.Node node;
-    private RuleScheduleController scheduleController;
+    private transient AntRulePattern pattern;
+    private transient DomainIndex.Node node;
+    private transient RuleScheduleController scheduleController;
 
 
 
-    public RuleBoost(Rule rule,RuleScheduleController scheduleController){
-        if(rule.id()<=0)
-            rule.setId(IdGenerator.instance.nextId());
-
+    public RuleWrapper(Rule rule, RuleScheduleController scheduleController){
+        super(rule.id()<=0?IdGenerator.instance.nextId():rule.id(),rule);
         this.base = rule;
         this.scheduleController = scheduleController;
 
-        this.pattern = new Pattern(rule.getPattern());
+        this.pattern = new AntRulePattern(rule.getPattern());
 
-    }
-
-    public long id(){
-        return base.id();
     }
 
     public Rule original(){
@@ -37,7 +32,7 @@ public class RuleBoost {
     }
 
 
-    public void destory(){
+    public void destroy(){
          node.unbind(this);
     }
 
@@ -56,17 +51,7 @@ public class RuleBoost {
     }
 
 
-    public boolean match(Request request){
-        return true;
-    }
-
-    public class Pattern{
-        public Pattern(String input){
-
-        }
-
-        public String host(){
-            return null;
-        }
+    public boolean match(Request request) {
+        return pattern.match(request.url());
     }
 }

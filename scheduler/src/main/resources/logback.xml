@@ -18,9 +18,9 @@
     <appender name="ANALYSIS" class="com.bh.spider.scheduler.watch.WatchAppender"/>
 
 
-    <root level="info">
+    <root level="debug">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="ANALYSIS"/>
-        <appender-ref ref="FILE"/>
+        <!--<appender-ref ref="FILE"/>-->
     </root>
 </configuration>

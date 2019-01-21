@@ -6,7 +6,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by lq on 17-6-7.
@@ -18,7 +20,7 @@ public class Rule implements Serializable {
 
     private long id;
 
-    private List<ExtractorGroup> extractors = new ArrayList<>();
+    private Map<String,String[]> extractors = new HashMap<>();
     /**
      * 定时器
      */
@@ -52,6 +54,16 @@ public class Rule implements Serializable {
         this.pattern = pattern;
         this.cron = cron;
         this.valid = true;
+    }
+
+
+    public Rule(long id, Rule rule) {
+        this.id = id;
+        this.extractors = rule.extractors;
+        this.cron = rule.cron;
+        this.pattern = rule.pattern;
+        this.parallelCount = rule.parallelCount;
+        this.description = rule.description;
     }
 
     public void setId(long id) {
@@ -110,17 +122,11 @@ public class Rule implements Serializable {
         this.parallelCount = parallelCount;
     }
 
-
-    public ExtractorGroup extractorGroup(int index){
-        return extractors.get(index);
+    public Map<String, String[]> getExtractors() {
+        return extractors;
     }
 
-    public List<ExtractorGroup> extractorGroups(){return extractors;}
-
-
-    public void addExtractorGroup(ExtractorGroup group){
-        extractors.add(group);
+    public void setExtractors(Map<String, String[]> extractors) {
+        this.extractors = extractors;
     }
-
-
 }

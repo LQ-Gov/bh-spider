@@ -6,7 +6,7 @@ import com.bh.spider.query.Query;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
-import com.bh.spider.scheduler.domain.RuleBoost;
+import com.bh.spider.scheduler.domain.RuleWrapper;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.fetcher.FetchContent;
@@ -50,9 +50,9 @@ public class BasicSchedulerFetchHandler implements IAssist {
 
 
         while (node != domainIndex.root()) {
-            Collection<RuleBoost> rules = node.rules();
+            Collection<RuleWrapper> rules = node.rules();
             if (rules != null) {
-                for (RuleBoost rule : rules) {
+                for (RuleWrapper rule : rules) {
 
                     if (rule.match(req)) {
                         rule.controller().joinQueue(new FetchContent(req));

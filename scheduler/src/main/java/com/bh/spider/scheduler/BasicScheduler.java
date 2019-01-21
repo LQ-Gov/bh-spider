@@ -3,7 +3,7 @@ package com.bh.spider.scheduler;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.domain.BasicDomainIndex;
+import com.bh.spider.scheduler.domain.DefaultDomainIndex;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
@@ -149,7 +149,7 @@ public class BasicScheduler implements IEvent {
     }
 
     protected void initDomainIndex() {
-        domainIndex = new BasicDomainIndex();
+        domainIndex = new DefaultDomainIndex();
     }
 
 
