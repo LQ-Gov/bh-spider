@@ -5,7 +5,8 @@ import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DefaultRuleScheduleController;
 import com.bh.spider.scheduler.domain.DomainIndex;
-import com.bh.spider.scheduler.domain.RuleWrapper;
+import com.bh.spider.scheduler.domain.RuleFacade;
+import com.bh.spider.scheduler.domain.RuleScheduleController;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
@@ -23,7 +24,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     private BasicScheduler scheduler;
     private JobCoreScheduler jobCoreScheduler;
     private DomainIndex domainIndex;
-    private Map<Long, RuleWrapper> ruleCache = new HashMap<>();
+    private Map<Long, RuleFacade> facadeCache = new HashMap<>();
     private Store store;
 
     private Config cfg;
@@ -51,7 +52,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
                     Json.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
 
             for (Rule rule : rules)
-                wrapper(rule);
+                facade(rule,true);
         }
     }
 
@@ -59,21 +60,21 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
 
 
-    private RuleWrapper wrapper(Rule rule) throws Exception {
+    private RuleFacade facade(Rule rule,boolean cached) throws Exception {
 
-        RuleWrapper boost = new RuleWrapper(rule,new DefaultRuleScheduleController(this.scheduler,rule,store));
-        boost.link(this.domainIndex);
+        return facade(rule, cached, new DefaultRuleScheduleController(this.scheduler, rule, store));
+    }
 
+    private RuleFacade facade(Rule rule, boolean cached, RuleScheduleController ruleScheduleController) throws Exception {
+        RuleFacade facade = new RuleFacade(this.scheduler, rule, ruleScheduleController);
+        facade.link(this.domainIndex);
 
+        if (facade.controller() != null)
+            facade.controller().execute(jobCoreScheduler);
+        if (cached)
+            facadeCache.put(facade.id(), facade);
 
-        ruleCache.put(boost.id(), boost);
-
-        boost.controller().execute(jobCoreScheduler);
-
-
-        return boost;
-
-
+        return facade;
     }
 
 
@@ -82,7 +83,13 @@ public class BasicSchedulerRuleHandler implements IAssist {
         host = host == null ? "__ROOT__" : host;
         Path path = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH), host + ".json");
 
-        List<Rule> rules = node.rules().stream().map(RuleWrapper::original).collect(Collectors.toList());
+
+        List<Rule> rules = node.rules().stream().map(RuleFacade::original).collect(Collectors.toList());
+
+        for (Rule rule : rules) {
+            if (rule.id() <= 0)
+                rule.setId(IdGenerator.instance.nextId());
+        }
 
         Files.write(path, Json.get().writeValueAsBytes(rules));
     }
@@ -90,7 +97,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
     @EventMapping
     protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
-        RuleWrapper boost = wrapper(rule);
+        RuleFacade boost = facade(rule,true);
 
         backup(boost.domainNode());
     }
@@ -98,7 +105,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     @EventMapping
     protected List<Rule> GET_RULE_LIST_HANDLER(Context ctx, String host) {
 
-        Iterator<RuleWrapper> iterator = ruleCache.values().iterator();
+        Iterator<RuleFacade> iterator = facadeCache.values().iterator();
 
         List<Rule> result = new LinkedList<>();
 
@@ -112,19 +119,32 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
     @EventMapping
     protected void DELETE_RULE_HANDLER(Context ctx, long id) throws IOException {
-        RuleWrapper boost = ruleCache.get(id);
+        RuleFacade boost = facadeCache.get(id);
         if (boost == null) return;
 
         boost.destroy();
         boost.controller().close();
-        ruleCache.remove(id);
+        facadeCache.remove(id);
 
         backup(boost.domainNode());
     }
 
     @EventMapping
+    protected RuleFacade FACADE_RULE_HANDLER(Context ctx,Rule rule) throws Exception {
+        if (rule == null || rule.id() <= 0) return null;
+
+        RuleFacade facade = facadeCache.get(rule.id());
+
+        if (facade == null) {
+            facade = facade(rule, false, null);
+        }
+
+        return facade;
+    }
+
+    @EventMapping
     protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean valid) throws Exception {
-        RuleWrapper decorator = ruleCache.get(id);
+        RuleFacade decorator = facadeCache.get(id);
         if (decorator == null) return;
         if (valid)
             decorator.controller().execute(jobCoreScheduler);

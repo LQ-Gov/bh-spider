@@ -12,7 +12,7 @@ public interface Context {
 
     void exception(Throwable cause);
 
-    void crawled(FetchContext fetchContext) throws ExecutionException, InterruptedException, IllegalAccessException, InstantiationException;
+    void crawled(FetchContext fetchContext) throws Exception;
 
     void commandCompleted(Object data);
 }

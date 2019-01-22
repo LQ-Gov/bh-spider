@@ -12,6 +12,9 @@ public enum CommandCode {
     DELETE_COMPONENT,
 
 
+    RULE_FACADE,
+
+
     //rule operation
     SUBMIT_RULE,
     GET_RULE_LIST,//获取RULE列表

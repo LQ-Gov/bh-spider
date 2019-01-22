@@ -20,7 +20,7 @@ public interface DomainIndex {
         private Node parent;
         private Map<String, Node> children;
 
-        private List<RuleWrapper> rules;
+        private List<RuleFacade> rules;
 
 
         public Node(String name, Node parent) {
@@ -37,17 +37,17 @@ public interface DomainIndex {
             return parent;
         }
 
-        public void bind(RuleWrapper rule) {
+        public void bind(RuleFacade rule) {
             if (rules == null)
                 rules = new LinkedList<>();
             rules.add(rule);
         }
 
 
-        public void unbind(RuleWrapper rule) {
+        public void unbind(RuleFacade rule) {
         }
 
-        public Collection<RuleWrapper> rules() {
+        public Collection<RuleFacade> rules() {
             return null;
         }
 

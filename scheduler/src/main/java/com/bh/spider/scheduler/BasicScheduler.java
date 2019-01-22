@@ -1,10 +1,12 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.fetch.Request;
+import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DefaultDomainIndex;
 import com.bh.spider.scheduler.domain.DomainIndex;
+import com.bh.spider.scheduler.domain.RuleFacade;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.EventMapping;
@@ -207,8 +209,6 @@ public class BasicScheduler implements IEvent {
     protected List<Node> GET_NODE_LIST_HANDLER(){
         return Collections.singletonList(me);
     }
-
-
 
     protected interface Initializer{
 
