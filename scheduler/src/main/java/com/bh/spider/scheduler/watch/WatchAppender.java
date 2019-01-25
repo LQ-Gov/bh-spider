@@ -3,23 +3,42 @@ package com.bh.spider.scheduler.watch;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import com.bh.spider.scheduler.config.Markers;
+import com.bh.spider.scheduler.watch.handler.MarkerHandler;
+import com.bh.spider.scheduler.watch.handler.Support;
 import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+import sun.jvm.hotspot.oops.Mark;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class WatchAppender extends AppenderBase<ILoggingEvent> {
-    private WatchExecutor watchExecutor = new WatchExecutor();
+
+    private Map<Marker, MarkerHandler> markers = new HashMap<>();
 
     @Override
     protected void append(ILoggingEvent event) {
         Marker marker = event.getMarker();
-        if (marker == null || !marker.contains(Markers.ANALYSIS)) return;
 
 
-        watchExecutor.submit(event);
+        MarkerHandler handler;
+        if (marker == null || (handler = markers.get(marker)) == null) return;
+
+        handler.handle(event);
     }
 
-    @Override
-    public void start() {
-        super.start();
-        watchExecutor.start();
+
+
+
+    public void addHandler(MarkerHandler handler) {
+
+        Support support = handler.getClass().getAnnotation(Support.class);
+        if(support!=null) {
+
+            for (String name : support.value()) {
+                Marker marker = MarkerFactory.getMarker(name);
+                markers.put(marker, handler);
+            }
+        }
     }
 }
