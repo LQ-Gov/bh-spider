@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -51,4 +53,25 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
             buffer.release();
         }
     }
+
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent) evt;
+            if (event.state().equals(IdleState.READER_IDLE)) {
+                System.out.println("长期没收到服务器推送数据");
+                //可以选择重新连接
+            } else if (event.state().equals(IdleState.WRITER_IDLE)) {
+                System.out.println("长期未向服务器发送数据");
+                //发送心跳包
+            } else if (event.state().equals(IdleState.ALL_IDLE)) {
+                System.out.println("ALL");
+            }
+        }
+
+        super.userEventTriggered(ctx, evt);
+    }
+
+
 }

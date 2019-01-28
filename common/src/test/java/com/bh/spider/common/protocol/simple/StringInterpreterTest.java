@@ -1,7 +1,9 @@
 package com.bh.spider.common.protocol.simple;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
@@ -11,7 +13,7 @@ import java.util.Arrays;
 public class StringInterpreterTest extends AbstractInterpreterTest<StringInterpreter> {
     @Test
     public void support() throws Exception {
-        Assert.assertTrue(interpreter().support(String.class));
+        Assertions.assertTrue(interpreter().support(String.class));
 
     }
 

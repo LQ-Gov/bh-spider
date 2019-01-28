@@ -2,12 +2,10 @@ package com.bh.spider.scheduler.watch;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.bh.spider.scheduler.config.Markers;
 import com.bh.spider.scheduler.watch.handler.MarkerHandler;
 import com.bh.spider.scheduler.watch.handler.Support;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
-import sun.jvm.hotspot.oops.Mark;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.event;
 
-import com.bh.spider.scheduler.config.Markers;
+import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.token.Token;
 import org.apache.commons.lang3.ClassUtils;
@@ -48,7 +48,7 @@ public class EventLoop extends Thread {
 
                 Command cmd = pair.getLeft();
                 CompletableFuture future = pair.getRight();
-                logger.info(Markers.ANALYSIS, "event loop for {}, execute command:{},params bytes size:{}",
+                logger.info(Markers.EVENT_LOOP, "event loop for {}, execute command:{},params bytes size:{}",
                         this.parent.getClass().getName(), cmd.key(), 0);
 
                 try {

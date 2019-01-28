@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutionException;
  * Created by lq on 17-3-30.
  */
 public interface Context {
+
+
     void write(Object data);
 
     void exception(Throwable cause);
@@ -15,4 +17,6 @@ public interface Context {
     void crawled(FetchContext fetchContext) throws Exception;
 
     void commandCompleted(Object data);
+
+    void whenComplete(ContextEventHandler handler);
 }

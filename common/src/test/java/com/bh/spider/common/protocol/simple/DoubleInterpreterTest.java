@@ -1,7 +1,9 @@
 package com.bh.spider.common.protocol.simple;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
@@ -11,9 +13,9 @@ import java.util.Arrays;
 public class DoubleInterpreterTest extends AbstractInterpreterTest<DoubleInterpreter> {
     @Test
     public void support() throws Exception {
-        Assert.assertTrue(interpreter().support(Double.class));
-        Assert.assertTrue(interpreter().support(double.class));
-        Assert.assertFalse(interpreter().support(Integer.class));
+        Assertions.assertTrue(interpreter().support(Double.class));
+        Assertions.assertTrue(interpreter().support(double.class));
+        Assertions.assertFalse(interpreter().support(Integer.class));
     }
 
     @Test

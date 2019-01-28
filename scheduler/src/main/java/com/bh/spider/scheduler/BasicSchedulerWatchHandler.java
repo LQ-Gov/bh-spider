@@ -1,48 +1,61 @@
 package com.bh.spider.scheduler;
 
+import com.bh.common.WatchFilter;
 import com.bh.spider.scheduler.context.ClientContext;
-import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.EventMapping;
 import com.bh.spider.scheduler.event.IAssist;
+import com.bh.spider.scheduler.watch.point.Point;
+import com.bh.spider.scheduler.watch.point.PointNotFoundException;
+import com.bh.spider.scheduler.watch.point.Points;
 import com.bh.spider.scheduler.watch.Watcher;
-import com.bh.spider.scheduler.watch.WatcherStore;
 import io.netty.channel.ChannelId;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 暂时只支持来自客户端的监控
+ */
 public class BasicSchedulerWatchHandler implements IAssist {
-    private static Map<ChannelId, Map<String, Watcher>> watchedContext = new ConcurrentHashMap<>();
+    private static Map<ChannelId, Map<String, Watcher>> WATCHERS = new ConcurrentHashMap<>();
 
     @EventMapping(autoComplete = false)
-    protected void WATCH_HANDLER(Context ctx, String key) throws Exception {
-        if (ctx instanceof ClientContext) {
+    protected void WATCH_HANDLER(ClientContext ctx, String key, WatchFilter filter) throws Exception {
 
-            ChannelId channelId = ((ClientContext) ctx).channelId();
-            Map<String, Watcher> watchers = watchedContext.computeIfAbsent(channelId, x -> new ConcurrentHashMap<>());
+        Map<String, Watcher> map = WATCHERS.get(ctx.channelId());
 
-            if (watchers.containsKey(key))
-                throw new Exception("the watch point is watched");
+        if (map != null && map.containsKey(key)) throw new Exception("已绑定");
+
+        Point point = Points.of(key);
+
+        if (point == null) throw new PointNotFoundException();
 
 
-            Watcher watcher = WatcherStore.register(ctx, key);
+        Watcher watcher = new Watcher(ctx, filter);
+        watcher.watch(point);
 
-            watchers.put(key, watcher);
 
-        }
+        Map<String, Watcher> watchers = WATCHERS.computeIfAbsent(ctx.channelId(), x -> new ConcurrentHashMap<>());
+        watchers.put(key, watcher);
 
+        ctx.whenComplete(x -> watchers.remove(key));
     }
 
 
+    /**
+     * 根据ctx.channelId 和 key 找到监控时的context,close掉
+     * @param ctx
+     * @param key
+     */
     @EventMapping
-    protected void UNWATCH_HANDLER(Context ctx, String key) {
-        if (ctx instanceof ClientContext) {
+    protected void UNWATCH_HANDLER(ClientContext ctx, String key) {
+        Map<String, Watcher> watchers = WATCHERS.get(ctx.channelId());
 
-            ChannelId channelId = ((ClientContext) ctx).channelId();
-            Map<String, Watcher> watchers = watchedContext.get(channelId);
-            Watcher watcher;
-            if (watchers != null && (watcher = watchers.get(key)) != null) {
-                watcher.destory();
+        if (watchers != null) {
+
+            Watcher watcher = watchers.get(key);
+            if (watcher != null) {
+                ((ClientContext) watcher.context()).close();
             }
         }
     }

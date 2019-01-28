@@ -1,7 +1,9 @@
 package com.bh.spider.common.protocol.simple;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
@@ -12,9 +14,9 @@ public class ByteInterpreterTest extends AbstractInterpreterTest<ByteInterpreter
 
     @Test
     public void support() throws Exception {
-        Assert.assertTrue(interpreter().support(Byte.class));
-        Assert.assertTrue(interpreter().support(byte.class));
-        Assert.assertFalse(interpreter().support(Integer.class));
+        Assertions.assertTrue(interpreter().support(Byte.class));
+        Assertions.assertTrue(interpreter().support(byte.class));
+        Assertions.assertFalse(interpreter().support(Integer.class));
 
     }
 

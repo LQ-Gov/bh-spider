@@ -1,7 +1,9 @@
 package com.bh.spider.common.protocol.simple;
 
-import org.junit.Assert;
-import org.junit.Before;
+
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import java.util.List;
 public class AbstractInterpreterTest<T extends UniqueInterpreter> {
     T obj = null;
 
-    @Before
+    @BeforeEach
     public void before() throws IllegalAccessException, InstantiationException {
         ParameterizedType type = (ParameterizedType) this.getClass().getGenericSuperclass();
 
@@ -30,7 +32,7 @@ public class AbstractInterpreterTest<T extends UniqueInterpreter> {
     public <C> void fromArray(C[] input) throws Exception {
         byte[] bytes = interpreter().fromArray(input);
 
-        Assert.assertArrayEquals(interpreter().toArray(bytes,AbstractInterpreter.ARRAY_HEAD_LEN,bytes.length-AbstractInterpreter.ARRAY_HEAD_LEN),input);
+        Assertions.assertArrayEquals(interpreter().toArray(bytes,AbstractInterpreter.ARRAY_HEAD_LEN,bytes.length-AbstractInterpreter.ARRAY_HEAD_LEN),input);
     }
 
 
@@ -40,7 +42,7 @@ public class AbstractInterpreterTest<T extends UniqueInterpreter> {
         List<Integer> data = new ArrayList<>();
         interpreter().toCollection(data,bytes,AbstractInterpreter.ARRAY_HEAD_LEN,bytes.length-AbstractInterpreter.ARRAY_HEAD_LEN);
 
-        Assert.assertEquals(base,data);
+        Assertions.assertEquals(base,data);
     }
 
 
@@ -49,6 +51,6 @@ public class AbstractInterpreterTest<T extends UniqueInterpreter> {
 
         C data  = (C) interpreter().toObject(bytes,0,bytes.length);
 
-        Assert.assertEquals(base,data);
+        Assertions.assertEquals(base,data);
     }
 }

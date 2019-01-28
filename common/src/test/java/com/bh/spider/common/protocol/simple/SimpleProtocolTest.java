@@ -2,8 +2,9 @@ package com.bh.spider.common.protocol.simple;
 
 import com.bh.spider.common.protocol.DataTypes;
 import com.bh.spider.common.protocol.Token;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 
 /**
  * Created by lq on 17-5-25.
@@ -17,9 +18,9 @@ public class SimpleProtocolTest {
         Object out = token.toObject(cls);
 
         if (o!=null&& o.getClass().isArray()) {
-            Assert.assertArrayEquals((Object[]) o, (Object[]) out);
+            Assertions.assertArrayEquals((Object[]) o, (Object[]) out);
         } else
-            Assert.assertEquals(out, o);
+            Assertions.assertEquals(out, o);
 
 
     }

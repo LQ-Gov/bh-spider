@@ -1,8 +1,5 @@
 package com.bh.spider.scheduler.context;
 
-import com.bh.spider.fetch.Behaviour;
-import com.bh.spider.fetch.Extractor;
-import com.bh.spider.fetch.ExtractorChainException;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
@@ -10,17 +7,12 @@ import com.bh.spider.scheduler.domain.ExtractorGroup;
 import com.bh.spider.scheduler.domain.RuleFacade;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
-import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-public class LocalContext implements Context {
+public class LocalContext extends AbstractContext {
     private final static Logger logger = LoggerFactory.getLogger(LocalContext.class);
     private BasicScheduler scheduler;
 
@@ -68,4 +60,5 @@ public class LocalContext implements Context {
     public void commandCompleted(Object data) {
 
     }
+
 }

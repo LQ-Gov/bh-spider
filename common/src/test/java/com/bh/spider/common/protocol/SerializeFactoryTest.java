@@ -1,8 +1,8 @@
 package com.bh.spider.common.protocol;
 
 import org.apache.commons.lang3.reflect.TypeUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -18,7 +18,7 @@ public class SerializeFactoryTest {
     private void serializHelper(Object... input) throws Exception {
         byte[] data = SerializeFactory.serialize(input);
         Object[] result = SerializeFactory.deserialize(data,null);
-        Assert.assertArrayEquals(input,result);
+        Assertions.assertArrayEquals(input,result);
     }
 
     @Test

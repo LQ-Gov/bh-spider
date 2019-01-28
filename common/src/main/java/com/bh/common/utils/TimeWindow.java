@@ -1,8 +1,11 @@
 package com.bh.common.utils;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import sun.misc.Unsafe;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -11,10 +14,15 @@ import java.util.function.Function;
  * @param <T>
  */
 public class TimeWindow<T> {
-    private final static Unsafe unsafe = Unsafe.getUnsafe();
+    private final static Unsafe unsafe;
 
 
     private static final long indexOffset;
+
+    /**
+     * 初始化的起始时间
+     */
+    private final long startTimeMillis;
 
     private final long capacity;
 
@@ -22,14 +30,12 @@ public class TimeWindow<T> {
 
     private volatile long index = 0;
 
-    /**
-     * 初始化的起始时间
-     */
-    private long startTimeMillis;
+
 
 
     static {
         try {
+            unsafe = (Unsafe) FieldUtils.getField(Unsafe.class,"theUnsafe",true).get(null);
             indexOffset = unsafe.objectFieldOffset(TimeWindow.class.getDeclaredField("index"));
         } catch (Exception e) {
             throw new Error(e);
@@ -37,13 +43,12 @@ public class TimeWindow<T> {
     }
 
 
-    public TimeWindow(int size, TimeUnit timeUnit) {
-        this.capacity = timeUnit.toMillis(1);
+    public TimeWindow(int size,int time,  TimeUnit timeUnit) {
+        this.capacity = timeUnit.toMillis(time);
         this.window = new Item[size];
 
         for (int i = 0; i < this.window.length; i++)
             this.window[i] = new Item<>();
-
 
         this.startTimeMillis = System.currentTimeMillis();
     }
@@ -138,6 +143,11 @@ public class TimeWindow<T> {
             oldValue = function.apply(oldValue, value);
         }
         return oldValue;
+    }
+
+
+    public long currentIndex(){
+        return index;
     }
 
 
