@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.context;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.domain.ExtractorGroup;
+import com.bh.spider.scheduler.domain.ExtractQueueFacade;
 import com.bh.spider.scheduler.domain.RuleFacade;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
@@ -44,10 +44,10 @@ public class LocalContext extends AbstractContext {
         RuleFacade facade = scheduler.<RuleFacade>process(new Command(this, CommandCode.RULE_FACADE, new Object[]{rule})).get();
 
         if (facade != null) {
-            List<ExtractorGroup> groups = facade.extractorGroups();
+            List<ExtractQueueFacade> queues = facade.extractorQueues();
 
-            for (ExtractorGroup group : groups) {
-                group.extract(this, fetchContext);
+            for (ExtractQueueFacade queue : queues) {
+                queue.extract(this, fetchContext);
             }
         }
 

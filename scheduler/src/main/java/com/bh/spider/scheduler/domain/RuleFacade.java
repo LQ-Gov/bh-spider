@@ -12,7 +12,7 @@ public class RuleFacade {
     private Rule base;
     private AntRulePattern pattern;
 
-    private List<ExtractorGroup> extractors;
+    private List<ExtractQueueFacade> extractors;
 
     private DomainIndex.Node node;
 
@@ -25,22 +25,21 @@ public class RuleFacade {
 
         this.pattern = new AntRulePattern(rule.getPattern());
 
-        this.extractors = new ArrayList<>(rule.getExtractors().size());
-
         if (rule.getExtractors() != null) {
-            rule.getExtractors().forEach((k, v) -> this.extractors.add(new ExtractorGroup(scheduler, k, v)));
+            extractors = new ArrayList<>(rule.getExtractors().size());
+            rule.getExtractors().forEach(x -> extractors.add(new ExtractQueueFacade(scheduler, x)));
         }
     }
 
-    public long id(){
-        return base.id();
+    public long id() {
+        return base.getId();
     }
 
     public Rule original() {
         return base;
     }
 
-    public List<ExtractorGroup> extractorGroups(){
+    public List<ExtractQueueFacade> extractorQueues() {
         return extractors;
     }
 

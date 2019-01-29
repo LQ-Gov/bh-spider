@@ -5,10 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by lq on 17-6-7.
@@ -20,7 +17,7 @@ public class Rule implements Serializable {
 
     private long id;
 
-    private Map<String,String[]> extractors = new HashMap<>();
+    private List<ExtractQueue> extractors = new LinkedList<>();
     /**
      * 定时器
      */
@@ -70,7 +67,7 @@ public class Rule implements Serializable {
         this.id = id;
     }
 
-    public long id() {
+    public long getId() {
         return id;
     }
 
@@ -111,7 +108,7 @@ public class Rule implements Serializable {
     @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
-        return obj instanceof Rule && (this == obj || this.id() == ((Rule) obj).id());
+        return obj instanceof Rule && (this == obj || this.getId() == ((Rule) obj).getId());
     }
 
     public int getParallelCount() {
@@ -122,11 +119,11 @@ public class Rule implements Serializable {
         this.parallelCount = parallelCount;
     }
 
-    public Map<String, String[]> getExtractors() {
+    public List<ExtractQueue> getExtractors() {
         return extractors;
     }
 
-    public void setExtractors(Map<String, String[]> extractors) {
+    public void setExtractors(List<ExtractQueue> extractors) {
         this.extractors = extractors;
     }
 }

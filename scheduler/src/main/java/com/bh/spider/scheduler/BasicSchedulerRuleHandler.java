@@ -87,7 +87,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
         List<Rule> rules = node.rules().stream().map(RuleFacade::original).collect(Collectors.toList());
 
         for (Rule rule : rules) {
-            if (rule.id() <= 0)
+            if (rule.getId() <= 0)
                 rule.setId(IdGenerator.instance.nextId());
         }
 
@@ -131,9 +131,9 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
     @EventMapping
     protected RuleFacade FACADE_RULE_HANDLER(Context ctx,Rule rule) throws Exception {
-        if (rule == null || rule.id() <= 0) return null;
+        if (rule == null || rule.getId() <= 0) return null;
 
-        RuleFacade facade = facadeCache.get(rule.id());
+        RuleFacade facade = facadeCache.get(rule.getId());
 
         if (facade == null) {
             facade = facade(rule, false, null);

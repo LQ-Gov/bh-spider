@@ -35,8 +35,8 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
         this.scheduler = scheduler;
         this.store = store;
         this.unfinishedIndex=0;
-        this.unfinishedCount = store.accessor().count(rule.id(), Request.State.GOING);
-        this.waitingCount = new AtomicLong(store.accessor().count(rule.id(), Request.State.QUEUE));
+        this.unfinishedCount = store.accessor().count(rule.getId(), Request.State.GOING);
+        this.waitingCount = new AtomicLong(store.accessor().count(rule.getId(), Request.State.QUEUE));
     }
 
     @Override
@@ -62,7 +62,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
         //先处理上次未完成的url
         if (unfinished) {
             Collection<Request> requests = cacheQueue.isEmpty() ?
-                    store.accessor().find(rule.id(), Request.State.GOING,unfinishedIndex, size) :
+                    store.accessor().find(rule.getId(), Request.State.GOING,unfinishedIndex, size) :
                     cacheQueue;
 
             Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests,rule});
@@ -74,7 +74,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
         } else {
             Collection<Request> requests = cacheQueue.isEmpty() ?
-                    store.accessor().find(rule.id(), Request.State.QUEUE, size) :
+                    store.accessor().find(rule.getId(), Request.State.QUEUE, size) :
                     cacheQueue;
 
             if (!requests.isEmpty()) {
@@ -83,7 +83,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
                 boolean ok = scheduler.<Boolean>process(cmd).get();
                 logger.info("任务提交完成，并且已返回，返回结果:{}",ok);
                 if (ok) {
-                    store.accessor().update(rule.id(),
+                    store.accessor().update(rule.getId(),
                             requests.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);
                     waitingCount.addAndGet(-1 * size);
                 }
@@ -94,7 +94,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
     @Override
     public void joinQueue(Request request) {
-        if (store.accessor().insert(request, rule.id())) {
+        if (store.accessor().insert(request, rule.getId())) {
             waitingCount.incrementAndGet();
         }
     }
@@ -112,7 +112,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
         Map<String, Object> params = new HashMap<>();
         params.put(QuartzJobImpl.RULE_CONTROLLER, this);
 
-        JobContext ctx = jobScheduler.scheduler(String.valueOf(rule.id()), rule.getCron(), params);
+        JobContext ctx = jobScheduler.scheduler(String.valueOf(rule.getId()), rule.getCron(), params);
         ctx.exec();
     }
 }
