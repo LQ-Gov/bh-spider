@@ -31,7 +31,7 @@
         <junit.version>5.3.2</junit.version>
         <google.guava.version>22.0</google.guava.version>
         <jackson.version>2.9.7</jackson.version>
-        <spring.boot.version>2.1.0.RELEASE</spring.boot.version>
+        <spring.boot.version>2.1.2.RELEASE</spring.boot.version>
     </properties>
 
 

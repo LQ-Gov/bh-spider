@@ -11,13 +11,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/profile");
+        registry.addEndpoint("/watch")
+                .setAllowedOrigins("*")
+                .withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/app")
-                .setUserDestinationPrefix("/user")
-                .enableSimpleBroker("/watch");
+        registry.setApplicationDestinationPrefixes("/topic");
+        registry.enableSimpleBroker("/topic","/queue");
     }
 }

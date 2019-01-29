@@ -8,6 +8,7 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.job.JobContext;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.scheduler.job.QuartzJobImpl;
+import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
 import org.slf4j.Logger;
@@ -45,6 +46,8 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
     @Override
     public void blast() throws ExecutionException, InterruptedException {
+
+        logger.info(Markers.EVENT_LOOP,"测试日志监控");
 
         boolean unfinished=unfinishedIndex< unfinishedCount;
         if (waitingCount.get() <= 0 && !unfinished) return;

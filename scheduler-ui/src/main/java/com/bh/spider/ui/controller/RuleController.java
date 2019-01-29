@@ -37,17 +37,7 @@ public class RuleController {
         //return new ArrayList<>();
     }
 
-    @RequestMapping(value = "/rule/state/{host}/{id}", method = RequestMethod.PATCH)
-    public void state(@PathVariable("host") String host, @PathVariable("id") String id, boolean state) {
 
-        if (state) {
-            client.rule().run(host, id);
-        } else {
-            client.rule().pause(host, id);
-        }
-
-
-    }
 
     @RequestMapping(value = "/rule/{host}/{uuid}", method = RequestMethod.DELETE)
     public void delete(@PathVariable("host") String host, @PathVariable("uuid") String uuid) {

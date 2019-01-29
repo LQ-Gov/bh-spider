@@ -1,18 +1,17 @@
 package com.bh.spider.client;
 
+import com.bh.common.WatchFilter;
 import com.bh.spider.client.context.ClientFetchContext;
 import com.bh.spider.client.converter.Converter;
-import com.bh.spider.client.converter.StringConverter;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
 import com.bh.spider.fetch.*;
-import com.bh.spider.fetch.impl.RequestBuilder;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
+import com.bh.spider.fetch.impl.RequestBuilder;
+import com.bh.spider.rule.Rule;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
-import com.bh.spider.rule.Rule;
-import com.bh.spider.transfer.entity.Component;
 import com.bh.spider.transfer.entity.Node;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -186,8 +185,14 @@ public class Client {
         return crawler(RequestBuilder.create(url).build(), rule, extractors);
     }
 
-    public void watch(String point, Consumer<String> consumer) throws IOException {
-        stream(CommandCode.WATCH, consumer, new StringConverter(), point);
+    public <T> void watch(String point,Class<T> valueClass, Consumer<T> consumer) {
+
+        stream(CommandCode.WATCH, consumer, new TypeConverter<>(valueClass), point);
+    }
+
+
+    public void watch(String point, WatchFilter filter,Consumer<String> consumer){
+
     }
 
 

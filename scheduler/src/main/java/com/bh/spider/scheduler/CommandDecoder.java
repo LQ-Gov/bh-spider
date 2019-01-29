@@ -4,6 +4,7 @@ import com.bh.spider.scheduler.context.ClientContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.token.JacksonToken;
+import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,11 +14,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
 
 public class CommandDecoder extends ChannelInboundHandlerAdapter {
+    private final static Logger logger = LoggerFactory.getLogger(CommandDecoder.class);
     private final static ObjectMapper mapper = Json.get();
 
     @Override
@@ -60,13 +64,13 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state().equals(IdleState.READER_IDLE)) {
-                System.out.println("长期没收到服务器推送数据");
+                logger.info(Markers.EVENT_LOOP,"长期没收到服务器推送数据");
                 //可以选择重新连接
             } else if (event.state().equals(IdleState.WRITER_IDLE)) {
-                System.out.println("长期未向服务器发送数据");
+                logger.info(Markers.EVENT_LOOP, "长期未向服务器发送数据");
                 //发送心跳包
             } else if (event.state().equals(IdleState.ALL_IDLE)) {
-                System.out.println("ALL");
+                logger.info(Markers.EVENT_LOOP,"ALL");
             }
         }
 

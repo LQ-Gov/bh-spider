@@ -34,25 +34,6 @@ public class WebConfig implements WebMvcConfigurer {
         converters.add(new MappingJackson2HttpMessageConverter(Json.get()));
     }
 
-    //    @Bean
-//    public DispatcherServlet dispatcherServlet() {
-//        return new DispatcherServlet();
-//    }
-//
-//    @Bean
-//    public ServletRegistrationBean dispatcherServletRegistration() {
-//        ServletRegistrationBean<DispatcherServlet> registration = new ServletRegistrationBean<>(
-//                dispatcherServlet(), "/api/");
-//        registration.setName(DispatcherServletAutoConfiguration.DEFAULT_DISPATCHER_SERVLET_REGISTRATION_BEAN_NAME);
-//        return registration;
-//    }
-
-    @Bean
-    @Primary
-    public ObjectMapper mapper(Jackson2ObjectMapperBuilder builder){
-        return Json.get();
-    }
-
     @Bean(value = "bh-client", initMethod = "open")
     public Client client() {
         return new Client("127.0.0.1:8033");

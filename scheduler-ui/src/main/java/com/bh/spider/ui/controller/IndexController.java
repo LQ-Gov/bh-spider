@@ -18,10 +18,10 @@ public class IndexController {
         return "index";
     }
 
-    @RequestMapping(value = "/**", method = RequestMethod.GET)
-    public String others(HttpServletRequest request) {
-        return "forward:/index";
-    }
+//    @RequestMapping(value = "/**", method = RequestMethod.GET)
+//    public String others(HttpServletRequest request) {
+//        return "forward:/index";
+//    }
 
     @ResponseBody
     @RequestMapping("ping")
