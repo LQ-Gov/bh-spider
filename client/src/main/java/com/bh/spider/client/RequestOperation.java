@@ -1,5 +1,6 @@
 package com.bh.spider.client;
 
+import com.bh.spider.client.sender.Sender;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.fetch.impl.RequestBuilder;
@@ -17,15 +18,15 @@ import java.util.List;
  */
 public class RequestOperation {
 
-    private Client client = null;
+    private Sender sender = null;
 
-    RequestOperation(Client client) {
-        this.client = client;
+    RequestOperation(Sender sender) {
+        this.sender = sender;
     }
 
 
     public void submit(Request req) {
-        client.write(CommandCode.SUBMIT_REQUEST, null, req);
+        sender.write(CommandCode.SUBMIT_REQUEST, null, req);
     }
 
 
@@ -36,6 +37,6 @@ public class RequestOperation {
 
     public List<Request> select(Query query) {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{RequestImpl.class}, null);
-        return client.write(CommandCode.GET_REQUEST_LIST, type, query);
+        return sender.write(CommandCode.GET_REQUEST_LIST, type, query);
     }
 }

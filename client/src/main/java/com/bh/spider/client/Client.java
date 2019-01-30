@@ -2,9 +2,9 @@ package com.bh.spider.client;
 
 import com.bh.common.WatchFilter;
 import com.bh.spider.client.context.ClientFetchContext;
-import com.bh.spider.client.converter.Converter;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
+import com.bh.spider.client.sender.Sender;
 import com.bh.spider.fetch.*;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
@@ -13,7 +13,6 @@ import com.bh.spider.rule.Rule;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
 import com.bh.spider.transfer.entity.Node;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
@@ -29,9 +28,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
@@ -40,31 +37,27 @@ import java.util.function.Consumer;
 public class Client {
     private final static Logger logger = LoggerFactory.getLogger(Client.class);
 
-    private final static ObjectMapper mapper = Json.get();
 
     private String server = null;
     private Socket socket = null;
-    private DataOutputStream out = null;
-
     private RuleOperation ruleOperation = null;
     private ComponentOperation componentOperation = null;
     private RequestOperation requestOperation = null;
 
     private Receiver receiver = null;
-    private final AtomicLong ID = new AtomicLong(0);
+    private Sender sender = null;
+
+    private Properties properties = null;
 
 
     public Client(String server) {
-        this(server,null);
+        this(server, null);
     }
 
 
     public Client(String server, Properties properties) {
-        properties = properties==null?new Properties():properties;
+        this.properties = properties == null ? new Properties() : properties;
         this.server = server;
-        ruleOperation = new RuleOperation(this);
-        componentOperation = new ComponentOperation(this,properties);
-        requestOperation = new RequestOperation(this);
 
     }
 
@@ -72,11 +65,13 @@ public class Client {
     public boolean open() throws URISyntaxException, IOException {
         URI uri = new URI("tcp://" + server);
         socket = new Socket(uri.getHost(), uri.getPort());
-        out = new DataOutputStream(socket.getOutputStream());
         receiver = new Receiver(socket);
         receiver.start();
 
-        logger.info("与调度平台建立了连接");
+        this.sender = new Sender(socket, receiver);
+        this.ruleOperation = new RuleOperation(this.sender);
+        this.componentOperation = new ComponentOperation(this.sender, this.properties);
+        this.requestOperation = new RequestOperation(this.sender);
         return true;
     }
 
@@ -85,46 +80,6 @@ public class Client {
         if (receiver.isAlive()) receiver.join();
 
     }
-
-    private synchronized void write0(long id, CommandCode cmd, Object... params) throws IOException {
-        short cmdCode = (short) cmd.ordinal();
-        byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
-
-        out.writeShort(cmdCode);
-        out.writeLong(id);
-        out.writeInt(data.length);
-        out.write(data);
-        out.flush();
-    }
-
-
-    protected <T> T write(CommandCode cmd, Type t, Object... params) {
-        try {
-            Future<T> future = stream(cmd, null, new TypeConverter<>(t), params);
-
-            return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    protected <T> Future<T> stream(CommandCode cmd, Consumer<T> consumer, Converter<byte[], T> converter, Object... params) {
-        try {
-            long id = ID.incrementAndGet();
-            Future<T> future = receiver.watch(id, consumer, converter);
-            write0(id, cmd, params);
-
-            return future;
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
 
     public ComponentOperation component() {
         return componentOperation;
@@ -143,7 +98,7 @@ public class Client {
     public final Future<FetchResponse> crawler(Request req, Rule rule, Class<? extends Extractor>... extractors) throws MalformedURLException {
 
         FetchContext base = new ClientFetchContext(req);
-        return stream(CommandCode.FETCH, response -> {
+        return sender.stream(CommandCode.FETCH, response -> {
 
             FetchContext ctx = new FinalFetchContext(base, response);
             try {
@@ -159,7 +114,6 @@ public class Client {
                         //此处做报告
                         e.printStackTrace();
                     }
-
                 }
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
@@ -185,26 +139,30 @@ public class Client {
         return crawler(RequestBuilder.create(url).build(), rule, extractors);
     }
 
-    public <T> void watch(String point,Class<T> valueClass, Consumer<T> consumer) {
+    public <T> void watch(String point, Class<T> valueClass, Consumer<T> consumer) {
 
-        stream(CommandCode.WATCH, consumer, new TypeConverter<>(valueClass), point);
+        sender.stream(CommandCode.WATCH, consumer, new TypeConverter<>(valueClass), point);
     }
 
 
-    public void watch(String point, WatchFilter filter,Consumer<String> consumer){
+    public void watch(String point, WatchFilter filter, Consumer<String> consumer) {
 
     }
 
+    public void unwatch(String point) {
+        sender.write(CommandCode.UNWATCH, null, point);
+    }
 
-    public Map<String,String> profile() {
+
+    public Map<String, String> profile() {
         Type returnType = Json.mapType(String.class, String.class);
-        return write(CommandCode.PROFILE, returnType);
+        return sender.write(CommandCode.PROFILE, returnType);
     }
 
 
     public List<Node> nodes() {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{Node.class}, null);
-        return write(CommandCode.GET_NODE_LIST, returnType);
+        return sender.write(CommandCode.GET_NODE_LIST, returnType);
     }
 
 

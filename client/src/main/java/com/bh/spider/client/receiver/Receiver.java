@@ -37,17 +37,20 @@ public class Receiver extends Thread {
 
                 Callback callback = callbacks.get(id);
 
-                boolean complete = (flag & 0x01) == 0;
+                if(callback!=null) {
 
-                boolean exception = (flag & 0x02) > 0;
+                    boolean complete = (flag & 0x01) == 0;
 
-                boolean remove = exception;
-                if (exception)
-                    callback.exception(new Exception(new String(data)));
+                    boolean exception = (flag & 0x02) > 0;
 
-                else remove = !callback.accept(data, complete);
+                    boolean remove = exception;
+                    if (exception)
+                        callback.exception(new Exception(new String(data)));
 
-                if (remove) callbacks.remove(id);
+                    else remove = !callback.accept(data, complete);
+
+                    if (remove) callbacks.remove(id);
+                }
             }
         }
         catch (IOException e) {
@@ -91,7 +94,7 @@ public class Receiver extends Thread {
 
     public <T> Future<T> watch(long id, Consumer<T> consumer, Converter<byte[], T> converter) {
         if (callbacks.containsKey(id))
-            throw new RuntimeException("the request is watched");
+            throw new RuntimeException("the command is watched");
 
 
         Callback<T> callback = new Callback<>(consumer, converter);

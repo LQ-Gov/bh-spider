@@ -213,6 +213,11 @@ public class BasicScheduler implements IEvent {
         return Collections.singletonList(me);
     }
 
+    @EventMapping
+    protected void HEART_BEAT_HANDLER(Context ctx){
+        logger.info("收到心跳信息");
+    }
+
     protected interface Initializer{
 
         void run() throws Exception;

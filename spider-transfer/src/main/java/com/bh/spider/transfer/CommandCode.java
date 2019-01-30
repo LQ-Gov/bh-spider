@@ -34,6 +34,7 @@ public enum CommandCode {
     LOAD_COMPONENT,
 
     WATCH,
+    UNWATCH,
 
     /*******抓取命令*******/
     FETCH,//单个抓取
@@ -45,6 +46,7 @@ public enum CommandCode {
 
 
     ALIVE,
+    HEART_BEAT,
     TASK,
     PROCESS,
     CLOSE;

@@ -1,22 +1,22 @@
 package com.bh.spider.client;
 
+import com.bh.spider.client.sender.Sender;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
-import com.bh.spider.query.Query;
-import com.bh.spider.query.condition.Condition;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.URL;
-import java.nio.file.*;
-import java.rmi.server.ExportException;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -25,13 +25,13 @@ import java.util.stream.Collectors;
  * Created by lq on 7/9/17.
  */
 public class ComponentOperation {
-    private Client client = null;
+    private Sender sender = null;
 
     private String classBasePath;
 
 
-    ComponentOperation(Client client, Properties properties) {
-        this.client = client;
+    ComponentOperation(Sender sender, Properties properties) {
+        this.sender = sender;
         classBasePath = properties.getProperty("class.file.base.path");
     }
 
@@ -134,7 +134,7 @@ public class ComponentOperation {
 
         byte[] data = Files.readAllBytes(path);
 
-        client.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
+        sender.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
 
     }
 
@@ -142,22 +142,22 @@ public class ComponentOperation {
     public void submit(String name, InputStream in,Component.Type type,String desc) throws IOException {
         byte[] data = IOUtils.toByteArray(in);
 
-        client.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
+        sender.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
     }
 
 
     public List<Component> select(Component.Type type) {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{Component.class}, null);
-        return client.write(CommandCode.GET_COMPONENT_LIST, returnType,type);
+        return sender.write(CommandCode.GET_COMPONENT_LIST, returnType,type);
     }
 
     public Component get(String name,Component.Type type) {
 
-        return client.write(CommandCode.GET_COMPONENT, Component.class, name,type);
+        return sender.write(CommandCode.GET_COMPONENT, Component.class, name,type);
     }
 
     public void delete(String name,Component.Type type) {
-        client.write(CommandCode.DELETE_COMPONENT, null, name,type);
+        sender.write(CommandCode.DELETE_COMPONENT, null, name,type);
     }
 
 
