@@ -47,8 +47,6 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     @Override
     public void blast() throws ExecutionException, InterruptedException {
 
-        logger.info(Markers.EVENT_LOOP,"测试日志监控");
-
         boolean unfinished=unfinishedIndex< unfinishedCount;
         if (waitingCount.get() <= 0 && !unfinished) return;
 
