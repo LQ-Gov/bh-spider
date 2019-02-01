@@ -5,7 +5,7 @@ import java.util.Map;
 public class ExtractQueue {
     private String name;
     private String description;
-    private Map<String,String[]> chains;
+    private String[] chain;
 
 
     public String getName() {
@@ -24,11 +24,11 @@ public class ExtractQueue {
         this.description = description;
     }
 
-    public Map<String, String[]> getChains() {
-        return chains;
+    public String[] getChain() {
+        return chain;
     }
 
-    public void setChains(Map<String, String[]> chains) {
-        this.chains = chains;
+    public void setChain(String[] chain) {
+        this.chain = chain;
     }
 }

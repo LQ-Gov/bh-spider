@@ -44,6 +44,12 @@ public class BasicSchedulerComponentHandler implements IAssist {
     }
 
     @EventMapping
+    protected Component GET_COMPONENT_HANDLER(String name,Component.Type type) {
+        ComponentRepository repository = factory.proxy(type);
+        return repository == null ? null : repository.get(name);
+    }
+
+    @EventMapping
     protected void DELETE_COMPONENT_HANDLER(Context ctx, String name,Component.Type type) throws IOException {
         factory.proxy(type).delete(name);
     }

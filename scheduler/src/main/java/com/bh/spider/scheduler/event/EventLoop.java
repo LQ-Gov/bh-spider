@@ -64,6 +64,7 @@ public class EventLoop extends Thread {
 
 
                 } catch (Exception e) {
+                    cmd.context().exception(e);
                     future.completeExceptionally(e);
                     e.printStackTrace();
                 }

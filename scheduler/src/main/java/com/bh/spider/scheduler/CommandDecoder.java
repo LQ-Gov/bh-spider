@@ -43,7 +43,6 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
                     buffer.readBytes(data);
 
                     for (JsonNode node : mapper.readTree(data)) {
-                        System.out.println(node.toString());
                         params.add(new JacksonToken(mapper, node.traverse()));
                     }
                 }
@@ -64,13 +63,13 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state().equals(IdleState.READER_IDLE)) {
-                logger.info(Markers.EVENT_LOOP,"长期没收到服务器推送数据");
+                logger.info("长期没收到服务器推送数据");
                 //可以选择重新连接
             } else if (event.state().equals(IdleState.WRITER_IDLE)) {
-                logger.info(Markers.EVENT_LOOP, "长期未向服务器发送数据");
+                logger.info("长期未向服务器发送数据");
                 //发送心跳包
             } else if (event.state().equals(IdleState.ALL_IDLE)) {
-                logger.info(Markers.EVENT_LOOP,"ALL");
+                logger.info("ALL");
             }
         }
 

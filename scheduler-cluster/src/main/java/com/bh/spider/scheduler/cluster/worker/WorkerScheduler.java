@@ -18,11 +18,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 public class WorkerScheduler extends BasicScheduler {
     private Channel channel;
-    public WorkerScheduler(Config config) {
+    public WorkerScheduler(Config config) throws UnknownHostException {
         super(config);
     }
 
@@ -67,7 +68,7 @@ public class WorkerScheduler extends BasicScheduler {
     protected void initEventLoop() throws Exception {
         loop = new EventLoop(this,
                 new WorkerSchedulerComponentHandler(cfg, this),
-                new BasicSchedulerFetchHandler(this, domain, store),
+                new BasicSchedulerFetchHandler(this, domainIndex, store),
                 new BasicSchedulerWatchHandler());
 
         loop.listen().join();

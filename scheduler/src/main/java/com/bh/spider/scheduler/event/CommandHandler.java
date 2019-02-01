@@ -1,6 +1,8 @@
 package com.bh.spider.scheduler.event;
 
 import com.bh.spider.scheduler.context.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -10,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
  * Created by lq on 17-4-11.
  */
 public class CommandHandler {
+    private final static Logger logger = LoggerFactory.getLogger(CommandHandler.class);
     private Object bean;
     private Method method;
     private Class<?>[] parameters;
@@ -51,7 +54,9 @@ public class CommandHandler {
                 if (ctx != null && mapping.autoComplete())
                     ctx.commandCompleted(returnValue);
             } catch (Exception e) {
+                e.printStackTrace();
                 future.completeExceptionally(e);
+                ctx.exception(e);
             } finally {
                 method.setAccessible(false);
             }

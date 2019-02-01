@@ -17,28 +17,36 @@ public class DefaultDomainIndex implements DomainIndex {
 
     @Override
     public Node match(String path, boolean exact) {
-        StringTokenizer tokenizer = new StringTokenizer(path,".");
+        String[] tokens = reverse(new StringTokenizer(path, "."));
         Node node = root;
 
-        while (tokenizer.hasMoreTokens()&&node!=null) {
-            String token = tokenizer.nextToken();
-            Node child = root.children(token);
-            if (child == null && !exact)
-                return node;
-            node = child;
+        for (String token : tokens) {
+            Node child = node.children(token);
+            if (child == null)
+                return exact ? node : null;
         }
         return node;
     }
 
     @Override
     public Node matchOrCreate(String path) {
-        StringTokenizer tokenizer = new StringTokenizer(path, ".");
+        String[] tokens = reverse(new StringTokenizer(path, "."));
         Node node = root;
 
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            node = root.children(token, new Node(token, root));
+        for (String token : tokens) {
+            node = node.children(token, true);
         }
         return node;
+    }
+
+
+    private String[] reverse(StringTokenizer tokenizer){
+        int count = tokenizer.countTokens();
+        String[] tokens = new String[count];
+
+        while (tokenizer.hasMoreTokens()) {
+            tokens[--count] = tokenizer.nextToken();
+        }
+        return tokens;
     }
 }

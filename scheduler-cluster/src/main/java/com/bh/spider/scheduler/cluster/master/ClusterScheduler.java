@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 
 public class ClusterScheduler extends BasicScheduler {
     private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
@@ -29,7 +30,7 @@ public class ClusterScheduler extends BasicScheduler {
 
     private Workers workers;
 
-    public ClusterScheduler(Config config) {
+    public ClusterScheduler(Config config) throws UnknownHostException {
         super(config);
         mid = cfg.get(Config.MY_ID);
         workers = new Workers(this);
@@ -74,7 +75,7 @@ public class ClusterScheduler extends BasicScheduler {
     protected void initEventLoop() throws Exception {
         loop = new EventLoop(this,
                 new ClusterSchedulerComponentHandler(cfg, this),
-                new ClusterSchedulerFetchHandler(this, domain, store),
+                new ClusterSchedulerFetchHandler(this, domainIndex, store),
                 new ClusterSchedulerWatchHandler());
 
         loop.listen().join();

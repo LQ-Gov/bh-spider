@@ -27,9 +27,9 @@ public class ComponentController {
 
 
     @PostMapping
-    public void put(String name,Component.Type type,String desc, MultipartFile file) throws IOException {
+    public void create(String name,Component.Type type,String description, MultipartFile file) throws IOException {
         InputStream in = file.getInputStream();
-        client.component().submit(name, in, type, desc);
+        client.component().submit(name, in, type, description);
     }
 
     @GetMapping(value = "/list")
@@ -41,10 +41,10 @@ public class ComponentController {
     }
 
 
-    @DeleteMapping(value = "/component/{name}")
+    @DeleteMapping(value = "/{name}")
     public String delete(@PathVariable("name") String name, String hash) {
 
-        Component component = client.component().get(name,null);
+        Component component = client.component().get(name, Component.Type.GROOVY);
         if (component == null) {
             return null;
             //module不存在
@@ -54,7 +54,7 @@ public class ComponentController {
             return null;
             //版本不一致
         }
-        client.component().delete(name,null);
+        client.component().delete(name, Component.Type.GROOVY);
         return "ok";
     }
 

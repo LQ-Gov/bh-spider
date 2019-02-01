@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -34,12 +36,12 @@ public class Metadata {
                 do {
                     long pos = this.accessor.getFilePointer();
                     boolean valid = accessor.readBoolean();
-                    if (!valid) {
-                        accessor.readLine();
-                        continue;
-                    }
                     String line = accessor.readLine();
+                    if (!valid) continue;
                     if (StringUtils.isBlank(line)) break;
+
+                    line = new String( line.getBytes(StandardCharsets.ISO_8859_1),Charset.defaultCharset());
+
                     Component component = Json.get().readValue(line, Component.class);
                     components.put(component.getName(), new Position<>(component, pos));
                 } while (true);
@@ -77,6 +79,8 @@ public class Metadata {
 
             accessor.writeBoolean(false);
             accessor.seek(end);
+
+            components.remove(name);
 
             return true;
 

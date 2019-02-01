@@ -1,9 +1,6 @@
 package com.bh.spider.scheduler.domain;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public interface DomainIndex {
     Node root();
@@ -26,6 +23,8 @@ public interface DomainIndex {
         public Node(String name, Node parent) {
             this.name = name;
             this.parent = parent;
+            this.children = new HashMap<>();
+            this.rules = new LinkedList<>();
         }
 
 
@@ -38,8 +37,6 @@ public interface DomainIndex {
         }
 
         public void bind(RuleFacade rule) {
-            if (rules == null)
-                rules = new LinkedList<>();
             rules.add(rule);
         }
 
@@ -48,11 +45,11 @@ public interface DomainIndex {
         }
 
         public Collection<RuleFacade> rules() {
-            return null;
+            return rules;
         }
 
         public String host() {
-            return null;
+            return (parent != null && parent.name != null) ? name + "." + parent.host() : name;
         }
 
 
@@ -64,8 +61,11 @@ public interface DomainIndex {
             return null;
         }
 
-        public Node children(String name, Node child) {
-            return children.computeIfAbsent(name, x -> child);
+        public Node children(String name, boolean force) {
+            if (force)
+                return children.computeIfAbsent(name, x -> new Node(x, this));
+            else
+                return children.get(name);
         }
 
         public void removeListener() {

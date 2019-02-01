@@ -12,6 +12,7 @@ import com.bh.spider.scheduler.event.IAssist;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.Json;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,20 +53,18 @@ public class BasicSchedulerRuleHandler implements IAssist {
                     Json.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
 
             for (Rule rule : rules)
-                facade(rule,true);
+                facade(rule, true);
         }
     }
 
 
-
-
-
-    private RuleFacade facade(Rule rule,boolean cached) throws Exception {
+    private RuleFacade facade(Rule rule, boolean cached) throws Exception {
 
         return facade(rule, cached, new DefaultRuleScheduleController(this.scheduler, rule, store));
     }
 
     private RuleFacade facade(Rule rule, boolean cached, RuleScheduleController ruleScheduleController) throws Exception {
+        if (rule.getId() <= 0) rule.setId(IdGenerator.instance.nextId());
         RuleFacade facade = new RuleFacade(this.scheduler, rule, ruleScheduleController);
         facade.link(this.domainIndex);
 
@@ -86,20 +85,17 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
         List<Rule> rules = node.rules().stream().map(RuleFacade::original).collect(Collectors.toList());
 
-        for (Rule rule : rules) {
-            if (rule.getId() <= 0)
-                rule.setId(IdGenerator.instance.nextId());
-        }
-
         Files.write(path, Json.get().writeValueAsBytes(rules));
     }
 
 
     @EventMapping
     protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
-        RuleFacade boost = facade(rule,true);
+        if (validate(rule)) {
+            RuleFacade boost = facade(rule, true);
+            backup(boost.domainNode());
+        }
 
-        backup(boost.domainNode());
     }
 
     @EventMapping
@@ -130,7 +126,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected RuleFacade FACADE_RULE_HANDLER(Context ctx,Rule rule) throws Exception {
+    protected RuleFacade FACADE_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (rule == null || rule.getId() <= 0) return null;
 
         RuleFacade facade = facadeCache.get(rule.getId());
@@ -150,5 +146,12 @@ public class BasicSchedulerRuleHandler implements IAssist {
             decorator.controller().execute(jobCoreScheduler);
         else
             decorator.controller().close();
+    }
+
+    private boolean validate(Rule rule) {
+        if (rule == null) throw new IllegalArgumentException("input is null");
+        if (StringUtils.isBlank(rule.getCron())) throw new IllegalArgumentException("cron can't empty");
+
+        return true;
     }
 }

@@ -5,6 +5,7 @@ public interface Extractor {
 
 
 
+    @Code("default")
     void run(FetchContext ctx) throws Exception;
 
 

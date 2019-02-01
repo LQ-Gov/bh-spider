@@ -12,11 +12,6 @@
     <artifactId>spider-transfer</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>com.bh</groupId>
-            <artifactId>store-query</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
         <dependency>
             <groupId>org.jsoup</groupId>
