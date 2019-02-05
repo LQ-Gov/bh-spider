@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.domain;
 import java.util.StringTokenizer;
 
 public class DefaultDomainIndex implements DomainIndex {
-    private Node root = new Node(null,null);
+    private Node root = new Node(null, null);
 
     @Override
     public Node root() {
@@ -12,7 +12,7 @@ public class DefaultDomainIndex implements DomainIndex {
 
     @Override
     public Node match(String path) {
-        return match(path,true);
+        return match(path, true);
     }
 
     @Override
@@ -21,9 +21,9 @@ public class DefaultDomainIndex implements DomainIndex {
         Node node = root;
 
         for (String token : tokens) {
-            Node child = node.children(token);
-            if (child == null)
-                return exact ? node : null;
+            node = node.children(token);
+            if (node == null)
+                return exact ? null : node;
         }
         return node;
     }
@@ -40,7 +40,7 @@ public class DefaultDomainIndex implements DomainIndex {
     }
 
 
-    private String[] reverse(StringTokenizer tokenizer){
+    private String[] reverse(StringTokenizer tokenizer) {
         int count = tokenizer.countTokens();
         String[] tokens = new String[count];
 

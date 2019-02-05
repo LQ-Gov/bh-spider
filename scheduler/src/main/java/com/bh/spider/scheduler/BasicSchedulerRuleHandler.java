@@ -126,7 +126,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected RuleFacade FACADE_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
+    protected RuleFacade RULE_FACADE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (rule == null || rule.getId() <= 0) return null;
 
         RuleFacade facade = facadeCache.get(rule.getId());

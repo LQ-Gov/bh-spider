@@ -54,11 +54,11 @@ public interface DomainIndex {
 
 
         public Collection<Node> children() {
-            return null;
+            return children.values();
         }
 
         public Node children(String name) {
-            return null;
+            return children(name,false);
         }
 
         public Node children(String name, boolean force) {

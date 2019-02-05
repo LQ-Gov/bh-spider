@@ -23,13 +23,12 @@ public class ExtractQueueFacade {
     private ExtractorLoader[] loaders;
 
 
-    public ExtractQueueFacade(BasicScheduler scheduler, ExtractQueue extractQueue) {
+    public ExtractQueueFacade(BasicScheduler scheduler, ExtractQueue queue) {
 
 
         this.scheduler = scheduler;
-        this.name = name;
-
-        String[] chain = extractQueue.getChain();
+        this.name = queue.getName();
+        String[] chain = queue.getChain();
         if (chain != null && chain.length > 0) {
             loaders = new ExtractorLoader[chain.length];
             for (int i = 0; i < chain.length; i++) {
@@ -53,19 +52,19 @@ public class ExtractQueueFacade {
 
             try {
                 invoke(ctx, fetchContext, obj, method);
-            }catch (ExtractorChainException e) {
+            } catch (ExtractorChainException e) {
                 if (e.result() == Behaviour.TERMINATION) break;
-            }catch (Exception e) {
+            } catch (Exception e) {
                 scheduler.process(new Command(ctx, CommandCode.REPORT_EXCEPTION, new Object[]{fetchContext.request().id(), e.getMessage()}));
                 throw e;
             }
         }
     }
 
-    private void invoke(Context ctx,FetchContext fetchContext,Extractor obj, Method method) throws Exception {
+    private void invoke(Context ctx, FetchContext fetchContext, Extractor obj, Method method) throws Exception {
         if (method.getParameterTypes().length > 0) {
             Class<?> firstParameterClass = method.getParameterTypes()[0];
-            if (firstParameterClass == fetchContext.getClass() || (fetchContext.getClass().isAssignableFrom(firstParameterClass))) {
+            if (firstParameterClass.isAssignableFrom(fetchContext.getClass())) {
                 method.invoke(obj, fetchContext);
             }
         } else method.invoke(obj);

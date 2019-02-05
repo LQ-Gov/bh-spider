@@ -95,6 +95,7 @@ public class AntRulePattern implements RulePattern {
     }
 
     private Map<String,String> paramsToMap(String query){
+        if(query==null) return null;
         Map<String,String> map = new HashMap<>();
         String[] blocks = query.split("&");
         for (String it : blocks) {
@@ -136,21 +137,21 @@ public class AntRulePattern implements RulePattern {
         //判断参数是否匹配
         Map<String, String> params = paramsToMap(url.getQuery());
 
-        for (Map.Entry<String, AntPatternMatcher.AntPatternSection> entry : parameters.entrySet()) {
-            String key = entry.getKey();
-            AntPatternMatcher.AntPatternSection section = entry.getValue();
+        if(params!=null&&parameters!=null) {
 
-            if (section == null) continue;
+            for (Map.Entry<String, AntPatternMatcher.AntPatternSection> entry : parameters.entrySet()) {
+                String key = entry.getKey();
+                AntPatternMatcher.AntPatternSection section = entry.getValue();
 
-            String value = params.get(key);
+                if (section == null) continue;
 
-            if (!section.matchStrings(StringUtils.defaultString(value,""), variables))
-                return false;
+                String value = params.get(key);
 
+                if (!section.matchStrings(StringUtils.defaultString(value, ""), variables))
+                    return false;
+
+            }
         }
-
-        MapUtils.debugPrint(System.out, "variables", variables);
-
 
         return true;
 

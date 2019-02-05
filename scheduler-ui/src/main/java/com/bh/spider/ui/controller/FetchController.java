@@ -4,20 +4,23 @@ import com.bh.spider.client.Client;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchState;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.MalformedURLException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-@RestController("/url")
-public class RequestController {
+@RestController
+@RequestMapping("/fetch")
+public class FetchController {
+
+    private final Client client;
 
     @Autowired
-    private Client client;
+    public FetchController(Client client) {
+        this.client = client;
+    }
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     public List<Request> list(String ruleId, FetchState state, Date startDate, Date endDate, int skip, int size) {
@@ -44,8 +47,9 @@ public class RequestController {
     }
 
 
-    @PostMapping
+    @PostMapping("/url")
     public void submit(String url) throws MalformedURLException {
+
         client.request().submit(url);
     }
 }
