@@ -1,6 +1,7 @@
 package com.bh.spider.transfer.entity;
 
 import com.sun.org.apache.bcel.internal.generic.RET;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -50,7 +51,7 @@ public class Component implements Serializable {
     private String hash;
     private Type type;
     private String description;
-    private boolean valid;
+    private Date createTime;
 
     public Component(){}
 
@@ -99,5 +100,13 @@ public class Component implements Serializable {
 
     public void setExtension(String extension) {
         this.extension = extension;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
     }
 }

@@ -151,13 +151,17 @@ public class ComponentOperation {
         return sender.write(CommandCode.GET_COMPONENT_LIST, returnType,type);
     }
 
-    public Component get(String name,Component.Type type) {
-
-        return sender.write(CommandCode.GET_COMPONENT, Component.class, name,type);
+    public List<Component> select(){
+        return select(null);
     }
 
-    public void delete(String name,Component.Type type) {
-        sender.write(CommandCode.DELETE_COMPONENT, null, name,type);
+    public Component get(String name) {
+
+        return sender.write(CommandCode.GET_COMPONENT, Component.class, name);
+    }
+
+    public void delete(String name) {
+        sender.write(CommandCode.DELETE_COMPONENT, null, name);
     }
 
 

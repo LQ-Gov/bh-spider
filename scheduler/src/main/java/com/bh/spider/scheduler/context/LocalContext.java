@@ -47,7 +47,11 @@ public class LocalContext extends AbstractContext {
             List<ExtractQueueFacade> queues = facade.extractorQueues();
 
             for (ExtractQueueFacade queue : queues) {
-                queue.extract(this, fetchContext);
+                try {
+                    queue.extract(this, fetchContext);
+                }catch (Exception e){
+                    scheduler.process(new Command(this, CommandCode.REPORT_EXCEPTION, new Object[]{fetchContext.request().id(), e.getMessage()}));
+                }
             }
         }
 

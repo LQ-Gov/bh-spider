@@ -8,8 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by lq on 17-3-16.
@@ -34,5 +33,28 @@ public class ComponentCoreFactory {
 
     public ComponentRepository proxy(Component.Type type) {
         return componentRepositories.get(type);
+    }
+
+
+    public ComponentRepository proxy(String name) {
+        Collection<ComponentRepository> repositories = componentRepositories.values();
+        for (ComponentRepository repository : repositories) {
+            if (repository.get(name) != null)
+                return repository;
+        }
+
+        return null;
+    }
+
+
+    public List<Component> all(){
+        Collection<ComponentRepository> repositories = componentRepositories.values();
+        List<Component> components = new LinkedList<>();
+
+        for (ComponentRepository repository : repositories) {
+            components.addAll(repository.all());
+        }
+
+        return components;
     }
 }

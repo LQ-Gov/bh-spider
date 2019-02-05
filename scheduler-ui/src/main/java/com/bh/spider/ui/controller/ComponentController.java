@@ -27,7 +27,7 @@ public class ComponentController {
 
 
     @PostMapping
-    public void create(String name,Component.Type type,String description, MultipartFile file) throws IOException {
+    public void create(String name, Component.Type type, String description, MultipartFile file) throws IOException {
         InputStream in = file.getInputStream();
         client.component().submit(name, in, type, description);
     }
@@ -35,28 +35,19 @@ public class ComponentController {
     @GetMapping(value = "/list")
     public List<Component> list() {
 
-        List<Component> result = client.component().select(Component.Type.GROOVY);
-        return result;
-
+        return client.component().select();
     }
 
 
     @DeleteMapping(value = "/{name}")
-    public String delete(@PathVariable("name") String name, String hash) {
+    public boolean delete(@PathVariable("name") String name, String hash) {
 
-        Component component = client.component().get(name, Component.Type.GROOVY);
-        if (component == null) {
-            return null;
-            //module不存在
+        Component component = client.component().get(name);
+        if (component == null || !hash.equals(component.getHash())) {
+            return false;
+            //module不存在||module hash不一样
         }
-
-        if (!component.getHash().equals(hash)) {
-            return null;
-            //版本不一致
-        }
-        client.component().delete(name, Component.Type.GROOVY);
-        return "ok";
+        client.component().delete(name);
+        return true;
     }
-
-
 }

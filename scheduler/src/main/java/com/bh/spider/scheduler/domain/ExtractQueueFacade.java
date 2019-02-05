@@ -54,9 +54,6 @@ public class ExtractQueueFacade {
                 invoke(ctx, fetchContext, obj, method);
             } catch (ExtractorChainException e) {
                 if (e.result() == Behaviour.TERMINATION) break;
-            } catch (Exception e) {
-                scheduler.process(new Command(ctx, CommandCode.REPORT_EXCEPTION, new Object[]{fetchContext.request().id(), e.getMessage()}));
-                throw e;
             }
         }
     }

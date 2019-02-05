@@ -70,7 +70,7 @@ public class BasicScheduler implements IEvent {
     private volatile boolean closed = true;
 
 
-    public BasicScheduler(Config config) throws UnknownHostException {
+    public BasicScheduler(Config config) throws Exception {
         this.cfg = config;
 
         InetAddress local = Inet4Address.getLocalHost();
