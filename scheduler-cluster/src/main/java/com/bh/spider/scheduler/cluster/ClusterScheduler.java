@@ -1,11 +1,15 @@
-package com.bh.spider.scheduler.cluster.master;
+package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.CommandReceiveHandler;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.EventMapping;
+import com.bh.spider.transfer.entity.Component;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -15,11 +19,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
+import java.nio.file.Paths;
 
 public class ClusterScheduler extends BasicScheduler {
     private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
@@ -30,7 +36,7 @@ public class ClusterScheduler extends BasicScheduler {
 
     private Workers workers;
 
-    public ClusterScheduler(Config config) throws UnknownHostException {
+    public ClusterScheduler(Config config) throws Exception {
         super(config);
         mid = cfg.get(Config.MY_ID);
         workers = new Workers(this);
@@ -38,8 +44,12 @@ public class ClusterScheduler extends BasicScheduler {
 
     }
 
+    @Override
+    protected void initDirectories() throws IOException {
+        super.initDirectories();
+        FileUtils.forceMkdir(Paths.get(cfg.get(Config.INIT_OPERATION_LOG_PATH)).toFile());
 
-
+    }
 
     @Override
     protected void initLocalListen() throws InterruptedException, URISyntaxException {
@@ -60,6 +70,7 @@ public class ClusterScheduler extends BasicScheduler {
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
                         ch.pipeline().addLast(new WorkerInBoundHandler(me));
+                        ch.pipeline().addLast(new WorkerCommandDecoder());
                         ch.pipeline().addLast(new CommandReceiveHandler(me));
 
                     }
@@ -78,15 +89,49 @@ public class ClusterScheduler extends BasicScheduler {
                 new ClusterSchedulerFetchHandler(this, domainIndex, store),
                 new ClusterSchedulerWatchHandler());
 
+
+        loop.addInterceptor(new OperationInterceptor());
+
         loop.listen().join();
 
     }
 
 
-    @EventMapping
-    private void SESSION_CONNECT_HANDLER(Context ctx,Session session) {
-        workers.add(session);
+    protected void initOperationRecorder() throws IOException {
+        String path = cfg.get(Config.INIT_OPERATION_LOG_PATH);
+        int cacheSize = Integer.valueOf(cfg.get(Config.INIT_OPERATION_CACHE_SIZE));
+        OperationRecorder defaultRecorder = new OperationRecorder(Paths.get(path,"default"),cacheSize);
+        OperationRecorder componentRecorder = new OperationRecorder("component", Paths.get(path, "component"), cacheSize);
+
+        OperationRecorderFactory.register(defaultRecorder);
+        OperationRecorderFactory.register(componentRecorder);
+
+
     }
+
+
+    @Override
+    public synchronized void exec() throws Exception {
+        //初始化存储文件夹
+        initDirectories();
+        //先初始化存储，其他模块依赖存储
+        initStore();
+        //初始化domain tree
+        initDomainIndex();
+
+        //初始化操作日志recorder
+        initOperationRecorder();
+
+        //init_system_signal_handles();
+        initJobScheduler();
+        //初始化本地端口监听
+        initLocalListen();
+
+        //初始化事件循环线程
+        initEventLoop();
+
+    }
+
 
 
     @EventMapping

@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.scheduler.context.ClientContext;
+import com.bh.spider.scheduler.context.CloseableContext;
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -13,8 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
     private final BasicScheduler scheduler;
-    private Set<ClientContext> contexts = ConcurrentHashMap.newKeySet();
 
+    private Set<CloseableContext> boundContexts = ConcurrentHashMap.newKeySet();
     public CommandReceiveHandler(BasicScheduler scheduler) {
         this.scheduler = scheduler;
     }
@@ -29,10 +30,12 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Command cmd = (Command) msg;
 
-        ClientContext clientContext = (ClientContext) cmd.context();
-        contexts.add(clientContext);
+        Context context = cmd.context();
 
-        clientContext.whenComplete(x->contexts.remove(x));
+        if(context instanceof CloseableContext) {
+            boundContexts.add((CloseableContext) context);
+            context.whenComplete(boundContexts::remove);
+        }
 
         scheduler.process(cmd);
 
@@ -47,6 +50,9 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
 
-        contexts.forEach(ClientContext::close);
+
+        for (CloseableContext context : boundContexts) {
+            context.close();
+        }
     }
 }

@@ -3,19 +3,15 @@ package com.bh.spider.scheduler.context;
 import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.transfer.Json;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Created by lq on 17-4-8.
  */
-public class ClientContext extends AbstractContext {
+public class ClientContext extends AbstractCloseableContext {
     private static final Logger logger = LoggerFactory.getLogger(ClientContext.class);
 
     private final static byte EXCEPTION_BYTE=0x02;
@@ -92,10 +88,4 @@ public class ClientContext extends AbstractContext {
     public ChannelId channelId(){
         return source.channel().id();
     }
-
-
-    public void close(){
-        this.complete();
-    }
-
 }

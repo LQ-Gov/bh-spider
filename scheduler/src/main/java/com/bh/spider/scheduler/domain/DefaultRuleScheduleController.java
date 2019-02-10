@@ -8,7 +8,6 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.job.JobContext;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.scheduler.job.QuartzJobImpl;
-import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
 import org.slf4j.Logger;

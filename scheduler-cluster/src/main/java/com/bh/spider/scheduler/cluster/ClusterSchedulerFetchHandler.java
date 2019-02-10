@@ -1,11 +1,11 @@
-package com.bh.spider.scheduler.cluster.master;
+package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.RequestImpl;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.BasicSchedulerFetchHandler;
-import com.bh.spider.scheduler.cluster.master.choose.RandomWorkerChoose;
-import com.bh.spider.scheduler.cluster.master.choose.WorkerChoose;
+import com.bh.spider.scheduler.cluster.choose.RandomWorkerChoose;
+import com.bh.spider.scheduler.cluster.choose.WorkerChoose;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.domain.DomainIndex;
@@ -33,17 +33,17 @@ public class ClusterSchedulerFetchHandler extends BasicSchedulerFetchHandler {
 
 
     @EventMapping
-    protected void WORKER_REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
+    public void WORKER_REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
         this.scheduler.process(new Command(new LocalContext(scheduler),CommandCode.REPORT_EXCEPTION,new Object[]{id,message}));
     }
 
     @Override
-    protected boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
+    public boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
         return super.FETCH_HANDLER(ctx, req, rule);
     }
 
     @Override
-    protected boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
+    public boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
         WorkerChoose choose = new RandomWorkerChoose(null);
         Workers workers = choose.filter(scheduler.workers(), requests);
 

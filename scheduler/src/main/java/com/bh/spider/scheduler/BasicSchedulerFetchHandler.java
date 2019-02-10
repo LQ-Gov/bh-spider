@@ -43,7 +43,7 @@ public class BasicSchedulerFetchHandler implements IAssist {
     }
 
     @EventMapping
-    protected void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
+    public void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
         String host = req.url().getHost();
 
         DomainIndex.Node node = domainIndex.match(host,false);
@@ -66,7 +66,7 @@ public class BasicSchedulerFetchHandler implements IAssist {
     }
 
     @EventMapping
-    protected void GET_REQUEST_LIST_HANDLER(Context ctx, Query query) {
+    public void GET_REQUEST_LIST_HANDLER(Context ctx, Query query) {
 //        List<RequestImpl> list = scheduler.store().request().select(query);
 //        ctx.write(list);
     }
@@ -78,13 +78,13 @@ public class BasicSchedulerFetchHandler implements IAssist {
      * @param rule
      */
     @EventMapping(autoComplete = false)
-    protected boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
+    public boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
         fetcher.fetch(ctx, req, rule);
         return true;
     }
 
     @EventMapping(autoComplete = false)
-    protected boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests,Rule rule) {
+    public boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests,Rule rule) {
 
         requests.removeIf(req -> fetchContextTable.containsKey(req.id()));
         requests.forEach(x -> fetchContextTable.put(x.id(), x));
@@ -93,7 +93,7 @@ public class BasicSchedulerFetchHandler implements IAssist {
     }
 
     @EventMapping
-    protected void REPORT_HANDLER(Context ctx, long id,int code) {
+    public void REPORT_HANDLER(Context ctx, long id,int code) {
         if(fetchContextTable.containsKey(id)) {
             store.accessor().update(id, code, Request.State.FINISHED,null);
             fetchContextTable.remove(id);
@@ -104,7 +104,7 @@ public class BasicSchedulerFetchHandler implements IAssist {
 
 
     @EventMapping
-    protected void REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
+    public void REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
         if (fetchContextTable.containsKey(id)) {
             store.accessor().update(id, null, Request.State.EXCEPTION, message);
             fetchContextTable.remove(id);

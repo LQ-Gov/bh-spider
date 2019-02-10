@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.master;
+package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.event.Command;
 
@@ -6,7 +6,7 @@ import java.util.*;
 
 public class Workers {
     private ClusterScheduler scheduler;
-    private Map<Long,Session> sessions = new HashMap<>();
+    private Map<Long, Session> sessions = new HashMap<>();
 
     public Workers(ClusterScheduler scheduler, Collection<Session> sessions) {
         sessions.forEach(this::add);

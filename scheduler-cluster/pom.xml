@@ -22,32 +22,21 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
-
-        <!-- https://mvnrepository.com/artifact/io.atomix/atomix -->
+        <!-- https://mvnrepository.com/artifact/javax.el/javax.el-api -->
         <dependency>
-            <groupId>io.atomix</groupId>
-            <artifactId>atomix</artifactId>
-            <version>${atomix.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.netty</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>javax.el</groupId>
+            <artifactId>javax.el-api</artifactId>
+            <version>3.0.0</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/io.atomix/atomix-raft -->
+        <!-- https://mvnrepository.com/artifact/org.glassfish/javax.el -->
         <dependency>
-            <groupId>io.atomix</groupId>
-            <artifactId>atomix-raft</artifactId>
-            <version>${atomix.version}</version>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.el</artifactId>
+            <version>3.0.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.atomix/atomix-primary-backup -->
-        <dependency>
-            <groupId>io.atomix</groupId>
-            <artifactId>atomix-primary-backup</artifactId>
-            <version>${atomix.version}</version>
-        </dependency>
+
+
     </dependencies>
 
 

@@ -7,12 +7,12 @@ public class RunModeClassFactory {
     public final static String STAND_ALONE = "stand-alone";
     public final static String CLUSTER_MASTER = "cluster-master";
 
-    public static Class<?> get(String mode) {
+    public static Class<?> get(String mode) throws ClassNotFoundException {
         switch (mode) {
             case STAND_ALONE:
                 return BasicScheduler.class;
-//            case CLUSTER_MASTER:
-//                return ClusterScheduler.class;
+            case CLUSTER_MASTER:
+                return Class.forName("com.bh.spider.scheduler.cluster.ClusterScheduler");
         }
 
         return null;

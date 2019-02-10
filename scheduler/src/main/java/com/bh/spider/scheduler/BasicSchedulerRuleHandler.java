@@ -90,7 +90,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
 
     @EventMapping
-    protected void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
+    public void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (validate(rule)) {
             RuleFacade boost = facade(rule, true);
             backup(boost.domainNode());
@@ -99,7 +99,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected List<Rule> GET_RULE_LIST_HANDLER(Context ctx, String host) {
+    public List<Rule> GET_RULE_LIST_HANDLER(Context ctx, String host) {
 
         Iterator<RuleFacade> iterator = facadeCache.values().iterator();
 
@@ -114,7 +114,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
 
     @EventMapping
-    protected void DELETE_RULE_HANDLER(Context ctx, long id) throws IOException {
+    public void DELETE_RULE_HANDLER(Context ctx, long id) throws IOException {
         RuleFacade boost = facadeCache.get(id);
         if (boost == null) return;
 
@@ -126,7 +126,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected RuleFacade RULE_FACADE_HANDLER(Context ctx, Rule rule) throws Exception {
+    public RuleFacade RULE_FACADE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (rule == null || rule.getId() <= 0) return null;
 
         RuleFacade facade = facadeCache.get(rule.getId());
@@ -139,7 +139,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
     @EventMapping
-    protected void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean valid) throws Exception {
+    public void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean valid) throws Exception {
         RuleFacade decorator = facadeCache.get(id);
         if (decorator == null) return;
         if (valid)

@@ -1,11 +1,9 @@
-package com.bh.spider.scheduler.cluster.worker;
+package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.worker.store.RemoteStoreBuilder;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.event.EventLoop;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
-import com.bh.spider.store.base.Store;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -23,7 +21,7 @@ import java.util.Properties;
 
 public class WorkerScheduler extends BasicScheduler {
     private Channel channel;
-    public WorkerScheduler(Config config) throws UnknownHostException {
+    public WorkerScheduler(Config config) throws Exception {
         super(config);
     }
 

@@ -1,10 +1,11 @@
 package com.bh.spider.scheduler.context;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class AbstractContext implements Context {
+public abstract class AbstractCloseableContext implements CloseableContext {
     private Set<ContextEventHandler> eventHandlers = ConcurrentHashMap.newKeySet();
 
 
@@ -21,5 +22,11 @@ public abstract class AbstractContext implements Context {
     @Override
     public void whenComplete(ContextEventHandler handler) {
         eventHandlers.add(handler);
+    }
+
+
+    @Override
+    public void close() {
+        complete();
     }
 }

@@ -27,7 +27,7 @@ public class BasicSchedulerComponentHandler implements IAssist {
 
 
     @EventMapping
-    protected void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
+    public void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
 
         ComponentRepository repository = factory.proxy(name);
         if (repository != null && repository != factory.proxy(type))
@@ -41,7 +41,7 @@ public class BasicSchedulerComponentHandler implements IAssist {
     }
 
     @EventMapping
-    protected List<Component> GET_COMPONENT_LIST_HANDLER(Context ctx,Component.Type type) {
+    public List<Component> GET_COMPONENT_LIST_HANDLER(Context ctx,Component.Type type) {
         if (type == null)
             return factory.all();
 
@@ -50,13 +50,13 @@ public class BasicSchedulerComponentHandler implements IAssist {
     }
 
     @EventMapping
-    protected Component GET_COMPONENT_HANDLER(String name) {
+    public Component GET_COMPONENT_HANDLER(String name) {
         ComponentRepository repository = factory.proxy(name);
         return repository == null ? null : repository.get(name);
     }
 
     @EventMapping
-    protected void DELETE_COMPONENT_HANDLER(Context ctx, String name) throws IOException {
+    public void DELETE_COMPONENT_HANDLER(Context ctx, String name) throws IOException {
         ComponentRepository repository = factory.proxy(name);
         if (repository != null)
             repository.delete(name);
@@ -64,7 +64,7 @@ public class BasicSchedulerComponentHandler implements IAssist {
 
 
     @EventMapping
-    protected Class<?> LOAD_COMPONENT_HANDLER(String name,Component.Type type) throws IOException, ClassNotFoundException {
+    public Class<?> LOAD_COMPONENT_HANDLER(String name,Component.Type type) throws IOException, ClassNotFoundException {
         return factory.proxy(type).loadClass(name);
     }
 

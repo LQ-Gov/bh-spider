@@ -199,8 +199,10 @@ public class BasicScheduler implements IEvent {
         jobCoreScheduler.start();
     }
 
+
+
     @EventMapping
-    protected Map<String,String> PROFILE_HANDLER(){
+    public Map<String,String> PROFILE_HANDLER(){
         Map<String,String> map  = new HashMap<>();
         map.put("mode",RunModeClassFactory.STAND_ALONE);
         map.put("store",store.name());
@@ -209,12 +211,12 @@ public class BasicScheduler implements IEvent {
 
 
     @EventMapping
-    protected List<Node> GET_NODE_LIST_HANDLER(){
+    public List<Node> GET_NODE_LIST_HANDLER(){
         return Collections.singletonList(me);
     }
 
     @EventMapping
-    protected void HEART_BEAT_HANDLER(Context ctx){
+    public void HEART_BEAT_HANDLER(Context ctx){
         logger.info("收到心跳信息");
     }
 

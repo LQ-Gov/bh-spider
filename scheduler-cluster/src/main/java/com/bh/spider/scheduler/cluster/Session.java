@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.master;
+package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.event.Command;
@@ -10,11 +10,12 @@ public class Session {
     public Session(Channel channel){
         this.channel = channel;
         this.id = IdGenerator.instance.nextId();
+
     }
 
 
     public long id(){
-        return this.id;
+        return id;
     }
 
 

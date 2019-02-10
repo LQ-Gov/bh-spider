@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class LocalContext extends AbstractContext {
+public class LocalContext extends AbstractCloseableContext {
     private final static Logger logger = LoggerFactory.getLogger(LocalContext.class);
     private BasicScheduler scheduler;
 

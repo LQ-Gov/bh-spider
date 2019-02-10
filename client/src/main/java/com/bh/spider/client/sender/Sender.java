@@ -38,7 +38,7 @@ public class Sender {
         this.receiver = receiver;
 
         this.heartBeat = new HeartBeat(this, 10000);
-        this.heartBeat.start();
+//        this.heartBeat.start();
 
     }
 

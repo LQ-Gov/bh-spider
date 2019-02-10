@@ -39,11 +39,14 @@ public class Config {
     //抓取参数陪配置
     public static final String INIT_PROCESSOR_THREADS_COUNT = "init.processor.threads.count";
 
+    //集群参数配置
     public static final String SPIDER_CLUSTER_PREFIX = "spider.cluster.";
+    public static final String INIT_OPERATION_CACHE_SIZE="init.operation.cache.size";
+    public static final String INIT_OPERATION_LOG_PATH="init.operation.log.path";
 
 
     //节点信息配置
-    public static final String MY_ID = "my.id";
+    public static final String MY_ID = "cluster.node.id";
     public static final String INIT_CLUSTER_MASTER_ADDRESS="init.cluster.master.address.";
     public static final String INIT_CLUSTER_MASTER_LISTEN_PORT="init.cluster.master.listen.port";
     public static final String INIT_CLUSTER_MASTER_SYNC_PORT="init.cluster.master.sync.port";
@@ -72,6 +75,9 @@ public class Config {
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"1","127.0.0.1:30051");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"2","127.0.0.1:30052");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX+"3","127.0.0.1:30053");
+
+        config.GLOBAL.put(INIT_OPERATION_CACHE_SIZE,"10");
+        config.GLOBAL.put(INIT_OPERATION_LOG_PATH,"data/operation");
 
         config.GLOBAL.put(INIT_CLUSTER_MASTER_ADDRESS+"1","127.0.0.01:");
 

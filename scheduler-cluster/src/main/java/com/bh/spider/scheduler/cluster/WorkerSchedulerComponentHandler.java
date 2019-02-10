@@ -1,8 +1,8 @@
-package com.bh.spider.scheduler.cluster.worker;
+package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicSchedulerComponentHandler;
+import com.bh.spider.scheduler.cluster.WorkerScheduler;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
-import com.bh.spider.scheduler.component.Metadata;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.EventMapping;
@@ -20,13 +20,13 @@ public class WorkerSchedulerComponentHandler extends BasicSchedulerComponentHand
 
 
     @EventMapping(disabled = true)
-    protected void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
+    public void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
         throw new NotSupportCommandException("SUBMIT_COMPONENT");
     }
 
 
     @EventMapping
-    protected void SUBMIT_COMPONENT_HANDLER(Context ctx,String name,Component.Type type){
+    public void SUBMIT_COMPONENT_HANDLER(Context ctx,String name,Component.Type type){
     }
 
 

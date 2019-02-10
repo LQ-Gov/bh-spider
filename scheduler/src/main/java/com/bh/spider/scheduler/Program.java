@@ -21,8 +21,8 @@ public class Program {
 
         Properties properties = new Properties();
 
-        //System.setProperty("init.run.mode","cluster-master");
-        System.setProperty("init.run.mode","stand-alone");
+        System.setProperty("init.run.mode", "cluster-master");
+        //System.setProperty("init.run.mode", "stand-alone");
         properties.putAll(System.getProperties());
 
         InputStream stream = Program.class.getResourceAsStream(file);
@@ -33,17 +33,17 @@ public class Program {
             logger.warn("the config file {} not exists,program start with default config", file);
 
 
-
-
         Config config = Config.init(properties);
 
-        Class<?> mode = RunModeClassFactory.get(config.get(Config.INIT_RUN_MODE));
-        if (mode == null)
+        String mode = config.get(Config.INIT_RUN_MODE);
+
+        Class<?> modeClass = RunModeClassFactory.get(mode);
+        if (modeClass == null)
             throw new Exception("not valid run mode");
 
-        BasicScheduler scheduler = (BasicScheduler) Class.forName(mode.getName())
-                .getConstructor(Config.class)
-                .newInstance(config);
+        BasicScheduler scheduler = (BasicScheduler) modeClass.getConstructor(Config.class).newInstance(config);
+
+        logger.info("{} mode running", mode);
 
         scheduler.exec();
     }

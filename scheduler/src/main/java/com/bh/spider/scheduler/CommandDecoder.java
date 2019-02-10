@@ -4,7 +4,6 @@ import com.bh.spider.scheduler.context.ClientContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.token.JacksonToken;
-import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,7 +46,7 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
                     }
                 }
 
-                Context context = new ClientContext(id, ctx);
+                Context context = buildContext(ctx,id,key);
                 Command cmd = new Command(context, key, params.toArray());
                 super.channelRead(ctx, cmd);
             }
@@ -55,6 +54,10 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
         }finally {
             buffer.release();
         }
+    }
+
+    protected Context buildContext(ChannelHandlerContext ctx, long commandId,CommandCode key){
+        return new ClientContext(commandId,ctx);
     }
 
 

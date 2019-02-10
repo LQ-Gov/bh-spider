@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -18,9 +20,10 @@ public class CommandHandler {
     private Class<?>[] parameters;
     private EventMapping mapping;
     private AssistPool pool;
-    private boolean returnVoid=false;
+    private boolean returnVoid;
+    private List<Interceptor> interceptors = new LinkedList<>();
 
-    public CommandHandler(Object bean, Method method, EventMapping mapping, AssistPool pool) {
+    public CommandHandler(Object bean, Method method, EventMapping mapping, AssistPool pool,List<Interceptor> interceptors) {
         this.bean = bean;
         this.method = method;
         this.mapping = mapping;
@@ -28,6 +31,8 @@ public class CommandHandler {
         this.pool = pool;
 
         this.returnVoid = method.getReturnType().equals(Void.TYPE);
+
+        this.interceptors = interceptors;
     }
 
 
@@ -39,6 +44,10 @@ public class CommandHandler {
     public EventMapping mapping() {
         return this.mapping;
     }
+
+
+    public Method method(){ return method;}
+
 
 
     public void invoke(Context ctx, Object[] args, CompletableFuture future) {

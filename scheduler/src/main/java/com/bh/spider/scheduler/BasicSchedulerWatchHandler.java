@@ -20,7 +20,7 @@ public class BasicSchedulerWatchHandler implements IAssist {
     private static Map<ChannelId, Map<String, Watcher>> WATCHERS = new ConcurrentHashMap<>();
 
     @EventMapping(autoComplete = false)
-    protected void WATCH_HANDLER(ClientContext ctx, String key, WatchFilter filter) throws Exception {
+    public void WATCH_HANDLER(ClientContext ctx, String key, WatchFilter filter) throws Exception {
 
         Map<String, Watcher> map = WATCHERS.get(ctx.channelId());
 
@@ -48,7 +48,7 @@ public class BasicSchedulerWatchHandler implements IAssist {
      * @param key
      */
     @EventMapping
-    protected void UNWATCH_HANDLER(ClientContext ctx, String key) {
+    public void UNWATCH_HANDLER(ClientContext ctx, String key) {
         Map<String, Watcher> watchers = WATCHERS.get(ctx.channelId());
 
         if (watchers != null) {

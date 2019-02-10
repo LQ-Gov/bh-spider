@@ -3,8 +3,11 @@ package com.bh.spider.scheduler.event;
 import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.token.Token;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.AnnotationUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,19 +22,20 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by lq on 17-3-16.
  */
 public class EventLoop extends Thread {
-    private Logger logger = LoggerFactory.getLogger(EventLoop.class);
+    private final static Logger logger = LoggerFactory.getLogger(EventLoop.class);
     private IEvent parent;
     private List< IAssist> assists;
     private BlockingQueue<Pair<Command,CompletableFuture>> queue = new LinkedBlockingQueue<>();
 
-    private Map<String, CommandHandler> executors = new HashMap<>();
+    private List<Interceptor> interceptors = new LinkedList<>();
+    private Map<String, CommandHandler> handlers = new HashMap<>();
 
     private boolean closed = true;
 
 
     public EventLoop(IEvent parent, IAssist... assists) {
         this.parent = parent;
-        this.assists = new LinkedList<>(Arrays.asList(assists));
+        this.assists = Arrays.asList(assists);
     }
 
     public <R> CompletableFuture<R> execute(Command cmd) {
@@ -52,17 +56,18 @@ public class EventLoop extends Thread {
                         this.parent.getClass().getName(), cmd.key(), 0);
 
                 try {
-                    CommandHandler executor = executors.get(cmd.key().toString());
+                    CommandHandler handler = handlers.get(cmd.key());
 
-                    if (executor == null) throw new RuntimeException("executor not found:"+cmd.key());
+                    if (handler == null) throw new RuntimeException("executor not found:" + cmd.key());
 
-                    Class<?>[] parameters = executor.parameters();
+                    Class<?>[] parameters = handler.parameters();
 
                     Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
-                    executor.invoke(cmd.context(),args,future);
-
-
+                    if (before(handler.mapping(), cmd.context(), handler.method(), args)) {
+                        handler.invoke(cmd.context(), args, future);
+                        after();
+                    }
                 } catch (Exception e) {
                     cmd.context().exception(e);
                     future.completeExceptionally(e);
@@ -122,18 +127,35 @@ public class EventLoop extends Thread {
     }
 
 
+    private boolean before(EventMapping mapping, Context ctx, Method method,Object[] args) {
+        if (interceptors != null && !interceptors.isEmpty()) {
+            for (Interceptor interceptor : interceptors) {
+                if (!interceptor.before(mapping, ctx, method, args))
+                    return false;
+            }
+        }
+
+        return true;
+
+    }
+
+
+    private void after(){
+
+    }
+
+
     private void initAssist(IAssist o) {
 
 
-        Method[] methods = o.getClass().getDeclaredMethods();
 
-        methods = Arrays.stream(methods).filter(x -> x.getDeclaredAnnotation(EventMapping.class) != null).toArray(Method[]::new);
+        Method[] methods = MethodUtils.getMethodsWithAnnotation(o.getClass(),EventMapping.class);
 
         if (methods.length > 0) {
 
             AssistPool pool = new AssistPool(o);
             for (Method method : methods) {
-                EventMapping mapping = method.getDeclaredAnnotation(EventMapping.class);
+                EventMapping mapping = method.getAnnotation(EventMapping.class);
                 if(mapping.disabled()) continue;
 
                 String key = mapping.value();
@@ -145,13 +167,20 @@ public class EventLoop extends Thread {
                 if (StringUtils.isBlank(key))
                     throw new Error("error method event mapping for " + method.getName());
 
-                if (executors.containsKey(key))
+                if (handlers.containsKey(key))
                     throw new Error("the " + key + " handler is already exists");
 
 
-                executors.put(key, new CommandHandler(o, method, mapping, pool));
+                handlers.put(key, new CommandHandler(o, method, mapping, pool,null));
 
             }
+        }
+    }
+
+
+    public void addInterceptor(Interceptor interceptor) {
+        if (this.closed) {
+            this.interceptors.add(interceptor);
         }
     }
 

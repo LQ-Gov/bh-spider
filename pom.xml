@@ -29,7 +29,7 @@
         <commons-codec.version>1.10</commons-codec.version>
         <commons-collections4.version>4.2</commons-collections4.version>
         <junit.version>5.3.2</junit.version>
-        <google.guava.version>22.0</google.guava.version>
+        <google.guava.version>27.0.1-jre</google.guava.version>
         <jackson.version>2.9.7</jackson.version>
         <spring.boot.version>2.1.2.RELEASE</spring.boot.version>
     </properties>
@@ -137,10 +137,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.8.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 

@@ -14,4 +14,6 @@ public @interface EventMapping {
     boolean disabled() default false;
 
     boolean autoComplete() default true;
+
+
 }

@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.master;
+package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicSchedulerWatchHandler;
 import com.bh.spider.scheduler.context.Context;
@@ -7,7 +7,7 @@ import com.bh.spider.scheduler.event.EventMapping;
 public class ClusterSchedulerWatchHandler extends BasicSchedulerWatchHandler {
 
     @EventMapping
-    public void WORKER_CONNECTED_HANDLER(Context ctx,Session session) {
+    public void WORKER_CONNECTED_HANDLER(Context ctx, Session session) {
         ctx.write(ctx);
     }
 
