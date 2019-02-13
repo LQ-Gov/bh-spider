@@ -14,7 +14,6 @@
         <module>store</module>
         <module>client</module>
         <module>scheduler-ui</module>
-        <module>store-query</module>
         <module>spider-transfer</module>
         <module>scheduler-cluster</module>
         <module>consistent</module>
