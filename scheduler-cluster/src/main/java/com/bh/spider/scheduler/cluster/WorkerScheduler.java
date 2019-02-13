@@ -1,64 +1,53 @@
 package com.bh.spider.scheduler.cluster;
 
-import com.bh.spider.scheduler.*;
-import com.bh.spider.scheduler.cluster.worker.store.RemoteStoreBuilder;
+import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.BasicSchedulerFetchHandler;
+import com.bh.spider.scheduler.BasicSchedulerWatchHandler;
+import com.bh.spider.scheduler.cluster.connect.Communicator;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.event.EventLoop;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import com.bh.spider.scheduler.event.EventMapping;
+import com.bh.spider.transfer.entity.Node;
+import org.apache.commons.io.FileUtils;
 
-import java.net.InetSocketAddress;
-import java.net.URI;
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.Properties;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class WorkerScheduler extends BasicScheduler {
-    private Channel channel;
+    private Config cfg;
+    private Communicator communicator;
     public WorkerScheduler(Config config) throws Exception {
         super(config);
-    }
 
+        this.cfg = config;
+
+
+    }
 
     @Override
-    protected void initStore() throws Exception {
-        store = new RemoteStoreBuilder(channel).build(null);
+    protected void initDirectories() throws IOException {
+        super.initDirectories();
+        FileUtils.forceMkdir(Paths.get(cfg.get(Config.INIT_OPERATION_LOG_PATH)).toFile());
+
+    }
+
+    protected void initCommunicator() throws URISyntaxException, InterruptedException {
+        communicator = new Communicator(this,cfg);
+        communicator.connect();
     }
 
 
-    @Override
-    protected void initLocalListen() throws URISyntaxException, InterruptedException {
-        Properties properties = cfg.all(Config.INIT_CLUSTER_MASTER_ADDRESS);
-
-        for (Object prop : properties.values()) {
-            URI uri = new URI(String.valueOf(prop));
-            channel = connect(uri);
-        }
-    }
-
-    private Channel connect(URI uri) throws InterruptedException {
-        Bootstrap bootstrap = new Bootstrap()
-                .group(new EpollEventLoopGroup(3))
-                .channel(NioSocketChannel.class)
-                .option(ChannelOption.SO_KEEPALIVE, true)
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    public void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new CommandInBoundHandler());
-                    }
-                });
-
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(uri.getHost(), uri.getPort())).sync();
+    protected void initOperationRecorder() throws IOException {
+        String path = cfg.get(Config.INIT_OPERATION_LOG_PATH);
+        int cacheSize = Integer.valueOf(cfg.get(Config.INIT_OPERATION_CACHE_SIZE));
+        OperationRecorder componentRecorder = new OperationRecorder("component", Paths.get(path, "component"), cacheSize);
+        OperationRecorderFactory.register(componentRecorder);
 
 
-
-        return future.channel();
     }
 
 
@@ -77,14 +66,20 @@ public class WorkerScheduler extends BasicScheduler {
         //初始化文件夹
         initDirectories();
 
-        //初始化本地端口监听
-        initLocalListen();
 
-        //先初始化存储，其他模块依赖存储
-        initStore();
+        initOperationRecorder();
+
+        //初始化本地端口监听
+        initCommunicator();
 
         //初始化事件循环线程
         initEventLoop();
+    }
 
+
+    @EventMapping(disabled = true)
+    @Override
+    public List<Node> GET_NODE_LIST_HANDLER() {
+        return super.GET_NODE_LIST_HANDLER();
     }
 }

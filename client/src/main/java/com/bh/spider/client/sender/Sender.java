@@ -5,6 +5,7 @@ import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
+import com.bh.transport.Transport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.DataOutputStream;
@@ -42,13 +43,19 @@ public class Sender {
 
     }
 
+    /**
+     * 最终发送方法,具体数据包格式见{@link Transport}
+     * @param id
+     * @param cmd
+     * @param params
+     * @throws IOException
+     */
     private synchronized void write0(long id, CommandCode cmd, Object... params) throws IOException {
         short cmdCode = (short) cmd.ordinal();
         byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
 
-        out.writeShort(cmdCode);
-        out.writeLong(id);
-        out.writeInt(data.length);
+        data = Transport.request(id, cmdCode, data);
+
         out.write(data);
         out.flush();
 

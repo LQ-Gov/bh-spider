@@ -102,11 +102,12 @@ public class Metadata {
             long current = accessor.getFilePointer();
             pos = write0(component, position.pos());
             accessor.seek(current);
-        } else
+        } else {
+            position = new Position<>();
             pos = write0(component, -1);
+        }
 
-        components.put(component.getName(), new Position<>(component, pos));
-
+        components.put(component.getName(), position.cover(component, pos));
     }
 
     public Component get(String name) {
@@ -131,10 +132,40 @@ public class Metadata {
         return false;
     }
 
+    /**
+     * 对指定的name 进行wait
+     * @param name
+     */
+    public boolean waitFor(String name) throws InterruptedException {
+        final Position<Component> position = components.get(name);
+        if(position==null) return false;
+
+        synchronized (position){
+            position.wait();
+        }
+
+        return true;
+    }
+
+
+    public boolean waitFor(String name,long timeout) throws InterruptedException {
+        final Position<Component> position = components.get(name);
+        if(position==null) return false;
+
+        synchronized (position){
+            position.wait(timeout);
+        }
+
+        return true;
+    }
+
 
     private class Position<T> {
         private T data;
         private long pos;
+
+
+        public Position(){}
 
 
         public Position(T data, long pos) {
@@ -149,5 +180,19 @@ public class Metadata {
         public long pos() {
             return pos;
         }
+
+
+        public Position<T> cover(T data,long pos) {
+            this.data = data;
+            this.pos = pos;
+
+            this.notifyAll();
+
+
+            return this;
+        }
+
+
+
     }
 }

@@ -5,11 +5,14 @@ import com.bh.spider.scheduler.CommandReceiveHandler;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
+import com.bh.spider.scheduler.cluster.context.WorkerContext;
+import com.bh.spider.scheduler.cluster.entity.Sync;
 import com.bh.spider.scheduler.config.Config;
-import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.context.LocalContext;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.EventMapping;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.transfer.CommandCode;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -25,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ClusterScheduler extends BasicScheduler {
@@ -98,15 +102,13 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     protected void initOperationRecorder() throws IOException {
-        String path = cfg.get(Config.INIT_OPERATION_LOG_PATH);
+        Path path = Paths.get(cfg.get(Config.INIT_OPERATION_LOG_PATH));
         int cacheSize = Integer.valueOf(cfg.get(Config.INIT_OPERATION_CACHE_SIZE));
-        OperationRecorder defaultRecorder = new OperationRecorder(Paths.get(path,"default"),cacheSize);
-        OperationRecorder componentRecorder = new OperationRecorder("component", Paths.get(path, "component"), cacheSize);
+        OperationRecorder defaultRecorder = new OperationRecorder(path, cacheSize);
+        OperationRecorder componentRecorder = new OperationRecorder("component", path, cacheSize);
 
         OperationRecorderFactory.register(defaultRecorder);
         OperationRecorderFactory.register(componentRecorder);
-
-
     }
 
 
@@ -134,13 +136,17 @@ public class ClusterScheduler extends BasicScheduler {
 
 
 
-    @EventMapping
-    private void SYNC_SESSION_INFO_HANDLER(Context ctx,long sessionId){
-
-    }
-
-
     public Workers workers(){
         return workers;
+    }
+
+    @EventMapping
+    private void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
+        Session session = ctx.session();
+
+
+        Command cmd = new Command(new LocalContext(this), CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, new Object[]{session, sync.getComponentOperationCommittedIndex()});
+
+        process(cmd);
     }
 }

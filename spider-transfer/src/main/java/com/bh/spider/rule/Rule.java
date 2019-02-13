@@ -33,6 +33,9 @@ public class Rule implements Serializable {
      */
     private String description;
 
+
+    private String[] policy;
+
     private boolean valid;
 
     public Rule() {
@@ -125,5 +128,13 @@ public class Rule implements Serializable {
 
     public void setExtractors(List<ExtractQueue> extractors) {
         this.extractors = extractors;
+    }
+
+    public String[] getPolicy() {
+        return policy;
+    }
+
+    public void setPolicy(String[] policy) {
+        this.policy = policy;
     }
 }

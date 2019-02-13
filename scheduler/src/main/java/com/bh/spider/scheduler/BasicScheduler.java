@@ -170,7 +170,7 @@ public class BasicScheduler implements IEvent {
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline().addLast("ping", new IdleStateHandler(60, 20, 60 * 10, TimeUnit.SECONDS));
-                        ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
+                        ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,  8+1, 4));
                         ch.pipeline().addLast(new CommandDecoder());
                         ch.pipeline().addLast(new CommandReceiveHandler(me));
 

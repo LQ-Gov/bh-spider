@@ -1,10 +1,11 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.spider.scheduler.Worker;
 import com.bh.spider.scheduler.event.Command;
 
 import java.util.*;
 
-public class Workers {
+public class Workers implements Iterable<Worker> {
     private ClusterScheduler scheduler;
     private Map<Long, Session> sessions = new HashMap<>();
 
@@ -53,5 +54,10 @@ public class Workers {
         return new Workers(this.scheduler, Collections.singleton(session));
 
 
+    }
+
+    @Override
+    public Iterator<Worker> iterator() {
+        return null;
     }
 }

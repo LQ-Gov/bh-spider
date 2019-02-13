@@ -1,38 +1,77 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicSchedulerComponentHandler;
-import com.bh.spider.scheduler.cluster.WorkerScheduler;
+import com.bh.spider.scheduler.cluster.component.ComponentOperationEntry;
+import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
+import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventMapping;
-import com.bh.spider.scheduler.event.NotSupportCommandException;
+import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 public class WorkerSchedulerComponentHandler extends BasicSchedulerComponentHandler {
+
+    private WorkerScheduler scheduler;
+    private OperationRecorder componentOperationRecorder;
+    private int loadClassTimeout;
 
 
     public WorkerSchedulerComponentHandler(Config cfg, WorkerScheduler scheduler) throws IOException {
         super(cfg, scheduler, new ComponentCoreFactory(cfg));
+
+        this.scheduler = scheduler;
+        this.componentOperationRecorder = OperationRecorderFactory.get("component");
+        this.loadClassTimeout = Integer.valueOf(cfg.get(Config.INIT_LOAD_CLASS_TIMEOUT));
     }
+    @EventMapping
+    public void WRITE_OPERATION_ENTRIES(List<Entry> entries) throws IOException {
 
+        //更新component metadata
+        for(Entry entry:entries) {
+            ComponentOperationEntry coe = new ComponentOperationEntry(entry);
+            if (ComponentOperationEntry.ADD.equals(coe.operation())) {
+                ComponentRepository repository = componentCoreFactory().proxy(coe.type());
+                repository.save(new byte[0], coe.name(), null, true, false);
+            } else if (ComponentOperationEntry.DELETE.equals(coe.operation())) {
+                ComponentRepository repository = componentCoreFactory().proxy(coe.name());
+                if (repository != null) {
+                    repository.delete(coe.name());
+                }
+            }
+        }
+        //写入数据
+        componentOperationRecorder.writeAll(entries);
 
-    @EventMapping(disabled = true)
-    public void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
-        throw new NotSupportCommandException("SUBMIT_COMPONENT");
     }
 
 
     @EventMapping
-    public void SUBMIT_COMPONENT_HANDLER(Context ctx,String name,Component.Type type){
+    public Callable< Class<?>> LOAD_COMPONENT_HANDLER(Context ctx, String name, Component.Type type, long timeout) throws IOException, ClassNotFoundException {
+        ComponentRepository repository = componentCoreFactory().proxy(type);
+
+
+        return () -> {
+            Component component = repository.get(name);
+            if (component == null) return null;
+
+            if (!component.isValid()) {
+                Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT, new Object[]{name});
+                ctx.write(cmd);
+
+                repository.waitFor(name, loadClassTimeout);
+
+            }
+
+            return repository.loadClass(name);
+        };
     }
-
-
-
-
-
-
-
 }

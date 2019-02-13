@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.concurrent.Future;
 
 public abstract class ComponentRepository {
 
@@ -27,20 +28,40 @@ public abstract class ComponentRepository {
     }
 
 
-    public Component.Type componentType(){
+    public Component.Type componentType() {
         return componentType;
     }
 
-    public Metadata metadata(){
+    public Metadata metadata() {
         return metadata;
     }
 
     public Component get(String name) {
-        return metadata.get(name);
+        return metadata().get(name);
+    }
+
+
+    public Component get(String name,boolean loadContent) throws IOException, CloneNotSupportedException {
+        Component component = metadata().get(name);
+        if (component != null && loadContent) {
+            Component o = component.clone();
+
+            Path path = Paths.get(base.toString(), component.getName());
+            byte[] bytes = Files.readAllBytes(path);
+            o.setData(bytes);
+
+            return o;
+        }
+        return component;
     }
 
 
     public Component save(byte[] data, String name, String description, boolean override) throws Exception {
+        return save(data, name, description, override, true);
+    }
+
+
+    public Component save(byte[] data, String name, String description, boolean override, boolean valid) throws IOException {
         Path old = Paths.get(base.toString(), name);
         Path tmp = Paths.get(base.toString(), name + ".tmp");
 
@@ -63,12 +84,22 @@ public abstract class ComponentRepository {
 
 
     public void delete(String name) throws IOException {
-        if(metadata().delete(name)) {
+        if (metadata().delete(name)) {
             Path old = Paths.get(base.toString(), name);
             Path tmp = Paths.get(base.toString(), name + ".tmp");
             if (Files.exists(old)) Files.delete(old);
             if (Files.exists(tmp)) Files.delete(tmp);
         }
+    }
+
+    public boolean waitFor(String name) throws InterruptedException {
+        return metadata().waitFor(name);
+    }
+
+
+    public boolean waitFor(String name, long timeout) throws InterruptedException {
+        return metadata().waitFor(name,timeout);
+
     }
 
 

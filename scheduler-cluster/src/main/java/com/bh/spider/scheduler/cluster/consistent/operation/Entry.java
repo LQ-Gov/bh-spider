@@ -6,10 +6,11 @@ import org.apache.commons.lang3.Conversion;
 import org.apache.commons.lang3.math.NumberUtils;
 
 public class Entry {
+    private long index;
     private byte action;
     private byte[] data;
 
-    private long index;
+
 
     public Entry(byte action,byte[] data){
         this(-1,action,data);
@@ -27,37 +28,41 @@ public class Entry {
     }
 
 
+    public byte[] data(){return data;}
+
+
     void setIndex(long value) {
         this.index = value;
     }
 
 
     public byte[] serialize() {
-        byte[] bytes = new byte[8 + 8 + 1 + data.length + 1];//CRC32码+index+action+data.length+\n
+        int len = 8 + 1 + data.length;
+        byte[] bytes = new byte[4 + len];//bytes.length+index+action+data
 
-        Conversion.longToByteArray(index, 0, bytes, 8, 8);
-        bytes[16] = action;
-        System.arraycopy(data, 0, bytes, 17, data.length);
-        long crc32 = CRCUtils.crc32(bytes, 8, bytes.length - 8);
+        Conversion.intToByteArray(4 + len, 0, bytes, 0, 4);
 
-        Conversion.longToByteArray(crc32, 0, bytes, 0, 8);
+        Conversion.longToByteArray(index, 0, bytes, 4, 8);//index
+        bytes[12] = action;//action
+        System.arraycopy(data, 0, bytes, 13, data.length);
 
         return bytes;
     }
 
 
 
-    public static Entry deserialize(byte[] data){
+    public static Entry deserialize(byte[] data) {
+
+        return deserialize(data,0,data.length-1);
+
+    }
 
 
-        //校验crc32码
-        long code = Conversion.byteArrayToLong(data,0,0,0,8);
+    public static Entry deserialize(byte[] data,int start,int len) {
 
-        if( CRCUtils.check(data,8,data.length-8,code)){
-            long index = Conversion.byteArrayToLong(data,8,0,0,8);
-            byte action = data[16];
-            return new Entry(index,action, ArrayUtils.subarray(data,17,data.length-1));
-        }
-        return null;
+        long index = Conversion.byteArrayToLong(data, start + 4, 0, 0, Integer.BYTES);
+        byte action = data[start + 12];
+        return new Entry(index, action, ArrayUtils.subarray(data, start + 13, start + len - 1));
+
     }
 }

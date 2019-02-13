@@ -12,6 +12,13 @@ public enum CommandCode {
     DELETE_COMPONENT,
 
 
+    WORKER_GET_COMPONENT,
+
+    CHECK_COMPONENT_OPERATION_COMMITTED_INDEX,
+    LOAD_OPERATION_ENTRY,
+    WRITE_OPERATION_ENTRIES,
+
+
     RULE_FACADE,
 
 
@@ -22,6 +29,7 @@ public enum CommandCode {
     DELETE_RULE,//删除rule
     EDIT_RULE,//修改rule
     SCHEDULER_RULE_EXECUTOR,//启动或暂停
+
 
 
 

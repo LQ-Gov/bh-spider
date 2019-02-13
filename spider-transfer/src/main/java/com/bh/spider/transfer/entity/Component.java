@@ -9,7 +9,7 @@ import java.util.Date;
 /**
  * Created by lq on 17-6-21.
  */
-public class Component implements Serializable {
+public class Component implements Serializable,Cloneable {
     public enum State {
         NULL, TMP, VALID
     }
@@ -51,7 +51,10 @@ public class Component implements Serializable {
     private String hash;
     private Type type;
     private String description;
+    private boolean valid;
     private Date createTime;
+
+    private byte[] data;
 
     public Component(){}
 
@@ -108,5 +111,28 @@ public class Component implements Serializable {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+
+    @Override
+    public Component clone() throws CloneNotSupportedException {
+        Component o = (Component) super.clone();
+        return o;
     }
 }

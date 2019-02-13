@@ -8,7 +8,7 @@ import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 public class GroovyComponentRepository extends ComponentRepository {
 
@@ -39,7 +39,8 @@ public class GroovyComponentRepository extends ComponentRepository {
 
         WeakReference<Proxy> reference = classCache.get(name);
         Proxy proxy;
-        if (reference != null && (proxy = reference.get()) != null) return proxy.cls();
+        if (reference != null && (proxy = reference.get()) != null)
+            return proxy.cls();
 
 
         Path path = Paths.get(dir.toString(), component.getName());
@@ -49,9 +50,9 @@ public class GroovyComponentRepository extends ComponentRepository {
 
         Class<?> cls = classLoader.parseClass(path.toFile());
 
-        reference = new WeakReference<>(new Proxy(classLoader,cls,component));
+        reference = new WeakReference<>(new Proxy(classLoader, cls, component));
 
-        classCache.put(name,reference);
+        classCache.put(name, reference);
 
 
         return cls;
@@ -68,7 +69,7 @@ public class GroovyComponentRepository extends ComponentRepository {
 
 
     private void clearCache(String name) {
-        if(name==null) return;
+        if (name == null) return;
         WeakReference<Proxy> reference = classCache.remove(name);
 
         Proxy proxy;
@@ -78,23 +79,29 @@ public class GroovyComponentRepository extends ComponentRepository {
     }
 
 
-    private class Proxy{
+    private class Proxy {
         private GroovyClassLoader classLoader;
         private Class<?> cls;
         private Component component;
 
-        public Proxy(GroovyClassLoader classLoader,Class<?> cls,Component component){
+        public Proxy(GroovyClassLoader classLoader, Class<?> cls, Component component) {
             this.classLoader = classLoader;
             this.cls = cls;
             this.component = component;
         }
 
 
-        public GroovyClassLoader classLoader(){ return this.classLoader;}
+        public GroovyClassLoader classLoader() {
+            return this.classLoader;
+        }
 
-        public Class<?> cls(){return cls; }
+        public Class<?> cls() {
+            return cls;
+        }
 
-        public Component component(){return component;}
+        public Component component() {
+            return component;
+        }
     }
 
 }

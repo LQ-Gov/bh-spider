@@ -34,4 +34,8 @@ public class WorkerContext extends AbstractCloseableContext {
     public void commandCompleted(Object data) {
 
     }
+
+    public Session session(){
+        return session;
+    }
 }

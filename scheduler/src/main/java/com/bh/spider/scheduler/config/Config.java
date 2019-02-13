@@ -38,11 +38,13 @@ public class Config {
 
     //抓取参数陪配置
     public static final String INIT_PROCESSOR_THREADS_COUNT = "init.processor.threads.count";
+    public static final String INIT_LOAD_CLASS_TIMEOUT="init.load.class.timeout";
 
     //集群参数配置
     public static final String SPIDER_CLUSTER_PREFIX = "spider.cluster.";
     public static final String INIT_OPERATION_CACHE_SIZE="init.operation.cache.size";
     public static final String INIT_OPERATION_LOG_PATH="init.operation.log.path";
+    public static final String DISPATCH_POLICY_PREFIX="dispatch.policy.";
 
 
     //节点信息配置
@@ -80,6 +82,9 @@ public class Config {
         config.GLOBAL.put(INIT_OPERATION_LOG_PATH,"data/operation");
 
         config.GLOBAL.put(INIT_CLUSTER_MASTER_ADDRESS+"1","127.0.0.01:");
+
+
+        //抓取配置
 
 
         return config;

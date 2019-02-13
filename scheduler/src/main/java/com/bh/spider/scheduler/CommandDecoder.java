@@ -16,6 +16,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,35 +30,46 @@ public class CommandDecoder extends ChannelInboundHandlerAdapter {
         try {
             if (buffer.isReadable()) {
 
-                CommandCode key = CommandCode.values()[buffer.readShort()];
-
                 long id = buffer.readLong();//请求ID
 
-                int len = buffer.readInt();
+                byte flag = buffer.readByte();//FLAG(请求暂时没用)
 
-                List<Object> params = new LinkedList<>();
-                if (len > 2) {
-                    byte[] data = new byte[len];
+                int len = buffer.readInt();//数据长度
 
-                    buffer.readBytes(data);
-
-                    for (JsonNode node : mapper.readTree(data)) {
-                        params.add(new JacksonToken(mapper, node.traverse()));
-                    }
-                }
-
-                Context context = buildContext(ctx,id,key);
-                Command cmd = new Command(context, key, params.toArray());
-                super.channelRead(ctx, cmd);
+                //如果是request的话
+                if ((flag & 0x04) == 0) request(ctx, id, len, buffer);
+                    //如果是response的
+                else response(ctx,id,flag,len,buffer);
             }
 
-        }finally {
+        } finally {
             buffer.release();
         }
     }
 
-    protected Context buildContext(ChannelHandlerContext ctx, long commandId,CommandCode key){
-        return new ClientContext(commandId,ctx);
+    protected void request(ChannelHandlerContext ctx, long commandId, int len, ByteBuf buffer) throws Exception {
+        CommandCode key = CommandCode.values()[buffer.readShort()];
+
+        Context context = buildContext(ctx, commandId, key);
+        List<Object> params = new LinkedList<>();
+        if (len > 2) {
+            byte[] data = new byte[len - 2];
+            buffer.readBytes(data);
+
+            for (JsonNode node : mapper.readTree(data)) {
+                params.add(new JacksonToken(mapper, node.traverse()));
+            }
+        }
+        Command cmd = new Command(context, key, params.toArray());
+        super.channelRead(ctx, cmd);
+    }
+
+    protected void response(ChannelHandlerContext ctx,long commandId,byte flag,int len,ByteBuf buffer) {
+    }
+
+
+    protected Context buildContext(ChannelHandlerContext ctx, long commandId, CommandCode key) {
+        return new ClientContext(commandId, ctx);
     }
 
 

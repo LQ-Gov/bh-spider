@@ -1,8 +1,5 @@
 package com.bh.spider.scheduler.cluster;
 
-import com.bh.spider.scheduler.cluster.ClusterScheduler;
-import com.bh.spider.scheduler.cluster.Session;
-import com.bh.spider.scheduler.event.Command;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.AttributeKey;
