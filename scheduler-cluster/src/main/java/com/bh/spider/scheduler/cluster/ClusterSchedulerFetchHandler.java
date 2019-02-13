@@ -45,7 +45,7 @@ public class ClusterSchedulerFetchHandler extends BasicSchedulerFetchHandler {
     }
 
     @Override
-    public boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
+    public  boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
 
         Allocation allocation = new Allocation(scheduler.workers(), requests);
 
