@@ -1,14 +1,19 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.spider.scheduler.CommandReceiveHandler;
+import com.bh.spider.scheduler.cluster.context.WorkerContext;
+import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.transfer.CommandCode;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.AttributeKey;
 
-public class WorkerInBoundHandler extends ChannelInboundHandlerAdapter {
+public class WorkerCommandReceiveHandler extends CommandReceiveHandler {
     private final static AttributeKey<Session> SESSION_KEY= AttributeKey.valueOf("SESSION");
 
     private ClusterScheduler scheduler;
-    public WorkerInBoundHandler(ClusterScheduler scheduler){
+
+    public WorkerCommandReceiveHandler(ClusterScheduler scheduler) {
+        super(scheduler);
         this.scheduler = scheduler;
     }
 
@@ -22,11 +27,12 @@ public class WorkerInBoundHandler extends ChannelInboundHandlerAdapter {
             this.scheduler.workers().add(session);
         }
 
-
-
-
         super.channelActive(ctx);
     }
 
-
+    @Override
+    protected Context buildContext(ChannelHandlerContext ctx, long commandId, CommandCode key) {
+        Session session = ctx.channel().<Session>attr(AttributeKey.valueOf("SESSION")).get();
+        return new WorkerContext(session,commandId);
+    }
 }

@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.cluster.connect;
 
 import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
@@ -35,13 +36,13 @@ public class Connection implements Closeable {
     private Channel channel;
     private Communicator communicator;
 
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
 
 
     private Cache<Long,Boolean> commandCache;
 
 
-    public Connection(URI uri, Communicator communicator,BasicScheduler scheduler) {
+    public Connection(URI uri, Communicator communicator, Scheduler scheduler) {
         this.uri = uri;
         this.communicator = communicator;
         this.scheduler = scheduler;

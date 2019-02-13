@@ -44,6 +44,11 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
+    public Rule rule() {
+        return rule;
+    }
+
+    @Override
     public void blast() throws ExecutionException, InterruptedException {
 
         boolean unfinished=unfinishedIndex< unfinishedCount;
@@ -106,10 +111,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     }
 
     public void execute(JobCoreScheduler jobScheduler) throws Exception {
-        Map<String, Object> params = new HashMap<>();
-        params.put(QuartzJobImpl.RULE_CONTROLLER, this);
-
-        JobContext ctx = jobScheduler.scheduler(String.valueOf(rule.getId()), rule.getCron(), params);
+        JobContext ctx = jobScheduler.scheduler(this);
         ctx.exec();
     }
 }

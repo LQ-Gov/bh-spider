@@ -1,7 +1,8 @@
 package com.bh.spider.scheduler.cluster.connect;
 
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.config.Config;
+import com.bh.spider.scheduler.Config;
+import com.bh.spider.scheduler.Scheduler;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -13,14 +14,12 @@ public class Communicator {
 
     private Config cfg;
 
-    private BasicScheduler scheduler;
 
     private Map<URI, Connection> connections = new HashMap<>();
 
     private volatile int connectionIndex=0;
 
-    public Communicator(BasicScheduler scheduler, Config cfg) throws URISyntaxException {
-        this.scheduler = scheduler;
+    public Communicator(Scheduler scheduler, Config cfg) throws URISyntaxException {
         this.cfg = cfg;
 
         Properties properties = cfg.all(Config.INIT_CLUSTER_MASTER_ADDRESS);

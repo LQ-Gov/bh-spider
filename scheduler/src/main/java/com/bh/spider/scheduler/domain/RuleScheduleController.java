@@ -18,6 +18,9 @@ public interface RuleScheduleController {
 
     void close();
 
+
+    Rule rule();
+
     /**
      * 终于到了最终读数据库的产生URL的阶段了
      */

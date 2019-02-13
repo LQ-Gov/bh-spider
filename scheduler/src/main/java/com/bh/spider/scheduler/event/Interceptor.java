@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 
 public interface Interceptor {
 
-    boolean before(EventMapping mapping, Context ctx, Method method,Object[] args);
+    boolean before(CommandHandler mapping, Context ctx, Method method, Object[] args);
 
 
     void after();

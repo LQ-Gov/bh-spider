@@ -1,29 +1,22 @@
 package com.bh.spider.scheduler.cluster.connect;
 
-import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.CommandDecoder;
-import io.netty.buffer.ByteBuf;
+import com.bh.spider.scheduler.CommandReceiveHandler;
+import com.bh.spider.scheduler.Scheduler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 
-public class CommandInBoundHandler extends CommandDecoder {
+public class CommandInBoundHandler extends CommandReceiveHandler {
 
     private Connection connection;
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
 
 
-    public CommandInBoundHandler(Connection connection,BasicScheduler scheduler){
+    public CommandInBoundHandler(Connection connection, Scheduler scheduler) {
+        super(scheduler);
         this.connection = connection;
         this.scheduler = scheduler;
     }
-
-
-    @Override
-    protected void response(ChannelHandlerContext ctx, long commandId, byte flag, int len, ByteBuf buffer) {
-        super.response(ctx, commandId, flag, len, buffer);
-    }
-
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
@@ -34,6 +27,8 @@ public class CommandInBoundHandler extends CommandDecoder {
         }
 
         super.userEventTriggered(ctx, evt);
-
     }
+
+
+
 }

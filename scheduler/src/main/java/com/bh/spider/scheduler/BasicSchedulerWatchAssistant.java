@@ -2,8 +2,8 @@ package com.bh.spider.scheduler;
 
 import com.bh.common.WatchFilter;
 import com.bh.spider.scheduler.context.ClientContext;
-import com.bh.spider.scheduler.event.EventMapping;
-import com.bh.spider.scheduler.event.IAssist;
+import com.bh.spider.scheduler.event.CommandHandler;
+import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.watch.point.Point;
 import com.bh.spider.scheduler.watch.point.PointNotFoundException;
 import com.bh.spider.scheduler.watch.point.Points;
@@ -16,10 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 暂时只支持来自客户端的监控
  */
-public class BasicSchedulerWatchHandler implements IAssist {
+public class BasicSchedulerWatchAssistant implements Assistant {
     private static Map<ChannelId, Map<String, Watcher>> WATCHERS = new ConcurrentHashMap<>();
 
-    @EventMapping(autoComplete = false)
+    @CommandHandler(autoComplete = false)
     public void WATCH_HANDLER(ClientContext ctx, String key, WatchFilter filter) throws Exception {
 
         Map<String, Watcher> map = WATCHERS.get(ctx.channelId());
@@ -47,7 +47,7 @@ public class BasicSchedulerWatchHandler implements IAssist {
      * @param ctx
      * @param key
      */
-    @EventMapping
+    @CommandHandler
     public void UNWATCH_HANDLER(ClientContext ctx, String key) {
         Map<String, Watcher> watchers = WATCHERS.get(ctx.channelId());
 

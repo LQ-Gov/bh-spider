@@ -7,6 +7,16 @@ import java.util.concurrent.ExecutionException;
 
 public class QuartzJobImpl implements Job {
     public final static String RULE_CONTROLLER="RULE-CONTROLLER";
+
+    private RuleScheduleController controller;
+
+
+    public QuartzJobImpl(RuleScheduleController controller){
+        this.controller = controller;
+
+    }
+
+
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {
 

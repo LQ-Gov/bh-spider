@@ -3,8 +3,6 @@ package com.bh.spider.scheduler.event;
 import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.token.Token;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.AnnotationUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
@@ -23,19 +21,24 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class EventLoop extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(EventLoop.class);
-    private IEvent parent;
-    private List< IAssist> assists;
-    private BlockingQueue<Pair<Command,CompletableFuture>> queue = new LinkedBlockingQueue<>();
+    private String name;
+    private List<Assistant> assists;
+    private BlockingQueue<Pair<Command, CompletableFuture>> queue = new LinkedBlockingQueue<>();
 
     private List<Interceptor> interceptors = new LinkedList<>();
-    private Map<String, CommandHandler> handlers = new HashMap<>();
+    private Map<String, CommandRunner> handlers = new HashMap<>();
 
     private boolean closed = true;
 
 
-    public EventLoop(IEvent parent, IAssist... assists) {
-        this.parent = parent;
+    public EventLoop(String name, Assistant... assists) {
+        this.name = name;
         this.assists = Arrays.asList(assists);
+    }
+
+
+    public EventLoop(Class cls, Assistant... assists) {
+        this(cls.getName(), assists);
     }
 
     public <R> CompletableFuture<R> execute(Command cmd) {
@@ -45,18 +48,18 @@ public class EventLoop extends Thread {
     }
 
     @Override
-    public void run() {
-        while (!this.parent.isClosed()) {
+    public synchronized void run() {
+        while (!closed) {
             try {
                 Pair<Command, CompletableFuture> pair = queue.take();
 
                 Command cmd = pair.getLeft();
                 CompletableFuture future = pair.getRight();
                 logger.info(Markers.EVENT_LOOP, "event loop for {}, execute command:{},params bytes size:{}",
-                        this.parent.getClass().getName(), cmd.key(), 0);
+                        name, cmd.key(), 0);
 
                 try {
-                    CommandHandler handler = handlers.get(cmd.key());
+                    CommandRunner handler = handlers.get(cmd.key());
 
                     if (handler == null) throw new RuntimeException("executor not found:" + cmd.key());
 
@@ -127,7 +130,7 @@ public class EventLoop extends Thread {
     }
 
 
-    private boolean before(EventMapping mapping, Context ctx, Method method,Object[] args) {
+    private boolean before(CommandHandler mapping, Context ctx, Method method, Object[] args) {
         if (interceptors != null && !interceptors.isEmpty()) {
             for (Interceptor interceptor : interceptors) {
                 if (!interceptor.before(mapping, ctx, method, args))
@@ -140,23 +143,22 @@ public class EventLoop extends Thread {
     }
 
 
-    private void after(){
+    private void after() {
 
     }
 
 
-    private void initAssist(IAssist o) {
+    private void initAssist(Assistant o) {
 
 
-
-        Method[] methods = MethodUtils.getMethodsWithAnnotation(o.getClass(),EventMapping.class);
+        Method[] methods = MethodUtils.getMethodsWithAnnotation(o.getClass(), CommandHandler.class);
 
         if (methods.length > 0) {
 
             AssistPool pool = new AssistPool(o);
             for (Method method : methods) {
-                EventMapping mapping = method.getAnnotation(EventMapping.class);
-                if(mapping.disabled()) continue;
+                CommandHandler mapping = method.getAnnotation(CommandHandler.class);
+                if (mapping.disabled()) continue;
 
                 String key = mapping.value();
                 if (StringUtils.isBlank(key)) {
@@ -171,7 +173,7 @@ public class EventLoop extends Thread {
                     throw new Error("the " + key + " handler is already exists");
 
 
-                handlers.put(key, new CommandHandler(o, method, mapping, pool,null));
+                handlers.put(key, new CommandRunner(o, method, mapping, pool, null));
 
             }
         }
@@ -185,12 +187,12 @@ public class EventLoop extends Thread {
     }
 
 
-    public synchronized EventLoop listen(){
+    public synchronized EventLoop listen() {
 
-        if(closed) {
-            initAssist(this.parent);
+        if (closed) {
             assists.forEach(this::initAssist);
             this.start();
+
             closed = false;
         }
         return this;

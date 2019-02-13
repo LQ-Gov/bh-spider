@@ -1,7 +1,6 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.fetch.Extractor;
-import com.bh.spider.scheduler.config.Config;
+import com.bh.spider.scheduler.Config;
 import com.bh.spider.transfer.entity.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

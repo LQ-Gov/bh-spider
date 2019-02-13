@@ -4,12 +4,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class AssistPool {
-    private IAssist assist;
+    private Assistant assist;
     private Thread thread;
     private BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
 
 
-    public AssistPool(IAssist iAssist) {
+    public AssistPool(Assistant iAssist) {
         this.assist = iAssist;
         this.thread = new Thread(this::run);
         this.thread.start();

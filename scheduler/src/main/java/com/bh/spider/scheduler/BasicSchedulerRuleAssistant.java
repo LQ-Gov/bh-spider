@@ -1,14 +1,13 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.config.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DefaultRuleScheduleController;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.domain.RuleFacade;
 import com.bh.spider.scheduler.domain.RuleScheduleController;
-import com.bh.spider.scheduler.event.EventMapping;
-import com.bh.spider.scheduler.event.IAssist;
+import com.bh.spider.scheduler.event.CommandHandler;
+import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.Json;
@@ -21,7 +20,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class BasicSchedulerRuleHandler implements IAssist {
+public class BasicSchedulerRuleAssistant implements Assistant {
     private BasicScheduler scheduler;
     private JobCoreScheduler jobCoreScheduler;
     private DomainIndex domainIndex;
@@ -31,7 +30,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     private Config cfg;
 
 
-    public BasicSchedulerRuleHandler(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, DomainIndex domainIndex) throws Exception {
+    public BasicSchedulerRuleAssistant(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, DomainIndex domainIndex) throws Exception {
         this.scheduler = scheduler;
         this.domainIndex = domainIndex;
         this.jobCoreScheduler = jobCoreScheduler;
@@ -89,7 +88,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
 
-    @EventMapping
+    @CommandHandler
     public void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (validate(rule)) {
             RuleFacade boost = facade(rule, true);
@@ -98,7 +97,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
 
     }
 
-    @EventMapping
+    @CommandHandler
     public List<Rule> GET_RULE_LIST_HANDLER(Context ctx, String host) {
 
         Iterator<RuleFacade> iterator = facadeCache.values().iterator();
@@ -113,7 +112,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
     }
 
 
-    @EventMapping
+    @CommandHandler
     public void DELETE_RULE_HANDLER(Context ctx, long id) throws IOException {
         RuleFacade boost = facadeCache.get(id);
         if (boost == null) return;
@@ -125,7 +124,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
         backup(boost.domainNode());
     }
 
-    @EventMapping
+    @CommandHandler
     public RuleFacade RULE_FACADE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (rule == null || rule.getId() <= 0) return null;
 
@@ -138,7 +137,7 @@ public class BasicSchedulerRuleHandler implements IAssist {
         return facade;
     }
 
-    @EventMapping
+    @CommandHandler
     public void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean valid) throws Exception {
         RuleFacade decorator = facadeCache.get(id);
         if (decorator == null) return;

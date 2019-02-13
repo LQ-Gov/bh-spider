@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.cluster.consistent.operation;
 
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.event.EventMapping;
+import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.Interceptor;
 
 import javax.el.*;
@@ -10,7 +10,7 @@ import java.lang.reflect.Parameter;
 
 public class OperationInterceptor implements Interceptor {
     @Override
-    public boolean before(EventMapping mapping, Context ctx, Method method, Object[] args) {
+    public boolean before(CommandHandler mapping, Context ctx, Method method, Object[] args) {
         Operation operation = method.getAnnotation(Operation.class);
         if(operation!=null) {
 

@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.config;
+package com.bh.spider.scheduler;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 /**
  * Created by lq on 17-3-29.

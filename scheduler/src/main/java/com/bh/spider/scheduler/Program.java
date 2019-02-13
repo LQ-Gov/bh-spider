@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.scheduler.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ public class Program {
         if (modeClass == null)
             throw new Exception("not valid run mode");
 
-        BasicScheduler scheduler = (BasicScheduler) modeClass.getConstructor(Config.class).newInstance(config);
+        Scheduler scheduler = (Scheduler) modeClass.getConstructor(Config.class).newInstance(config);
 
         logger.info("{} mode running", mode);
 
