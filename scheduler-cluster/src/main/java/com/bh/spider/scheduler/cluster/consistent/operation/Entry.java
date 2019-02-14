@@ -1,9 +1,8 @@
 package com.bh.spider.scheduler.cluster.consistent.operation;
 
 import com.bh.common.utils.ArrayUtils;
-import com.bh.common.utils.CRCUtils;
-import org.apache.commons.lang3.Conversion;
-import org.apache.commons.lang3.math.NumberUtils;
+
+import java.nio.ByteBuffer;
 
 public class Entry {
     private long index;
@@ -37,16 +36,13 @@ public class Entry {
 
 
     public byte[] serialize() {
-        int len = 8 + 1 + data.length;
-        byte[] bytes = new byte[4 + len];//bytes.length+index+action+data
+        int len =4+ 8 + 1 + data.length+1;
 
-        Conversion.intToByteArray(4 + len, 0, bytes, 0, 4);
+        ByteBuffer buffer = ByteBuffer.allocate(len);
 
-        Conversion.longToByteArray(index, 0, bytes, 4, 8);//index
-        bytes[12] = action;//action
-        System.arraycopy(data, 0, bytes, 13, data.length);
+        buffer.putInt(len).putLong(index).put(action).put(data).put((byte) '\n');
 
-        return bytes;
+        return buffer.array();
     }
 
 
@@ -58,11 +54,10 @@ public class Entry {
     }
 
 
-    public static Entry deserialize(byte[] data,int start,int len) {
+    public static Entry deserialize(byte[] data,int offset,int len) {
 
-        long index = Conversion.byteArrayToLong(data, start + 4, 0, 0, Integer.BYTES);
-        byte action = data[start + 12];
-        return new Entry(index, action, ArrayUtils.subarray(data, start + 13, start + len - 1));
+        ByteBuffer buffer = ByteBuffer.wrap(data, offset, len);
 
+        return new Entry(buffer.getLong(), buffer.get(), ArrayUtils.subarray(data, offset + 8 + 1, offset + len - 1));
     }
 }

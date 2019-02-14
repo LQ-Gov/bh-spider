@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.CommandReceiveHandler;
+import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.transfer.CommandCode;

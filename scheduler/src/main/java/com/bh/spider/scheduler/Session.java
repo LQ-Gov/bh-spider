@@ -1,16 +1,11 @@
-package com.bh.spider.scheduler.cluster;
+package com.bh.spider.scheduler;
 
-import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.event.Command;
 import io.netty.channel.Channel;
 
 public class Session {
     private long id;
     private Channel channel;
-
-    private long componentOperationCommittedIndex;
-
-    private long memberOperationCommittedIndex;
 
     public Session(Channel channel){
         this.channel = channel;

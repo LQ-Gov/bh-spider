@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.scheduler.event.Command;
+import com.bh.spider.scheduler.event.EventLoop;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -28,6 +29,13 @@ public interface Scheduler {
      * @return
      */
     Config config();
+
+
+    /**
+     * 事件循环器
+     * @return
+     */
+    EventLoop eventLoop();
 
 
 

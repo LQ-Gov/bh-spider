@@ -3,7 +3,6 @@ package com.bh.spider.scheduler;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -21,12 +20,17 @@ public class Config {
 
     //数据/配置存储路径
     public static final String INIT_DATA_PATH = "init.data.path";
-    public static final String INIT_DATA_RULE_PATH = "init.data.rule.path";
+
+    public static final String INIT_DATA_RULE_PATH = "init.data.rule.path";//规则存储路径
+    public static final String INIT_COMPONTENT_PATH="init.data.component.path";//组件存储路径
     public static final String INIT_PHANTOMJS_PATH = "init.phantomjs.path";
+    public static final String INIT_OPERATION_LOG_PATH="init.operation.log.path";//操作日志存储路径
 
     //数据库存储配置
     public static final String INIT_STORE_BUILDER = "init.store.builder"; //存储引擎类型
     public static final String INIT_STORE_PROPERTIES="init.store.properties.";//存储引擎类型配置前缀
+
+
 
 
 
@@ -42,7 +46,6 @@ public class Config {
     //集群参数配置
     public static final String SPIDER_CLUSTER_PREFIX = "spider.cluster.";
     public static final String INIT_OPERATION_CACHE_SIZE="init.operation.cache.size";
-    public static final String INIT_OPERATION_LOG_PATH="init.operation.log.path";
     public static final String DISPATCH_POLICY_PREFIX="dispatch.policy.";
 
 
@@ -56,6 +59,7 @@ public class Config {
         Config config = new Config();
         config.GLOBAL.put(INIT_DATA_PATH, "data/");
         config.GLOBAL.put(INIT_DATA_RULE_PATH,"data/rule");
+        config.GLOBAL.put(INIT_COMPONTENT_PATH,"data/component");
         config.GLOBAL.put(INIT_RUN_MODE, "stand-alone");
         config.GLOBAL.put(INIT_LISTEN_PORT, "8033");
         config.GLOBAL.put(INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors() * 2);
@@ -123,13 +127,6 @@ public class Config {
         return properties;
 
     }
-
-
-    public Collection<Map.Entry<Object, Object>> toCollection() {
-        return GLOBAL.entrySet();
-    }
-
-
 }
 
 

@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler.cluster.dispatch;
 
 import com.bh.spider.fetch.Request;
-import com.bh.spider.scheduler.Worker;
-import com.bh.spider.scheduler.cluster.Workers;
+import com.bh.spider.scheduler.cluster.worker.Worker;
+import com.bh.spider.scheduler.cluster.worker.Workers;
 
 import java.util.*;
 

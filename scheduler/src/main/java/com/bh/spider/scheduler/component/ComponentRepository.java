@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.concurrent.Future;
 
 public abstract class ComponentRepository {
 
@@ -23,6 +22,8 @@ public abstract class ComponentRepository {
 
         this.base = dir;
         this.componentType = type;
+
+        Files.createDirectories(dir);
 
         metadata = new Metadata(Paths.get(base.toString(), "metadata"));
     }

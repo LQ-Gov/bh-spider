@@ -1,45 +1,39 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.BasicSchedulerFetchAssistant;
-import com.bh.spider.scheduler.BasicSchedulerWatchAssistant;
-import com.bh.spider.scheduler.cluster.connect.Communicator;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.Config;
+import com.bh.spider.scheduler.cluster.connect.Communicator;
 import com.bh.spider.scheduler.cluster.initialization.CommunicatorInitializer;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
-import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.event.CommandHandler;
+import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.DirectoriesInitializer;
 import com.bh.spider.scheduler.initialization.EventLoopInitializer;
-import com.bh.spider.transfer.entity.Component;
 import com.bh.spider.transfer.entity.Node;
-import org.apache.commons.io.FileUtils;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.List;
 
 public class WorkerScheduler extends BasicScheduler {
-    private Config cfg;
+
     private Communicator communicator;
     private EventLoop loop;
     public WorkerScheduler(Config config) throws Exception {
         super(config);
 
-        this.cfg = config;
+    }
 
-
+    @Override
+    public EventLoop eventLoop() {
+        return loop;
     }
 
     @Override
     public synchronized void exec() throws Exception {
         //初始化存储文件夹
-        new DirectoriesInitializer(config().get(Config.INIT_DATA_PATH),"operation",Component.Type.JAR.name(), Component.Type.GROOVY.name()).exec();
+        new DirectoriesInitializer(config().get(Config.INIT_OPERATION_LOG_PATH),config().get(Config.INIT_COMPONTENT_PATH)).exec();
 
-        new OperationRecorderInitializer(config().get(Config.INIT_DATA_PATH), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)),"component").exec();
+        new OperationRecorderInitializer(Paths.get( config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)),"component").exec();
 
         this.communicator = new CommunicatorInitializer(this,config()).exec();
 

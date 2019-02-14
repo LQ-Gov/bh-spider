@@ -5,15 +5,14 @@ import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFac
 import com.bh.spider.scheduler.initialization.Initializer;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class OperationRecorderInitializer implements Initializer<Void> {
-    private String base;
+    private Path path;
     private String[] names;
     private int cacheSize;
 
-    public OperationRecorderInitializer(String basePath,int cacheSize, String... names){
-        this.base = basePath;
+    public OperationRecorderInitializer(Path path,int cacheSize, String... names){
+        this.path = path;
         this.cacheSize = cacheSize;
         this.names = names;
 
@@ -23,9 +22,7 @@ public class OperationRecorderInitializer implements Initializer<Void> {
     public Void exec() throws Exception {
 
         for(String name:names) {
-            Path path = Paths.get(base,name);
-
-            OperationRecorder recorder = new OperationRecorder(path, cacheSize);
+            OperationRecorder recorder = new OperationRecorder(name, path, cacheSize);
             OperationRecorderFactory.register(recorder);
         }
 

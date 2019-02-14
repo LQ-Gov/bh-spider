@@ -18,7 +18,7 @@ public class ComponentCoreFactory {
     private Map<Component.Type,ComponentRepository> componentRepositories = new HashMap<>();
 
     public ComponentCoreFactory(Config cfg) throws IOException {
-        String dataPath = cfg.get(Config.INIT_DATA_PATH);
+        String dataPath = cfg.get(Config.INIT_COMPONTENT_PATH);
 
         JarComponentRepository jarComponentRepository = new JarComponentRepository(Paths.get(dataPath, Component.Type.JAR.name()));
 

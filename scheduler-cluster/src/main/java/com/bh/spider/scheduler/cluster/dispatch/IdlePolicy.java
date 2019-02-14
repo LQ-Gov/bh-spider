@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.cluster.dispatch;
 
 import com.bh.spider.fetch.Request;
-import com.bh.spider.scheduler.Worker;
+import com.bh.spider.scheduler.cluster.worker.Worker;
 
 import java.util.Collection;
 import java.util.Map;
@@ -14,6 +14,13 @@ public class IdlePolicy implements Policy {
 
     @Override
     public void filter(Map<Worker, Collection<Request>> allocated, Collection<Request> remained, Collection<Request> abandoned) {
+
+
+    }
+
+
+    private void checkAllocated(Map<Worker, Collection<Request>> allocated,Collection<Request> remained) {
+
 
     }
 }

@@ -1,12 +1,9 @@
 package com.bh.spider.scheduler.cluster.dispatch;
 
 import com.bh.spider.fetch.Request;
-import com.bh.spider.scheduler.Worker;
-import com.bh.spider.scheduler.cluster.Workers;
+import com.bh.spider.scheduler.cluster.worker.Worker;
 
-import java.util.BitSet;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 public interface Policy {

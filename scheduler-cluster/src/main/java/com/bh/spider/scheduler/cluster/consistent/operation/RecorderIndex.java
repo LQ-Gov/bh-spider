@@ -1,99 +1,109 @@
 package com.bh.spider.scheduler.cluster.consistent.operation;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.Conversion;
-
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public class RecorderIndex {
 
-    private final byte[] memory = new byte[17];
+    private final static byte BLOCK_SIZE= 17;
+    private final byte[] memory = new byte[BLOCK_SIZE];
+    private final ByteBuffer buffer = ByteBuffer.allocate(BLOCK_SIZE);
 
-    private long committedIndex;
+    private Entry last;
 
-    private RandomAccessFile reader;
+    private FileChannel writeChannel;
 
-    private RandomAccessFile writer;
+    private FileChannel readChannel;
 
 
     public RecorderIndex(Path path) throws IOException {
-        this(path.toFile());
 
+        this.last = null;
+
+        this.writeChannel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+
+        this.readChannel = FileChannel.open(path, StandardOpenOption.READ);
+
+
+        checkLastCommit();
     }
 
 
-    public RecorderIndex(File file) throws IOException {
-
-        file.createNewFile();
 
 
-        reader = new RandomAccessFile(file, "r");
+    private void checkLastCommit() throws IOException {
+        long len = readChannel.size();
+        if (len < BLOCK_SIZE) return;
 
-        writer = new RandomAccessFile(file, "w");
 
+        long pos = len - BLOCK_SIZE;
+        writeToBuffer(pos);
 
-        checkLastCommit(reader);
+        buffer.flip();
+
+        for (int i = 0; i < buffer.limit(); i++) {
+            if (buffer.get(i) == '\n') {
+                pos = pos + i - BLOCK_SIZE;
+                writeToBuffer(pos);
+                buffer.flip();
+
+                last = new Entry(buffer.getLong(), pos);
+                writeChannel.position(readChannel.position());
+                break;
+            }
+        }
     }
 
-
-    private void checkLastCommit(RandomAccessFile reader) throws IOException {
-        long len = reader.length();
-        if (len == 0) return;
-
-        long pos = len - 1;
-        int ch = -1;
-
-        do{
-            reader.seek(pos);
-            ch = reader.read();
-        } while (ch != '\n' && (--pos) >= 0);
-
-        if(ch=='\n') {
-            reader.seek(pos-16);
-            reader.read(memory);
-            committedIndex = Conversion.byteArrayToLong(memory, 0, 0, 0, Long.BYTES);
-        }
-        else {
-            committedIndex = 0;
-        }
-        writer.seek(pos+1);
+    private void writeToBuffer(long pos) throws IOException {
+        buffer.clear();
+        readChannel.position(pos);
+        readChannel.read(buffer);
     }
 
 
 
     public void write(long committedIndex,long pos) throws IOException {
 
-        byte[] data = new byte[17];
-        Conversion.longToByteArray(committedIndex, 0, data, 0, Long.BYTES);
-        Conversion.longToByteArray(pos, 0, data, 8, Long.BYTES);
-        data[16] = '\n';
+        buffer.clear();
+        buffer.putLong(committedIndex).putLong(pos).put((byte) '\n');
+        buffer.flip();
+        writeChannel.write(buffer);
+        this.writeChannel.force(true);
 
-
-        writer.write(data);
-
-        this.committedIndex = committedIndex;
-
+        this.last = new Entry(committedIndex, pos);
     }
 
 
 
     public long position(long index) throws IOException {
-        if (committedIndex() < index) return -1;
+        Entry entry = last;
+        if (index < 0 || entry == null || entry.committedIndex < index) return -1;
 
-        long offset = (committedIndex - index + 1) * 17;
 
-        reader.seek(reader.length() - offset);
+        long offset = (entry.committedIndex - index) * BLOCK_SIZE;
 
-        reader.read(memory);
+        writeToBuffer(entry.position - offset);
 
-        return Conversion.byteArrayToLong(memory,0,0,0,Long.BYTES);
+        buffer.flip();
+
+        return buffer.getLong(8);
     }
 
 
     public long committedIndex(){
-        return committedIndex;
+        return last==null?-1:last.committedIndex;
+    }
+
+
+    private class Entry{
+        private long committedIndex;
+        private long position;
+        public Entry(long committedIndex,long position){
+            this.committedIndex =committedIndex;
+            this.position = position;
+        }
     }
 }

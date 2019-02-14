@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicSchedulerComponentAssistant;
+import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
 import com.bh.spider.scheduler.cluster.consistent.operation.Operation;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
@@ -44,7 +45,7 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
     //向worker同步component 日志
     @CommandHandler
-    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(Context ctx,Session session,long committedIndex) throws IOException {
+    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(Context ctx, Session session, long committedIndex) throws IOException {
         long localCommittedIndex = componentOperationRecorder.committedIndex();
         if (localCommittedIndex > committedIndex) {
             List<Entry> entries = componentOperationRecorder.load(committedIndex + 1, localCommittedIndex);

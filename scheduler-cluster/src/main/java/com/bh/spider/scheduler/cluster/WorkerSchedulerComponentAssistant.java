@@ -63,7 +63,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
             Component component = repository.get(name);
             if (component == null) return null;
 
-            if (!component.isValid()) {
+            if (component.isExpired()) {
                 Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT, new Object[]{name});
                 ctx.write(cmd);
 

@@ -3,6 +3,7 @@ package com.bh.spider.scheduler.component;
 import com.bh.spider.transfer.entity.Component;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -13,6 +14,7 @@ public class JarComponentRepository extends ComponentRepository {
     public JarComponentRepository(Path path) throws IOException {
         super(Component.Type.JAR, path);
         this.dir = path;
+
 
         this.classLoader = new JarComponentClassLoader(JarComponentRepository.class.getClassLoader());
 

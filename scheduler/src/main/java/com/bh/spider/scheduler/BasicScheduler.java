@@ -3,12 +3,14 @@ package com.bh.spider.scheduler;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
-import com.bh.spider.scheduler.event.*;
+import com.bh.spider.scheduler.event.Assistant;
+import com.bh.spider.scheduler.event.Command;
+import com.bh.spider.scheduler.event.CommandHandler;
+import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
 import com.bh.spider.transfer.entity.Node;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -65,7 +67,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     @Override
     public <R> CompletableFuture<R> process(Command cmd) {
-        return loop.execute(cmd);
+        return eventLoop().execute(cmd);
     }
 
     @Override
@@ -73,14 +75,17 @@ public class BasicScheduler implements Scheduler, Assistant {
         return cfg;
     }
 
+    @Override
+    public EventLoop eventLoop() {
+        return loop;
+    }
+
 
     @Override
     public synchronized void exec() throws Exception {
 
         //初始化存储文件夹
-        new DirectoriesInitializer(
-                cfg.get(Config.INIT_DATA_PATH),
-                "rule", Component.Type.JAR.name(), Component.Type.GROOVY.name()).exec();
+        new DirectoriesInitializer(cfg.get(Config.INIT_COMPONTENT_PATH), cfg.get(Config.INIT_DATA_RULE_PATH)).exec();
 
         //初始化存储引擎
         this.store = new StoreInitializer(config().get(Config.INIT_STORE_BUILDER), config().all(Config.INIT_STORE_PROPERTIES)).exec();
@@ -106,7 +111,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
 
         //初始化事件循环线程
-        this.loop = new EventLoopInitializer(BasicScheduler.class,this,
+        this.loop = new EventLoopInitializer(BasicScheduler.class, this,
                 new BasicSchedulerComponentAssistant(cfg, this),
                 new BasicSchedulerRuleAssistant(cfg, this, this.store, this.jobCoreScheduler, domainIndex),
                 new BasicSchedulerFetchAssistant(this, domainIndex, store),

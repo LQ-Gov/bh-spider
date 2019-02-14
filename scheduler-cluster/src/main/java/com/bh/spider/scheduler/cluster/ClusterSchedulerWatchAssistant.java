@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.spider.scheduler.BasicSchedulerWatchAssistant;
+import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.CommandHandler;
 

@@ -1,13 +1,11 @@
 package com.bh.spider.scheduler.cluster;
 
-import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.CommandReceiveHandler;
-import com.bh.spider.scheduler.Config;
-import com.bh.spider.scheduler.Scheduler;
+import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.entity.Sync;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
+import com.bh.spider.scheduler.cluster.worker.Workers;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
@@ -17,7 +15,6 @@ import com.bh.spider.scheduler.initialization.*;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -55,15 +52,22 @@ public class ClusterScheduler extends BasicScheduler {
 
     }
 
+
+    @Override
+    public EventLoop eventLoop() {
+        return loop;
+    }
+
     @Override
     public synchronized void exec() throws Exception {
 
         //初始化存储文件夹
         new DirectoriesInitializer(
-                config().get(Config.INIT_DATA_PATH),
-                "rule", "operation", Component.Type.JAR.name(), Component.Type.GROOVY.name()).exec();
+                config().get(Config.INIT_DATA_RULE_PATH),
+                config().get(Config.INIT_COMPONTENT_PATH),
+                config().get(Config.INIT_OPERATION_LOG_PATH)).exec();
 
-        new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_DATA_PATH), "operation").toString(), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "default", "component").exec();
+        new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "default", "component").exec();
 
         //初始化存储引擎
         this.store = new StoreInitializer(config().get(Config.INIT_STORE_BUILDER), config().all(Config.INIT_STORE_PROPERTIES)).exec();
@@ -102,6 +106,7 @@ public class ClusterScheduler extends BasicScheduler {
 
         //初始化事件循环线程
         this.loop = new EventLoopInitializer(ClusterScheduler.class, this,
+                new BasicSchedulerRuleAssistant(config(), this, this.store, this.jobCoreScheduler, domainIndex),
                 new ClusterSchedulerComponentAssistant(config(), this),
                 new ClusterSchedulerFetchAssistant(this, domainIndex, store),
                 new ClusterSchedulerWatchAssistant()).exec();

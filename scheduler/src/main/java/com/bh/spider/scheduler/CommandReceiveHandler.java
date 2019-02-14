@@ -56,8 +56,8 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
 
                 Context context = buildContext(ctx, id, key);
                 List<Object> params = new LinkedList<>();
-                if (len > 2) {
-                    byte[] data = new byte[len - 2];
+                if (len > 0) {
+                    byte[] data = new byte[len];
                     buffer.readBytes(data);
 
                     for (JsonNode node : mapper.readTree(data)) {

@@ -1,11 +1,9 @@
 package com.bh.spider.scheduler.cluster.connect;
 
-import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
-import com.bh.transport.Transport;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -82,7 +80,7 @@ public class Connection implements Closeable {
         short cmdCode = (short) CommandCode.valueOf(command.key()).ordinal();
         byte[] data = Json.get().writeValueAsBytes(command.params());
 
-        data = Transport.request(id, cmdCode, data);
+//        data = Transport.request(id, cmdCode, data);
 
         ByteBuf buf = channel.alloc().buffer(data.length);//id,flag,len,data
         buf.writeBytes(data);

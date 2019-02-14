@@ -1,6 +1,7 @@
-package com.bh.spider.scheduler.cluster;
+package com.bh.spider.scheduler.cluster.worker;
 
-import com.bh.spider.scheduler.Worker;
+import com.bh.spider.scheduler.Session;
+import com.bh.spider.scheduler.cluster.ClusterScheduler;
 import com.bh.spider.scheduler.event.Command;
 
 import java.util.*;

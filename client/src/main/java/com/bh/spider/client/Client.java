@@ -17,14 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
+import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -39,7 +36,7 @@ public class Client {
 
 
     private String server = null;
-    private Socket socket = null;
+
     private RuleOperation ruleOperation = null;
     private ComponentOperation componentOperation = null;
     private RequestOperation requestOperation = null;
@@ -47,6 +44,7 @@ public class Client {
     private Receiver receiver = null;
     private Sender sender = null;
 
+    private SocketChannel channel;
     private Properties properties = null;
 
 
@@ -59,16 +57,19 @@ public class Client {
         this.properties = properties == null ? new Properties() : properties;
         this.server = server;
 
+
     }
 
 
     public boolean open() throws URISyntaxException, IOException {
         URI uri = new URI("tcp://" + server);
-        socket = new Socket(uri.getHost(), uri.getPort());
-        receiver = new Receiver(socket);
+
+        this.channel = SocketChannel.open(new InetSocketAddress(uri.getHost(),uri.getPort()));
+
+        receiver = new Receiver(this.channel.socket());
         receiver.start();
 
-        this.sender = new Sender(socket, receiver);
+        this.sender = new Sender(channel, receiver);
         this.ruleOperation = new RuleOperation(this.sender);
         this.componentOperation = new ComponentOperation(this.sender, this.properties);
         this.requestOperation = new RequestOperation(this.sender);
@@ -76,7 +77,7 @@ public class Client {
     }
 
     public void close() throws IOException, InterruptedException {
-        if (socket != null && socket.isConnected()) socket.close();
+        if (channel != null && channel.isConnected()) channel.close();
         if (receiver.isAlive()) receiver.join();
 
     }

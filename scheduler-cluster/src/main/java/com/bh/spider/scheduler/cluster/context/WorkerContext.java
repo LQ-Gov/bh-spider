@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.cluster.context;
 
 import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.scheduler.cluster.Session;
+import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.context.AbstractCloseableContext;
 
 public class WorkerContext extends AbstractCloseableContext {

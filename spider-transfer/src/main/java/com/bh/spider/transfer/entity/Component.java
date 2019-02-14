@@ -1,8 +1,5 @@
 package com.bh.spider.transfer.entity;
 
-import com.sun.org.apache.bcel.internal.generic.RET;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.Serializable;
 import java.util.Date;
 
@@ -10,9 +7,6 @@ import java.util.Date;
  * Created by lq on 17-6-21.
  */
 public class Component implements Serializable,Cloneable {
-    public enum State {
-        NULL, TMP, VALID
-    }
 
     public enum Type {
         UNKNOWN("unknown"),
@@ -51,8 +45,9 @@ public class Component implements Serializable,Cloneable {
     private String hash;
     private Type type;
     private String description;
-    private boolean valid;
+    private boolean expired;
     private Date createTime;
+
 
     private byte[] data;
 
@@ -114,12 +109,12 @@ public class Component implements Serializable,Cloneable {
     }
 
 
-    public boolean isValid() {
-        return valid;
+    public boolean isExpired() {
+        return expired;
     }
 
-    public void setValid(boolean valid) {
-        this.valid = valid;
+    public void setExpired(boolean expired) {
+        this.expired = expired;
     }
 
     public byte[] getData() {

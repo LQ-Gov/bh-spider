@@ -5,11 +5,8 @@ import com.bh.spider.transfer.entity.Component;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -20,28 +17,29 @@ import java.util.stream.Collectors;
 public class Metadata {
     private final static int FIXED_ROW_SIZE = 500;
 
-
-    private Path path;
-
     private Map<String, Position<Component>> components = new HashMap<>();
-
 
     private RandomAccessFile accessor;
 
+    private long lastPositionIndex;
+
 
     public Metadata(Path path) throws IOException {
-        this.path = path;
-        this.accessor = new RandomAccessFile(path.toFile(), "rw");
-        if (Files.exists(path) && Files.size(path) > 0) {
-            long pos = 0;
+        this.accessor = new RandomAccessFile(path.toFile(), "rws");
+        this.lastPositionIndex =0;
 
-            while (pos < accessor.length()) {
-                Position<Component> position = read0(pos);
+        long len = this.accessor.length();
+        if (Files.exists(path) && len > 0) {
+            long pos = 0;
+            while(len-pos>=FIXED_ROW_SIZE) {
+                Position<Component> position = read0(pos,null);
                 if (position != null)
                     components.put(position.data().getName(), position);
-
                 pos += FIXED_ROW_SIZE;
             }
+
+            lastPositionIndex = pos;
+
         }
     }
 
@@ -60,28 +58,27 @@ public class Metadata {
         if (pos >= 0 && pos != accessor.getFilePointer())
             accessor.seek(pos);
 
-        pos = accessor.getFilePointer();
-        accessor.writeBoolean(false);//先设置此行无效
+        accessor.writeBoolean(true);//先设置此行无效
+        accessor.writeBoolean(false);//设置没有过期
         byte[] data = Json.get().writeValueAsBytes(component);
-        accessor.writeInt(data.length);
+        accessor.writeInt(data.length);//设置组件数据长度
         accessor.write(data);
-        byte[] surplus = new byte[FIXED_ROW_SIZE - data.length - 4];//4字节表示有效字节长度的值,1为换行符
+        byte[] surplus = new byte[FIXED_ROW_SIZE - 1 - 1 - data.length - 4];//1:valid,1:expired,4:data.length
         accessor.write(surplus);
-        long end = accessor.getFilePointer();
-        accessor.seek(pos);
-        accessor.writeBoolean(true);//写完 设置此行有效
-        accessor.seek(end);
+
+
+        if (pos + FIXED_ROW_SIZE >= accessor.length()) lastPositionIndex = pos + FIXED_ROW_SIZE;
 
         return pos;
     }
 
-    private Position<Component> read0(long pos) throws IOException {
-        if (pos != accessor.getFilePointer())
-            accessor.seek(pos);
-        if (pos == accessor.length()) return null;
+    private Position<Component> read0(long pos,Position<Component> position) throws IOException {
+        if (accessor.length() - pos < FIXED_ROW_SIZE) return null;
+        accessor.seek(pos);
 
         if (!accessor.readBoolean())
             return null;
+        boolean expired = accessor.readBoolean();
 
         int size = accessor.readInt();
 
@@ -90,7 +87,8 @@ public class Metadata {
 
 
         Component component = Json.get().readValue(data, Component.class);
-        return new Position<>(component, pos);
+        component.setExpired(expired);
+        return position == null ? new Position<>(component, pos) : position.cover(component, pos,false);
     }
 
 
@@ -99,15 +97,13 @@ public class Metadata {
         long pos;
         Position<Component> position = components.get(component.getName());
         if (position != null) {
-            long current = accessor.getFilePointer();
             pos = write0(component, position.pos());
-            accessor.seek(current);
         } else {
             position = new Position<>();
-            pos = write0(component, -1);
+            pos = write0(component, lastPositionIndex);
         }
 
-        components.put(component.getName(), position.cover(component, pos));
+        components.put(component.getName(), position.cover(component, pos,true));
     }
 
     public Component get(String name) {
@@ -182,11 +178,15 @@ public class Metadata {
         }
 
 
-        public Position<T> cover(T data,long pos) {
+        public Position<T> cover(T data,long pos,boolean notify) {
             this.data = data;
             this.pos = pos;
 
-            this.notifyAll();
+            if(notify) {
+                synchronized (this) {
+                    this.notifyAll();
+                }
+            }
 
 
             return this;

@@ -1,13 +1,13 @@
 package com.bh.spider.scheduler.cluster.consistent.operation;
 
 import com.google.common.collect.EvictingQueue;
-import org.apache.commons.io.IOUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,10 +21,10 @@ public class OperationRecorder {
     private Queue<Entry> cacheQueue;
 
 
-    private RandomAccessFile reader;
+    private FileChannel reader;
 
 
-    private RandomAccessFile writer;
+    private FileChannel writer;
 
 
     private RecorderIndex recorderIndex;
@@ -38,17 +38,21 @@ public class OperationRecorder {
         this.name = name;
         this.cacheQueue = EvictingQueue.create(cacheSize);
 
-        File file = new File(path.toFile(),name);
+        Path filePath = Paths.get(path.toString(), name);
 
-        file.createNewFile();
+        writer = FileChannel.open(filePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
-        reader = new RandomAccessFile(file, "r");
+        reader = FileChannel.open(filePath, StandardOpenOption.READ);
 
-        writer = new RandomAccessFile(file, "w");
+        Path indexPath = Paths.get(path.toString(), name + ".index");
 
+        recorderIndex = new RecorderIndex(indexPath);
 
-        recorderIndex = new RecorderIndex(new File(path.toFile(),name+".index"));
+        if (recorderIndex.committedIndex() != -1) {
+            long pos = recorderIndex.position(recorderIndex.committedIndex());
+            skip(writer, pos, 1);
 
+        }
     }
 
 
@@ -73,13 +77,13 @@ public class OperationRecorder {
         entry.setIndex(nextIndex);
 
         try {
-            long pos = writer.getFilePointer();
-            writer.write(entry.serialize());
-            writer.write('\n');
+            long pos = writer.position();
+
+            writer.write(ByteBuffer.wrap(entry.serialize()));
 
             recorderIndex.write(nextIndex, pos);
-
             cacheQueue.add(entry);
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -91,14 +95,38 @@ public class OperationRecorder {
 
     }
 
-    private Entry read() throws IOException {
-        int len = reader.readInt();
 
-        byte[] data = new byte[len+1];
+    private void skip(FileChannel channel,long pos,int len) throws IOException {
+
+        long end = channel.size();
+
+
+        ByteBuffer buffer = ByteBuffer.allocate(4);
+
+        for(int i=0;i<len&&pos<end;i++) {
+            channel.position(pos);
+
+            buffer.clear();
+            if(channel.read(buffer)==buffer.capacity()) {
+                buffer.flip();
+
+                pos += buffer.getInt() + 4;
+            }
+            else break;
+        }
+    }
+
+    private Entry read() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(4);
+        reader.read(buffer);
+        buffer.flip();
+
+        ByteBuffer data = ByteBuffer.allocate(buffer.getInt());
 
         reader.read(data);
 
-        return Entry.deserialize(data,0,len);
+
+        return Entry.deserialize(data.array(), 0, data.capacity() - 1);
 
     }
 
@@ -106,7 +134,7 @@ public class OperationRecorder {
     private List<Entry> read(long startPos,long size) throws IOException {
         List<Entry> result = new LinkedList<>();
 
-        reader.seek(startPos);
+        reader.position(startPos);
 
         for (long i = 1; i < size; i++) {
             result.add(read());

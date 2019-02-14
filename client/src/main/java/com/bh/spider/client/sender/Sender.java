@@ -6,12 +6,11 @@ import com.bh.spider.client.receiver.Receiver;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.Conversion;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
@@ -23,8 +22,6 @@ public class Sender {
 
     private final AtomicLong ID = new AtomicLong(0);
 
-    private DataOutputStream out;
-
     private Receiver receiver;
 
     private HeartBeat heartBeat;
@@ -32,10 +29,13 @@ public class Sender {
     private long lastWriteTime;
 
 
+    private SocketChannel channel;
 
 
-    public Sender(Socket socket, Receiver receiver) throws IOException {
-        this.out = new DataOutputStream(socket.getOutputStream());
+
+
+    public Sender(SocketChannel channel, Receiver receiver) throws IOException {
+        this.channel =channel;
         this.receiver = receiver;
 
         this.heartBeat = new HeartBeat(this, 10000);
@@ -55,16 +55,16 @@ public class Sender {
         byte[] data = params == null || params.length == 0 ? new byte[0] : mapper.writeValueAsBytes(params);
 
         byte[] result = new byte[8 + 2 + 4 + data.length];
-        Conversion.longToByteArray(id, 0, result, 0, Long.BYTES);
 
-        Conversion.shortToByteArray(cmdCode, 0, result, 8, Short.BYTES);
 
-        Conversion.intToByteArray(data.length, 0, result, 10, Integer.BYTES);
+        ByteBuffer buffer = ByteBuffer.allocate(8+2+4+data.length);
+        buffer.putLong(id).putShort(cmdCode).putInt(data.length).put(data);
 
-        System.arraycopy(data, 0, result, 14, data.length);
+        buffer.flip();
 
-        out.write(data);
-        out.flush();
+        while (buffer.hasRemaining()) {
+            channel.write(buffer);
+        }
 
         lastWriteTime = System.currentTimeMillis();
     }
