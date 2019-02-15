@@ -1,10 +1,29 @@
 package com.bh.spider.transfer.entity;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class Node {
     private String ip;
     private String hostname;
+    private String os;
     private String type;
     private String state;
+
+
+
+    public static Node self() throws UnknownHostException {
+        InetAddress local = Inet4Address.getLocalHost();
+
+        Node node = new Node();
+        node.setIp(local.getHostAddress());
+        node.setHostname(local.getHostName());
+        node.setOs(System.getProperty("os.name"));
+
+
+        return node;
+    }
 
 
     public String getIp() {
@@ -37,5 +56,14 @@ public class Node {
 
     public void setState(String state) {
         this.state = state;
+    }
+
+
+    public String getOs() {
+        return os;
+    }
+
+    public void setOs(String os) {
+        this.os = os;
     }
 }

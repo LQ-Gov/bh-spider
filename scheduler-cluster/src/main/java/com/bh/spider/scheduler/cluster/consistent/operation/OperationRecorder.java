@@ -1,6 +1,8 @@
 package com.bh.spider.scheduler.cluster.consistent.operation;
 
 import com.google.common.collect.EvictingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Queue;
 
 public class OperationRecorder {
+    private final static Logger logger = LoggerFactory.getLogger(OperationRecorder.class);
 
     private String name;
 
@@ -40,7 +43,7 @@ public class OperationRecorder {
 
         Path filePath = Paths.get(path.toString(), name);
 
-        writer = FileChannel.open(filePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+        writer = FileChannel.open(filePath, StandardOpenOption.WRITE,StandardOpenOption.READ, StandardOpenOption.CREATE);
 
         reader = FileChannel.open(filePath, StandardOpenOption.READ);
 
@@ -48,8 +51,10 @@ public class OperationRecorder {
 
         recorderIndex = new RecorderIndex(indexPath);
 
-        if (recorderIndex.committedIndex() != -1) {
-            long pos = recorderIndex.position(recorderIndex.committedIndex());
+        long committedIndex =recorderIndex.committedIndex();
+        if (committedIndex != -1) {
+
+            long pos = recorderIndex.position(committedIndex);
             skip(writer, pos, 1);
 
         }
@@ -103,17 +108,20 @@ public class OperationRecorder {
 
         ByteBuffer buffer = ByteBuffer.allocate(4);
 
-        for(int i=0;i<len&&pos<end;i++) {
-            channel.position(pos);
-
+        channel.position(pos);
+        for (int i = 0; i < len && pos < end; i++) {
             buffer.clear();
-            if(channel.read(buffer)==buffer.capacity()) {
+            if (channel.read(buffer) == buffer.capacity()) {
                 buffer.flip();
 
-                pos += buffer.getInt() + 4;
-            }
-            else break;
+                pos += buffer.getInt();
+                channel.position(pos);
+
+            } else break;
         }
+
+
+        logger.info("当前writer position:{}", channel.position());
     }
 
     private Entry read() throws IOException {

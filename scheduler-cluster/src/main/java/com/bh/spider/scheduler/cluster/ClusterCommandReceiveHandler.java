@@ -7,13 +7,16 @@ import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.transfer.CommandCode;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class WorkerCommandReceiveHandler extends CommandReceiveHandler {
+public class ClusterCommandReceiveHandler extends CommandReceiveHandler {
+    private final static Logger logger = LoggerFactory.getLogger(ClusterCommandReceiveHandler.class);
     private final static AttributeKey<Session> SESSION_KEY= AttributeKey.valueOf("SESSION");
 
     private ClusterScheduler scheduler;
 
-    public WorkerCommandReceiveHandler(ClusterScheduler scheduler) {
+    public ClusterCommandReceiveHandler(ClusterScheduler scheduler) {
         super(scheduler);
         this.scheduler = scheduler;
     }
@@ -25,10 +28,17 @@ public class WorkerCommandReceiveHandler extends CommandReceiveHandler {
         if(session==null) {
             session = new Session(ctx.channel());
             ctx.channel().attr(SESSION_KEY).set(session);
-            this.scheduler.workers().add(session);
+
+
         }
 
         super.channelActive(ctx);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        Session session = ctx.channel().attr(SESSION_KEY).get();
+        session.close();
     }
 
     @Override

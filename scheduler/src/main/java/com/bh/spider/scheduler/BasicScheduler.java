@@ -20,8 +20,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -53,12 +51,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     public BasicScheduler(Config config) throws Exception {
         this.cfg = config;
-
-        InetAddress local = Inet4Address.getLocalHost();
-
-        this.me = new Node();
-        this.me.setIp(local.getHostAddress());
-        this.me.setHostname(local.getHostName());
+        this.me = Node.self();
         this.me.setType("DEFAULT");
 
     }
@@ -80,12 +73,17 @@ public class BasicScheduler implements Scheduler, Assistant {
         return loop;
     }
 
+    @Override
+    public Node self() {
+        return me;
+    }
+
 
     @Override
     public synchronized void exec() throws Exception {
 
         //初始化存储文件夹
-        new DirectoriesInitializer(cfg.get(Config.INIT_COMPONTENT_PATH), cfg.get(Config.INIT_DATA_RULE_PATH)).exec();
+        new DirectoriesInitializer(cfg.get(Config.INIT_COMPONENT_PATH), cfg.get(Config.INIT_DATA_RULE_PATH)).exec();
 
         //初始化存储引擎
         this.store = new StoreInitializer(config().get(Config.INIT_STORE_BUILDER), config().all(Config.INIT_STORE_PROPERTIES)).exec();
@@ -142,7 +140,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     @CommandHandler
     public List<Node> GET_NODE_LIST_HANDLER() {
-        return Collections.singletonList(me);
+        return Collections.singletonList(self());
     }
 
     @CommandHandler

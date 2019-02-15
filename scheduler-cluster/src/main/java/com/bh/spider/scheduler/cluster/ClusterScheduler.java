@@ -5,6 +5,7 @@ import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.entity.Sync;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
+import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.domain.DomainIndex;
@@ -15,6 +16,7 @@ import com.bh.spider.scheduler.initialization.*;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
+import com.bh.spider.transfer.entity.Node;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -24,6 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterScheduler extends BasicScheduler {
@@ -64,7 +70,7 @@ public class ClusterScheduler extends BasicScheduler {
         //初始化存储文件夹
         new DirectoriesInitializer(
                 config().get(Config.INIT_DATA_RULE_PATH),
-                config().get(Config.INIT_COMPONTENT_PATH),
+                config().get(Config.INIT_COMPONENT_PATH),
                 config().get(Config.INIT_OPERATION_LOG_PATH)).exec();
 
         new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "default", "component").exec();
@@ -97,8 +103,7 @@ public class ClusterScheduler extends BasicScheduler {
             @Override
             public void initChannel(SocketChannel ch) {
                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
-                ch.pipeline().addLast(new WorkerCommandReceiveHandler(me));
-                ch.pipeline().addLast(new CommandReceiveHandler(me));
+                ch.pipeline().addLast(new ClusterCommandReceiveHandler(me));
 
             }
         }).exec();
@@ -129,5 +134,38 @@ public class ClusterScheduler extends BasicScheduler {
         Command cmd = new Command(new LocalContext(this), CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, new Object[]{session, sync.getComponentOperationCommittedIndex()});
 
         process(cmd);
+    }
+
+
+    @Override
+    @CommandHandler
+    public Map<String, String> PROFILE_HANDLER() {
+        Map<String, String> map = new HashMap<>();
+        map.put("mode", RunModeClassFactory.CLUSTER_MASTER);
+        map.put("store", store.name());
+        return map;
+    }
+
+    @Override
+    @CommandHandler
+    public List<Node> GET_NODE_LIST_HANDLER() {
+        List<Node> nodes =new LinkedList<>();
+        nodes.add(self());
+
+        for(Worker worker:workers){
+            nodes.add(worker);
+        }
+
+
+        return nodes;
+    }
+
+
+    @CommandHandler
+    public void CONNECT_HANDLER(WorkerContext ctx, Node node) {
+        Worker worker = new Worker(ctx.session(), node);
+        workers.add(worker);
+
+        logger.info("新的连接加入");
     }
 }

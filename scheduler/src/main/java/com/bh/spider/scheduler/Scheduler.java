@@ -2,6 +2,7 @@ package com.bh.spider.scheduler;
 
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
+import com.bh.spider.transfer.entity.Node;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -36,6 +37,13 @@ public interface Scheduler {
      * @return
      */
     EventLoop eventLoop();
+
+
+    /**
+     * 本机节点信息
+     * @return
+     */
+    Node self();
 
 
 

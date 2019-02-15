@@ -46,7 +46,7 @@ public class RecorderIndex {
 
         for (int i = 0; i < buffer.limit(); i++) {
             if (buffer.get(i) == '\n') {
-                pos = pos + i - BLOCK_SIZE;
+                pos = pos + i+1 - BLOCK_SIZE;
                 writeToBuffer(pos);
                 buffer.flip();
 

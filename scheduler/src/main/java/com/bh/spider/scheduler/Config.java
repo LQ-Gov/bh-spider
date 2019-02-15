@@ -22,9 +22,9 @@ public class Config {
     public static final String INIT_DATA_PATH = "init.data.path";
 
     public static final String INIT_DATA_RULE_PATH = "init.data.rule.path";//规则存储路径
-    public static final String INIT_COMPONTENT_PATH="init.data.component.path";//组件存储路径
+    public static final String INIT_COMPONENT_PATH ="init.data.component.path";//组件存储路径
     public static final String INIT_PHANTOMJS_PATH = "init.phantomjs.path";
-    public static final String INIT_OPERATION_LOG_PATH="init.operation.log.path";//操作日志存储路径
+    public static final String INIT_OPERATION_LOG_PATH="init.data.operation.log.path";//操作日志存储路径
 
     //数据库存储配置
     public static final String INIT_STORE_BUILDER = "init.store.builder"; //存储引擎类型
@@ -59,10 +59,11 @@ public class Config {
         Config config = new Config();
         config.GLOBAL.put(INIT_DATA_PATH, "data/");
         config.GLOBAL.put(INIT_DATA_RULE_PATH,"data/rule");
-        config.GLOBAL.put(INIT_COMPONTENT_PATH,"data/component");
+        config.GLOBAL.put(INIT_COMPONENT_PATH,"data/component");
         config.GLOBAL.put(INIT_RUN_MODE, "stand-alone");
         config.GLOBAL.put(INIT_LISTEN_PORT, "8033");
         config.GLOBAL.put(INIT_PROCESSOR_THREADS_COUNT, Runtime.getRuntime().availableProcessors() * 2);
+
 
 
 
@@ -84,10 +85,11 @@ public class Config {
         config.GLOBAL.put(INIT_OPERATION_CACHE_SIZE,"10");
         config.GLOBAL.put(INIT_OPERATION_LOG_PATH,"data/operation");
 
-        config.GLOBAL.put(INIT_CLUSTER_MASTER_ADDRESS+"1","127.0.0.01:");
+        config.GLOBAL.put(INIT_CLUSTER_MASTER_ADDRESS+"1","127.0.0.1:8070");
 
 
         //抓取配置
+        config.GLOBAL.put(INIT_LOAD_CLASS_TIMEOUT,"1000");
 
 
         return config;

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class Metadata {
     private final static int FIXED_ROW_SIZE = 500;
 
-    private Map<String, Position<Component>> components = new HashMap<>();
+    private Map<String, Position<Component>> components = new LinkedHashMap<>();
 
     private RandomAccessFile accessor;
 

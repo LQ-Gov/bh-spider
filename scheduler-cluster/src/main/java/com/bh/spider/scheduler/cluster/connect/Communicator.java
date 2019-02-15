@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler.cluster.connect;
 
-import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
 
@@ -25,7 +24,7 @@ public class Communicator {
         Properties properties = cfg.all(Config.INIT_CLUSTER_MASTER_ADDRESS);
 
         for (Object prop : properties.values()) {
-            URI uri = new URI(String.valueOf(prop));
+            URI uri = new URI("ftp://"+ prop);
 
             connections.put(uri, new Connection(uri,this,scheduler));
         }

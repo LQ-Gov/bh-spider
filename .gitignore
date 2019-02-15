@@ -6,5 +6,6 @@
 /phantomjsdriver.log
 /scheduler.log
 /data/
+/data-worker/
 
 /scheduler/conf/rule

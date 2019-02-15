@@ -54,6 +54,12 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
     }
 
 
+    @Override
+    @CommandHandler(disabled = true)
+    public Class<?> LOAD_COMPONENT_HANDLER(String name, Component.Type type) throws IOException, ClassNotFoundException {
+        return super.LOAD_COMPONENT_HANDLER(name, type);
+    }
+
     @CommandHandler
     public Callable< Class<?>> LOAD_COMPONENT_HANDLER(Context ctx, String name, Component.Type type, long timeout) throws IOException, ClassNotFoundException {
         ComponentRepository repository = componentCoreFactory().proxy(type);

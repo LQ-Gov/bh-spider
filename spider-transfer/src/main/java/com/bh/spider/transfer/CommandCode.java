@@ -3,6 +3,7 @@ package com.bh.spider.transfer;
 public enum CommandCode {
     PROFILE,
     GET_NODE_LIST,
+    CONNECT,
 
 
     //component operation

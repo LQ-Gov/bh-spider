@@ -7,13 +7,14 @@ import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.job.JobContext;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
-import com.bh.spider.scheduler.job.QuartzJobImpl;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -51,6 +52,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     @Override
     public void blast() throws ExecutionException, InterruptedException {
 
+        logger.info("rule schedule controller test");
         boolean unfinished=unfinishedIndex< unfinishedCount;
         if (waitingCount.get() <= 0 && !unfinished) return;
 

@@ -31,7 +31,7 @@ public class WorkerScheduler extends BasicScheduler {
     @Override
     public synchronized void exec() throws Exception {
         //初始化存储文件夹
-        new DirectoriesInitializer(config().get(Config.INIT_OPERATION_LOG_PATH),config().get(Config.INIT_COMPONTENT_PATH)).exec();
+        new DirectoriesInitializer(config().get(Config.INIT_OPERATION_LOG_PATH),config().get(Config.INIT_COMPONENT_PATH)).exec();
 
         new OperationRecorderInitializer(Paths.get( config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)),"component").exec();
 
