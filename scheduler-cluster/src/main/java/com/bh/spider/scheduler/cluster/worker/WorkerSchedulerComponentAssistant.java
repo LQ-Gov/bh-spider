@@ -1,13 +1,13 @@
-package com.bh.spider.scheduler.cluster;
+package com.bh.spider.scheduler.cluster.worker;
 
 import com.bh.spider.scheduler.BasicSchedulerComponentAssistant;
+import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.cluster.component.ComponentOperationEntry;
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
 import com.bh.spider.scheduler.component.ComponentRepository;
-import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
@@ -36,7 +36,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
     public void WRITE_OPERATION_ENTRIES(List<Entry> entries) throws IOException {
 
         //更新component metadata
-        for(Entry entry:entries) {
+        for (Entry entry : entries) {
             ComponentOperationEntry coe = new ComponentOperationEntry(entry);
             if (ComponentOperationEntry.ADD.equals(coe.operation())) {
                 ComponentRepository repository = componentCoreFactory().proxy(coe.type());
@@ -48,8 +48,11 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
                 }
             }
         }
+
+
         //写入数据
         componentOperationRecorder.writeAll(entries);
+        ((Worker) scheduler.self()).setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
 
     }
 

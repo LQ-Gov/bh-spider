@@ -54,6 +54,12 @@ public class BasicScheduler implements Scheduler, Assistant {
         this.me = Node.self();
         this.me.setType("DEFAULT");
 
+
+    }
+
+
+    public BasicScheduler(Config config,Node node){
+
     }
 
 

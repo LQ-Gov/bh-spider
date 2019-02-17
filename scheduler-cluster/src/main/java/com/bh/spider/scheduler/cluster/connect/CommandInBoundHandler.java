@@ -21,6 +21,7 @@ public class CommandInBoundHandler extends CommandReceiveHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         connection.write(IdGenerator.instance.nextId(),new Command(null, CommandCode.CONNECT,new Object[]{scheduler.self()}));
+        connection.ping();
         logger.info("连接已建立");
 
     }
@@ -35,7 +36,7 @@ public class CommandInBoundHandler extends CommandReceiveHandler {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state().equals(IdleState.WRITER_IDLE)) {
-                connection.heartBeat();
+                connection.ping();
             }
         }
 

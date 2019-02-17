@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 /**
  * Created by lq on 17-3-16.
  */
-@JsonIgnoreProperties({"session","scheduler","closeConsumers"})
+@JsonIgnoreProperties({"session","scheduler"})
 public class Worker extends Node {
 
     private BasicScheduler scheduler = null;
@@ -17,6 +17,8 @@ public class Worker extends Node {
 
 
     private long componentOperationCommittedIndex;
+
+    private int capacity;
 
     private long memberOperationCommittedIndex;
 
@@ -41,4 +43,20 @@ public class Worker extends Node {
 
 
     public Session session(){return session;}
+
+    public long getComponentOperationCommittedIndex() {
+        return componentOperationCommittedIndex;
+    }
+
+    public void setComponentOperationCommittedIndex(long componentOperationCommittedIndex) {
+        this.componentOperationCommittedIndex = componentOperationCommittedIndex;
+    }
+
+    public int getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+    }
 }

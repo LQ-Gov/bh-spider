@@ -1,6 +1,10 @@
 package com.bh.spider.scheduler.cluster.connect;
 
+import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
+import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
@@ -29,6 +33,8 @@ import java.util.concurrent.TimeUnit;
 public class Connection implements Closeable {
 
     private final static Logger logger = LoggerFactory.getLogger(Connection.class);
+
+    private OperationRecorder componentOperationRecorder = OperationRecorderFactory.get("component");
 
     private URI uri;
     private Channel channel;
@@ -88,9 +94,24 @@ public class Connection implements Closeable {
 
     }
 
+    public void write(Command command) throws JsonProcessingException {
+        write(IdGenerator.instance.nextId(),command);
+    }
 
 
-    public void heartBeat(){
+
+    public void ping() throws JsonProcessingException {
+
+        Worker node = (Worker) scheduler.self();
+
+        Sync sync = new Sync();
+        sync.setComponentOperationCommittedIndex(node.getComponentOperationCommittedIndex());
+        sync.setCapacity(node.getCapacity());
+
+
+        Command cmd = new Command(null, CommandCode.WORKER_HEART_BEAT, new Object[]{sync});
+
+        write(cmd);
 
     }
 

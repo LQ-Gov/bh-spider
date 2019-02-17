@@ -42,6 +42,9 @@ public class BasicSchedulerFetchAssistant implements Assistant {
         this.store = store;
     }
 
+
+    protected Scheduler scheduler(){return scheduler;}
+
     @CommandHandler
     public void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
         String host = req.url().getHost();

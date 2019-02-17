@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.entity;
+package com.bh.spider.scheduler.cluster.connect;
 
 public class Sync {
     /**
