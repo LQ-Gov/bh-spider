@@ -165,7 +165,5 @@ public class ClusterScheduler extends BasicScheduler {
     public void CONNECT_HANDLER(WorkerContext ctx, Node node) {
         Worker worker = new Worker(ctx.session(), node);
         workers.add(worker);
-
-        logger.info("新的连接加入");
     }
 }
