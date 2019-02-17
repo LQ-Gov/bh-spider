@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.cluster;
 import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
-import com.bh.spider.scheduler.cluster.connect.Sync;
+import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;

@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.cluster.connect;
+package com.bh.spider.scheduler.cluster.communication;
 
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;

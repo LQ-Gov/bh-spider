@@ -2,7 +2,7 @@ package com.bh.spider.scheduler.cluster.initialization;
 
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.cluster.connect.Communicator;
+import com.bh.spider.scheduler.cluster.communication.Communicator;
 import com.bh.spider.scheduler.initialization.Initializer;
 
 public class CommunicatorInitializer implements Initializer<Communicator> {

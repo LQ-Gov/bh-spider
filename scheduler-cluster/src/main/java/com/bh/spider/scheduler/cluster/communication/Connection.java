@@ -1,10 +1,10 @@
-package com.bh.spider.scheduler.cluster.connect;
+package com.bh.spider.scheduler.cluster.communication;
 
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
+import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
-import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
@@ -102,7 +102,7 @@ public class Connection implements Closeable {
 
     public void ping() throws JsonProcessingException {
 
-        Worker node = (Worker) scheduler.self();
+        ClusterNode node = (ClusterNode) scheduler.self();
 
         Sync sync = new Sync();
         sync.setComponentOperationCommittedIndex(node.getComponentOperationCommittedIndex());

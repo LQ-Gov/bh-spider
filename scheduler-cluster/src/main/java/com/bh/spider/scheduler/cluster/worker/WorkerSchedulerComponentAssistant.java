@@ -2,6 +2,7 @@ package com.bh.spider.scheduler.cluster.worker;
 
 import com.bh.spider.scheduler.BasicSchedulerComponentAssistant;
 import com.bh.spider.scheduler.Config;
+import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.cluster.component.ComponentOperationEntry;
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
@@ -52,7 +53,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
 
         //写入数据
         componentOperationRecorder.writeAll(entries);
-        ((Worker) scheduler.self()).setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
+        ((ClusterNode) scheduler.self()).setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
 
     }
 

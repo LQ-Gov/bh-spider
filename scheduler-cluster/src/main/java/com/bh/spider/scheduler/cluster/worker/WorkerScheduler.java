@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.cluster.worker;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.cluster.ClusterNode;
-import com.bh.spider.scheduler.cluster.connect.Communicator;
+import com.bh.spider.scheduler.cluster.communication.Communicator;
 import com.bh.spider.scheduler.cluster.initialization.CommunicatorInitializer;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
 import com.bh.spider.scheduler.event.CommandHandler;
@@ -23,12 +23,20 @@ public class WorkerScheduler extends BasicScheduler {
     public WorkerScheduler(Config config) throws Exception {
         super(config);
         this.node = new ClusterNode(Node.self());
+        this.node.setType("WORKER");
+        this.node.setComponentOperationCommittedIndex(-1);
+        this.node.setCapacity(-1);
 
     }
 
     @Override
     public EventLoop eventLoop() {
         return loop;
+    }
+
+    @Override
+    public Node self() {
+        return this.node;
     }
 
     @Override

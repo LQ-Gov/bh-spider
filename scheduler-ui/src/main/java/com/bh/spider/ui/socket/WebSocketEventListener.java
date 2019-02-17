@@ -25,7 +25,7 @@ public class WebSocketEventListener {
 
     @EventListener
     public void connectEventHandler(SessionConnectedEvent event) {
-        log.info("[ws-connected] socket connect: {}", event.getMessage());
+        log.info("[ws-connected] socket communication: {}", event.getMessage());
         // do someting ...
     }
 
