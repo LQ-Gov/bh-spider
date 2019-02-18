@@ -10,6 +10,7 @@ import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFac
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
 import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.event.CollectionParams;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.transfer.CommandCode;
@@ -24,6 +25,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
     private WorkerScheduler scheduler;
     private OperationRecorder componentOperationRecorder;
     private int loadClassTimeout;
+    private final ClusterNode node;
 
 
     public WorkerSchedulerComponentAssistant(Config cfg, WorkerScheduler scheduler) throws IOException {
@@ -32,9 +34,11 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
         this.scheduler = scheduler;
         this.componentOperationRecorder = OperationRecorderFactory.get("component");
         this.loadClassTimeout = Integer.valueOf(cfg.get(Config.INIT_LOAD_CLASS_TIMEOUT));
+        this.node = (ClusterNode) scheduler.self();
+        this.node.setComponentOperationCommittedIndex(this.componentOperationRecorder.committedIndex());
     }
     @CommandHandler
-    public void WRITE_OPERATION_ENTRIES(List<Entry> entries) throws IOException {
+    public void WRITE_OPERATION_ENTRIES(@CollectionParams(collectionType = List.class,argumentTypes = {Entry.class}) List<Entry> entries) throws IOException {
 
         //更新component metadata
         for (Entry entry : entries) {
@@ -53,7 +57,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
 
         //写入数据
         componentOperationRecorder.writeAll(entries);
-        ((ClusterNode) scheduler.self()).setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
+        node.setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
 
     }
 

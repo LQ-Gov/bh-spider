@@ -15,7 +15,9 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.store.base.Store;
 import com.bh.spider.transfer.CommandCode;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant {
@@ -47,16 +49,25 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
     @Override
     public  boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
 
-        Allocation allocation = new Allocation(scheduler.workers(), requests);
+        Allocation allocation = new Allocation(scheduler.workers(), new ArrayList<>(requests));
 
         allocation.consult(new IdlePolicy(), new IdlePolicy());
 
 
-        Map<Worker, Collection<Request>> result = allocation.allocatedResult();
+        Map<Worker, List<Request>> result = allocation.allocatedResult();
 
 
-        //workers.tellAll(new Command(null, CommandCode.FETCH_BATCH, new Object[]{requests, rule}));
+        for (Map.Entry<Worker, List<Request>> entry : result.entrySet()) {
+            try {
+                Worker worker = entry.getKey();
+                List<Request> allocated = entry.getValue();
 
+                Command cmd = new Command(ctx, CommandCode.FETCH_BATCH, new Object[]{allocated, rule});
+                worker.write(cmd);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return true;
     }
 }

@@ -2,8 +2,6 @@ package com.bh.spider.scheduler.context;
 
 import com.bh.spider.fetch.FetchContext;
 
-import java.util.concurrent.ExecutionException;
-
 /**
  * Created by lq on 17-3-30.
  */

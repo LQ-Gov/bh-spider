@@ -13,6 +13,9 @@ public class ClusterNode extends Node {
      */
     private int capacity;
 
+
+    public ClusterNode(){}
+
     public ClusterNode(Node node){
         this.setHostname(node.getHostname());
         this.setIp(node.getIp());

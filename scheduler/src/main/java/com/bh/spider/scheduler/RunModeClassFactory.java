@@ -16,7 +16,7 @@ public class RunModeClassFactory {
                 return Class.forName("com.bh.spider.scheduler.cluster.ClusterScheduler");
 
             case CLUSTER_WORKER:
-                return Class.forName("com.bh.spider.scheduler.cluster.WorkerScheduler");
+                return Class.forName("com.bh.spider.scheduler.cluster.worker.WorkerScheduler");
         }
 
         return null;

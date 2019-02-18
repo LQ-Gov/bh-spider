@@ -128,8 +128,10 @@ public class ClusterScheduler extends BasicScheduler {
     }
 
     @CommandHandler
-    private void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
+    public void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
         Session session = ctx.session();
+
+
 
         Command cmd = new Command(new LocalContext(this), CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, new Object[]{session, sync.getComponentOperationCommittedIndex()});
 
@@ -149,11 +151,11 @@ public class ClusterScheduler extends BasicScheduler {
     @Override
     @CommandHandler
     public List<Node> GET_NODE_LIST_HANDLER() {
-        List<Node> nodes =new LinkedList<>();
+        List<Node> nodes = new LinkedList<>();
         nodes.add(self());
 
-        for(Worker worker:workers){
-            nodes.add(worker);
+        for (Worker worker : workers) {
+            nodes.add(worker.node());
         }
 
 
@@ -162,8 +164,11 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     @CommandHandler
-    public void CONNECT_HANDLER(WorkerContext ctx, Node node) {
+    public void CONNECT_HANDLER(WorkerContext ctx, ClusterNode node) {
         Worker worker = new Worker(ctx.session(), node);
         workers.add(worker);
+
+        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, new Object[]{node.getComponentOperationCommittedIndex()});
+        process(cmd);
     }
 }

@@ -19,29 +19,10 @@ public class Workers implements Iterable<Worker> {
         this.scheduler = scheduler;
     }
 
-    public void add(Worker worker){
-        collection.put(worker.id(),worker);
+    public void add(Worker worker) {
+        collection.put(worker.id(), worker);
         worker.session().whenClose(session -> collection.remove(worker.id()));
     }
-
-
-//    public Workers random() {
-//        Random random = new Random();
-//        Collection<Session> sessionCollection = sessions.values();
-//
-//        int randomValue = random.nextInt(sessionCollection.size());
-//
-//        Iterator<Session> it = sessionCollection.iterator();
-//        Session session = null;
-//        for (int i = 0; i < randomValue; i++)
-//            session = it.next();
-//
-//
-//        return new Workers(this.scheduler, Collections.singleton(session));
-//
-//
-//    }
-
     @Override
     public Iterator<Worker> iterator() {
         return collection.values().iterator();

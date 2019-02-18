@@ -10,6 +10,7 @@ public class Entry {
     private byte[] data;
 
 
+    public Entry(){}
 
     public Entry(byte action,byte[] data){
         this(-1,action,data);
@@ -49,7 +50,7 @@ public class Entry {
 
     public static Entry deserialize(byte[] data) {
 
-        return deserialize(data,0,data.length-1);
+        return deserialize(data,0,data.length);
 
     }
 
@@ -58,6 +59,6 @@ public class Entry {
 
         ByteBuffer buffer = ByteBuffer.wrap(data, offset, len);
 
-        return new Entry(buffer.getLong(), buffer.get(), ArrayUtils.subarray(data, offset + 8 + 1, offset + len - 1));
+        return new Entry(buffer.getLong(), buffer.get(), ArrayUtils.subarray(data, offset + 8 + 1, offset + len));
     }
 }

@@ -20,10 +20,8 @@ public class CommandInBoundHandler extends CommandReceiveHandler {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        connection.write(IdGenerator.instance.nextId(),new Command(null, CommandCode.CONNECT,new Object[]{scheduler.self()}));
-        connection.ping();
+        connection.write(IdGenerator.instance.nextId(), new Command(null, CommandCode.CONNECT, new Object[]{scheduler.self()}));
         logger.info("连接已建立");
-
     }
 
     public CommandInBoundHandler(Connection connection, Scheduler scheduler) {

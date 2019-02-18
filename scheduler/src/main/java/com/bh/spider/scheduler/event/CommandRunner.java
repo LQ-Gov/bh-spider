@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -16,7 +17,6 @@ public class CommandRunner {
     private final static Logger logger = LoggerFactory.getLogger(CommandRunner.class);
     private Object bean;
     private Method method;
-    private Class<?>[] parameters;
     private CommandHandler mapping;
     private AssistPool pool;
     private boolean returnVoid;
@@ -26,7 +26,6 @@ public class CommandRunner {
         this.bean = bean;
         this.method = method;
         this.mapping = mapping;
-        this.parameters = this.method.getParameterTypes();
         this.pool = pool;
 
         this.returnVoid = method.getReturnType().equals(Void.TYPE);
@@ -34,9 +33,13 @@ public class CommandRunner {
         this.interceptors = interceptors;
     }
 
+    public void arguments(){
 
-    public Class<?>[] parameters() {
-        return parameters;
+    }
+
+
+    public Parameter[] parameters() {
+        return this.method.getParameters();
     }
 
 

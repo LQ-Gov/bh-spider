@@ -52,7 +52,9 @@ public class WorkerScheduler extends BasicScheduler {
         //初始化事件循环线程
 
         this.loop = new EventLoopInitializer(WorkerScheduler.class,this,
-                new WorkerSchedulerComponentAssistant(config(),this)).exec();
+                new WorkerSchedulerComponentAssistant(config(),this),
+                new WorkerSchedulerFetchAssistant(this)
+                ).exec();
 
         this.loop.listen().join();
     }

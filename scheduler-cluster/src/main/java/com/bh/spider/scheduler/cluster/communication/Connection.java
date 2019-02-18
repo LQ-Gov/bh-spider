@@ -2,7 +2,6 @@ package com.bh.spider.scheduler.cluster.communication;
 
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.event.Command;
@@ -67,7 +66,7 @@ public class Connection implements Closeable {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) {
-                        ch.pipeline().addLast(new IdleStateHandler(0,10,0));
+                        ch.pipeline().addLast(new IdleStateHandler(0,20,0));
                         ch.pipeline().addLast(new CommandInBoundHandler(me,scheduler));
                     }
                 });
@@ -102,16 +101,16 @@ public class Connection implements Closeable {
 
     public void ping() throws JsonProcessingException {
 
-        ClusterNode node = (ClusterNode) scheduler.self();
-
-        Sync sync = new Sync();
-        sync.setComponentOperationCommittedIndex(node.getComponentOperationCommittedIndex());
-        sync.setCapacity(node.getCapacity());
-
-
-        Command cmd = new Command(null, CommandCode.WORKER_HEART_BEAT, new Object[]{sync});
-
-        write(cmd);
+//        ClusterNode node = (ClusterNode) scheduler.self();
+//
+//        Sync sync = new Sync();
+//        sync.setComponentOperationCommittedIndex(node.getComponentOperationCommittedIndex());
+//        sync.setCapacity(node.getCapacity());
+//
+//
+//        Command cmd = new Command(null, CommandCode.WORKER_HEART_BEAT, new Object[]{sync});
+//
+//        write(cmd);
 
     }
 

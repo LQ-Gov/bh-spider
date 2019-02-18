@@ -1,6 +1,10 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.scheduler.event.Command;
+import com.bh.spider.transfer.CommandCode;
+import com.bh.spider.transfer.Json;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 import java.io.Closeable;
@@ -26,13 +30,17 @@ public class Session implements Closeable {
         return id;
     }
 
+    public void write(Command cmd) throws JsonProcessingException {
+        short cmdCode = (short) CommandCode.valueOf(cmd.key()).ordinal();
 
-    public void tell(Command cmd){
+        byte[] data = Json.get().writeValueAsBytes(cmd.params());
+
+        ByteBuf buffer = channel.alloc().buffer(8+2+4+data.length);
+        buffer.writeLong(id).writeShort(cmdCode).writeInt(data.length).writeBytes(data);
+
+        channel.writeAndFlush(buffer);
 
     }
-
-
-    public void write(Command cmd){}
 
 
 
@@ -44,7 +52,7 @@ public class Session implements Closeable {
 
     @Override
     public void close() throws IOException {
-        for(Consumer<Session> consumer:closeConsumers){
+        for (Consumer<Session> consumer : closeConsumers) {
             consumer.accept(this);
         }
     }

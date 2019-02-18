@@ -2,38 +2,25 @@ package com.bh.spider.scheduler.cluster.worker;
 
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Session;
-import com.bh.spider.transfer.entity.Node;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.bh.spider.scheduler.cluster.ClusterNode;
+import com.bh.spider.scheduler.event.Command;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
  * Created by lq on 17-3-16.
  */
-@JsonIgnoreProperties({"session","scheduler"})
-public class Worker extends Node {
+public class Worker {
 
     private BasicScheduler scheduler = null;
 
     private transient Session session;
 
+    private ClusterNode node;
 
-    private long componentOperationCommittedIndex;
-
-    private int capacity;
-
-    private long memberOperationCommittedIndex;
-
-
-    public Worker(BasicScheduler scheduler) {
-        this.scheduler = scheduler;
-    }
-
-
-    public Worker(Session session,Node node) {
+    public Worker(Session session,ClusterNode node) {
         this.session = session;
-        this.setHostname(node.getHostname());
-        this.setIp(node.getIp());
-        this.setOs(node.getOs());
-        this.setType(node.getType());
+
+        this.node = node;
     }
 
 
@@ -42,21 +29,18 @@ public class Worker extends Node {
     }
 
 
-    public Session session(){return session;}
 
-    public long getComponentOperationCommittedIndex() {
-        return componentOperationCommittedIndex;
+    public void write(Command cmd) throws JsonProcessingException {
+        session.write(cmd);
     }
 
-    public void setComponentOperationCommittedIndex(long componentOperationCommittedIndex) {
-        this.componentOperationCommittedIndex = componentOperationCommittedIndex;
+
+    public ClusterNode node(){
+        return node;
     }
 
-    public int getCapacity() {
-        return capacity;
-    }
+    public Session session(){ return session;}
 
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
-    }
+
+
 }

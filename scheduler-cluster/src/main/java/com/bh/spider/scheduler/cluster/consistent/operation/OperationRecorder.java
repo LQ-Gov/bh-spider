@@ -10,10 +10,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 public class OperationRecorder {
     private final static Logger logger = LoggerFactory.getLogger(OperationRecorder.class);
@@ -82,22 +79,33 @@ public class OperationRecorder {
         entry.setIndex(nextIndex);
 
         try {
-            long pos = writer.position();
-
-            writer.write(ByteBuffer.wrap(entry.serialize()));
-
-            recorderIndex.write(nextIndex, pos);
-            cacheQueue.add(entry);
-
+            return write0(entry);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private synchronized boolean write0(Entry entry) throws IOException {
+        if (committedIndex() + 1 != entry.index()) return false;
+        long pos = writer.position();
+
+        writer.write(ByteBuffer.wrap(entry.serialize()));
+
+        recorderIndex.write(entry.index(), pos);
+        cacheQueue.add(entry);
+
         return true;
     }
 
-    public synchronized void writeAll(List<Entry> entries){
-
+    public synchronized void writeAll(List<Entry> entries) {
+        try {
+            for (Entry entry : entries) {
+                if (!write0(entry)) return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -126,48 +134,65 @@ public class OperationRecorder {
 
     private Entry read() throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(4);
-        reader.read(buffer);
-        buffer.flip();
+        if( reader.read(buffer)==4) {
+            buffer.flip();
 
-        ByteBuffer data = ByteBuffer.allocate(buffer.getInt());
+            int len = buffer.getInt()-4;
+            ByteBuffer data = ByteBuffer.allocate(len);
 
-        reader.read(data);
+            if(reader.read(data)==len) {
+                return Entry.deserialize(data.array(), 0, data.capacity() - 1);
+            }
+        }
 
-
-        return Entry.deserialize(data.array(), 0, data.capacity() - 1);
+        return null;
 
     }
 
 
-    private List<Entry> read(long startPos,long size) throws IOException {
+    private List<Entry> readEntries(long startCommittedIndex,long endCommittedIndex) throws IOException {
+
+
+        startCommittedIndex = Math.max(startCommittedIndex, 0);
+        endCommittedIndex = Math.min(committedIndex(), endCommittedIndex);
+
+        if (endCommittedIndex < startCommittedIndex) return Collections.emptyList();
+
         List<Entry> result = new LinkedList<>();
 
-        reader.position(startPos);
+        reader.position(recorderIndex.position(startCommittedIndex));
 
-        for (long i = 1; i < size; i++) {
+        for (; startCommittedIndex <= endCommittedIndex; startCommittedIndex++) {
             result.add(read());
+
         }
 
         return result;
     }
 
-    public List<Entry> load(long start,long end) throws IOException {
+    public List<Entry> load(long startCommittedIndex,long endCommittedIndex) throws IOException {
+        startCommittedIndex = Math.max(startCommittedIndex,0);
+
+        endCommittedIndex = Math.min(committedIndex(),endCommittedIndex);
+
+        if (endCommittedIndex < 0 || startCommittedIndex > endCommittedIndex) return Collections.emptyList();
+
         List<Entry> entries = new ArrayList<>(cacheQueue);
 
-        Entry first = null;
-        //start,end 都在entries内
-        if (!entries.isEmpty() && (first = entries.get(0)).index() <= start)
-            return entries.subList((int) (start - first.index()), Math.min((int) (end - first.index()), entries.size() - 1));
+        Entry first = entries.isEmpty() ? null : entries.get(0);
+
+        if (first == null || first.index() > endCommittedIndex)
+            return readEntries(startCommittedIndex, endCommittedIndex);
 
 
-        List<Entry> tail = new LinkedList<>();
-        //只有end在entries内
-        if (first != null && end > first.index())
-            tail = entries.subList(0, Math.min((int) (end - first.index()), entries.size() - 1));
+        if(startCommittedIndex>first.index()) {
+            return entries.subList((int) (startCommittedIndex - first.index()), (int) (endCommittedIndex - first.index() + 1));
+        }
 
+        List<Entry> head = readEntries(startCommittedIndex,first.index()-1);
 
-        long pos = recorderIndex.position(start);
-        List<Entry> head = read(pos, Math.min(end, first == null ? Long.MAX_VALUE : first.index()) - start);
+        List<Entry> tail = entries.subList(0,(int)(endCommittedIndex-first.index())+1);
+
 
         head.addAll(tail);
 

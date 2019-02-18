@@ -1,8 +1,10 @@
 package com.bh.spider.scheduler.event;
 
-import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.token.Token;
+import com.bh.spider.scheduler.watch.Markers;
+import com.bh.spider.transfer.Json;
+import com.fasterxml.jackson.databind.JavaType;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -63,7 +66,7 @@ public class EventLoop extends Thread {
 
                     if (handler == null) throw new RuntimeException("executor not found:" + cmd.key());
 
-                    Class<?>[] parameters = handler.parameters();
+                    Parameter[] parameters = handler.parameters();
 
                     Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
@@ -87,27 +90,27 @@ public class EventLoop extends Thread {
     }
 
 
-    protected Object[] buildArgs(Context ctx, Class<?>[] parameters, Object[] inputs) {
+    protected Object[] buildArgs(Context ctx, Parameter[] parameters, Object[] inputs) {
         if (parameters.length == 0) return null;
 
         Object[] args = new Object[parameters.length];
 
         for (int i = 0, x = 0; i < parameters.length; i++) {
 
-            if (Context.class.isAssignableFrom(parameters[i])) {
+            if (Context.class.isAssignableFrom(parameters[i].getType())) {
                 args[i] = ctx;//赋值给其context
                 continue;
             }
             if (inputs == null || inputs.length <= x)
                 args[i] = null;
-            else if (inputs[x] == null || parameters[i].isAssignableFrom(inputs[x].getClass()))
+            else if (inputs[x] == null || parameters[i].getType().isAssignableFrom(inputs[x].getClass()))
                 args[i] = inputs[x++];
 
                 //参数为值类型
-            else if (parameters[i].isPrimitive() && parameters[i] == ClassUtils.wrapperToPrimitive(inputs[x].getClass()))
+            else if (parameters[i].getType().isPrimitive() && parameters[i].getType() == ClassUtils.wrapperToPrimitive(inputs[x].getClass()))
                 args[i] = inputs[x++];
 
-            else if (parameters[i].isArray() && inputs[x].getClass().isArray()) {
+            else if (parameters[i].getType().isArray() && inputs[x].getClass().isArray()) {
 //                Class<?> componentType = parameters[i].getComponentType();
 //                if (componentType.isPrimitive()
 //                        && ClassUtils.wrapperToPrimitive(inputs[x].getClass().getComponentType()) == componentType)
@@ -116,9 +119,23 @@ public class EventLoop extends Thread {
 //                else {
 //                    //如果不是基本类型,就依次进行转化
 //                }
-            } else if (Token.class.isAssignableFrom(inputs[x].getClass())) {
+            }
+            else if(Collection.class.isAssignableFrom(parameters[i].getType())){
+                CollectionParams collectionParams = parameters[i].getAnnotation(CollectionParams.class);
+                if(collectionParams==null){
+                    throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i);
+                }
                 try {
-                    args[i] = ((Token) inputs[x++]).toObject(parameters[i]);
+                    JavaType jt = Json.get().getTypeFactory().constructCollectionType(collectionParams.collectionType(),collectionParams.argumentTypes()[0]);
+                    args[i] = ((Token) inputs[x++]).toObject(jt);
+                }catch (Exception e){
+                    throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i);
+                }
+            }
+
+            else if (Token.class.isAssignableFrom(inputs[x].getClass())) {
+                try {
+                    args[i] = ((Token) inputs[x++]).toObject(parameters[i].getType());
                 } catch (Exception e) {
                     throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i, e);
                 }

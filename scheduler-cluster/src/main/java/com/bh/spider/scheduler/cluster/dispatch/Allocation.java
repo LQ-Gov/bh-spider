@@ -8,13 +8,13 @@ import java.util.*;
 
 public class Allocation {
 
-    private final Map<Worker,Collection<Request>> allocated;
+    private final Map<Worker,List<Request>> allocated;
 
     private final List<Request> remained;
 
     private final List<Request> abandoned;
 
-    public Allocation(Workers workers, Collection<Request> requests) {
+    public Allocation(Workers workers, List<Request> requests) {
         remained = new LinkedList<>(requests);
         allocated = new HashMap<>();
         abandoned = new LinkedList<>();
@@ -32,7 +32,7 @@ public class Allocation {
     }
 
 
-    public Map<Worker,Collection<Request>> allocatedResult() {
+    public Map<Worker,List<Request>> allocatedResult() {
         return allocated;
     }
 
