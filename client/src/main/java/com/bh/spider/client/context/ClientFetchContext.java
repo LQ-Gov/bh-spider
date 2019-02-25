@@ -1,10 +1,9 @@
 package com.bh.spider.client.context;
 
 import com.bh.spider.common.fetch.*;
-import com.bh.spider.doc.Document;
 import com.bh.spider.common.fetch.impl.RequestBuilder;
 import com.bh.spider.common.rule.Rule;
-import com.bh.spipder.fetch.*;
+import com.bh.spider.doc.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,12 +118,6 @@ public class ClientFetchContext implements FetchContext {
     public void scheduler(String url) throws MalformedURLException {
         scheduler(null, url);
     }
-
-    @Override
-    public void skip() throws ExtractorChainException {
-
-    }
-
     @Override
     public void termination() throws ExtractorChainException {
 

@@ -13,7 +13,6 @@ import com.bh.spider.common.rule.Rule;
 import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.common.member.Node;
-import com.bh.spipder.fetch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
