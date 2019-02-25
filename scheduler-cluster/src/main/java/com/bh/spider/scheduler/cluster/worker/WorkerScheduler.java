@@ -46,7 +46,7 @@ public class WorkerScheduler extends BasicScheduler {
 
         new OperationRecorderInitializer(Paths.get( config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)),"component").exec();
 
-        this.communicator = new CommunicatorInitializer(this,config()).exec();
+
 
 
         //初始化事件循环线程
@@ -55,6 +55,8 @@ public class WorkerScheduler extends BasicScheduler {
                 new WorkerSchedulerComponentAssistant(config(),this),
                 new WorkerSchedulerFetchAssistant(this)
                 ).exec();
+
+        this.communicator = new CommunicatorInitializer(this,config()).exec();
 
         this.loop.listen().join();
     }

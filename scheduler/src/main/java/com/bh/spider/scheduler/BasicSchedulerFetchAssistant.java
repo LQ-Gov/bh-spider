@@ -7,8 +7,8 @@ import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.domain.RuleFacade;
-import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.Assistant;
+import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.FetchContent;
 import com.bh.spider.scheduler.fetcher.Fetcher;
 import com.bh.spider.store.base.Store;
@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,6 +46,11 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
 
     protected Scheduler scheduler(){return scheduler;}
+
+
+    protected Fetcher fetcher(){return fetcher;}
+
+
 
     @CommandHandler
     public void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
@@ -87,12 +94,13 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     }
 
     @CommandHandler(autoComplete = false)
-    public boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests,Rule rule) {
+    public List<Request> FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
 
+        List<Request> returnValue = new LinkedList<>(requests);
         requests.removeIf(req -> fetchContextTable.containsKey(req.id()));
         requests.forEach(x -> fetchContextTable.put(x.id(), x));
         fetcher.fetch(ctx, requests, rule);
-        return true;
+        return returnValue;
     }
 
     @CommandHandler

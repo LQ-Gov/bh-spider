@@ -4,16 +4,16 @@ import com.bh.spider.fetch.FetchContext;
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.FetchResponse;
 import com.bh.spider.fetch.impl.FinalFetchContext;
-import com.bh.spider.rule.SeleniumRule;
 import com.bh.spider.rule.Rule;
+import com.bh.spider.rule.SeleniumRule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.Context;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 /**
@@ -23,14 +23,15 @@ public class Fetcher {
     private BasicScheduler scheduler = null;
 
 
-    private volatile ExecutorService workers = null;
+    private volatile ThreadPoolExecutor workers = null;
 
     public Fetcher(BasicScheduler scheduler, int workerCount) {
 
         this.scheduler = scheduler;
         workerCount = workerCount <= 0 ? Runtime.getRuntime().availableProcessors() : workerCount;
 
-        this.workers = Executors.newFixedThreadPool(workerCount);
+        this.workers = (ThreadPoolExecutor) Executors.newFixedThreadPool(workerCount);
+
     }
 
     public Fetcher(BasicScheduler scheduler) {
@@ -62,6 +63,11 @@ public class Fetcher {
         execute(client, context).whenComplete((result, e) -> this.fetchCallback(ctx, context, result, e));
 
 
+    }
+
+
+    public int  capacity() {
+        return Math.max(workers.getCorePoolSize() * 2 - workers.getQueue().size(), 0);
     }
 
 

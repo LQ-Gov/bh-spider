@@ -19,6 +19,7 @@ public class IdlePolicy implements Policy {
 
 
     private void checkAllocated(Map<Worker, List<Request>> allocated,List<Request> remained) {
+        if(allocated.isEmpty()) return;
         Set<Worker> workers = allocated.keySet();
 
         int waitAllocatedWorkerCount = 0;
@@ -29,7 +30,7 @@ public class IdlePolicy implements Policy {
             /**
              * 如果没有分配空间
              */
-            if(capacity<=0) allocated.remove(worker);
+            if(capacity<=0){ allocated.remove(worker); continue;}
 
             /**
              * 如果已分配的请求量大于capacity,则清理
@@ -60,6 +61,7 @@ public class IdlePolicy implements Policy {
 
         List<Request> sub = list.subList(start, Math.min(end, list.size()));
 
+        sub = new ArrayList<>(sub);
 
         list.removeAll(sub);
 

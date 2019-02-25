@@ -16,8 +16,12 @@ public class Allocation {
 
     public Allocation(Workers workers, List<Request> requests) {
         remained = new LinkedList<>(requests);
-        allocated = new HashMap<>();
         abandoned = new LinkedList<>();
+        allocated = new HashMap<>();
+
+        for(Worker worker:workers)
+            allocated.put(worker,new ArrayList<>());
+
 
     }
 

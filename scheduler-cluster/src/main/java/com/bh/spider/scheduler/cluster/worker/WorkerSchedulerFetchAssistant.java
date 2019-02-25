@@ -7,18 +7,24 @@ import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.BasicSchedulerFetchAssistant;
 import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.event.CollectionParams;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.NotSupportCommandException;
 import com.bh.spider.transfer.CommandCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.List;
 
 public class WorkerSchedulerFetchAssistant extends BasicSchedulerFetchAssistant {
+    private final static Logger logger = LoggerFactory.getLogger(WorkerSchedulerFetchAssistant.class);
 
     private final ClusterNode node;
     public WorkerSchedulerFetchAssistant(BasicScheduler scheduler) {
         super(scheduler, null, null);
         this.node = (ClusterNode) scheduler().self();
+        node.setCapacity(fetcher().capacity());
     }
 
 
@@ -34,8 +40,21 @@ public class WorkerSchedulerFetchAssistant extends BasicSchedulerFetchAssistant 
     }
 
     @Override
-    @CommandHandler
-    public boolean FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
+    @CommandHandler(autoComplete = false)
+    public List<Request> FETCH_BATCH_HANDLER(Context ctx, @CollectionParams(collectionType = List.class,argumentTypes = {RequestImpl.class}) Collection<Request> requests, Rule rule) {
         return super.FETCH_BATCH_HANDLER(ctx, requests, rule);
+    }
+
+
+    @Override
+    @CommandHandler
+    public void REPORT_HANDLER(Context ctx, long id, int code) {
+        logger.info("老子报告了");
+    }
+
+    @Override
+    @CommandHandler
+    public void REPORT_EXCEPTION_HANDLER(Context ctx, long id, String message) {
+        logger.info("老子报告异常了");
     }
 }

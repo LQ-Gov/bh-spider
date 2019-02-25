@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -71,10 +72,12 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
             Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests,rule});
 
-            boolean ok = scheduler.<Boolean>process(cmd).get();
-            if (ok)
-                unfinishedIndex+=size;
-            setCacheQueue(ok ? null : requests);
+            List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
+            if (!allocated.isEmpty())
+                unfinishedIndex+=allocated.size();
+
+            requests.removeAll(allocated);
+            setCacheQueue(requests);
 
         } else {
             Collection<Request> requests = cacheQueue.isEmpty() ?
@@ -82,16 +85,18 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
                     cacheQueue;
 
             if (!requests.isEmpty()) {
-                Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests,rule});
+                Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests, rule});
 
-                boolean ok = scheduler.<Boolean>process(cmd).get();
-                logger.info("任务提交完成，并且已返回，返回结果:{}",ok);
-                if (ok) {
+                List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
+                logger.info("任务提交完成，提交成功数量:{},剩余数量:{}", allocated.size(), requests.size() - allocated.size());
+                if (!allocated.isEmpty()) {
                     store.accessor().update(rule.getId(),
-                            requests.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);
-                    waitingCount.addAndGet(-1 * size);
+                            allocated.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);
+                    waitingCount.addAndGet(-1 * allocated.size());
                 }
-                setCacheQueue(ok ? null : requests);
+
+                requests.removeAll(allocated);
+                setCacheQueue(requests);
             }
         }
     }
