@@ -59,7 +59,7 @@ public class Metadata {
             accessor.seek(pos);
 
         accessor.writeBoolean(true);//先设置此行无效
-        accessor.writeBoolean(false);//设置没有过期
+        accessor.writeBoolean(component.isExpired());//设置没有过期
         byte[] data = Json.get().writeValueAsBytes(component);
         accessor.writeInt(data.length);//设置组件数据长度
         accessor.write(data);

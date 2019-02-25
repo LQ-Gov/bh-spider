@@ -46,5 +46,8 @@ public interface Scheduler {
     Node self();
 
 
+    boolean running();
+
+
 
 }

@@ -58,11 +58,11 @@ public abstract class ComponentRepository {
 
 
     public Component save(byte[] data, String name, String description, boolean override) throws Exception {
-        return save(data, name, description, override, true);
+        return save(data, name, description, override, false);
     }
 
 
-    public Component save(byte[] data, String name, String description, boolean override, boolean valid) throws IOException {
+    public Component save(byte[] data, String name, String description, boolean override, boolean expired) throws IOException {
         Path old = Paths.get(base.toString(), name);
         Path tmp = Paths.get(base.toString(), name + ".tmp");
 
@@ -73,6 +73,7 @@ public abstract class ComponentRepository {
         Component component = new Component(name, componentType());
         component.setDescription(description);
         component.setHash(hash);
+        component.setExpired(expired);
         metadata().write(component);
 
         Files.move(tmp, old, StandardCopyOption.REPLACE_EXISTING);

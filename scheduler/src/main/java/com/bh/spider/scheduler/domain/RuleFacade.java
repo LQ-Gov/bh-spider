@@ -2,7 +2,7 @@ package com.bh.spider.scheduler.domain;
 
 import com.bh.spider.fetch.Request;
 import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.domain.pattern.AntRulePattern;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public class RuleFacade {
     private RuleScheduleController scheduleController;
 
 
-    public RuleFacade(BasicScheduler scheduler, Rule rule, RuleScheduleController scheduleController) {
+    public RuleFacade(Scheduler scheduler, Rule rule, RuleScheduleController scheduleController) {
         this.base = rule;
         this.scheduleController = scheduleController;
 

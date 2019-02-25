@@ -84,6 +84,11 @@ public class BasicScheduler implements Scheduler, Assistant {
         return me;
     }
 
+    @Override
+    public boolean running() {
+        return eventLoop()!=null&&eventLoop().running();
+    }
+
 
     @Override
     public synchronized void exec() throws Exception {

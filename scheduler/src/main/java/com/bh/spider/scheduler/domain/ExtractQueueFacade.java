@@ -2,48 +2,54 @@ package com.bh.spider.scheduler.domain;
 
 import com.bh.spider.fetch.*;
 import com.bh.spider.rule.ExtractQueue;
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public class ExtractQueueFacade {
 
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
     private String name;
     private ExtractorLoader[] loaders;
 
+    private String[] chain;
 
-    public ExtractQueueFacade(BasicScheduler scheduler, ExtractQueue queue) {
+
+    public ExtractQueueFacade(Scheduler scheduler, ExtractQueue queue) {
 
 
         this.scheduler = scheduler;
         this.name = queue.getName();
-        String[] chain = queue.getChain();
-        if (chain != null && chain.length > 0) {
-            loaders = new ExtractorLoader[chain.length];
-            for (int i = 0; i < chain.length; i++) {
-                loaders[i] = new ExtractorLoader(chain[i], null);
-            }
-        }
+        this.chain = queue.getChain();
+//        if (chain != null && chain.length > 0) {
+//            loaders = new ExtractorLoader[chain.length];
+//            for (int i = 0; i < chain.length; i++) {
+//                loaders[i] = new ExtractorLoader(chain[i], null);
+//            }
+//        }
 
     }
 
 
     public void extract(Context ctx, FetchContext fetchContext) throws Exception {
-        if (loaders == null || loaders.length == 0) return;
+        if (chain == null || chain.length == 0) return;
 
 
         int code = fetchContext.response().code();
+        for(String it:chain){
+            ExtractFacade.facade(scheduler,ctx,it);
+        }
+
         for (ExtractorLoader loader : loaders) {
 
             Method method = loader.method(ctx, String.valueOf(code));
@@ -56,6 +62,10 @@ public class ExtractQueueFacade {
                 if (e.result() == Behaviour.TERMINATION) break;
             }
         }
+    }
+
+    public void extractAsync(Context ctx,FetchContext fetchContext){
+
     }
 
     private void invoke(Context ctx, FetchContext fetchContext, Extractor obj, Method method) throws Exception {
@@ -118,7 +128,17 @@ public class ExtractQueueFacade {
             Future<Class<Extractor>> future = scheduler.process(new Command(ctx, CommandCode.LOAD_COMPONENT,
                     new Object[]{name, Component.Type.GROOVY}));
             cls = future.get();
-
         }
+    }
+
+
+    private class AsyncExtractorLoader extends ExtractorLoader{
+
+        public AsyncExtractorLoader(String name, Class<? extends Extractor> cls) {
+            super(name, cls);
+        }
+
+
+
     }
 }

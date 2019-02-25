@@ -36,6 +36,7 @@ public class GroovyComponentRepository extends ComponentRepository {
     public Class<?> loadClass(String name) throws IOException {
 
         Component component = metadata().get(name);
+        if(component==null||component.isExpired()) return null;
 
         WeakReference<Proxy> reference = classCache.get(name);
         Proxy proxy;

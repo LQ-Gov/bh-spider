@@ -2,8 +2,6 @@ package com.bh.spider.scheduler.cluster.communication;
 
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.Json;
@@ -32,8 +30,6 @@ import java.util.concurrent.TimeUnit;
 public class Connection implements Closeable {
 
     private final static Logger logger = LoggerFactory.getLogger(Connection.class);
-
-    private OperationRecorder componentOperationRecorder = OperationRecorderFactory.get("component");
 
     private URI uri;
     private Channel channel;

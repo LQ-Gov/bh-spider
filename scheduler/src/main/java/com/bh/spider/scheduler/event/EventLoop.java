@@ -214,4 +214,9 @@ public class EventLoop extends Thread {
         }
         return this;
     }
+
+
+    public boolean running(){
+        return !closed;
+    }
 }

@@ -45,7 +45,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
             ComponentOperationEntry coe = new ComponentOperationEntry(entry);
             if (ComponentOperationEntry.ADD.equals(coe.operation())) {
                 ComponentRepository repository = componentCoreFactory().proxy(coe.type());
-                repository.save(new byte[0], coe.name(), null, true, false);
+                repository.save(new byte[0], coe.name(), null, true, true);
             } else if (ComponentOperationEntry.DELETE.equals(coe.operation())) {
                 ComponentRepository repository = componentCoreFactory().proxy(coe.name());
                 if (repository != null) {
@@ -62,14 +62,8 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
     }
 
 
-    @Override
-    @CommandHandler(disabled = true)
-    public Class<?> LOAD_COMPONENT_HANDLER(String name, Component.Type type) throws IOException, ClassNotFoundException {
-        return super.LOAD_COMPONENT_HANDLER(name, type);
-    }
-
     @CommandHandler
-    public Callable< Class<?>> LOAD_COMPONENT_HANDLER(Context ctx, String name, Component.Type type, long timeout) throws IOException, ClassNotFoundException {
+    public Callable< Class<?>> LOAD_COMPONENT_ASYNC_HANDLER(Context ctx, String name, Component.Type type) throws IOException, ClassNotFoundException {
         ComponentRepository repository = componentCoreFactory().proxy(type);
 
 

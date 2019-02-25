@@ -15,5 +15,7 @@ public @interface CommandHandler {
 
     boolean autoComplete() default true;
 
+    String cron() default "";
+
 
 }

@@ -52,6 +52,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
     @Override
     public void blast() throws ExecutionException, InterruptedException {
+        if(!scheduler.running()) return;
 
         logger.info("rule schedule controller test");
         boolean unfinished=unfinishedIndex< unfinishedCount;
@@ -67,14 +68,14 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
         //先处理上次未完成的url
         if (unfinished) {
             Collection<Request> requests = cacheQueue.isEmpty() ?
-                    store.accessor().find(rule.getId(), Request.State.GOING,unfinishedIndex, size) :
+                    store.accessor().find(rule.getId(), Request.State.GOING, unfinishedIndex, size) :
                     cacheQueue;
 
-            Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests,rule});
+            Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests, rule});
 
             List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
             if (!allocated.isEmpty())
-                unfinishedIndex+=allocated.size();
+                unfinishedIndex += allocated.size();
 
             requests.removeAll(allocated);
             setCacheQueue(requests);
@@ -88,7 +89,9 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
                 Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests, rule});
 
                 List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
+
                 logger.info("任务提交完成，提交成功数量:{},剩余数量:{}", allocated.size(), requests.size() - allocated.size());
+
                 if (!allocated.isEmpty()) {
                     store.accessor().update(rule.getId(),
                             allocated.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);

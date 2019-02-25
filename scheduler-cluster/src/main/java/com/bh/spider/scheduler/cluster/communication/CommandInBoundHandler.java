@@ -3,6 +3,8 @@ package com.bh.spider.scheduler.cluster.communication;
 import com.bh.spider.scheduler.CommandReceiveHandler;
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
+import com.bh.spider.scheduler.cluster.context.MasterContext;
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
 import io.netty.channel.ChannelHandlerContext;
@@ -42,5 +44,8 @@ public class CommandInBoundHandler extends CommandReceiveHandler {
     }
 
 
-
+    @Override
+    protected Context buildContext(ChannelHandlerContext ctx, long commandId, CommandCode key) {
+        return new MasterContext(scheduler,connection);
+    }
 }

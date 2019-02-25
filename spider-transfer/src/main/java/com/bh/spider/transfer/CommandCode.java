@@ -42,6 +42,7 @@ public enum CommandCode {
 
 
     LOAD_COMPONENT,
+    LOAD_COMPONENT_ASYNC,
 
     WATCH,
     UNWATCH,

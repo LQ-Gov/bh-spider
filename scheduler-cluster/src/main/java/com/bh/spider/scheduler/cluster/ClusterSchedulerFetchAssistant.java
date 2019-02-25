@@ -8,7 +8,6 @@ import com.bh.spider.scheduler.cluster.dispatch.Allocation;
 import com.bh.spider.scheduler.cluster.dispatch.IdlePolicy;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
@@ -25,17 +24,6 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
         super(scheduler, null, domainIndex, store);
 
         this.scheduler = scheduler;
-    }
-
-    @CommandHandler
-    public void WORKER_REPORT_HANDLER(Context ctx, long id,int code) {
-        this.scheduler.process(new Command(new LocalContext(scheduler), CommandCode.REPORT, new Object[]{id, code}));
-    }
-
-
-    @CommandHandler
-    public void WORKER_REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
-        this.scheduler.process(new Command(new LocalContext(scheduler),CommandCode.REPORT_EXCEPTION,new Object[]{id,message}));
     }
 
     @Override
@@ -68,6 +56,7 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
                 e.printStackTrace();
             }
         }
+        cacheFetchContext(ctx,returnValue);
         return returnValue;
     }
 }

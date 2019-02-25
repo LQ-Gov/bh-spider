@@ -12,12 +12,15 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.transfer.CommandCode;
 import com.bh.spider.transfer.entity.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 
 public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentAssistant {
 
+    private final static Logger logger = LoggerFactory.getLogger(ClusterSchedulerComponentAssistant.class);
 
     private ClusterScheduler scheduler;
 
@@ -38,8 +41,11 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
         ComponentRepository repository = componentCoreFactory().proxy(name);
 
         Component component = repository.get(name, true);
-
-        ctx.write(component);
+//
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT,
+                new Object[]{component.getData(), component.getName(), component.getType(), component.getDescription()});
+        ctx.write(cmd);
+        logger.info("WORKER_GET_COMPONENT_HANDLER 执行");
     }
 
     //向worker同步component 日志

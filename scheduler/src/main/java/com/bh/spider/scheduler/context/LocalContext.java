@@ -1,12 +1,15 @@
 package com.bh.spider.scheduler.context;
 
+import com.bh.spider.fetch.Behaviour;
+import com.bh.spider.fetch.ExtractorChainException;
 import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.rule.ExtractQueue;
 import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.domain.ExtractQueueFacade;
-import com.bh.spider.scheduler.domain.RuleFacade;
+import com.bh.spider.scheduler.Scheduler;
+import com.bh.spider.scheduler.domain.ExtractFacade;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.transfer.CommandCode;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,9 +17,9 @@ import java.util.List;
 
 public class LocalContext extends AbstractCloseableContext {
     private final static Logger logger = LoggerFactory.getLogger(LocalContext.class);
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
 
-    public LocalContext(BasicScheduler scheduler) {
+    public LocalContext(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
@@ -40,22 +43,23 @@ public class LocalContext extends AbstractCloseableContext {
         Rule rule = fetchContext.rule();
         if (rule == null) return;
 
+        List<ExtractQueue> queues = rule.getExtractors();
+        if (CollectionUtils.isEmpty(queues)) return;
 
-        RuleFacade facade = scheduler.<RuleFacade>process(new Command(this, CommandCode.RULE_FACADE, new Object[]{rule})).get();
+        for (ExtractQueue queue : queues) {
+            if (queue == null || queue.getChain() == null) continue;
 
-        if (facade != null) {
-            List<ExtractQueueFacade> queues = facade.extractorQueues();
+            for (String it : queue.getChain()) {
+                ExtractFacade facade = buildExtractFacade(scheduler, this, it);
+                if (facade == null) continue;
 
-            for (ExtractQueueFacade queue : queues) {
                 try {
-                    queue.extract(this, fetchContext);
-                }catch (Exception e){
-                    scheduler.process(new Command(this, CommandCode.REPORT_EXCEPTION, new Object[]{fetchContext.request().id(), e.getMessage()}));
+                    facade.exec(fetchContext);
+                } catch (ExtractorChainException e) {
+                    if (e.result() == Behaviour.TERMINATION) break;
                 }
             }
         }
-
-        //提交报告
         scheduler.process(new Command(this, CommandCode.REPORT, new Object[]{fetchContext.request().id(), code}));
     }
 
@@ -63,6 +67,12 @@ public class LocalContext extends AbstractCloseableContext {
     @Override
     public void commandCompleted(Object data) {
 
+    }
+
+
+    protected ExtractFacade buildExtractFacade(Scheduler scheduler,Context ctx,String name) throws Exception {
+
+        return ExtractFacade.facade(scheduler,ctx,name);
     }
 
 }

@@ -8,6 +8,7 @@ import com.bh.spider.scheduler.BasicSchedulerFetchAssistant;
 import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.CollectionParams;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.NotSupportCommandException;
 import com.bh.spider.transfer.CommandCode;
@@ -49,7 +50,9 @@ public class WorkerSchedulerFetchAssistant extends BasicSchedulerFetchAssistant 
     @Override
     @CommandHandler
     public void REPORT_HANDLER(Context ctx, long id, int code) {
-        logger.info("老子报告了");
+        Command cmd = new Command(ctx,CommandCode.REPORT,new Object[]{id,code});
+
+        ctx.write(cmd);
     }
 
     @Override

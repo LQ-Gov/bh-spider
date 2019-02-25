@@ -2,7 +2,6 @@ package com.bh.spider.scheduler;
 
 import com.bh.spider.fetch.Request;
 import com.bh.spider.fetch.impl.RequestImpl;
-import com.bh.spider.query.Query;
 import com.bh.spider.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
@@ -30,7 +29,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     private DomainIndex domainIndex;
     private Store store;
 
-    private Map<Long,Request> fetchContextTable = new ConcurrentHashMap<>();
+    private Map<Long, Request> fetchContextCache = new ConcurrentHashMap<>();
 
     public BasicSchedulerFetchAssistant(BasicScheduler scheduler, DomainIndex domainIndex, Store store) {
         this(scheduler, new Fetcher(scheduler), domainIndex, store);
@@ -49,6 +48,23 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
 
     protected Fetcher fetcher(){return fetcher;}
+
+
+    protected void cacheFetchContext(Context ctx,Request request){
+        if(request!=null) this.fetchContextCache.put(request.id(),request);
+    }
+
+
+    protected void cacheFetchContext(Context ctx,List<Request> requests) {
+        if (requests == null) return;
+
+        for (Request request : requests)
+            cacheFetchContext(ctx, request);
+    }
+
+    protected Map<Long,Request> fetchContextCache(){
+        return fetchContextCache;
+    }
 
 
 
@@ -75,14 +91,9 @@ public class BasicSchedulerFetchAssistant implements Assistant {
         throw new Exception("绑定请求失败");
     }
 
-    @CommandHandler
-    public void GET_REQUEST_LIST_HANDLER(Context ctx, Query query) {
-//        List<RequestImpl> list = scheduler.store().request().select(query);
-//        ctx.write(list);
-    }
 
     /**
-     * 重要的 event mapping，正式开始抓取!!!
+     * 重要的 command handler，正式开始抓取!!!
      * @param ctx 该ctx可能的来源:1.client,2.平台本身的常规任务调度
      * @param req
      * @param rule
@@ -97,17 +108,18 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     public List<Request> FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
 
         List<Request> returnValue = new LinkedList<>(requests);
-        requests.removeIf(req -> fetchContextTable.containsKey(req.id()));
-        requests.forEach(x -> fetchContextTable.put(x.id(), x));
+
+
         fetcher.fetch(ctx, requests, rule);
+        cacheFetchContext(ctx, returnValue);
         return returnValue;
     }
 
     @CommandHandler
     public void REPORT_HANDLER(Context ctx, long id,int code) {
-        if(fetchContextTable.containsKey(id)) {
+        if(fetchContextCache().containsKey(id)) {
             store.accessor().update(id, code, Request.State.FINISHED,null);
-            fetchContextTable.remove(id);
+            fetchContextCache().remove(id);
         }
 
         logger.info("{}抓取完成,生成报告",id);
@@ -116,9 +128,15 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler
     public void REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
-        if (fetchContextTable.containsKey(id)) {
+        if (fetchContextCache().containsKey(id)) {
             store.accessor().update(id, null, Request.State.EXCEPTION, message);
-            fetchContextTable.remove(id);
+            fetchContextCache().remove(id);
         }
+    }
+
+
+    @CommandHandler(cron = "*/5 * * * * ?")
+    public void CLEAR_EXPIRED_FETCH_HANDLER() {
+        //清理过期的抓取,暂时不完成
     }
 }

@@ -89,7 +89,7 @@ public class Config {
 
 
         //抓取配置
-        config.GLOBAL.put(INIT_LOAD_CLASS_TIMEOUT,"1000");
+        config.GLOBAL.put(INIT_LOAD_CLASS_TIMEOUT,"10000");
 
 
         return config;
