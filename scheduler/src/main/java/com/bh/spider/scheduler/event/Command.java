@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.event;
 
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.transfer.CommandCode;
+import com.bh.common.utils.CommandCode;
 
 /**
  * Created by lq on 17-3-26.

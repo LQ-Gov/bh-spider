@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.event;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.token.Token;
 import com.bh.spider.scheduler.watch.Markers;
-import com.bh.spider.transfer.Json;
+import com.bh.common.utils.Json;
 import com.fasterxml.jackson.databind.JavaType;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;

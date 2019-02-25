@@ -1,8 +1,6 @@
 package com.bh.spider.client.sender;
 
-import com.bh.spider.transfer.CommandCode;
-
-import java.io.IOException;
+import com.bh.common.utils.CommandCode;
 
 public class HeartBeat extends Thread {
 

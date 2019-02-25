@@ -1,9 +1,9 @@
 package com.bh.spider.client;
 
 import com.bh.spider.client.sender.Sender;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.RequestBuilder;
-import com.bh.spider.transfer.CommandCode;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.RequestBuilder;
+import com.bh.common.utils.CommandCode;
 
 import java.net.MalformedURLException;
 

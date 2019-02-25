@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.component.Component;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;

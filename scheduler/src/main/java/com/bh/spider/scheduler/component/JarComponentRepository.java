@@ -1,9 +1,8 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.component.Component;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 

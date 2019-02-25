@@ -1,9 +1,10 @@
 package com.bh.spider.client.context;
 
+import com.bh.spider.common.fetch.*;
 import com.bh.spider.doc.Document;
-import com.bh.spider.fetch.*;
-import com.bh.spider.fetch.impl.RequestBuilder;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.fetch.impl.RequestBuilder;
+import com.bh.spider.common.rule.Rule;
+import com.bh.spipder.fetch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

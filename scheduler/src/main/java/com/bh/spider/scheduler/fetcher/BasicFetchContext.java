@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.*;
-import com.bh.spider.fetch.impl.RequestBuilder;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.fetch.*;
+import com.bh.spider.common.fetch.impl.RequestBuilder;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.doc.Document;
 
@@ -127,11 +127,6 @@ public class BasicFetchContext implements FetchContext {
     @Override
     public void scheduler(String url) throws MalformedURLException {
         scheduler(null,url);
-    }
-
-    @Override
-    public void skip() throws ExtractorChainException {
-
     }
 
     @Override

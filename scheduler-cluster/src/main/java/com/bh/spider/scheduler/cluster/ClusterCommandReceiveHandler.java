@@ -4,7 +4,7 @@ import com.bh.spider.scheduler.CommandReceiveHandler;
 import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.transfer.CommandCode;
+import com.bh.common.utils.CommandCode;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import org.slf4j.Logger;

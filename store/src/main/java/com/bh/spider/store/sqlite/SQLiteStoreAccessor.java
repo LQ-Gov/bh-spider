@@ -1,10 +1,10 @@
 package com.bh.spider.store.sqlite;
 
-import com.bh.spider.fetch.FetchMethod;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.RequestImpl;
+import com.bh.common.utils.Json;
+import com.bh.spider.common.fetch.FetchMethod;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.RequestImpl;
 import com.bh.spider.store.base.StoreAccessor;
-import com.bh.spider.transfer.Json;
 import com.fasterxml.jackson.databind.type.MapType;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

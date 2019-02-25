@@ -14,9 +14,9 @@
         <module>store</module>
         <module>client</module>
         <module>scheduler-ui</module>
-        <module>spider-transfer</module>
         <module>scheduler-cluster</module>
         <module>consistent</module>
+        <module>doc</module>
     </modules>
 
     <properties>

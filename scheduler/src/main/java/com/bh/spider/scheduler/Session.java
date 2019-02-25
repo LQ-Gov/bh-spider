@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler;
 
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.Json;
+import com.bh.common.utils.CommandCode;
+import com.bh.common.utils.Json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;

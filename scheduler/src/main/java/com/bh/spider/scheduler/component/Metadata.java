@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.transfer.Json;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.common.utils.Json;
+import com.bh.spider.common.component.Component;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 

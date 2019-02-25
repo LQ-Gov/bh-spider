@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.context;
 
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.transfer.Json;
+import com.bh.spider.common.fetch.FetchContext;
+import com.bh.common.utils.Json;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;

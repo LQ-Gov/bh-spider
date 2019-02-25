@@ -2,7 +2,7 @@ package com.bh.spider.scheduler;
 
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
-import com.bh.spider.transfer.entity.Node;
+import com.bh.spider.common.member.Node;
 
 import java.util.concurrent.CompletableFuture;
 

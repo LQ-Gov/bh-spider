@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.FetchMethod;
-import com.bh.spider.fetch.Request;
+import com.bh.spider.common.fetch.FetchMethod;
+import com.bh.spider.common.fetch.Request;
 import com.bh.spider.scheduler.IdGenerator;
 
 import java.net.URL;

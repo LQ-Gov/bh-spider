@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.fetch.Request;
+import com.bh.spider.common.fetch.Request;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Assistant;
@@ -10,8 +10,8 @@ import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Node;
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.member.Node;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;

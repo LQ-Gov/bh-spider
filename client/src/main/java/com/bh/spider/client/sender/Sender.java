@@ -3,8 +3,8 @@ package com.bh.spider.client.sender;
 import com.bh.spider.client.converter.Converter;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.Json;
+import com.bh.common.utils.CommandCode;
+import com.bh.common.utils.Json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package com.bh.spider.client.converter;
 
 
-import com.bh.spider.transfer.Json;
+import com.bh.common.utils.Json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;

@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.context;
 
-import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.common.fetch.FetchContext;
 
 /**
  * Created by lq on 17-3-30.

@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.domain;
 
-import com.bh.spider.fetch.Request;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;

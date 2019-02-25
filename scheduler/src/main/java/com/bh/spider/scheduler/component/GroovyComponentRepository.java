@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.component;
 
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.component.Component;
 import groovy.lang.GroovyClassLoader;
 
 import java.io.IOException;

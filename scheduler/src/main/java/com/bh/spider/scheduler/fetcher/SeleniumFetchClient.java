@@ -1,11 +1,11 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchResponse;
-import com.bh.spider.rule.SeleniumRule;
-import com.bh.spider.rule.Rule;
-import com.bh.spider.rule.Script;
+import com.bh.spider.common.fetch.FetchContext;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.FetchResponse;
+import com.bh.spider.common.rule.SeleniumRule;
+import com.bh.spider.common.rule.Rule;
+import com.bh.spider.common.rule.Script;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;

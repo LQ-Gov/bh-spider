@@ -6,7 +6,7 @@ import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.cluster.context.MasterContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.transfer.CommandCode;
+import com.bh.common.utils.CommandCode;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;

@@ -10,7 +10,7 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.DirectoriesInitializer;
 import com.bh.spider.scheduler.initialization.EventLoopInitializer;
-import com.bh.spider.transfer.entity.Node;
+import com.bh.spider.common.member.Node;
 
 import java.nio.file.Paths;
 import java.util.List;

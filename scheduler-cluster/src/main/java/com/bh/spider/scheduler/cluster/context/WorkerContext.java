@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.cluster.context;
 
-import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.common.fetch.FetchContext;
 import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.context.AbstractCloseableContext;
 import com.bh.spider.scheduler.event.Command;

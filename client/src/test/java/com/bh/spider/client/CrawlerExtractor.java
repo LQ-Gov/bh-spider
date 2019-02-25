@@ -1,8 +1,8 @@
 package com.bh.spider.client;
 
 import com.bh.spider.doc.Document;
-import com.bh.spider.fetch.Extractor;
-import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.common.fetch.Extractor;
+import com.bh.spider.common.fetch.FetchContext;
 
 public class CrawlerExtractor implements Extractor {
     @Override

@@ -1,7 +1,7 @@
 package com.bh.spider.client
 
-import com.bh.spider.fetch.Extractor
-import com.bh.spider.fetch.FetchContext
+import com.bh.spider.common.fetch.Extractor
+import com.bh.spider.common.fetch.FetchContext
 
 class ZhiHuCrawler implements Extractor {
     @Override

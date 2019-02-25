@@ -5,7 +5,7 @@ import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.Assistant;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.component.Component;
 
 import java.io.IOException;
 import java.util.List;

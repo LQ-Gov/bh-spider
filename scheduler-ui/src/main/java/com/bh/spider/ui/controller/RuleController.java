@@ -1,11 +1,10 @@
 package com.bh.spider.ui.controller;
 
 import com.bh.spider.client.Client;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.rule.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**

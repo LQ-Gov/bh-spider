@@ -1,15 +1,14 @@
 package com.bh.spider.ui.controller;
 
 import com.bh.spider.client.Client;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchState;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.FetchState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.MalformedURLException;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/fetch")

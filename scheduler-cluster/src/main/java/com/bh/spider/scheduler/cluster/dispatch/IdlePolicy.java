@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.cluster.dispatch;
 
-import com.bh.spider.fetch.Request;
+import com.bh.spider.common.fetch.Request;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import org.apache.commons.collections4.CollectionUtils;
 

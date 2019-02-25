@@ -1,8 +1,8 @@
 package com.bh.spider.client;
 
 import com.bh.spider.client.sender.Sender;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.component.Component;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;

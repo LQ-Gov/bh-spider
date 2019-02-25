@@ -1,12 +1,12 @@
 package com.bh.spider.scheduler.domain;
 
-import com.bh.spider.fetch.*;
-import com.bh.spider.rule.ExtractQueue;
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.component.Component;
+import com.bh.spider.common.fetch.*;
+import com.bh.spider.common.rule.ExtractQueue;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
 import java.lang.reflect.Method;
@@ -64,7 +64,7 @@ public class ExtractQueueFacade {
         }
     }
 
-    public void extractAsync(Context ctx,FetchContext fetchContext){
+    public void extractAsync(Context ctx, FetchContext fetchContext){
 
     }
 

@@ -1,15 +1,11 @@
 package com.bh.spider.scheduler.job;
 
-import com.bh.spider.rule.Rule;
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.domain.RuleScheduleController;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
-import org.quartz.simpl.SimpleJobFactory;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;

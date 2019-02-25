@@ -1,13 +1,13 @@
 package com.bh.spider.scheduler.domain;
 
-import com.bh.spider.fetch.Code;
-import com.bh.spider.fetch.Extractor;
-import com.bh.spider.fetch.FetchContext;
+import com.bh.spider.common.fetch.Code;
+import com.bh.spider.common.fetch.Extractor;
+import com.bh.spider.common.fetch.FetchContext;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.component.Component;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 

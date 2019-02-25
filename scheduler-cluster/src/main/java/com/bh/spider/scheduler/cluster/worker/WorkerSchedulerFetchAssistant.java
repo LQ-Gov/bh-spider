@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler.cluster.worker;
 
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.RequestImpl;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.RequestImpl;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.BasicSchedulerFetchAssistant;
 import com.bh.spider.scheduler.cluster.ClusterNode;
@@ -11,7 +11,7 @@ import com.bh.spider.scheduler.event.CollectionParams;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.NotSupportCommandException;
-import com.bh.spider.transfer.CommandCode;
+import com.bh.common.utils.CommandCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,6 +1,6 @@
 package com.bh.spider.client;
 
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.rule.Rule;
 import org.junit.Before;
 import org.junit.Test;
 

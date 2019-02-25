@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.cluster.component;
 
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.component.Component;
 
 public class ComponentOperationEntry {
     public final static String ADD = "ADD";

@@ -2,8 +2,8 @@ package com.bh.spider.scheduler.watch.point;
 
 
 import com.bh.common.WatchPointCodes;
-import com.bh.spider.rule.Rule;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.rule.Rule;
+import com.bh.spider.common.component.Component;
 
 import java.util.HashMap;
 import java.util.Map;

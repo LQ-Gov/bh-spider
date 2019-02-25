@@ -1,9 +1,9 @@
 package com.bh.spider.client;
 
 import com.bh.spider.client.sender.Sender;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.Json;
-import com.bh.spider.rule.Rule;
+import com.bh.common.utils.CommandCode;
+import com.bh.common.utils.Json;
+import com.bh.spider.common.rule.Rule;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.io.IOException;

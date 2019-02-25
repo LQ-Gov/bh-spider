@@ -1,6 +1,6 @@
 package com.bh.spider.ui.entity;
 
-import com.bh.spider.transfer.entity.Node;
+import com.bh.spider.common.member.Node;
 
 import java.util.List;
 import java.util.Map;

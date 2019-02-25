@@ -10,8 +10,8 @@ import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.component.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

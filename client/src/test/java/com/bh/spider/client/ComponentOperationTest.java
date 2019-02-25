@@ -1,6 +1,6 @@
 package com.bh.spider.client;
 
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.component.Component;
 import org.junit.Before;
 import org.junit.Test;
 

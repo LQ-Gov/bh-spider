@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.impl.FetchCookie;
+import com.bh.spider.common.fetch.impl.FetchCookie;
 
 import java.net.HttpCookie;
 

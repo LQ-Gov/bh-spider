@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler.cluster;
 
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.RequestImpl;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.RequestImpl;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicSchedulerFetchAssistant;
 import com.bh.spider.scheduler.cluster.dispatch.Allocation;
 import com.bh.spider.scheduler.cluster.dispatch.IdlePolicy;
@@ -12,7 +12,7 @@ import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.store.base.Store;
-import com.bh.spider.transfer.CommandCode;
+import com.bh.common.utils.CommandCode;
 
 import java.util.*;
 

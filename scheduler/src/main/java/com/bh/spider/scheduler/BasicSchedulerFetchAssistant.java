@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.RequestImpl;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.RequestImpl;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.domain.RuleFacade;

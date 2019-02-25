@@ -13,8 +13,8 @@ import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.CollectionParams;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
-import com.bh.spider.transfer.CommandCode;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.component.Component;
 
 import java.io.IOException;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler.cluster;
 
-import com.bh.spider.transfer.entity.Node;
+import com.bh.spider.common.member.Node;
 
 public class ClusterNode extends Node {
     /**

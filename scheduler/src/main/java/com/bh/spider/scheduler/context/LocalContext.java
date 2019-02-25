@@ -1,14 +1,14 @@
 package com.bh.spider.scheduler.context;
 
-import com.bh.spider.fetch.Behaviour;
-import com.bh.spider.fetch.ExtractorChainException;
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.rule.ExtractQueue;
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.fetch.Behaviour;
+import com.bh.spider.common.fetch.ExtractorChainException;
+import com.bh.spider.common.fetch.FetchContext;
+import com.bh.spider.common.rule.ExtractQueue;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.domain.ExtractFacade;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.transfer.CommandCode;
+import com.bh.common.utils.CommandCode;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

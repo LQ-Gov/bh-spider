@@ -1,7 +1,7 @@
 package com.bh.spider.ui.controller;
 
 import com.bh.spider.client.Client;
-import com.bh.spider.transfer.entity.Component;
+import com.bh.spider.common.component.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;

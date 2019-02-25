@@ -1,6 +1,6 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.rule.Rule;
+import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DefaultRuleScheduleController;
 import com.bh.spider.scheduler.domain.DomainIndex;
@@ -10,7 +10,7 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
-import com.bh.spider.transfer.Json;
+import com.bh.common.utils.Json;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;

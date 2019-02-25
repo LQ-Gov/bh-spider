@@ -1,9 +1,9 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.spider.fetch.FetchContext;
-import com.bh.spider.fetch.FetchContextUtils;
-import com.bh.spider.fetch.Request;
-import com.bh.spider.fetch.impl.FetchResponse;
+import com.bh.spider.common.fetch.FetchContext;
+import com.bh.spider.common.fetch.FetchContextUtils;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.impl.FetchResponse;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
