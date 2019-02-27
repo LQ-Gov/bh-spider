@@ -62,7 +62,7 @@ public class EventLoop extends Thread {
                         name, cmd.key(), 0);
 
                 try {
-                    CommandRunner handler = handlers.get(cmd.key());
+                    CommandRunner handler = handlers.get(cmd.key().name());
 
                     if (handler == null) throw new RuntimeException("executor not found:" + cmd.key());
 

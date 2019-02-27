@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/node")
+@RequestMapping("/api/node")
 public class NodeController {
     private final Client client;
 

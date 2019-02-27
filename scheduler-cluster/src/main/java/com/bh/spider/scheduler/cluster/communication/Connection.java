@@ -1,10 +1,9 @@
 package com.bh.spider.scheduler.cluster.communication;
 
+import com.bh.common.utils.Json;
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.common.utils.CommandCode;
-import com.bh.common.utils.Json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -78,7 +77,7 @@ public class Connection implements Closeable {
     }
 
     public void write(long id,Command command) throws JsonProcessingException {
-        short cmdCode = (short) CommandCode.valueOf(command.key()).ordinal();
+        short cmdCode = (short) command.key().ordinal();
 
         byte[] data = Json.get().writeValueAsBytes(command.params());
 

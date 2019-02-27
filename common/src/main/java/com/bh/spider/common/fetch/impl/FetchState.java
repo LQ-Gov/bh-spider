@@ -59,9 +59,7 @@ public class FetchState {
         return new FetchState(Request.State.FINISHED, new Date(), null);
     }
 
-    public static FetchState failed(){
-        return new FetchState(Request.State.FAILED,new Date(),null);
-    }
+
 
     public static FetchState exception(String message){
         return new FetchState(Request.State.EXCEPTION,new Date(),message);

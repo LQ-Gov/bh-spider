@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("/fetch")
+@RequestMapping("/api/fetch")
 public class FetchController {
 
     private final Client client;

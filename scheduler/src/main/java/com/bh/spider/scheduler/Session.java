@@ -1,8 +1,7 @@
 package com.bh.spider.scheduler;
 
-import com.bh.spider.scheduler.event.Command;
-import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
+import com.bh.spider.scheduler.event.Command;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -31,11 +30,11 @@ public class Session implements Closeable {
     }
 
     public void write(Command cmd) throws JsonProcessingException {
-        short cmdCode = (short) CommandCode.valueOf(cmd.key()).ordinal();
+        short cmdCode = (short) cmd.key().ordinal();
 
         byte[] data = Json.get().writeValueAsBytes(cmd.params());
 
-        ByteBuf buffer = channel.alloc().buffer(8+2+4+data.length);
+        ByteBuf buffer = channel.alloc().buffer(8 + 2 + 4 + data.length);
         buffer.writeLong(id).writeShort(cmdCode).writeInt(data.length).writeBytes(data);
 
         channel.writeAndFlush(buffer);

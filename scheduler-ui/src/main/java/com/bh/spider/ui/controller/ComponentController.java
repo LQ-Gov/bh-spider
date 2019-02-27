@@ -15,7 +15,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("/component")
+@RequestMapping("/api/component")
 public class ComponentController {
 
     private final Client client;

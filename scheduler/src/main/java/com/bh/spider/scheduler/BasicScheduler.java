@@ -132,7 +132,7 @@ public class BasicScheduler implements Scheduler, Assistant {
     }
 
     public void submit(Context ctx, Request req) {
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST, new Object[]{req});
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST, req);
         this.process(cmd);
     }
 

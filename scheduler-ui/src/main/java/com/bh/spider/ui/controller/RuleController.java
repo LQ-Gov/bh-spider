@@ -12,7 +12,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("/rule")
+@RequestMapping("/api/rule")
 public class RuleController {
 
     private final Client client;

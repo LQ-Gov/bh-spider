@@ -1,16 +1,28 @@
 package com.bh.common.utils;
 
 public enum CommandCode {
+    //COMPONENT相关操作
+    SUBMIT_COMPONENT,//提交component
+    GET_COMPONENT_LIST,//获取所有的component
+    GET_COMPONENT,//获取单个component
+    DELETE_COMPONENT,
+
+
+    //RULE 相关操作
+    SUBMIT_RULE,
+    GET_RULE_LIST,//获取RULE列表
+    GET_HOST_LIST,///获取所有规则的host
+    DELETE_RULE,//删除rule
+    SCHEDULER_RULE_EXECUTOR,//启动或暂停
+
+
+
     PROFILE,
     GET_NODE_LIST,
     CONNECT,
 
 
-    //component operation
-    SUBMIT_COMPONENT,//提交component
-    GET_COMPONENT_LIST,//获取所有的component
-    GET_COMPONENT,//获取单个component
-    DELETE_COMPONENT,
+
 
 
     WORKER_GET_COMPONENT,
@@ -24,13 +36,7 @@ public enum CommandCode {
     RULE_FACADE,
 
 
-    //rule operation
-    SUBMIT_RULE,
-    GET_RULE_LIST,//获取RULE列表
-    GET_HOST_LIST,///获取所有规则的host
-    DELETE_RULE,//删除rule
-    EDIT_RULE,//修改rule
-    SCHEDULER_RULE_EXECUTOR,//启动或暂停
+
 
 
 

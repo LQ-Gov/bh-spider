@@ -29,8 +29,4 @@ public class RequestOperation {
         submit(req);
     }
 
-//    public List<Request> select(Query query) {
-//        ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{RequestImpl.class}, null);
-//        return sender.write(CommandCode.GET_REQUEST_LIST, type, query);
-//    }
 }

@@ -54,7 +54,6 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     public void blast() throws ExecutionException, InterruptedException {
         if(!scheduler.running()) return;
 
-        logger.info("rule schedule controller test");
         boolean unfinished=unfinishedIndex< unfinishedCount;
         if (waitingCount.get() <= 0 && !unfinished) return;
 
