@@ -37,6 +37,7 @@ public class Rule implements Serializable {
     private boolean valid;
 
     public Rule() {
+        this(0);
     }
 
     public Rule(long id) {

@@ -25,7 +25,7 @@ public class JobCoreScheduler {
 
     }
 
-    public synchronized JobContext scheduler(RuleScheduleController controller){
+    public synchronized JobContext schedule(RuleScheduleController controller){
         Rule rule = controller.rule();
         String id = String.valueOf( rule.getId());
         JobDetail detail = newJob(QuartzJobImpl.class).withIdentity(id).build();
@@ -43,7 +43,7 @@ public class JobCoreScheduler {
 
     }
 
-    public synchronized JobContext scheduler(String id,String cron,Map<String,Object> params) throws SchedulerException {
+    public synchronized JobContext schedule(String id,String cron,Map<String,Object> params) throws SchedulerException {
         JobDetail detail = newJob(QuartzJobImpl.class).withIdentity(id).build();
         if(params!=null)
             detail.getJobDataMap().putAll(params);
@@ -67,6 +67,8 @@ public class JobCoreScheduler {
         if (quartz.isStarted())
             quartz.shutdown();
     }
+
+
 
 
 

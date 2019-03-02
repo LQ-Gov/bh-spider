@@ -6,6 +6,8 @@ import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
+import com.bh.spider.scheduler.job.JobContext;
+import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     private Rule rule;
     private BasicScheduler scheduler;
     private Store store;
+    private JobContext jobContext;
 
 
     private long unfinishedIndex;
@@ -39,8 +42,8 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void close() {
-
+    public void close() throws Exception {
+        this.jobContext.close();
     }
 
     @Override
@@ -115,5 +118,11 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
             if (collection != null)
                 cacheQueue.addAll(collection);
         }
+    }
+
+    @Override
+    public void execute(JobCoreScheduler jobScheduler) throws Exception {
+        this.jobContext = jobScheduler.schedule(this);
+        this.jobContext.exec();
     }
 }

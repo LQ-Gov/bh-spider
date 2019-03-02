@@ -12,7 +12,9 @@ public enum CommandCode {
     SUBMIT_RULE,
     GET_RULE_LIST,//获取RULE列表
     GET_HOST_LIST,///获取所有规则的host
-    DELETE_RULE,//删除rule
+    DELETE_RULE,//删除rule(此删除并未真正删除，会进入一个清理阶段)
+    TERMINATION_RULE,//真正删除rule的阶段
+
     SCHEDULER_RULE_EXECUTOR,//启动或暂停
 
 

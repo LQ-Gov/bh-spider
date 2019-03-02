@@ -2,10 +2,12 @@ package com.bh.spider.ui.controller;
 
 import com.bh.spider.client.Client;
 import com.bh.spider.common.rule.Rule;
+import com.bh.spider.ui.vo.RuleVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by lq on 7/5/17.
@@ -24,9 +26,11 @@ public class RuleController {
 
 
     @GetMapping("/list")
-    public List<Rule> list() {
+    public List<RuleVo> list() {
 
-        return client.rule().select();
+        List<Rule> rules = client.rule().select();
+
+        return rules.stream().map(RuleVo::new).collect(Collectors.toList());
     }
 
 
@@ -38,9 +42,9 @@ public class RuleController {
 
 
 
-    @RequestMapping(value = "/rule/{host}/{uuid}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable("host") String host, @PathVariable("uuid") String uuid) {
-        client.rule().delete(host, uuid);
+    @DeleteMapping(value = "/{id}")
+    public void delete( @PathVariable("id") long id) {
+        client.rule().delete(id);
     }
 
     @PostMapping

@@ -19,12 +19,25 @@ public class QuartzJobContext implements JobContext {
 
 
     @Override
-    public State state() {
+    public State state() throws SchedulerException {
+        Trigger.TriggerState ts = scheduler.getTriggerState(trigger.getKey());
+
+
+
+
         return null;
     }
 
     @Override
     public void exec() throws SchedulerException {
         scheduler.scheduleJob(detail,trigger);
+
+    }
+
+    public void close() throws SchedulerException {
+
+        scheduler.pauseTrigger(trigger.getKey());;// 停止触发器
+        scheduler.unscheduleJob(trigger.getKey());// 移除触发器
+        scheduler.deleteJob(detail.getKey());// 删除任务
     }
 }

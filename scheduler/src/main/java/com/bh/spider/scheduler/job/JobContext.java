@@ -5,8 +5,11 @@ public interface JobContext {
         RUNNING, STOP, BLOCK, ERROR
     }
 
-    State state();
+    State state() throws Exception;
 
 
     void exec() throws Exception;
+
+
+    void close() throws Exception;
 }

@@ -13,9 +13,6 @@ public interface RuleFacade {
     String host();
 
 
-    void destroy();
-
-
     void link(DomainIndex domainIndex);
 
     RuleScheduleController controller();

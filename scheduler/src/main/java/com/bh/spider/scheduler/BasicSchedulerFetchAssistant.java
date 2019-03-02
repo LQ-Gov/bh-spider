@@ -5,7 +5,7 @@ import com.bh.spider.common.fetch.impl.RequestImpl;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
-import com.bh.spider.scheduler.domain.DefaultRuleFacade;
+import com.bh.spider.scheduler.domain.RuleFacade;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.FetchContent;
@@ -76,11 +76,10 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
 
         while (node != domainIndex.root()) {
-            Collection<DefaultRuleFacade> rules = node.rules();
+            Collection<RuleFacade> rules = node.rules();
             if (rules != null) {
-                for (DefaultRuleFacade rule : rules) {
-
-                    if (rule.match(req)) {
+                for (RuleFacade rule : rules) {
+                    if (rule.original().isValid() && rule.match(req)) {
                         rule.controller().joinQueue(new FetchContent(req));
                         return;
                     }

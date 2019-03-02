@@ -140,9 +140,9 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
 
     @CommandHandler
-    public void TERMINATION_RULE_HANDLER(Context ctx,long id) throws IOException {
+    public void TERMINATION_RULE_HANDLER(Context ctx,long id) throws Exception {
         RuleFacade facade = facadeCache.get(id);
-        if (facade == null || facade.modifiable()) return;
+        if (facade == null) return;
 
         Rule rule = facade.original();
 

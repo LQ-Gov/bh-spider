@@ -54,8 +54,8 @@ public class RuleOperation {
         return sender.write(CommandCode.GET_HOST_LIST, type);
     }
 
-    public void delete(String host, String uuid) {
-        sender.write(CommandCode.DELETE_RULE, null, host, uuid);
+    public void delete(long id) {
+        sender.write(CommandCode.DELETE_RULE, null, id);
     }
 
 

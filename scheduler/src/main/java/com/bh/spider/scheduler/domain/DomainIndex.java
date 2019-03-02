@@ -42,6 +42,7 @@ public interface DomainIndex {
 
 
         public void unbind(RuleFacade rule) {
+            rules.removeIf(x->x==rule);
         }
 
         public Collection<RuleFacade> rules() {

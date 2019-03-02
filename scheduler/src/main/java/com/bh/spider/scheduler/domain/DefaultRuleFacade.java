@@ -40,12 +40,7 @@ public class DefaultRuleFacade implements RuleFacade {
         return pattern.host();
     }
 
-    @Override
-    public void destroy() {
-        node.unbind(this);
-        if(controller()!=null)
-            controller().close();
-    }
+
 
     @Override
     public void link(DomainIndex domainIndex) {

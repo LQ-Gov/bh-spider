@@ -1,9 +1,11 @@
 package com.bh.spider.scheduler.job;
 
 import com.bh.spider.scheduler.domain.RuleScheduleController;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
+@DisallowConcurrentExecution
 public class QuartzJobImpl implements Job {
     public final static String RULE_CONTROLLER="RULE-CONTROLLER";
 

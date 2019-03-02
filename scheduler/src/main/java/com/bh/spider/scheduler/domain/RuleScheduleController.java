@@ -10,11 +10,11 @@ import com.bh.spider.store.base.Store;
 public interface RuleScheduleController {
 
     default void execute(JobCoreScheduler jobScheduler) throws Exception{
-        JobContext ctx = jobScheduler.scheduler(this);
+        JobContext ctx = jobScheduler.schedule(this);
         ctx.exec();
     }
 
-    void close();
+    void close() throws Exception;
 
 
     Rule rule();
