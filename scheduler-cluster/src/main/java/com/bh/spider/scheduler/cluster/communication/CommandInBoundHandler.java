@@ -1,17 +1,20 @@
 package com.bh.spider.scheduler.cluster.communication;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.scheduler.CommandReceiveHandler;
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.cluster.context.MasterContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.common.utils.CommandCode;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.EventLoop;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 public class CommandInBoundHandler extends CommandReceiveHandler {
     private final static Logger logger = LoggerFactory.getLogger(CommandInBoundHandler.class);
@@ -24,6 +27,14 @@ public class CommandInBoundHandler extends CommandReceiveHandler {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         connection.write(IdGenerator.instance.nextId(), new Command(null, CommandCode.CONNECT, new Object[]{scheduler.self()}));
         logger.info("连接已建立");
+    }
+
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        final EventLoop eventLoop = ctx.channel().eventLoop();
+        eventLoop.schedule(() -> connection.open(), 1L, TimeUnit.SECONDS);
+        super.channelInactive(ctx);
     }
 
     public CommandInBoundHandler(Connection connection, Scheduler scheduler) {

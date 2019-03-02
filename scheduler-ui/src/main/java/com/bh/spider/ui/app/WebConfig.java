@@ -2,6 +2,7 @@ package com.bh.spider.ui.app;
 
 import com.bh.common.utils.Json;
 import com.bh.spider.client.Client;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -18,6 +19,9 @@ import java.util.List;
 @Configuration
 @EnableWebMvc
 public class WebConfig implements WebMvcConfigurer {
+
+    @Value("${spider.server.address}")
+    private String spiderServer;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -43,6 +47,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean(value = "bh-client", initMethod = "open")
     public Client client() {
-        return new Client("127.0.0.1:8033");
+        return new Client(spiderServer);
     }
 }

@@ -8,15 +8,15 @@ self.__precacheManifest = [
     "url": "/public/vendors.async.js"
   },
   {
-    "revision": "af4094d1b016e0cc19ad",
+    "revision": "7342806a9104c9f3e291",
     "url": "/public/1.async.js"
   },
   {
-    "revision": "df6d1c13ba1783d0a5ff",
+    "revision": "ed862ffe1b35f3eba860",
     "url": "/public/umi.css"
   },
   {
-    "revision": "df6d1c13ba1783d0a5ff",
+    "revision": "ed862ffe1b35f3eba860",
     "url": "/public/umi.js"
   },
   {
@@ -76,7 +76,7 @@ self.__precacheManifest = [
     "url": "/public/9.async.js"
   },
   {
-    "revision": "52d0e70ae088bc35484e",
+    "revision": "6cc8115e7652f386cfbe",
     "url": "/public/10.async.js"
   },
   {
@@ -88,7 +88,7 @@ self.__precacheManifest = [
     "url": "/public/12.async.js"
   },
   {
-    "revision": "be867e16858a8e1a911f",
+    "revision": "72dd527fa57fa0cf97f1",
     "url": "/public/13.async.js"
   },
   {
@@ -116,16 +116,16 @@ self.__precacheManifest = [
     "url": "/public/index.html"
   },
   {
-    "revision": "694c4300be571fdd4d8b6abbe14d2e3f",
-    "url": "/public/favicon.png"
-  },
-  {
     "revision": "347329d0982682b42d40c8162817a940",
     "url": "/public/icons/icon-128x128.png"
   },
   {
     "revision": "c23aa881b8d0e959f6c0aeb5ae7e4baa",
     "url": "/public/icons/icon-192x192.png"
+  },
+  {
+    "revision": "694c4300be571fdd4d8b6abbe14d2e3f",
+    "url": "/public/favicon.png"
   },
   {
     "revision": "5661ce8e2472d2727e8fd0390b22ba37",

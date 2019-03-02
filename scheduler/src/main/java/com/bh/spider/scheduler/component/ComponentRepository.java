@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Date;
 import java.util.List;
 
 public abstract class ComponentRepository {
@@ -74,6 +75,7 @@ public abstract class ComponentRepository {
         component.setDescription(description);
         component.setHash(hash);
         component.setExpired(expired);
+        component.setCreateTime(new Date());
         metadata().write(component);
 
         Files.move(tmp, old, StandardCopyOption.REPLACE_EXISTING);

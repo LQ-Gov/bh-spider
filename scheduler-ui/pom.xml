@@ -32,30 +32,6 @@
     <build>
         <finalName>scheduler-ui</finalName>
         <plugins>
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-antrun-plugin</artifactId>-->
-                <!--<version>1.8</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>main-class-placement</id>-->
-                        <!--<phase>prepare-package</phase>-->
-                        <!--<configuration>-->
-                            <!--<target>-->
-                                <!--<copy todir="${project.build.directory}/${project.artifactId}/">-->
-                                    <!--<fileset dir="${project.build.directory}/classes/">-->
-                                        <!--<include name="**/*.*"/>-->
-                                    <!--</fileset>-->
-                                <!--</copy>-->
-                            <!--</target>-->
-                        <!--</configuration>-->
-                        <!--<goals>-->
-                            <!--<goal>run</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -65,6 +41,26 @@
                         <goals>
                             <goal>repackage</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>package.xml</descriptor>
+                            </descriptors>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

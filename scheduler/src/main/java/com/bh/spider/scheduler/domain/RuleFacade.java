@@ -2,73 +2,29 @@ package com.bh.spider.scheduler.domain;
 
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.rule.Rule;
-import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.domain.pattern.AntRulePattern;
 
-import java.util.ArrayList;
-import java.util.List;
+public interface RuleFacade {
 
-public class RuleFacade {
-    private Rule base;
-    private AntRulePattern pattern;
+    long id();
 
-    private List<ExtractQueueFacade> extractors;
-
-    private DomainIndex.Node node;
-
-    private RuleScheduleController scheduleController;
+    Rule original();
 
 
-    public RuleFacade(Scheduler scheduler, Rule rule, RuleScheduleController scheduleController) {
-        this.base = rule;
-        this.scheduleController = scheduleController;
-
-        this.pattern = new AntRulePattern(rule.getPattern());
-
-        if (rule.getExtractors() != null) {
-            extractors = new ArrayList<>(rule.getExtractors().size());
-            rule.getExtractors().forEach(x -> extractors.add(new ExtractQueueFacade(scheduler, x)));
-        }
-    }
-
-    public long id() {
-        return base.getId();
-    }
-
-    public Rule original() {
-        return base;
-    }
-
-    public List<ExtractQueueFacade> extractorQueues() {
-        return extractors;
-    }
+    String host();
 
 
-    public String host() {
-        return pattern.host();
-    }
+    void destroy();
 
 
-    public void destroy() {
-        node.unbind(this);
-    }
+    void link(DomainIndex domainIndex);
+
+    RuleScheduleController controller();
+
+    DomainIndex.Node domainNode();
 
 
-    public void link(DomainIndex domainIndex) {
-        node = host() == null ? domainIndex.root() : domainIndex.matchOrCreate(host());
-        node.bind(this);
-    }
-
-    public RuleScheduleController controller() {
-        return scheduleController;
-    }
-
-    public DomainIndex.Node domainNode() {
-        return node;
-    }
+    boolean match(Request request);
 
 
-    public boolean match(Request request) {
-        return pattern.match(request.url());
-    }
+    boolean modifiable();
 }

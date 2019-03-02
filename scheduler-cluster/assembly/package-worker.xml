@@ -1,0 +1,35 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+
+    <id>worker</id>
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <formats>
+        <format>zip</format>
+    </formats>
+    <files>
+        <file>
+            <source> ${project.build.directory}/${project.artifactId}-${project.version}.jar</source>
+        </file>
+
+        <file>
+            <source>${project.basedir}/bin/start-worker.sh</source>
+            <outputDirectory>bin</outputDirectory>
+            <destName>start.sh</destName>
+        </file>
+        <file>
+            <source>${project.basedir}/bin/stop-worker.sh</source>
+            <outputDirectory>bin</outputDirectory>
+            <destName>stop.sh</destName>
+        </file>
+    </files>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <excludes>
+                <exclude>${project.groupId}:${project.artifactId}:jar:*</exclude>
+            </excludes>
+        </dependencySet>
+    </dependencySets>
+</assembly>

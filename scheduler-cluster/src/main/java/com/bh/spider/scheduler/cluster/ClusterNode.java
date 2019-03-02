@@ -6,6 +6,7 @@ public class ClusterNode extends Node {
     /**
      * 组件的操作日志索引
      */
+    private boolean alive;
     private long componentOperationCommittedIndex;
 
     /**

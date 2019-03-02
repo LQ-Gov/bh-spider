@@ -3,13 +3,17 @@ package com.bh.spider.scheduler;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 /**
  * Created by lq on 17-3-29.
+ *
+ * 配置优先级为,配置文件最低,环境变量最高
  */
+
 public class Config {
 
     private final Map<Object,Object> GLOBAL = new HashMap<>();
@@ -96,10 +100,12 @@ public class Config {
     }
 
 
-    public static Config init(Properties properties) {
+    public static Config init(Properties... properties) {
         Config config = init0();
-        if (properties != null)
-            config.GLOBAL.putAll(properties);
+
+        if (properties != null) {
+            Arrays.stream(properties).forEach(config.GLOBAL::putAll);
+        }
 
         return config;
     }

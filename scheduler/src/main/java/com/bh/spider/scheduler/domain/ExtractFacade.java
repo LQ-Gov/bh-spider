@@ -42,7 +42,7 @@ public class ExtractFacade {
 
     public static ExtractFacade facade(Scheduler scheduler, Context ctx, String name) throws Exception {
         Future<Class<Extractor>> future = scheduler.process(new Command(ctx, CommandCode.LOAD_COMPONENT,
-                new Object[]{name, Component.Type.GROOVY}));
+                name, Component.Type.GROOVY));
 
         Class<Extractor> cls = future.get();
         if(cls!=null){

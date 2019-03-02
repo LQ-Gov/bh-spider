@@ -1,14 +1,12 @@
 package com.bh.spider.scheduler.domain;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.scheduler.job.JobContext;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
-import com.bh.common.utils.CommandCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,10 +115,5 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
             if (collection != null)
                 cacheQueue.addAll(collection);
         }
-    }
-
-    public void execute(JobCoreScheduler jobScheduler) throws Exception {
-        JobContext ctx = jobScheduler.scheduler(this);
-        ctx.exec();
     }
 }

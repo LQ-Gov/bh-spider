@@ -52,7 +52,7 @@ public class Connection implements Closeable {
 
 
 
-    public void open() throws InterruptedException {
+    public void open() {
         Connection me = this;
         Bootstrap bootstrap = new Bootstrap()
                 .group(new NioEventLoopGroup(3))
@@ -66,14 +66,15 @@ public class Connection implements Closeable {
                     }
                 });
 
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(uri.getHost(), uri.getPort())).sync();
+        ChannelFuture future = bootstrap
+                .connect(new InetSocketAddress(uri.getHost(), uri.getPort()))
+                .addListener(new ConnectionListener(this));
         channel = future.channel();
     }
 
 
     @Override
     public void close() throws IOException {
-
     }
 
     public void write(long id,Command command) throws JsonProcessingException {

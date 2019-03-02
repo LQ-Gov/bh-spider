@@ -211,6 +211,7 @@ public class EventLoop extends Thread {
             this.start();
 
             closed = false;
+            logger.info("event loop started...");
         }
         return this;
     }

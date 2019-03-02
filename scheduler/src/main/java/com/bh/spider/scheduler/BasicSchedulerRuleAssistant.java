@@ -2,10 +2,7 @@ package com.bh.spider.scheduler;
 
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.domain.DefaultRuleScheduleController;
-import com.bh.spider.scheduler.domain.DomainIndex;
-import com.bh.spider.scheduler.domain.RuleFacade;
-import com.bh.spider.scheduler.domain.RuleScheduleController;
+import com.bh.spider.scheduler.domain.*;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
@@ -25,6 +22,8 @@ public class BasicSchedulerRuleAssistant implements Assistant {
     private JobCoreScheduler jobCoreScheduler;
     private DomainIndex domainIndex;
     private Map<Long, RuleFacade> facadeCache = new HashMap<>();
+
+
     private Store store;
 
     private Config cfg;
@@ -38,6 +37,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         this.store = store;
 
         initLocalRuleController();
+
     }
 
 
@@ -45,41 +45,51 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         Path ruleDirectory = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH));
 
 
-        List<Path> filePaths = Files.list(ruleDirectory).filter(x -> x.toString().endsWith(".json")).collect(Collectors.toList());
+        List<Path> filePaths = Files.list(ruleDirectory).filter(x -> x.toString().endsWith(".rule")).collect(Collectors.toList());
 
         for (Path filePath : filePaths) {
             List<Rule> rules = Json.get().readValue(filePath.toFile(),
                     Json.get().getTypeFactory().constructCollectionType(ArrayList.class, Rule.class));
 
-            for (Rule rule : rules)
-                facade(rule, true);
+            for (Rule rule : rules) {
+
+                RuleFacade facade = rule.isValid() ? facade(rule) : daemon(rule);
+                facadeCache.put(facade.id(), facade);
+            }
         }
+
     }
 
-
-    private RuleFacade facade(Rule rule, boolean cached) throws Exception {
-
-        return facade(rule, cached, new DefaultRuleScheduleController(this.scheduler, rule, store));
+    private RuleFacade facade(Rule rule) throws Exception {
+        return facade(rule,new DefaultRuleScheduleController(this.scheduler, rule, store));
     }
 
-    private RuleFacade facade(Rule rule, boolean cached, RuleScheduleController ruleScheduleController) throws Exception {
+    private RuleFacade facade(Rule rule,  RuleScheduleController ruleScheduleController) throws Exception {
         if (rule.getId() <= 0) rule.setId(IdGenerator.instance.nextId());
-        RuleFacade facade = new RuleFacade(this.scheduler, rule, ruleScheduleController);
+        DefaultRuleFacade facade = new DefaultRuleFacade(this.scheduler, rule, ruleScheduleController);
         facade.link(this.domainIndex);
 
         if (facade.controller() != null)
             facade.controller().execute(jobCoreScheduler);
-        if (cached)
-            facadeCache.put(facade.id(), facade);
 
         return facade;
+    }
+
+
+    private RuleFacade daemon(Rule rule) throws Exception {
+        rule.setCron("*/1 * * * * ?");
+        RuleFacade facade = new DaemonRuleFacade(this.scheduler, rule, new DaemonRuleScheduleController(this.scheduler, rule, store));
+        facade.link(domainIndex);
+        facade.controller().execute(jobCoreScheduler);
+        return facade;
+
     }
 
 
     private void backup(DomainIndex.Node node) throws IOException {
         String host = node.host();
         host = host == null ? "__ROOT__" : host;
-        Path path = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH), host + ".json");
+        Path path = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH), host + ".rule");
 
 
         List<Rule> rules = node.rules().stream().map(RuleFacade::original).collect(Collectors.toList());
@@ -91,10 +101,10 @@ public class BasicSchedulerRuleAssistant implements Assistant {
     @CommandHandler
     public void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (validate(rule)) {
-            RuleFacade boost = facade(rule, true);
-            backup(boost.domainNode());
+            RuleFacade facade = facade(rule);
+            backup(facade.domainNode());
+            facadeCache.put(facade.id(), facade);
         }
-
     }
 
     @CommandHandler
@@ -113,15 +123,38 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
 
     @CommandHandler
-    public void DELETE_RULE_HANDLER(Context ctx, long id) throws IOException {
-        RuleFacade boost = facadeCache.get(id);
-        if (boost == null) return;
+    public void DELETE_RULE_HANDLER(Context ctx, long id) throws Exception {
+        RuleFacade facade = facadeCache.get(id);
+        if (facade == null || !facade.modifiable()) return;
 
-        boost.destroy();
-        boost.controller().close();
-        facadeCache.remove(id);
+        facade.controller().close();
 
-        backup(boost.domainNode());
+        facade.original().setValid(false);
+
+        backup(facade.domainNode());
+
+        daemon(facade.original());
+
+
+    }
+
+
+    @CommandHandler
+    public void TERMINATION_RULE_HANDLER(Context ctx,long id) throws IOException {
+        RuleFacade facade = facadeCache.get(id);
+        if (facade == null || facade.modifiable()) return;
+
+        Rule rule = facade.original();
+
+        if (!rule.isValid()) {
+
+            facade.controller().close();
+            facade.domainNode().unbind(facade);
+
+            backup(facade.domainNode());
+
+            facadeCache.remove(facade.id());
+        }
     }
 
     @CommandHandler
@@ -131,7 +164,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         RuleFacade facade = facadeCache.get(rule.getId());
 
         if (facade == null) {
-            facade = facade(rule, false, null);
+            facade = facade(rule, null);
         }
 
         return facade;

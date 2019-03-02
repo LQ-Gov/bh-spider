@@ -3,7 +3,8 @@ package com.bh.spider.scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.util.Properties;
 
 /**
@@ -15,22 +16,20 @@ public class Program {
 
     public static void main(String[] args) throws Exception {
 
-        String file = args.length > 0 ? args[0] : "spider.properties";
 
 
         Properties properties = new Properties();
-        //System.setProperty("init.run.mode", "stand-alone");
-        properties.putAll(System.getProperties());
 
-        InputStream stream = Program.class.getResourceAsStream(file);
-        if (stream != null) {
-            properties.load(stream);
-            logger.info("load config file from {}", file);
-        } else
-            logger.warn("the config file {} not exists,program start with default config", file);
+        File conf = new File(System.getProperty("user.dir"),args.length > 0 ? args[0] : "conf/config.properties");
 
+        if(conf.exists()){
+            properties.load(new FileReader(conf));
+            logger.info("load config file from {}", conf);
+        }
+        else logger.warn("the config file {} not exists,program start with default config", conf);
 
-        Config config = Config.init(properties);
+        Config config = Config.init(properties,System.getProperties());
+
 
         String mode = config.get(Config.INIT_RUN_MODE);
 
