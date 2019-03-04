@@ -50,8 +50,6 @@ public class CommandInBoundHandler extends CommandReceiveHandler {
                 connection.ping();
             }
         }
-
-        super.userEventTriggered(ctx, evt);
     }
 
 

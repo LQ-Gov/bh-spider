@@ -3,6 +3,7 @@ package com.bh.spider.scheduler.cluster.worker;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.cluster.ClusterNode;
+import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.event.Command;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -40,6 +41,12 @@ public class Worker {
     }
 
     public Session session(){ return session;}
+
+
+    public void update(Sync sync){
+        node.setCapacity(sync.getCapacity());
+        node.setComponentOperationCommittedIndex(sync.getComponentOperationCommittedIndex());
+    }
 
 
 

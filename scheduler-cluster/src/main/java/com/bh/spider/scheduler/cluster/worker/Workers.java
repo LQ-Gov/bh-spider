@@ -27,4 +27,10 @@ public class Workers implements Iterable<Worker> {
     public Iterator<Worker> iterator() {
         return collection.values().iterator();
     }
+
+
+
+    public Worker get(long id){
+        return collection.get(id);
+    }
 }

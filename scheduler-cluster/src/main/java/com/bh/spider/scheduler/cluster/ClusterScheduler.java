@@ -1,13 +1,14 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.*;
+import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
-import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;
-import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
@@ -15,8 +16,6 @@ import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
 import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
-import com.bh.common.utils.CommandCode;
-import com.bh.spider.common.member.Node;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -129,11 +128,12 @@ public class ClusterScheduler extends BasicScheduler {
 
     @CommandHandler
     public void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
-        Session session = ctx.session();
 
+        Worker worker = workers.get(ctx.sessionId());
 
+        worker.update(sync);
 
-        Command cmd = new Command(new LocalContext(this), CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, new Object[]{session, sync.getComponentOperationCommittedIndex()});
+        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, sync.getComponentOperationCommittedIndex());
 
         process(cmd);
     }
@@ -168,7 +168,7 @@ public class ClusterScheduler extends BasicScheduler {
         Worker worker = new Worker(ctx.session(), node);
         workers.add(worker);
 
-        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, new Object[]{node.getComponentOperationCommittedIndex()});
+        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, node.getComponentOperationCommittedIndex());
         process(cmd);
     }
 }
