@@ -25,7 +25,7 @@ public class CommandInBoundHandler extends CommandReceiveHandler {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        connection.write(IdGenerator.instance.nextId(), new Command(null, CommandCode.CONNECT, new Object[]{scheduler.self()}));
+        connection.write(IdGenerator.instance.nextId(), new Command(null, CommandCode.CONNECT, scheduler.self()));
         logger.info("连接已建立");
     }
 

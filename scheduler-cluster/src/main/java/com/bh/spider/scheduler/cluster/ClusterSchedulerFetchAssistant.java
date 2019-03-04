@@ -48,10 +48,12 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
             try {
                 Worker worker = entry.getKey();
                 List<Request> allocated = entry.getValue();
+                if(!allocated.isEmpty()) {
 
-                Command cmd = new Command(ctx, CommandCode.FETCH_BATCH, new Object[]{allocated, rule});
-                worker.write(cmd);
-                returnValue.addAll(allocated);
+                    Command cmd = new Command(ctx, CommandCode.FETCH_BATCH, allocated, rule);
+                    worker.write(cmd);
+                    returnValue.addAll(allocated);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -1,12 +1,12 @@
 package com.bh.spider.scheduler.cluster.communication;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.Scheduler;
+import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.event.Command;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -24,7 +24,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
 
 public class Connection implements Closeable {
 
@@ -37,17 +36,12 @@ public class Connection implements Closeable {
     private Scheduler scheduler;
 
 
-    private Cache<Long,Boolean> commandCache;
 
 
     public Connection(URI uri, Communicator communicator, Scheduler scheduler) {
         this.uri = uri;
         this.communicator = communicator;
         this.scheduler = scheduler;
-
-        commandCache = Caffeine.newBuilder()
-                .maximumSize(Long.MAX_VALUE)
-                .expireAfterWrite(1, TimeUnit.MINUTES).build();
     }
 
 
@@ -97,16 +91,16 @@ public class Connection implements Closeable {
 
     public void ping() throws JsonProcessingException {
 
-//        ClusterNode node = (ClusterNode) scheduler.self();
-//
-//        Sync sync = new Sync();
-//        sync.setComponentOperationCommittedIndex(node.getComponentOperationCommittedIndex());
-//        sync.setCapacity(node.getCapacity());
-//
-//
-//        Command cmd = new Command(null, CommandCode.WORKER_HEART_BEAT, new Object[]{sync});
-//
-//        write(cmd);
+        ClusterNode node = (ClusterNode) scheduler.self();
+
+        Sync sync = new Sync();
+        sync.setComponentOperationCommittedIndex(node.getComponentOperationCommittedIndex());
+        sync.setCapacity(node.getCapacity());
+
+
+        Command cmd = new Command(null, CommandCode.WORKER_HEART_BEAT, sync);
+
+        write(cmd);
 
     }
 

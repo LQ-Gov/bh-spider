@@ -33,7 +33,7 @@
   "/icons/icon-512x512.png": "/public/icons/icon-512x512.png",
   "/index.html": "/public/index.html",
   "/manifest.json": "/public/manifest.json",
-  "/precache-manifest.379657bfe765384e9305c80853fe2654.js": "/public/precache-manifest.379657bfe765384e9305c80853fe2654.js",
+  "/precache-manifest.a3ab5bb086da4b09be31de741d28f274.js": "/public/precache-manifest.a3ab5bb086da4b09be31de741d28f274.js",
   "/pwacompat.min.js": "/public/pwacompat.min.js",
   "/service-worker.js": "/public/service-worker.js"
 }

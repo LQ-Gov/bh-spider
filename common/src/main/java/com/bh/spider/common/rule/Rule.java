@@ -32,7 +32,16 @@ public class Rule implements Serializable {
     private String description;
 
 
+    /**
+     * 请求调度策略
+     */
     private String[] policy;
+
+
+    /**
+     * 代理
+     */
+    private String[] proxies;
 
     private boolean valid;
 
@@ -135,5 +144,13 @@ public class Rule implements Serializable {
 
     public void setPolicy(String[] policy) {
         this.policy = policy;
+    }
+
+    public String[] getProxies() {
+        return proxies;
+    }
+
+    public void setProxies(String[] proxies) {
+        this.proxies = proxies;
     }
 }

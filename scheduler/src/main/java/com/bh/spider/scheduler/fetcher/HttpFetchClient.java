@@ -1,11 +1,15 @@
 package com.bh.spider.scheduler.fetcher;
 
+import com.bh.common.utils.ArrayUtils;
 import com.bh.spider.common.fetch.FetchContext;
 import com.bh.spider.common.fetch.FetchContextUtils;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.fetch.impl.FetchResponse;
+import com.bh.spider.common.rule.Rule;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.CookieSpecs;
@@ -56,6 +60,10 @@ public class HttpFetchClient implements FetchClient {
         try {
             Request req = ctx.request();
             HttpRequestBase base = toHttpRequest(req);
+
+            setProxy(base,ctx.rule());
+
+
             HttpResponse response = clientInstance().execute(base);
             int code = response.getStatusLine().getStatusCode();
 
@@ -99,6 +107,7 @@ public class HttpFetchClient implements FetchClient {
                 uri = FetchContextUtils.instance().toURL(original).toURI();
                 base = new HttpGet(uri);
             }
+
             break;
             case POST:
                 base = new HttpPost(uri);
@@ -130,5 +139,18 @@ public class HttpFetchClient implements FetchClient {
         original.headers().forEach(base::setHeader);
 
         return base;
+    }
+
+    private void setProxy(HttpRequestBase base,Rule rule) {
+        if (rule == null || ArrayUtils.isEmpty(rule.getProxies())) return;
+        //随机选择一个代理
+        int index = RandomUtils.nextInt(0, rule.getProxies().length);
+        URI uri = URI.create("proxy://"+rule.getProxies()[index]);
+
+
+        HttpHost proxy = new HttpHost(uri.getHost(), uri.getPort(),base.getURI().getScheme());
+
+        base.setConfig(RequestConfig.custom().setProxy(proxy).build());
+
     }
 }

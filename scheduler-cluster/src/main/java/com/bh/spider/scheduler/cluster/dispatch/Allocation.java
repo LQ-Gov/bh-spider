@@ -29,6 +29,7 @@ public class Allocation {
 
         for(Policy policy:policies)
             policy.filter(allocated,remained,abandoned);
+
     }
 
     public Collection<Request> abandoned(){
@@ -39,6 +40,9 @@ public class Allocation {
     public Map<Worker,List<Request>> allocatedResult() {
         return allocated;
     }
+
+
+
 
     /**
      * 最终分配配额是否有效
