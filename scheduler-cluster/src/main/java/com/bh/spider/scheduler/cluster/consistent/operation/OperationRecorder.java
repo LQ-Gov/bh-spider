@@ -156,15 +156,15 @@ public class OperationRecorder {
         startCommittedIndex = Math.max(startCommittedIndex, 0);
         endCommittedIndex = Math.min(committedIndex(), endCommittedIndex);
 
-        if (endCommittedIndex < startCommittedIndex) return Collections.emptyList();
-
         List<Entry> result = new LinkedList<>();
 
-        reader.position(recorderIndex.position(startCommittedIndex));
+        if (endCommittedIndex >= startCommittedIndex) {
 
-        for (; startCommittedIndex <= endCommittedIndex; startCommittedIndex++) {
-            result.add(read());
+            reader.position(recorderIndex.position(startCommittedIndex));
 
+            for (; startCommittedIndex <= endCommittedIndex; startCommittedIndex++) {
+                result.add(read());
+            }
         }
 
         return result;

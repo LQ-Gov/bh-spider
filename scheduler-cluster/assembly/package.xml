@@ -2,26 +2,23 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
 
-    <id>worker</id>
+    <id>bin</id>
     <includeBaseDirectory>false</includeBaseDirectory>
 
     <formats>
         <format>zip</format>
     </formats>
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+        </fileSet>
+    </fileSets>
+
+
     <files>
         <file>
             <source> ${project.build.directory}/${project.artifactId}-${project.version}.jar</source>
-        </file>
-
-        <file>
-            <source>${project.basedir}/bin/start-worker.sh</source>
-            <outputDirectory>bin</outputDirectory>
-            <destName>start.sh</destName>
-        </file>
-        <file>
-            <source>${project.basedir}/bin/stop-worker.sh</source>
-            <outputDirectory>bin</outputDirectory>
-            <destName>stop.sh</destName>
         </file>
     </files>
     <dependencySets>

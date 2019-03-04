@@ -16,6 +16,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,7 @@ public class Connection implements Closeable {
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline().addLast(new IdleStateHandler(0,20,0));
+                        ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
                         ch.pipeline().addLast(new CommandInBoundHandler(me,scheduler));
                     }
                 });
