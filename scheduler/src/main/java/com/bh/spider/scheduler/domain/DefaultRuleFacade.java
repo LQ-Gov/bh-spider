@@ -64,6 +64,11 @@ public class DefaultRuleFacade implements RuleFacade {
         return pattern.match(request.url());
     }
 
+    @Override
+    public RulePattern pattern() {
+        return pattern;
+    }
+
 
     @Override
     public boolean modifiable(){

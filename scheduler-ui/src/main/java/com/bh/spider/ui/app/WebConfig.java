@@ -28,7 +28,6 @@ public class WebConfig implements WebMvcConfigurer {
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
         registry.addResourceHandler("/service-worker.js").addResourceLocations("classpath:/public/");
         registry.addResourceHandler("/public/**").addResourceLocations("classpath:/public/");
-
     }
 
     @Override

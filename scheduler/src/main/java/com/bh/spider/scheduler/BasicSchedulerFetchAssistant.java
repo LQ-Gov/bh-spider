@@ -6,6 +6,8 @@ import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.domain.RuleFacade;
+import com.bh.spider.scheduler.domain.RulePattern;
+import com.bh.spider.scheduler.domain.pattern.AntPatternComparator;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.FetchContent;
@@ -14,10 +16,7 @@ import com.bh.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicSchedulerFetchAssistant implements Assistant {
@@ -78,11 +77,18 @@ public class BasicSchedulerFetchAssistant implements Assistant {
         while (node != domainIndex.root()) {
             Collection<RuleFacade> rules = node.rules();
             if (rules != null) {
+                Map<RulePattern, RuleFacade> matches = new HashMap<>();
                 for (RuleFacade rule : rules) {
                     if (rule.original().isValid() && rule.match(req)) {
-                        rule.controller().joinQueue(new FetchContent(req));
-                        return;
+                        matches.put(rule.pattern(), rule);
                     }
+                }
+                if (!matches.isEmpty()) {
+                    List<RulePattern> patterns = new ArrayList<>(matches.keySet());
+                    patterns.sort(new AntPatternComparator(req));
+                    RuleFacade facade = matches.get(patterns.get(0));
+                    facade.controller().joinQueue(new FetchContent(req));
+                    return;
                 }
             }
             node = node.parent();

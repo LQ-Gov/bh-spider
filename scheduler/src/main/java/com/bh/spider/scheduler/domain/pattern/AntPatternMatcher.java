@@ -16,7 +16,7 @@ public class AntPatternMatcher implements AntMatcher {
 
     private static final int CACHE_TURNOFF_THRESHOLD = 65536;
 
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{[^/]+?\\}");
+    public static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{[^/]+?\\}");
 
     private static final char[] WILDCARD_CHARS = { '*', '?', '{' };
 
@@ -91,6 +91,11 @@ public class AntPatternMatcher implements AntMatcher {
     public boolean match(String value, Map<String, String> variables) {
 
         return doMatch(this.pattern, value, true, variables);
+    }
+
+    @Override
+    public String pattern() {
+        return this.pattern;
     }
 
 

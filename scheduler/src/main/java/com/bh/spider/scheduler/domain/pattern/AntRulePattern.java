@@ -1,13 +1,14 @@
 package com.bh.spider.scheduler.domain.pattern;
 
+import com.bh.spider.common.fetch.Request;
 import com.bh.spider.scheduler.domain.RulePattern;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -163,7 +164,18 @@ public class AntRulePattern implements RulePattern {
     }
 
     @Override
-    public int compareTo(RulePattern o) {
-        return 0;
+    public Comparator<RulePattern> getComparator(Request request) {
+        return new AntPatternComparator(request);
     }
+
+
+    public String domain(){
+        return domain.pattern();
+    }
+
+    public String path(){
+        return path.pattern();
+    }
+
+
 }

@@ -23,5 +23,8 @@ public interface RuleFacade {
     boolean match(Request request);
 
 
+    RulePattern pattern();
+
+
     boolean modifiable();
 }
