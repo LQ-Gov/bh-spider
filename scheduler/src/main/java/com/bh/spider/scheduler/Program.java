@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -20,13 +21,20 @@ public class Program {
 
         Properties properties = new Properties();
 
+
         File conf = new File(System.getProperty("user.dir"),args.length > 0 ? args[0] : "conf/config.properties");
 
         if(conf.exists()){
             properties.load(new FileReader(conf));
             logger.info("load config file from {}", conf);
         }
-        else logger.warn("the config file {} not exists,program start with default config", conf);
+        else{
+            InputStream is = Program.class.getResourceAsStream("/conf/config.properties");
+            if(is!=null){
+                properties.load(is);
+            }
+            else logger.warn("the config file {} not exists,program start with default config", conf);
+        }
 
         Config config = Config.init(properties,System.getProperties());
 

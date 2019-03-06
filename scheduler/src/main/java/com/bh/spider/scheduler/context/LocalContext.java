@@ -38,29 +38,29 @@ public class LocalContext extends AbstractCloseableContext {
     public void crawled(FetchContext fetchContext) throws Exception {
         int code = fetchContext.response().code();
 
-        logger.info("抓取完成:URI:{},RESPONSE CODE:{}", fetchContext.url(), code);
+        logger.info("抓取完成:URI:{}  ,RESPONSE CODE:{}", fetchContext.url(), code);
 
         Rule rule = fetchContext.rule();
         if (rule == null) return;
 
         List<ExtractQueue> queues = rule.getExtractors();
-        if (CollectionUtils.isEmpty(queues)) return;
+        if (CollectionUtils.isNotEmpty(queues)) {
 
-        for (ExtractQueue queue : queues) {
-            if (queue == null || queue.getChain() == null) continue;
+            for (ExtractQueue queue : queues) {
+                if (queue == null || queue.getChain() == null) continue;
 
-            for (String it : queue.getChain()) {
-                ExtractFacade facade = buildExtractFacade(scheduler, this, it);
-                if (facade == null) continue;
-
-                try {
-                    facade.exec(fetchContext);
-                } catch (ExtractorChainException e) {
-                    if (e.result() == Behaviour.TERMINATION) break;
+                for (String it : queue.getChain()) {
+                    ExtractFacade facade = buildExtractFacade(scheduler, this, it);
+                    if (facade == null) continue;
+                    try {
+                        facade.exec(fetchContext);
+                    } catch (ExtractorChainException e) {
+                        if (e.result() == Behaviour.TERMINATION) break;
+                    }
                 }
             }
         }
-        scheduler.process(new Command(this, CommandCode.REPORT, new Object[]{fetchContext.request().id(), code}));
+        scheduler.process(new Command(this, CommandCode.REPORT, fetchContext.request().id(), code));
     }
 
 

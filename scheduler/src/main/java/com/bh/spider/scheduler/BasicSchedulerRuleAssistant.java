@@ -131,6 +131,8 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
         facade.original().setValid(false);
 
+        facade.domainNode().unbind(facade);
+
         backup(facade.domainNode());
 
         daemon(facade.original());
@@ -151,6 +153,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
             facade.controller().close();
             facade.domainNode().unbind(facade);
 
+            //之所以守护规则还需要关联domain node,就是为了backup domainNode
             backup(facade.domainNode());
 
             facadeCache.remove(facade.id());

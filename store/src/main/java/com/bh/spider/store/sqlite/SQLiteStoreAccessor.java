@@ -1,11 +1,9 @@
 package com.bh.spider.store.sqlite;
 
 import com.bh.common.utils.Json;
-import com.bh.spider.common.fetch.FetchMethod;
 import com.bh.spider.common.fetch.Request;
-import com.bh.spider.common.fetch.impl.RequestImpl;
 import com.bh.spider.store.base.StoreAccessor;
-import com.fasterxml.jackson.databind.type.MapType;
+import com.bh.spider.store.common.ConvertUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +12,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SQLiteStoreAccessor implements StoreAccessor {
@@ -90,6 +86,11 @@ public class SQLiteStoreAccessor implements StoreAccessor {
     }
 
     @Override
+    public boolean save(Request request, long ruleId) {
+        return false;
+    }
+
+    @Override
     public void update(long ruleId, Long[] ids, Request.State state) {
 
         String sql = String.format("UPDATE %s SET state=? WHERE rule_id=? AND id in (%s)",
@@ -134,23 +135,9 @@ public class SQLiteStoreAccessor implements StoreAccessor {
             statement.setLong(4,size);
             ResultSet rs = statement.executeQuery();
 
-            List<Request> result =new LinkedList<>();
-            while (rs.next()) {
+            return ConvertUtils.convert(rs);
 
-                Request request = new RequestImpl(
-                        rs.getLong("id"),
-                        rs.getString("url"),
-                        FetchMethod.valueOf(rs.getString("method")));
-
-
-                MapType mapType = Json.get().getTypeFactory().constructMapType(HashMap.class, String.class, String.class);
-                request.headers().putAll(Json.get().readValue(StringUtils.defaultString(rs.getString("headers"),""),mapType));
-                request.extra().putAll(Json.get().readValue(StringUtils.defaultString(rs.getString("extra"),""),mapType));
-                result.add(request);
-            }
-            return result;
-
-        }catch (Exception e){
+        }catch (Exception ignored){
         }
         return Collections.emptyList();
     }

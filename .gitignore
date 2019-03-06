@@ -9,3 +9,4 @@
 /data-worker/
 
 /scheduler/conf/rule
+**/conf/config.properties

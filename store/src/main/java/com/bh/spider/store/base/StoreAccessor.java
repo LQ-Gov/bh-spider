@@ -9,6 +9,8 @@ public interface StoreAccessor {
 
     boolean insert(Request request, long ruleId);
 
+    boolean save(Request request,long ruleId);
+
     void update(long ruleId,Long[] reIds,Request.State state);
 
     void update(long id,Integer code,Request.State state,String message);

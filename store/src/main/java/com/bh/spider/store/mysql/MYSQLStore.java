@@ -45,6 +45,6 @@ public class MYSQLStore implements Store {
 
     @Override
     public StoreAccessor accessor() {
-        return null;
+        return accessor;
     }
 }
