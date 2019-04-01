@@ -1,6 +1,9 @@
 package com.bh.spider.consistent.raft.wal;
 
-import com.bh.spider.consistent.raft.wal.pb.WalProto;
+import com.bh.spider.consistent.raft.wal.pb.Record;
+import com.bh.spider.consistent.raft.wal.pb.RecordType;
+import com.bh.spider.consistent.raft.wal.pb.Snapshot;
+import com.google.protobuf.ByteString;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +49,7 @@ public class WAL {
     /**
      * snapshot to start reading
      */
-    private WalProto.Snapshot start;
+    private Snapshot start;
 
 
     /**
@@ -75,10 +78,6 @@ public class WAL {
 //    encoder *encoder // encoder to encode records
 //
 //    fp    *filePipeline
-
-    private WAL(Path dir, byte[] metadata) {
-        this(dir,metadata,new Encoder());
-    }
 
 
     private WAL(Path dir,byte[] metadata,Encoder encoder){
@@ -125,22 +124,67 @@ public class WAL {
         }
 
 
-        WAL wal = new WAL(dir, metadata);
+        WAL wal = new WAL(dir, metadata,new Encoder(channel));
         //创建encoder(已在构造函数中创建)
 
         //将锁假如wal locks
         wal.locks.add(lock);
 
+        wal.saveCRC(0);
+        wal.encoder.encode(Record.newBuilder().setType(RecordType.METADATA_VALUE).setData(ByteString.copyFrom(metadata)));;
+
+        wal.saveSnapshot(Snapshot.newBuilder().build());
+
+        wal.renameWAL(tmp);
+
+        return wal;
 
     }
 
 
 
-    public void saveCrc(int prevCrc){
-        WalProto.Record record = new WalProto.Record.Builder()
-                .setType()
-        return this.encoder.encode( {Type: crcType, Crc: prevCrc})
+    public void saveCRC(int prevCrc) throws IOException {
+        Record.Builder recordBuilder = Record.newBuilder().setType(RecordType.CRC_VALUE).setCrc(prevCrc);
+        this.encoder.encode(recordBuilder);
     }
 
 
+    public void saveSnapshot(Snapshot snapshot) throws IOException {
+        ByteString bs  = snapshot.toByteString();
+
+        synchronized (this){
+            this.encoder.encode(Record.newBuilder().setType(RecordType.SNAPSHOT_VALUE).setData(bs));
+            if(this.lastIndex<snapshot.getIndex())
+                this.lastIndex=snapshot.getIndex();
+
+
+             this.sync();
+        }
+
+    }
+
+    public void sync() throws IOException {
+        if(this.encoder!=null)
+            this.encoder.flush();
+    }
+
+
+    public FileLock tail(){
+        if(!this.locks.isEmpty())
+            return this.locks.get(this.locks.size()-1);
+
+        return null;
+    }
+
+
+    private void renameWAL(Path tmp) throws IOException {
+        FileUtils.deleteDirectory(this.dir.toFile());
+        // On non-Windows platforms, hold the lock while renaming. Releasing
+        // the lock and trying to reacquire it quickly can be flaky because
+        // it's possible the process will fork to spawn a process while this is
+        // happening. The fds are set up as close-on-exec by the Go runtime,
+        // but there is a window between the fork and the exec where another
+        // process holds the lock.
+        Files.move(tmp, this.dir);
+    }
 }
