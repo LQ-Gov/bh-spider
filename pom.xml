@@ -34,6 +34,7 @@
         <google.guava.version>27.0.1-jre</google.guava.version>
         <jackson.version>2.9.8</jackson.version>
         <spring.boot.version>2.1.2.RELEASE</spring.boot.version>
+        <netty.version>4.1.32.Final</netty.version>
     </properties>
 
 
@@ -129,6 +130,14 @@
             <artifactId>junit-jupiter-api</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.version}</version>
         </dependency>
 
     </dependencies>
