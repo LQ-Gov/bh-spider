@@ -1,5 +1,5 @@
 syntax = "proto3";
-package com.bh.spider.consistent.raft.wal.pb;
+package com.bh.spider.consistent.raft.pb;
 
 option java_multiple_files = true;
 option java_outer_classname = "WalProto";
@@ -17,8 +17,8 @@ enum RecordType {
     CRC = 3;
     SNAPSHOT = 4;
 }
-message Snapshot {
-    uint64 index = 1;
-    uint64 term = 2;
-}
+//message Snapshot {
+//    uint64 index = 1;
+//    uint64 term = 2;
+//}
 

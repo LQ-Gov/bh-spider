@@ -1,9 +1,11 @@
 package com.bh.spider.consistent.raft.wal;
 
-import com.bh.spider.consistent.raft.wal.pb.Record;
-import com.bh.spider.consistent.raft.wal.pb.RecordType;
-import com.bh.spider.consistent.raft.wal.pb.Snapshot;
+import com.bh.spider.consistent.raft.pb.Entry;
+import com.bh.spider.consistent.raft.pb.Record;
+import com.bh.spider.consistent.raft.pb.RecordType;
+import com.bh.spider.consistent.raft.pb.Snapshot;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +21,22 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author liuqi19
  * @version $Id: WAL, 2019-04-01 16:21 liuqi19
  */
 public class WAL {
+    private final static Logger logger = LoggerFactory.getLogger(WAL.class);
 
     private final static long SEGMENT_SIZE_BYTES = 64 * 1000 * 1000; // 64MB
 
 
-    private final static Logger logger = LoggerFactory.getLogger(WAL.class);
+    private final static Pattern WAL_NAME_PATTERN=Pattern.compile("(\\d+)-(\\d+)\\.wal");
+
 
     /**
      * the living directory of the underlay files
@@ -49,7 +56,7 @@ public class WAL {
     /**
      * snapshot to start reading
      */
-    private Snapshot start;
+    private Index start;
 
 
     /**
@@ -66,19 +73,25 @@ public class WAL {
     List<FileLock> locks;
 
 
+    /**
+     * encoder to encode records
+     */
     private Encoder encoder;
+
+    /**
+     * decoder to decode records
+     */
+    private Decoder decoder;
 
 
 //
 //    state    raftpb.HardState // hardstate recorded at the head of WAL
 //
-//    decoder   *decoder       // decoder to decode records
 //    readClose func() error   // closer for decode reader
-//
-//    encoder *encoder // encoder to encode records
 //
 //    fp    *filePipeline
 
+    private WAL(){}
 
     private WAL(Path dir,byte[] metadata,Encoder encoder){
         this.dir = dir;
@@ -154,8 +167,8 @@ public class WAL {
 
         synchronized (this){
             this.encoder.encode(Record.newBuilder().setType(RecordType.SNAPSHOT_VALUE).setData(bs));
-            if(this.lastIndex<snapshot.getIndex())
-                this.lastIndex=snapshot.getIndex();
+//            if(this.lastIndex<snapshot.getIndex())
+//                this.lastIndex=snapshot.getIndex();
 
 
              this.sync();
@@ -187,4 +200,86 @@ public class WAL {
         // process holds the lock.
         Files.move(tmp, this.dir);
     }
+
+
+
+    public static WAL open(Path dir, Index index) throws IOException {
+
+        List<FileLock> fileLocks = openAtIndex(dir,index,true);
+
+        Encoder encoder =new Encoder(fileLocks.get(fileLocks.size()-1).channel());
+        WAL wal = new WAL(dir,null,encoder);
+        wal.start=index;
+        wal.locks = fileLocks;
+
+
+
+        return wal;
+
+
+
+
+    }
+
+    private static List<FileLock> openAtIndex(Path dir,Index index,boolean write) throws IOException {
+        List<Path> wals = Files.list(dir).filter(x -> x.endsWith(".wal")).collect(Collectors.toList());
+
+
+        List<FileLock> fileLocks = new LinkedList<>();
+        for (int i = wals.size() - 1; i >= 0; i--) {
+            Matcher matcher = WAL_NAME_PATTERN.matcher(wals.get(i).toString());
+            if (matcher.find()) {
+                long currentIndex = Long.valueOf(matcher.group(2));
+                if (index.getIndex() >= currentIndex) {
+                    for (int j = i; j < wals.size(); j++) {
+                        FileLock lock = FileChannel.open(wals.get(j)).lock();
+                        fileLocks.add(lock);
+                    }
+
+                }
+            }
+        }
+
+        return fileLocks;
+
+
+    }
+
+
+
+    public List<Entry> readAll() throws InvalidProtocolBufferException {
+
+        List<Entry> entries = new LinkedList<>();
+
+        Record record;
+        while ((record=decoder.decode())!=null) {
+
+            switch ((int) record.getType()){
+                case RecordType.ENTRY_VALUE:{
+                    Entry entry = Entry.parseFrom(record.getData());
+                    if(entry.getIndex()>this.start.getIndex())
+                        entries.add(entry);
+                }break;
+
+                case RecordType.METADATA_VALUE:{
+
+                }
+
+            }
+        }
+
+        return entries;
+
+    }
+
+
+
+
+
+
+
+
+
+
+    public void reply(){}
 }

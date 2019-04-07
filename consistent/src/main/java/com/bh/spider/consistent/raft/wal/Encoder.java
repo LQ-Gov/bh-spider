@@ -1,6 +1,6 @@
 package com.bh.spider.consistent.raft.wal;
 
-import com.bh.spider.consistent.raft.wal.pb.Record;
+import com.bh.spider.consistent.raft.pb.Record;
 import com.bh.spider.consistent.utils.CrcUtils;
 
 import java.io.IOException;
