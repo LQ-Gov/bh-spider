@@ -6,6 +6,10 @@ package com.bh.spider.consistent.raft;
  */
 public enum  MessageType {
     /**
+     * 连接消息
+     */
+    CONNECT,
+    /**
      * 当Follower节点的选举计时器超时，会发送MsgHup消息
      */
     HUP,

@@ -9,11 +9,34 @@ public class Message {
     private long index;
     private long term;
 
+    private byte[] data;
+
+
+    private transient Node from;
+
 
 
     public Message(MessageType type,long index){
         this.type = type;
         this.index = index;
+    }
+
+
+    public Message(MessageType type,byte[] data){
+        this.type = type;
+        this.data = data;
+    }
+
+
+    public Message(MessageType type,byte[] data,Node from){
+
+    }
+
+
+    public Message(MessageType type,long term,byte[] data) {
+        this.type = type;
+        this.term = term;
+        this.data = data;
     }
 
 
@@ -23,8 +46,8 @@ public class Message {
         return index;
     }
 
-    public Raft.Node from(){
-        return null;
+    public Node from(){
+        return from;
     }
 
     public MessageType type(){
@@ -34,4 +57,6 @@ public class Message {
     public long term(){
         return term;
     }
+
+    public byte[] data(){return data;}
 }

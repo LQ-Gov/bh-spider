@@ -29,7 +29,7 @@ public class FollowerMessageHandler extends AbstractMessageHandler {
 
             case PROP: {
                 if (raft.leader() == null) {
-                    logger.info("{} no leader at term {}; dropping proposal", raft.node().id(), raft.term());
+//                    logger.info("{} no leader at term {}; dropping proposal", raft.node().id(), raft.term());
                     throw new ProposalDroppedException();
                 }
 

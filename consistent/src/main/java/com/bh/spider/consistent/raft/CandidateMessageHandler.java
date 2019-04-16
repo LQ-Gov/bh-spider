@@ -24,7 +24,7 @@ public class CandidateMessageHandler extends AbstractMessageHandler {
         switch (msg.type()) {
 
             case PROP: {
-                logger.info("{} no leader at term {}; dropping proposal", raft.node().id(), raft.term());
+//                logger.info("{} no leader at term {}; dropping proposal", raft.node().id(), raft.term());
                 throw new ProposalDroppedException();
             }
             case APP: {
@@ -45,7 +45,7 @@ public class CandidateMessageHandler extends AbstractMessageHandler {
             break;
 
             case VOTE_RESP:
-                boolean[] result = raft.votes();
+//                boolean[] result = raft.votes();
 //                r.logger.Infof("%x [quorum:%d] has received %d %s votes and %d vote rejections", r.id, r.quorum(), gr, m.Type, len(r.votes)-gr)
 //                switch r.quorum() {
 //                case gr:

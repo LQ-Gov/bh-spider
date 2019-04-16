@@ -26,6 +26,8 @@ public class Snapshotter {
     }
 
     public static Snapshotter create(Path dir) {
+//创建快照目录
+//        Files.createDirectories(dir);
         Snapshotter snapshotter = new Snapshotter(dir);
         return snapshotter;
     }
