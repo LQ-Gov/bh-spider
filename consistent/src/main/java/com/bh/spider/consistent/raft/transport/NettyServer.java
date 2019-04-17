@@ -6,12 +6,15 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.AttributeKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author liuqi19
  * @version : SocketTransport, 2019-04-08 23:19 liuqi19
  */
 public class NettyServer implements Server {
+    private final static Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
     private Channel channel;
 
@@ -38,7 +41,7 @@ public class NettyServer implements Server {
         ChannelFuture local = server.bind(port);
         this.channel = local.channel();
 
-//        logger.info("init command listen server:{}", port);
+        logger.info("init local listen:{}", port);
 
 
     }

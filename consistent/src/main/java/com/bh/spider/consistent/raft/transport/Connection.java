@@ -1,6 +1,5 @@
 package com.bh.spider.consistent.raft.transport;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 
@@ -34,9 +33,9 @@ public class Connection {
     }
 
 
-    public void write(byte[] data){
-        ByteBuf buffer = channel.alloc().buffer(data.length);
-        channel.writeAndFlush(buffer);
+    public void write(Object object){
+//        ByteBuf buffer = channel.alloc().buffer(data.length);
+        channel.writeAndFlush(object);
     }
 
 

@@ -14,6 +14,8 @@ public class Ticker extends TimerTask {
 
     @Override
     public void run() {
-        raft.tick();
+        try {
+            raft.tick();
+        }catch (Exception e){e.printStackTrace();}
     }
 }

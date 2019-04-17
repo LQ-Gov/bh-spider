@@ -11,7 +11,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,23 +64,24 @@ public class Raft {
 
     private Storage storage;
 
+    /**
+     * 在当前轮次的投票结果
+     */
     private Map<Node, Boolean> votes;
 
+    /**
+     * 我的投票
+     */
     private Node voted;
 
 
-    private long randomizedElectionTimeout;
-
-
-    public Raft(Node node) {
-//        this.me = node;
-    }
+    private Election election = new Election(5);
 
 
     public Raft(Properties properties, Node local, Node... members) {
 
 
-        this.me = new LocalNode(local);
+        this.me = new LocalNode(this,local);
 
         this.members = members;
 
@@ -96,16 +96,12 @@ public class Raft {
 
     }
 
-    public void resetRandomizedElectionTimeout() {
-        this.randomizedElectionTimeout = this.electionCycle + RandomUtils.nextLong(0, this.electionCycle);
-    }
-
 
     private void broadcast(Message message) {
 
         for (Node node : members) {
             try {
-                me.connection(node).write(Json.get().writeValueAsBytes(message));
+                me.connection(node).write(message);
             } catch (Exception ignored) {
             }
         }
@@ -121,7 +117,7 @@ public class Raft {
     private void campaign() throws JsonProcessingException {
         this.becomeCandidate();
 
-        Vote vote = new Vote(me.id(), this.term() + 1);
+        Vote vote = new Vote(me.id(), me.role() == NodeRole.PRE_CANDIDATE ? this.term() + 1 : this.term() + 1);
 
         Message message = new Message(MessageType.VOTE, Json.get().writeValueAsBytes(vote));
 
@@ -129,6 +125,15 @@ public class Raft {
     }
 
     private void commandReceiverListener(Connection connection, Message message) {
+        if(message.term()>this.term()) {
+            if (message.type() == MessageType.HEARTBEAT) {
+                this.becomeFollower(message.term(), message.from());
+            } else
+                this.becomeFollower(message.term(), null);
+        }
+        else if(message.term()<this.term()){
+
+        }
 
         switch (message.type()) {
             case CONNECT: {
@@ -157,12 +162,12 @@ public class Raft {
 
                 //如果已投票的节点等于msg.from()(重复接收投票信息),或者voted为空，且leader不存在
                 boolean canVote = (voted == message.from()) || (voted == null && leader == null) || (message.term() > this.term());
-                if (canVote) {
-                    this.send(new Message(MessageType.VOTE_RESP, ConvertUtils.toBytes(true)), message.from());
-                    this.voted = message.from();
-                    this.resetElectionCycle();
-                }
 
+                this.send(new Message(MessageType.VOTE_RESP, ConvertUtils.toBytes(canVote)), message.from());
+                if (canVote) {
+                    this.voted = message.from();
+                    election.reset();
+                }
             }
             break;
 
@@ -174,6 +179,11 @@ public class Raft {
                 } else this.becomeFollower(this.term, null);
             }
             break;
+
+
+            default:{
+                me.commandHandler(message);
+            }
 
         }
 
@@ -213,11 +223,14 @@ public class Raft {
         Server server = new NettyServer();
 
         server.listen(me.port(), conn -> {
-            conn.addChannelHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
+            conn.addChannelHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
             conn.addChannelHandler("CIH", new CommandInBoundHandler(me, null, self::commandReceiverListener));
 
         });
 
+        //建立本地节点自己和自己的通信
+
+        me.bindConnection(me, new LocalConnection(me, this::commandReceiverListener));
 
         //连接其他节点
         for (Node member : members) {
@@ -226,20 +239,22 @@ public class Raft {
                 conn.connect(new ChannelInitializer<SocketChannel>() {
                                  @Override
                                  protected void initChannel(SocketChannel ch) {
-                                     ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
+                                     ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
                                      ch.pipeline().addLast(new CommandInBoundHandler(me, member, self::commandReceiverListener));
                                      ch.pipeline().addLast(new RemoteConnectHandler(me));
                                  }
                              }
-
                 );
 
                 me.bindConnection(member, conn);
             }
         }
 
+
+        this.becomeFollower(0, null);
+
         //定时器启动
-        //  timer.schedule(new Ticker(this), 0, 100);
+        timer.schedule(new Ticker(this), 0, 100);
 
         server.join();
 
@@ -261,7 +276,7 @@ public class Raft {
 
 
     private int quorum() {
-        return members.length / 2;
+        return (members.length + 1) / 2;
     }
 
 
@@ -298,7 +313,7 @@ public class Raft {
 
         this.votes.clear();
 
-        this.resetRandomizedElectionTimeout();
+//        this.resetRandomizedElectionTimeout();
     }
 
 
@@ -337,8 +352,8 @@ public class Raft {
 
         //r.reset(r.Term + 1)
         //r.tick = r.tickElection
-        this.term++;
-        this.tick = new ElectionTick();
+//        this.term++;
+//        this.tick = new ElectionTick();
 
         this.me.becomeCandidate();
         logger.info("{} became candidate at term {}", me.id(), this.term);
@@ -418,7 +433,36 @@ public class Raft {
     }
 
 
-    public void tick() {
+    private void attemptBroadcastHeartbeat() {
+
+        if(me.role()!=NodeRole.LEADER) return;
+
+
+        broadcast(new Message(MessageType.HEARTBEAT,this.term(),null));
+
+    }
+
+    private void attemptBroadcastElection() throws JsonProcessingException {
+
+        if (election.incrementOrCompleted()) {
+            election.reset();
+            if (me.role() == NodeRole.LEADER) {
+            } else
+                this.campaign();
+        }
+    }
+
+
+    public void tick() throws JsonProcessingException {
+        switch (me.role()) {
+
+            case LEADER:
+                this.attemptBroadcastHeartbeat();
+                break;
+            default:
+                this.attemptBroadcastElection();
+                break;
+        }
 
         logger.info("tick");
     }

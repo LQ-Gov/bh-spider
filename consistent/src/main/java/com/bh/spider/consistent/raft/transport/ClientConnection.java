@@ -48,9 +48,8 @@ public class ClientConnection extends Connection {
             if (!f.isSuccess()) {
                 EventLoop loop = f.channel().eventLoop();
                 loop.schedule(() -> connect(channelHandlers), 1L, TimeUnit.SECONDS);
-            }
+            } else this.setChannel(f.channel());
         });
-//        this.setChannel(future.channel());
         return future;
     }
 }

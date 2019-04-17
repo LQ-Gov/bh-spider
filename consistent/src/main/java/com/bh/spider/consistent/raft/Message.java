@@ -15,6 +15,7 @@ public class Message {
     private transient Node from;
 
 
+    public Message(){}
 
     public Message(MessageType type,long index){
         this.type = type;
@@ -29,14 +30,23 @@ public class Message {
 
 
     public Message(MessageType type,byte[] data,Node from){
+        this.type = type;
+        this.data = data;
+        this.from = from;
 
     }
 
 
     public Message(MessageType type,long term,byte[] data) {
+        this(type,term,data,null);
+    }
+
+
+    public Message(MessageType type,long term,byte[] data,Node from) {
         this.type = type;
         this.term = term;
         this.data = data;
+        this.from = from;
     }
 
 

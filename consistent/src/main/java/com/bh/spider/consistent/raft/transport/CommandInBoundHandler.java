@@ -34,16 +34,21 @@ public class CommandInBoundHandler extends ChannelInboundHandlerAdapter {
         ByteBuf buffer = (ByteBuf) msg;
 
         if (buffer.isReadable()) {
-
-            MessageType type = MessageType.values()[buffer.readShort()];
-
             int len = buffer.readInt();//数据长度
 
-            byte[] data = new byte[len];
+            MessageType type = MessageType.values()[ buffer.readInt()];
+
+            long term =buffer.readLong();
+
+
+
+
+            byte[] data = new byte[len-4-8];
 
             buffer.readBytes(data);
 
-            Message message = new Message(type, data);
+            Message message = new Message(type,term,data,remote);
+
 
             if (listener != null) {
                 listener.receive(conn, message);
