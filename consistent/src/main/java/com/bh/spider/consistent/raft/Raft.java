@@ -14,9 +14,11 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author liuqi19
@@ -35,15 +37,6 @@ public class Raft {
      * Raft分组内的成员
      */
     private Node[] members;
-
-
-    /**
-     * 选举定时器
-     */
-    private int electionCycle;
-
-
-    private Tick tick;
 
     private long term;
 
@@ -67,7 +60,7 @@ public class Raft {
     /**
      * 在当前轮次的投票结果
      */
-    private Map<Node, Boolean> votes;
+    private Map<Node, Boolean> votes = new ConcurrentHashMap<>();
 
     /**
      * 我的投票
@@ -75,13 +68,16 @@ public class Raft {
     private Node voted;
 
 
-    private Election election = new Election(5);
+    private Election election = new Election(20);
+
+
+    private Heartbeat heartbeat = new Heartbeat(7);
 
 
     public Raft(Properties properties, Node local, Node... members) {
 
 
-        this.me = new LocalNode(this,local);
+        this.me = new LocalNode(this, local);
 
         this.members = members;
 
@@ -99,9 +95,11 @@ public class Raft {
 
     private void broadcast(Message message) {
 
+        this.send(me, message);
+
         for (Node node : members) {
             try {
-                me.connection(node).write(message);
+                this.send(node, message);
             } catch (Exception ignored) {
             }
         }
@@ -114,27 +112,50 @@ public class Raft {
      *
      * @throws JsonProcessingException
      */
-    private void campaign() throws JsonProcessingException {
-        this.becomeCandidate();
+    private void campaign(boolean preCandidate) throws JsonProcessingException {
+        if (preCandidate) {
+            this.becomePreCandidate();
+        } else
+            this.becomeCandidate();
 
-        Vote vote = new Vote(me.id(), me.role() == NodeRole.PRE_CANDIDATE ? this.term() + 1 : this.term() + 1);
+        long term = this.term() + (me.role() == NodeRole.PRE_CANDIDATE ? 1 : 0);
 
-        Message message = new Message(MessageType.VOTE, Json.get().writeValueAsBytes(vote));
+        Vote vote = new Vote(me.id(), term);
+
+        logger.info("发起投票,role:{},id:{},term:{}", me.role(), me.id(), term);
+
+        Message message = new Message(MessageType.VOTE,this.term(), Json.get().writeValueAsBytes(vote));
 
         broadcast(message);
     }
 
-    private void commandReceiverListener(Connection connection, Message message) {
-        if(message.term()>this.term()) {
-            if (message.type() == MessageType.HEARTBEAT) {
-                this.becomeFollower(message.term(), message.from());
-            } else
-                this.becomeFollower(message.term(), null);
-        }
-        else if(message.term()<this.term()){
+    private synchronized void commandReceiverListener(Connection connection, Message message) throws IOException {
+
+//        logger.info("receive message from {},message type:{},term:{}",
+//                message.from() == null ? null : message.from().id(), message.type(), message.term());
+
+        if (message.term() > this.term()) {
+            switch (message.type()) {
+                case VOTE:
+                case VOTE_RESP:
+                    break;
+
+                default: {
+                    Node leader = null;
+                    if (message.type() == MessageType.HEARTBEAT || message.type() == MessageType.APP)
+                        leader = message.from();
+
+                    logger.info("接收到{},term:{},from leader:{}",message.type(),message.term(),leader==null?null:leader.id());
+                    this.becomeFollower(message.term(), leader);
+                }
+            }
+        } else if (message.term() < this.term()) {
+
+            return;
 
         }
 
+        //这里的所有的m.term==this.term
         switch (message.type()) {
             case CONNECT: {
                 Node remote = this.node(ConvertUtils.toInt(message.data()));
@@ -147,23 +168,21 @@ public class Raft {
             }
             break;
 
-            //Leader通知
-            case APP: {
-                this.resetElectionCycle();
-                this.leader = message.from();
-            }
-            break;
-
             case VOTE: {
-                if (this.term() > message.term()) {
-                    this.send(new Message(MessageType.VOTE_RESP, ConvertUtils.toBytes(false)), message.from());
-                    return;
-                }
+                Vote vote = Json.get().readValue(message.data(), Vote.class);
+
+                // 这里是判断如果发生网络分区,
+                // leader被分到到大多数分区中,少数分区中的follower->candidate,然后term+1(此时term比大多数集群要大),
+                // 网络分区结束后发送vote向其他node，则其他node需判断本身leader是否为Null,并且不在lease周期之内
+//                if (leader != null&&leader!=message.from()) return;
 
                 //如果已投票的节点等于msg.from()(重复接收投票信息),或者voted为空，且leader不存在
-                boolean canVote = (voted == message.from()) || (voted == null && leader == null) || (message.term() > this.term());
+                boolean canVote = (voted == message.from()) || (voted == null && leader == null) || (vote.term() > this.term());
 
-                this.send(new Message(MessageType.VOTE_RESP, ConvertUtils.toBytes(canVote)), message.from());
+                logger.info("回复投票请求,id:{},term:{},result:{}", vote.id(), vote.term(), canVote);
+                this.send(message.from(), new Message(MessageType.VOTE_RESP,vote.term(), ConvertUtils.toBytes(canVote)));
+
+
                 if (canVote) {
                     this.voted = message.from();
                     election.reset();
@@ -174,19 +193,57 @@ public class Raft {
             case VOTE_RESP: {
                 votes.put(message.from(), ConvertUtils.toBoolean(message.data()));
                 long agree = votes.values().stream().filter(x -> x).count();
-                if (agree > quorum()) {
-                    this.becomeLeader();
-                } else this.becomeFollower(this.term, null);
+                logger.info("投票总数:{},同意数:{},quorum:{}",votes.size(),agree,this.quorum());
+                if (agree == this.quorum()) {
+                    if (me.role() == NodeRole.PRE_CANDIDATE)
+                        campaign(false);
+                    else
+                        this.becomeLeader();
+                } else if (votes.size() - agree == this.quorum())
+                    this.becomeFollower(this.term, null);
             }
             break;
 
 
-            default:{
-                me.commandHandler(message);
+            //
+            default: {
+                switch (me.role()) {
+                    case FOLLOWER:
+                        followerCommandReceiverListener(message);
+                        break;
+                    case PRE_CANDIDATE:
+                    case CANDIDATE:
+                        candidateCommandReceiverListener(message);
+                        break;
+                }
+//                me.commandHandler(message);
             }
 
         }
 
+    }
+
+
+    private void followerCommandReceiverListener(Message message) {
+
+        switch (message.type()) {
+            case APP:
+            case HEARTBEAT: {
+                this.election.reset();
+                this.leader = message.from();
+            }
+
+        }
+    }
+
+
+    private void candidateCommandReceiverListener(Message message) {
+        switch (message.type()) {
+            case APP:
+            case HEARTBEAT: {
+                this.becomeFollower(message.term(), message.from());
+            }
+        }
     }
 
 
@@ -225,6 +282,7 @@ public class Raft {
         server.listen(me.port(), conn -> {
             conn.addChannelHandler(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
             conn.addChannelHandler("CIH", new CommandInBoundHandler(me, null, self::commandReceiverListener));
+            conn.addChannelHandler(new CommandOutBoundHandler());
 
         });
 
@@ -242,6 +300,7 @@ public class Raft {
                                      ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
                                      ch.pipeline().addLast(new CommandInBoundHandler(me, member, self::commandReceiverListener));
                                      ch.pipeline().addLast(new RemoteConnectHandler(me));
+                                     ch.pipeline().addLast(new CommandOutBoundHandler());
                                  }
                              }
                 );
@@ -276,7 +335,7 @@ public class Raft {
 
 
     private int quorum() {
-        return (members.length + 1) / 2;
+        return (members.length + 1) / 2 + 1;
     }
 
 
@@ -289,20 +348,9 @@ public class Raft {
     }
 
 
-    public void send(Message msg, Node to) {
+    public void send(Node to, Message msg) {
+        me.sendTo(to, msg);
     }
-
-
-    public void reject(Reject reject) {
-    }
-
-
-    //重置选举计时器
-    public void resetElectionCycle() {
-        this.electionCycle = 0;
-
-    }
-
 
     private void reset(long term) {
         if (this.term != term) {
@@ -313,7 +361,8 @@ public class Raft {
 
         this.votes.clear();
 
-//        this.resetRandomizedElectionTimeout();
+        this.election.reset();
+
     }
 
 
@@ -325,18 +374,10 @@ public class Raft {
      */
     public void becomeFollower(long term, Node leader) {
 
-
-        this.tick = new ElectionTick();
-
-        //原代码为r.reset(term) 后续需研究reset方法的作用
-        this.term = term;
-
-
-//        r.step = stepFollower
-//        r.reset(term)
+        this.reset(term);
         this.leader = leader;
         this.me.becomeFollower();
-        logger.info("{} became follower at term {}", me.id(), this.term);
+        logger.info("{} became follower at term {},leader is {}", me.id(), this.term,leader==null?null: leader.id());
     }
 
 
@@ -349,11 +390,7 @@ public class Raft {
             return;
         }
 
-
-        //r.reset(r.Term + 1)
-        //r.tick = r.tickElection
-//        this.term++;
-//        this.tick = new ElectionTick();
+        this.reset(this.term + 1);
 
         this.me.becomeCandidate();
         logger.info("{} became candidate at term {}", me.id(), this.term);
@@ -369,18 +406,11 @@ public class Raft {
      * 成为PRE-备选人
      */
     public void becomePreCandidate() {
-        // TODO(xiangli) remove the panic when the raft implementation is stable
         if (me.role() == NodeRole.LEADER) {
             logger.error("invalid transition [leader -> pre-candidate]");
             return;
         }
-        // Becoming a pre-candidate changes our step functions and state,
-        // but doesn't change anything else. In particular it does not increase
-        // r.Term or change r.Vote.
-//        r.step = stepCandidate
-//        r.votes = make(map[uint64]bool)
-        this.tick = new ElectionTick();
-        this.leader = null;
+        this.reset(this.term());
         this.me.becomePreCandidate();
 
 
@@ -397,12 +427,12 @@ public class Raft {
             return;
         }
 
-//        r.step = stepLeader
-//        r.reset(r.Term)
-        this.tick = new HeartbeatTick();
+        this.reset(this.term());
         this.leader = this.me;
 
         this.me.becomeLeader();
+
+        logger.info("i am leader:{}", me.id());
 
         broadcast(new Message(MessageType.APP, this.term(), null));
 
@@ -435,10 +465,15 @@ public class Raft {
 
     private void attemptBroadcastHeartbeat() {
 
-        if(me.role()!=NodeRole.LEADER) return;
+        if (me.role() != NodeRole.LEADER) return;
 
 
-        broadcast(new Message(MessageType.HEARTBEAT,this.term(),null));
+        if (heartbeat.incrementOrCompleted()) {
+            broadcast(new Message(MessageType.HEARTBEAT, this.term(), null));
+
+            heartbeat.reset();
+        }
+
 
     }
 
@@ -448,7 +483,7 @@ public class Raft {
             election.reset();
             if (me.role() == NodeRole.LEADER) {
             } else
-                this.campaign();
+                this.campaign(true);
         }
     }
 
@@ -463,7 +498,5 @@ public class Raft {
                 this.attemptBroadcastElection();
                 break;
         }
-
-        logger.info("tick");
     }
 }

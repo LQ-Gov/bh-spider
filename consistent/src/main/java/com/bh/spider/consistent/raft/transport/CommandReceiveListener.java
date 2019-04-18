@@ -9,5 +9,5 @@ import com.bh.spider.consistent.raft.Message;
 public interface CommandReceiveListener {
 
 
-    void receive(Connection connection, Message message);
+    void receive(Connection connection, Message message) throws Exception;
 }

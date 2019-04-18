@@ -8,7 +8,7 @@ import org.apache.commons.lang3.RandomUtils;
  */
 public class Election {
 
-    private long elapsed;
+    private volatile long elapsed;
 
     private long randomizedElectionTimeout;
 

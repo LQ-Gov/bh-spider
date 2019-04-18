@@ -1,9 +1,6 @@
 package com.bh.spider.consistent.raft;
 
-import com.bh.spider.consistent.raft.role.Candidate;
-import com.bh.spider.consistent.raft.role.Follower;
-import com.bh.spider.consistent.raft.role.Leader;
-import com.bh.spider.consistent.raft.role.Role;
+import com.bh.spider.consistent.raft.role.*;
 import com.bh.spider.consistent.raft.transport.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +27,11 @@ public class LocalNode extends Node {
         super(node);
 
 
-        roleCache = new Role[]{new Follower(raft,this),new Candidate(raft,this),new Leader()};
+        roleCache = new Role[]{
+                new Follower(raft, this),
+                new Candidate(raft, this),
+                new PreCandidate(),
+                new Leader()};
     }
 
     @Override
@@ -55,6 +56,7 @@ public class LocalNode extends Node {
      * 成为PRE-备选人
      */
     void becomePreCandidate() {
+        role = roleCache[2];
     }
 
 
@@ -62,7 +64,7 @@ public class LocalNode extends Node {
      * 成为Leader
      */
     void becomeLeader() {
-        role = roleCache[2];
+        role = roleCache[3];
     }
 
 //    @Override
@@ -94,15 +96,8 @@ public class LocalNode extends Node {
 
     public void bindConnection(Node node, Connection connection) {
         connections.put(node.id(), connection);
-        logger.info("bind connection local:{},remote:{}", this.id(), node.id());
 
     }
-
-
-    public Connection connection(Node node) {
-        return connections.get(node.id());
-    }
-
 
     public void commandHandler(Message message) {
         Role r = this.role;

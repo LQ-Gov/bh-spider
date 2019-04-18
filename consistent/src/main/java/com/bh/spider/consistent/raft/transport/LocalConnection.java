@@ -24,9 +24,11 @@ public class LocalConnection extends Connection {
         if(object instanceof Message) {
             Message msg = (Message) object;
 
-            Message result = new Message(msg.type(), msg.index(), msg.data(), node);
+            Message result = new Message(msg.type(),msg.term(), msg.data(), node);
 
-            listener.receive(this, result);
+            try {
+                listener.receive(this, result);
+            }catch (Exception e){}
 
         }
     }

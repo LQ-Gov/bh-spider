@@ -37,6 +37,15 @@ public class ClientConnection extends Connection {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) {
+                        //增加重连机制
+                        ch.pipeline().addFirst(new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                                super.channelInactive(ctx);
+                                ctx.channel().eventLoop().schedule(() -> connect(channelHandlers), 1, TimeUnit.SECONDS);
+                            }
+                        });
+
                         ch.pipeline().addLast(channelHandlers);
                     }
                 })
