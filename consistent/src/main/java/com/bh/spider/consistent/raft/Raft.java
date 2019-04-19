@@ -124,18 +124,40 @@ public class Raft {
 
         logger.info("发起投票,role:{},id:{},term:{}", me.role(), me.id(), term);
 
-        Message message = new Message(MessageType.VOTE,this.term(), Json.get().writeValueAsBytes(vote));
+        Message message = new Message(MessageType.VOTE, this.term(), Json.get().writeValueAsBytes(vote));
 
         broadcast(message);
     }
 
     private synchronized void commandReceiverListener(Connection connection, Message message) throws IOException {
 
-//        logger.info("receive message from {},message type:{},term:{}",
-//                message.from() == null ? null : message.from().id(), message.type(), message.term());
-
+        /*
+         * m.term>this.term的情况:
+         * 1.当leader选举成功后,首次向集群发送APP或HEARTBEAT消息的时候
+         *
+         * 2.在leader选举过程中,各节点会进入PRE_CANDIDATE(预选)状态，即candidate会先向其他节点试探性的发送一个term+1（本身的term并不改变）
+         *   如果此时为leader刚失效的状态,则集群中会存在大量的term相等的节点，则term+1会大于当前节点,于此同时,对应的VOTE_RESP消息，
+         *   也会以term+1返回，也可能会大于发送节点的term
+         *
+         * 3.在某follower节点发生网络分区，一个lease内无法接收到leader内的消息，则会进入candidate阶段,以term+1发起投票，如果此时网络分区修复
+         *   则此节点如在接收到leader心跳之前就又一次发送了VOTE消息,则term会大于正常集群中的大多数节点的term
+         *
+         * 4.如果一个节点宕机，在恢复过程中,正常集群重新发生了选举，则集群中的term必然会增加，节点重新恢复正常后,收到leader发来的
+         *   HEARTBEAT消息，会大于当前term
+         *
+         *
+         * 总结:由此分析，会出现m.term>this.term的情况，总共有3种消息:VOTE,VOTE_RESP,APP,HEARTBEAT,
+         * 但VOTE,VOTE_RESP在m.term==this.term时也有效，所以此处忽略VOTE_RESP和VOTE消息
+         *
+         *
+         * PRE_CANDIDATE状态的目的是为了防止发生网络分区时term无限增加，每次都要先拿一个term试探，如果返回大多数的成功，才会正式选举
+         *
+         *
+         *
+         */
         if (message.term() > this.term()) {
             switch (message.type()) {
+                case CONNECT:
                 case VOTE:
                 case VOTE_RESP:
                     break;
@@ -145,17 +167,22 @@ public class Raft {
                     if (message.type() == MessageType.HEARTBEAT || message.type() == MessageType.APP)
                         leader = message.from();
 
-                    logger.info("接收到{},term:{},from leader:{}",message.type(),message.term(),leader==null?null:leader.id());
+                    logger.info("接收到{},term:{},from leader:{}", message.type(), message.term(), leader == null ? null : leader.id());
                     this.becomeFollower(message.term(), leader);
                 }
             }
-        } else if (message.term() < this.term()) {
+        }
+        /*
+         * 如果m.term<this.term 忽略消息,不过如果是CONNECT消息，则放行
+         *
+         */
 
+        else if (message.term() < this.term() && message.type() != MessageType.CONNECT) {
             return;
 
         }
 
-        //这里的所有的m.term==this.term
+        //这里的所有的m.term>=this.term
         switch (message.type()) {
             case CONNECT: {
                 Node remote = this.node(ConvertUtils.toInt(message.data()));
@@ -174,14 +201,12 @@ public class Raft {
                 // 这里是判断如果发生网络分区,
                 // leader被分到到大多数分区中,少数分区中的follower->candidate,然后term+1(此时term比大多数集群要大),
                 // 网络分区结束后发送vote向其他node，则其他node需判断本身leader是否为Null,并且不在lease周期之内
-//                if (leader != null&&leader!=message.from()) return;
+                if (leader != null) return;
 
                 //如果已投票的节点等于msg.from()(重复接收投票信息),或者voted为空，且leader不存在
                 boolean canVote = (voted == message.from()) || (voted == null && leader == null) || (vote.term() > this.term());
 
-                logger.info("回复投票请求,id:{},term:{},result:{}", vote.id(), vote.term(), canVote);
-                this.send(message.from(), new Message(MessageType.VOTE_RESP,vote.term(), ConvertUtils.toBytes(canVote)));
-
+                this.send(message.from(), new Message(MessageType.VOTE_RESP, vote.term(), ConvertUtils.toBytes(canVote)));
 
                 if (canVote) {
                     this.voted = message.from();
@@ -193,7 +218,7 @@ public class Raft {
             case VOTE_RESP: {
                 votes.put(message.from(), ConvertUtils.toBoolean(message.data()));
                 long agree = votes.values().stream().filter(x -> x).count();
-                logger.info("投票总数:{},同意数:{},quorum:{}",votes.size(),agree,this.quorum());
+                logger.info("投票总数:{},同意数:{},quorum:{}", votes.size(), agree, this.quorum());
                 if (agree == this.quorum()) {
                     if (me.role() == NodeRole.PRE_CANDIDATE)
                         campaign(false);
@@ -377,7 +402,7 @@ public class Raft {
         this.reset(term);
         this.leader = leader;
         this.me.becomeFollower();
-        logger.info("{} became follower at term {},leader is {}", me.id(), this.term,leader==null?null: leader.id());
+        logger.info("{} became follower at term {},leader is {}", me.id(), this.term, leader == null ? null : leader.id());
     }
 
 
