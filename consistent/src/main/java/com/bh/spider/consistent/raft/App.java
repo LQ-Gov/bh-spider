@@ -1,5 +1,9 @@
 package com.bh.spider.consistent.raft;
 
+import com.bh.common.utils.ConvertUtils;
+
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author liuqi19
  * @version $Id: App, 2019-04-02 13:40 liuqi19
@@ -9,10 +13,10 @@ public class App {
     public static void main(String[] args) throws Exception {
         //建立raftNode
 
-        Node[] nodes = new Node[3];
+        Node[] nodes = new Node[2];
         nodes[0] = new Node(1,"127.0.0.1",9930);
         nodes[1] = new Node(2,"127.0.0.1",9931);
-        nodes[2] = new Node(3,"127.0.0.1",9932);
+//        nodes[2] = new Node(3,"127.0.0.1",9932);
 
 
 
@@ -21,7 +25,7 @@ public class App {
 
         Node local = nodes[index];
 
-        Node[] members = new Node[2];
+        Node[] members = new Node[nodes.length-1];
 
 
         for(int i=0,ni=0;i<nodes.length;i++) {
@@ -44,7 +48,20 @@ public class App {
 
         Raft raft =new Raft(null,local,members);
 
-        raft.exec();
+        CompletableFuture<Void> future = raft.exec();
+
+
+        while (!raft.isLeader()&&raft.leader()==null){
+            Thread.sleep(100);
+        }
+
+
+        if(raft.isLeader()){
+            raft.write(ConvertUtils.toBytes(123));
+            raft.write(ConvertUtils.toBytes(44832));
+        }
+
+        future.join();
 
     }
 }

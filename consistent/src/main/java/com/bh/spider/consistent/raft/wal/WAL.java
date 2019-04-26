@@ -1,5 +1,7 @@
 package com.bh.spider.consistent.raft.wal;
 
+import com.bh.common.utils.Json;
+import com.bh.spider.consistent.raft.HardState;
 import com.bh.spider.consistent.raft.pb.Entry;
 import com.bh.spider.consistent.raft.pb.Record;
 import com.bh.spider.consistent.raft.pb.RecordType;
@@ -123,7 +125,7 @@ public class WAL {
         Path walFilePath = Paths.get(tmp.toString(), Utils.walName(0, 0));
 
 
-        FileChannel channel = FileChannel.open(walFilePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        InduceFileChannel channel = InduceFileChannel.open(walFilePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
         FileLock lock = channel.lock();
 
 
@@ -182,9 +184,10 @@ public class WAL {
     }
 
 
-    public FileLock tail(){
+    public InduceFileChannel tail(){
         if(!this.locks.isEmpty())
-            return this.locks.get(this.locks.size()-1);
+            return (InduceFileChannel) this.locks.get(this.locks.size()-1).channel();
+
 
         return null;
     }
@@ -271,6 +274,84 @@ public class WAL {
         return entries;
 
     }
+
+
+
+    public void save(HardState state, List<Entry> entries) throws IOException {
+
+        //保存Entries
+        for(Entry entry:entries) {
+            byte[] data = Json.get().writeValueAsBytes(entry);
+
+
+            com.bh.spider.consistent.raft.wal.Record record =
+                    new com.bh.spider.consistent.raft.wal.Record(com.bh.spider.consistent.raft.wal.RecordType.ENTRY, data);
+
+            encoder.encode(record);
+        }
+
+        //保存state
+
+
+        com.bh.spider.consistent.raft.wal.Record record =
+                new com.bh.spider.consistent.raft.wal.Record(com.bh.spider.consistent.raft.wal.RecordType.STATE,Json.get().writeValueAsBytes(state));
+
+        encoder.encode(record);
+
+
+        tail().position(tail().size()-1);
+
+        if(tail().size()<SEGMENT_SIZE_BYTES){
+            return;
+        }
+
+
+        this.cut();
+
+
+
+    }
+
+
+    private void cut() throws IOException {
+
+
+        Path path = Paths.get(this.dir.toString(),this.buildWalName(this.seq()+1,this.lastIndex+1));
+
+//        Path tmp = Paths.get(path.toString()+".tmp");
+        InduceFileChannel channel = InduceFileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        FileLock lock = channel.lock();
+        this.locks.add(lock);
+
+        this.encoder = new Encoder(tail());
+
+//        Files.move(tmp,path);
+
+    }
+
+
+    private long seq() {
+        InduceFileChannel channel = tail();
+        Matcher matcher = WAL_NAME_PATTERN.matcher(channel.filename());
+
+        if(matcher.find()){
+            return Long.valueOf( matcher.group(1));
+        }
+
+        return 0;
+    }
+
+
+
+
+
+
+
+    private String buildWalName(long seq, long index){
+        return String.format("%016x-%016x.wal", seq, index);
+    }
+
+
 
 
 

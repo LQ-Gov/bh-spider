@@ -40,14 +40,16 @@ public class CommandInBoundHandler extends ChannelInboundHandlerAdapter {
 
             long term =buffer.readLong();
 
+            long index = buffer.readLong();
 
 
 
-            byte[] data = new byte[len-4-8];
+
+            byte[] data = new byte[len-4-8-8];
 
             buffer.readBytes(data);
 
-            Message message = new Message(type,term,data,remote);
+            Message message = new Message(type,term,index,data,remote);
 
 
             if (listener != null) {

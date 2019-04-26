@@ -1,5 +1,6 @@
 package com.bh.spider.consistent.raft;
 
+import com.bh.common.utils.ArrayUtils;
 import com.bh.common.utils.ConvertUtils;
 import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.snap.Snapshotter;
@@ -11,14 +12,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Timer;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * @author liuqi19
@@ -57,6 +59,9 @@ public class Raft {
 
     private Storage storage;
 
+
+    private Thread thread = null;
+
     /**
      * 在当前轮次的投票结果
      */
@@ -74,6 +79,12 @@ public class Raft {
     private Heartbeat heartbeat = new Heartbeat(7);
 
 
+    private Persistent persister;
+
+
+    private CompletableFuture<Void> future;
+
+
     public Raft(Properties properties, Node local, Node... members) {
 
 
@@ -81,6 +92,10 @@ public class Raft {
 
         this.members = members;
 
+        this.log = new Log();
+
+
+//        this.persister =
 
 //        this.snapshotter = Snapshotter.create(Paths.get(properties.getProperty("snapshot.path")));
 
@@ -89,19 +104,42 @@ public class Raft {
 
         this.storage = new MemoryStorage();
 
-
     }
 
 
-    private void broadcast(Message message) {
+    private void broadcast(Message message,boolean sendToSelf) {
 
-        this.send(me, message);
+        if(sendToSelf)
+            this.send(me, message);
 
         for (Node node : members) {
             try {
                 this.send(node, message);
             } catch (Exception ignored) {
             }
+        }
+
+    }
+
+
+    protected void broadcast(Function<Node,Message> function){
+        for(Node node:members){
+            this.send(node,function.apply(node));
+        }
+    }
+
+
+    private void broadcastAdvance() throws JsonProcessingException {
+        List<Node> nodes = new LinkedList<>();
+//        nodes.add(me);
+        nodes.addAll(Arrays.asList(members));
+
+
+        for (Node node : nodes) {
+
+            sync(node);
+
+
         }
 
     }
@@ -126,7 +164,7 @@ public class Raft {
 
         Message message = new Message(MessageType.VOTE, this.term(), Json.get().writeValueAsBytes(vote));
 
-        broadcast(message);
+        broadcast(message,true);
     }
 
     private synchronized void commandReceiverListener(Connection connection, Message message) throws IOException {
@@ -204,7 +242,7 @@ public class Raft {
                 if (leader != null) return;
 
                 //如果已投票的节点等于msg.from()(重复接收投票信息),或者voted为空，且leader不存在
-                boolean canVote = (voted == message.from()) || (voted == null && leader == null) || (vote.term() > this.term());
+                boolean canVote = vote.id() == 2 && ((voted == message.from()) || (voted == null && leader == null) || (vote.term() > this.term()));
 
                 this.send(message.from(), new Message(MessageType.VOTE_RESP, vote.term(), ConvertUtils.toBytes(canVote)));
 
@@ -240,6 +278,9 @@ public class Raft {
                     case CANDIDATE:
                         candidateCommandReceiverListener(message);
                         break;
+                    case LEADER:
+                        leaderCommandReceiverListener(message);
+                        break;
                 }
 //                me.commandHandler(message);
             }
@@ -249,30 +290,161 @@ public class Raft {
     }
 
 
-    private void followerCommandReceiverListener(Message message) {
+    private void followerCommandReceiverListener(Message message) throws IOException {
 
         switch (message.type()) {
-            case APP:
+            case PROP: {
+                if (this.leader == null) {
+                    logger.info("{} no leader at term {}; dropping proposal", me.id(), this.term());
+                    //跑出异常
+                    return;
+                }
+
+                this.send(leader, message);
+            }
+            break;
+
+
+            case APP: {
+                this.election.reset();
+                this.leader = message.from();
+                this.handleAppendEntries(message);
+
+
+            }
+            break;
             case HEARTBEAT: {
                 this.election.reset();
                 this.leader = message.from();
-            }
+                this.handleHeartbeat(message);
 
+            }
         }
     }
 
 
-    private void candidateCommandReceiverListener(Message message) {
+    private void candidateCommandReceiverListener(Message message) throws IOException {
         switch (message.type()) {
+            case PROP:
+                //抛出异常
+                return;
             case APP:
+                this.becomeFollower(message.term(), message.from());
+                this.handleAppendEntries(message);
+                break;
             case HEARTBEAT: {
                 this.becomeFollower(message.term(), message.from());
+                this.handleHeartbeat(message);
+            }
+            break;
+        }
+    }
+
+
+    private void leaderCommandReceiverListener(Message message) throws IOException {
+        switch (message.type()) {
+            case PROP:
+                Entry.Collection ec = Json.get().readValue(message.data(), Entry.Collection.class);
+                ec.update(this.term(), this.log.lastIndex() + 1);
+
+                this.log.append(ec.entries());
+
+                this.me.advance(this.log.lastIndex());
+
+                this.broadcastAdvance();
+//                this.me.advance(this.log.lastIndex());
+                break;
+
+            case APP_RESP:
+                boolean accept = ConvertUtils.toBoolean(message.data());
+                if(accept){
+                    message.from().advance(message.index());
+                    commit();
+                }
+                break;
+
+
+            case HEARTBEAT_RESP:
+                Node from = message.from();
+                if(from.index()<this.log.lastIndex())
+                    this.sync(from);
+        }
+    }
+
+
+    private void handleAppendEntries(Message message) throws IOException {
+        if (this.log.committedIndex() > message.index()) {
+            this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), log.committedIndex()));
+            return;
+        }
+
+        if(ArrayUtils.isNotEmpty(message.data())) {
+
+            Entry.Collection collection = Json.get().readValue(message.data(), Entry.Collection.class);
+
+            if (this.log.append(collection.entries())) {
+                this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), log.lastIndex(),ConvertUtils.toBytes(true)));
+            } else {
+                this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), message.index(), ConvertUtils.toBytes(false)));
             }
         }
     }
 
 
-    public void exec() throws Exception {
+    /**
+     * 尝试进行commit,未必成功
+     */
+    private void commit() {
+        long[] indexes = new long[members.length + 1];
+
+        for (int i = 0; i < members.length; i++) {
+            indexes[i] = members[i].index();
+        }
+
+        indexes[indexes.length - 1] = me.index();
+
+        Arrays.sort(indexes);
+
+        long mci = indexes[indexes.length - quorum()];
+
+
+        this.log.commit(this.term, mci);
+    }
+
+
+
+    private void sync(Node to) throws JsonProcessingException {
+
+        long term = this.log.term(to.index());
+        //TODO 第二个参数要可配置
+        Entry[] entries = this.log.entries(to.index()+1, Integer.MAX_VALUE);
+
+        if (entries == null || entries.length == 0) return;
+
+        //TODO 此处要判断如果异常，则要发送快照，此时暂不处理
+
+        Entry.Collection ec = new Entry.Collection(term, this.log.committedIndex(), entries);
+
+        //TODO 此处还有一系列处理逻辑，暂未看懂
+
+        Message message = new Message(MessageType.APP, this.term(), to.index(), Json.get().writeValueAsBytes(ec));
+        me.sendTo(to, message);
+    }
+
+    private void handleHeartbeat(Message message) {
+        long committed = ArrayUtils.isEmpty(message.data()) ? -1 : ConvertUtils.toLong(message.data());
+        this.log.commitTo(committed);
+        this.send(message.from(), new Message(MessageType.HEARTBEAT_RESP, this.term(), null));
+    }
+
+
+    public synchronized CompletableFuture<Void> exec() throws Exception {
+
+        if (this.future != null)
+            return future;
+
+
+        this.future = new CompletableFuture<>();
 
 //        Snapshot snapshot = snapshotter.load();
 //
@@ -340,7 +512,10 @@ public class Raft {
         //定时器启动
         timer.schedule(new Ticker(this), 0, 100);
 
-        server.join();
+//        server.join();
+
+
+        return future;
 
 
     }
@@ -348,6 +523,11 @@ public class Raft {
 
     public Node leader() {
         return leader;
+    }
+
+
+    public boolean isLeader() {
+        return leader == me;
     }
 
 
@@ -459,7 +639,7 @@ public class Raft {
 
         logger.info("i am leader:{}", me.id());
 
-        broadcast(new Message(MessageType.APP, this.term(), null));
+        broadcast(new Message(MessageType.APP, this.term(), null),true);
 
         // Followers enter replicate mode when they've been successfully probed
         // (perhaps after having received a snapshot as a result). The leader is
@@ -494,7 +674,12 @@ public class Raft {
 
 
         if (heartbeat.incrementOrCompleted()) {
-            broadcast(new Message(MessageType.HEARTBEAT, this.term(), null));
+
+            Raft self = this;
+            broadcast(node -> {
+                long committed = Math.min(self.log.committedIndex(), node.index());
+                return new Message(MessageType.HEARTBEAT, self.term, ConvertUtils.toBytes(committed));
+            });
 
             heartbeat.reset();
         }
@@ -522,6 +707,74 @@ public class Raft {
             default:
                 this.attemptBroadcastElection();
                 break;
+        }
+    }
+
+
+    private Ready ready() {
+
+
+        while (true) {
+            List<Entry> entries = this.log.unstableEntries();
+
+            List<Entry> committedEntries = this.log.nextEntries();
+
+
+            if (CollectionUtils.isNotEmpty(entries) || CollectionUtils.isNotEmpty(committedEntries))
+                return new Ready(entries, committedEntries, null);
+
+
+            try {
+                Thread.sleep(1);
+            } catch (Exception e) {
+                break;
+            }
+        }
+
+
+        return null;
+
+    }
+
+
+    public void write(byte[] data) {
+
+
+        Entry.Collection collection = new Entry.Collection(new Entry[]{new Entry(data)});
+        try {
+            Message msg = new Message(MessageType.PROP, this.term(), Json.get().writeValueAsBytes(collection), me);
+            this.me.sendTo(me, msg);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public class Persistent extends Thread {
+
+        private Raft raft;
+
+        public Persistent(Raft raft) {
+            this.raft = raft;
+        }
+
+
+        @Override
+        public void run() {
+            Ready ready = null;
+            while ((ready = raft.ready()) != null) {
+
+                try {
+
+
+                    raft.wal.save(null, null);
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

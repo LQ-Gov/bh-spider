@@ -20,11 +20,12 @@ public class CommandOutBoundHandler extends ChannelOutboundHandlerAdapter {
         if(msg instanceof Message) {
             Message message = (Message) msg;
 
-            ByteBuf buffer = ctx.alloc().buffer(4+4+8+((message.data()==null)?0:message.data().length));
+            ByteBuf buffer = ctx.alloc().buffer(4+4+8+8+((message.data()==null)?0:message.data().length));
 
             buffer.writeInt(buffer.capacity()-4);
             buffer.writeInt(message.type().ordinal());
             buffer.writeLong(message.term());
+            buffer.writeLong(message.index());
             if(message.data()!=null){
                 buffer.writeBytes(message.data());
             }

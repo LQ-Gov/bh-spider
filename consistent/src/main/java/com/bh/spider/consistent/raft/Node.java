@@ -8,6 +8,7 @@ public class Node {
     private int id;
     private String hostname;
     private int port;
+    private long index=-1;
 
 
 
@@ -35,6 +36,17 @@ public class Node {
 
     public int port(){
         return port;
+    }
+
+
+    public void advance(long index){
+        if(this.index<index)
+            this.index = index;
+
+    }
+
+    public long index(){
+        return index;
     }
 
 

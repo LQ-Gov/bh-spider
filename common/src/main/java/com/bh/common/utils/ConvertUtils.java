@@ -26,4 +26,15 @@ public class ConvertUtils {
     public static boolean toBoolean(byte[] data){
         return data.length==1&&data[0]>0;
     }
+
+
+
+    public static byte[] toBytes(long value){
+        return ByteBuffer.allocate(8).putLong(value).array();
+    }
+
+
+    public static long toLong(byte[] data){
+        return ByteBuffer.wrap(data).getLong();
+    }
 }

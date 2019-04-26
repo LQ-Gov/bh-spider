@@ -44,6 +44,18 @@ public class Encoder {
 
     }
 
+
+    public void encode(com.bh.spider.consistent.raft.wal.Record record) throws IOException {
+        long crc32 = CrcUtils.sum32(record.data());
+
+
+        ByteBuffer buffer = ByteBuffer.allocate(8 + record.data().length);
+        buffer.putLong(record.data().length).put(record.data());
+
+
+        channel.write(buffer);
+    }
+
     private long computePadLength(long dataLength) {
 
         // force 8 byte alignment so length never gets a torn write

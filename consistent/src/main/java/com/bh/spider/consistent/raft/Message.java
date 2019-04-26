@@ -43,8 +43,24 @@ public class Message {
 
 
     public Message(MessageType type,long term,byte[] data,Node from) {
+        this(type,term,0,data,from);
+    }
+
+
+    public Message(MessageType type,long term,long index){
+        this(type,term,index,null,null);
+    }
+
+
+    public Message(MessageType type,long term,long index,byte[] data){
+        this(type,term,index,data,null);
+    }
+
+
+    public Message(MessageType type,long term,long index, byte[] data,Node from) {
         this.type = type;
         this.term = term;
+        this.index = index;
         this.data = data;
         this.from = from;
     }
