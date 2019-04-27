@@ -3,7 +3,12 @@ package com.bh.spider.consistent.raft;
 import com.bh.common.utils.ArrayUtils;
 import com.bh.common.utils.ConvertUtils;
 import com.bh.common.utils.Json;
-import com.bh.spider.consistent.raft.snap.Snapshotter;
+import com.bh.spider.consistent.raft.log.Entry;
+import com.bh.spider.consistent.raft.log.Log;
+import com.bh.spider.consistent.raft.node.LocalNode;
+import com.bh.spider.consistent.raft.node.Node;
+import com.bh.spider.consistent.raft.role.RoleType;
+import com.bh.spider.consistent.raft.log.Snapshotter;
 import com.bh.spider.consistent.raft.storage.MemoryStorage;
 import com.bh.spider.consistent.raft.storage.Storage;
 import com.bh.spider.consistent.raft.transport.*;
@@ -32,7 +37,7 @@ public class Raft {
     /**
      * 定时器（leader:heart,other:election）
      */
-    private Timer timer = new Timer();
+    private Ticker ticker;
 
 
     /**
@@ -40,13 +45,13 @@ public class Raft {
      */
     private Node[] members;
 
-    private long term;
 
     private Node leader;
 
     private LocalNode me;
 
 
+    private long term;
     /**
      * entry 日志
      */
@@ -60,8 +65,6 @@ public class Raft {
     private Storage storage;
 
 
-    private Thread thread = null;
-
     /**
      * 在当前轮次的投票结果
      */
@@ -72,13 +75,6 @@ public class Raft {
      */
     private Node voted;
 
-
-    private Election election = new Election(20);
-
-
-    private Heartbeat heartbeat = new Heartbeat(7);
-
-
     private Persistent persister;
 
 
@@ -88,9 +84,11 @@ public class Raft {
     public Raft(Properties properties, Node local, Node... members) {
 
 
-        this.me = new LocalNode(this, local);
+        this.me = new LocalNode(local, this, this::broadcastHeartbeat, this::broadcastElection);
 
         this.members = members;
+
+        this.ticker = new Ticker(100, 5, () -> me.role2().tick());
 
         this.log = new Log();
 
@@ -107,9 +105,9 @@ public class Raft {
     }
 
 
-    private void broadcast(Message message,boolean sendToSelf) {
+    private void broadcast(Message message, boolean sendToSelf) {
 
-        if(sendToSelf)
+        if (sendToSelf)
             this.send(me, message);
 
         for (Node node : members) {
@@ -122,9 +120,9 @@ public class Raft {
     }
 
 
-    protected void broadcast(Function<Node,Message> function){
-        for(Node node:members){
-            this.send(node,function.apply(node));
+    private void broadcast(Function<Node, Message> function) {
+        for (Node node : members) {
+            this.send(node, function.apply(node));
         }
     }
 
@@ -147,24 +145,26 @@ public class Raft {
 
     /**
      * 进行选举
-     *
-     * @throws JsonProcessingException
      */
-    private void campaign(boolean preCandidate) throws JsonProcessingException {
+    private void campaign(boolean preCandidate) {
         if (preCandidate) {
             this.becomePreCandidate();
         } else
             this.becomeCandidate();
 
-        long term = this.term() + (me.role() == NodeRole.PRE_CANDIDATE ? 1 : 0);
+        long term = this.term() + (me.role() == RoleType.PRE_CANDIDATE ? 1 : 0);
 
         Vote vote = new Vote(me.id(), term);
 
         logger.info("发起投票,role:{},id:{},term:{}", me.role(), me.id(), term);
 
-        Message message = new Message(MessageType.VOTE, this.term(), Json.get().writeValueAsBytes(vote));
+        try {
+            Message message = new Message(MessageType.VOTE, this.term(), Json.get().writeValueAsBytes(vote));
 
-        broadcast(message,true);
+            broadcast(message, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private synchronized void commandReceiverListener(Connection connection, Message message) throws IOException {
@@ -248,7 +248,7 @@ public class Raft {
 
                 if (canVote) {
                     this.voted = message.from();
-                    election.reset();
+                    ticker.reset(true);
                 }
             }
             break;
@@ -258,7 +258,7 @@ public class Raft {
                 long agree = votes.values().stream().filter(x -> x).count();
                 logger.info("投票总数:{},同意数:{},quorum:{}", votes.size(), agree, this.quorum());
                 if (agree == this.quorum()) {
-                    if (me.role() == NodeRole.PRE_CANDIDATE)
+                    if (me.role() == RoleType.PRE_CANDIDATE)
                         campaign(false);
                     else
                         this.becomeLeader();
@@ -306,7 +306,7 @@ public class Raft {
 
 
             case APP: {
-                this.election.reset();
+                this.ticker.reset(true);
                 this.leader = message.from();
                 this.handleAppendEntries(message);
 
@@ -314,7 +314,7 @@ public class Raft {
             }
             break;
             case HEARTBEAT: {
-                this.election.reset();
+                this.ticker.reset(true);
                 this.leader = message.from();
                 this.handleHeartbeat(message);
 
@@ -357,7 +357,7 @@ public class Raft {
 
             case APP_RESP:
                 boolean accept = ConvertUtils.toBoolean(message.data());
-                if(accept){
+                if (accept) {
                     message.from().advance(message.index());
                     commit();
                 }
@@ -366,7 +366,7 @@ public class Raft {
 
             case HEARTBEAT_RESP:
                 Node from = message.from();
-                if(from.index()<this.log.lastIndex())
+                if (from.index() < this.log.lastIndex())
                     this.sync(from);
         }
     }
@@ -378,12 +378,12 @@ public class Raft {
             return;
         }
 
-        if(ArrayUtils.isNotEmpty(message.data())) {
+        if (ArrayUtils.isNotEmpty(message.data())) {
 
             Entry.Collection collection = Json.get().readValue(message.data(), Entry.Collection.class);
 
             if (this.log.append(collection.entries())) {
-                this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), log.lastIndex(),ConvertUtils.toBytes(true)));
+                this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), log.lastIndex(), ConvertUtils.toBytes(true)));
             } else {
                 this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), message.index(), ConvertUtils.toBytes(false)));
             }
@@ -412,12 +412,11 @@ public class Raft {
     }
 
 
-
     private void sync(Node to) throws JsonProcessingException {
 
         long term = this.log.term(to.index());
         //TODO 第二个参数要可配置
-        Entry[] entries = this.log.entries(to.index()+1, Integer.MAX_VALUE);
+        Entry[] entries = this.log.entries(to.index() + 1, Integer.MAX_VALUE);
 
         if (entries == null || entries.length == 0) return;
 
@@ -430,6 +429,7 @@ public class Raft {
         Message message = new Message(MessageType.APP, this.term(), to.index(), Json.get().writeValueAsBytes(ec));
         me.sendTo(to, message);
     }
+
 
     private void handleHeartbeat(Message message) {
         long committed = ArrayUtils.isEmpty(message.data()) ? -1 : ConvertUtils.toLong(message.data());
@@ -495,8 +495,8 @@ public class Raft {
                                  @Override
                                  protected void initChannel(SocketChannel ch) {
                                      ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
-                                     ch.pipeline().addLast(new CommandInBoundHandler(me, member, self::commandReceiverListener));
                                      ch.pipeline().addLast(new RemoteConnectHandler(me));
+                                     ch.pipeline().addLast(new CommandInBoundHandler(me, member, self::commandReceiverListener));
                                      ch.pipeline().addLast(new CommandOutBoundHandler());
                                  }
                              }
@@ -510,13 +510,9 @@ public class Raft {
         this.becomeFollower(0, null);
 
         //定时器启动
-        timer.schedule(new Ticker(this), 0, 100);
-
-//        server.join();
-
+        ticker.run();
 
         return future;
-
 
     }
 
@@ -548,12 +544,7 @@ public class Raft {
         return term;
     }
 
-    public Log log() {
-        return log;
-    }
-
-
-    public void send(Node to, Message msg) {
+    private void send(Node to, Message msg) {
         me.sendTo(to, msg);
     }
 
@@ -566,7 +557,7 @@ public class Raft {
 
         this.votes.clear();
 
-        this.election.reset();
+        this.ticker.reset();
 
     }
 
@@ -577,7 +568,7 @@ public class Raft {
      * @param term
      * @param leader
      */
-    public void becomeFollower(long term, Node leader) {
+    private void becomeFollower(long term, Node leader) {
 
         this.reset(term);
         this.leader = leader;
@@ -589,8 +580,8 @@ public class Raft {
     /**
      * 成为备选人
      */
-    public void becomeCandidate() {
-        if (me.role() == NodeRole.LEADER) {
+    private void becomeCandidate() {
+        if (me.role() == RoleType.LEADER) {
             logger.error("invalid transition [leader -> candidate]");
             return;
         }
@@ -599,19 +590,14 @@ public class Raft {
 
         this.me.becomeCandidate();
         logger.info("{} became candidate at term {}", me.id(), this.term);
-
-
-//        r.step = stepCandidate
-
-//        r.Vote = r.id
     }
 
 
     /**
      * 成为PRE-备选人
      */
-    public void becomePreCandidate() {
-        if (me.role() == NodeRole.LEADER) {
+    private void becomePreCandidate() {
+        if (me.role() == RoleType.LEADER) {
             logger.error("invalid transition [leader -> pre-candidate]");
             return;
         }
@@ -626,8 +612,8 @@ public class Raft {
     /**
      * 成为Leader
      */
-    public void becomeLeader() {
-        if (me.role() == NodeRole.FOLLOWER) {
+    private void becomeLeader() {
+        if (me.role() == RoleType.FOLLOWER) {
             logger.error("invalid transition [follower -> leader]");
             return;
         }
@@ -639,75 +625,27 @@ public class Raft {
 
         logger.info("i am leader:{}", me.id());
 
-        broadcast(new Message(MessageType.APP, this.term(), null),true);
-
-        // Followers enter replicate mode when they've been successfully probed
-        // (perhaps after having received a snapshot as a result). The leader is
-        // trivially in this state. Note that r.reset() has initialized this
-        // progress with the last index already.
-//        r.prs[r.id].becomeReplicate()
-
-        // Conservatively set the pendingConfIndex to the last index in the
-        // log. There may or may not be a pending config change, but it's
-        // safe to delay any future proposals until we commit all our
-        // pending log entries, and scanning the entire tail of the log
-        // could be expensive.
-//        r.pendingConfIndex = r.raftLog.lastIndex()
-
-//        emptyEnt := pb.Entry{Data: nil}
-//        if !r.appendEntry(emptyEnt) {
-        // This won't happen because we just called reset() above.
-//            r.logger.Panic("empty entry was dropped")
-//        }
-        // As a special case, don't count the initial empty entry towards the
-        // uncommitted log quota. This is because we want to preserve the
-        // behavior of allowing one entry larger than quota if the current
-        // usage is zero.
-//        r.reduceUncommittedSize([]pb.Entry{emptyEnt})
-//        r.logger.Infof("%x became leader at term %d", r.id, r.Term)
+        broadcast(new Message(MessageType.APP, this.term(), null), true);
     }
 
 
-    private void attemptBroadcastHeartbeat() {
+    private void broadcastHeartbeat() {
 
-        if (me.role() != NodeRole.LEADER) return;
+        if (me.role() != RoleType.LEADER) return;
 
-
-        if (heartbeat.incrementOrCompleted()) {
-
-            Raft self = this;
-            broadcast(node -> {
-                long committed = Math.min(self.log.committedIndex(), node.index());
-                return new Message(MessageType.HEARTBEAT, self.term, ConvertUtils.toBytes(committed));
-            });
-
-            heartbeat.reset();
-        }
-
-
+        Raft self = this;
+        broadcast(node -> {
+            long committed = Math.min(self.log.committedIndex(), node.index());
+            return new Message(MessageType.HEARTBEAT, self.term, ConvertUtils.toBytes(committed));
+        });
     }
 
-    private void attemptBroadcastElection() throws JsonProcessingException {
-
-        if (election.incrementOrCompleted()) {
-            election.reset();
-            if (me.role() == NodeRole.LEADER) {
-            } else
-                this.campaign(true);
-        }
-    }
+    private void broadcastElection() {
 
 
-    public void tick() throws JsonProcessingException {
-        switch (me.role()) {
-
-            case LEADER:
-                this.attemptBroadcastHeartbeat();
-                break;
-            default:
-                this.attemptBroadcastElection();
-                break;
-        }
+        if (me.role() == RoleType.LEADER) {
+        } else
+            this.campaign(true);
     }
 
 

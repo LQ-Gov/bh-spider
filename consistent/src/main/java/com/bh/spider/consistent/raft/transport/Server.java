@@ -6,8 +6,5 @@ package com.bh.spider.consistent.raft.transport;
  */
 public interface Server {
 
-
     void listen(int port, ConnectionInitializer initializer) throws Exception;
-
-    void join() throws InterruptedException;
 }

@@ -1,7 +1,7 @@
 package com.bh.spider.consistent.raft.transport;
 
 import com.bh.spider.consistent.raft.Message;
-import com.bh.spider.consistent.raft.Node;
+import com.bh.spider.consistent.raft.node.Node;
 
 /**
  * @author liuqi19

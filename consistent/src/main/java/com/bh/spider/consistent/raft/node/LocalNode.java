@@ -1,5 +1,7 @@
-package com.bh.spider.consistent.raft;
+package com.bh.spider.consistent.raft.node;
 
+import com.bh.spider.consistent.raft.Message;
+import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.consistent.raft.role.*;
 import com.bh.spider.consistent.raft.transport.Connection;
 import org.slf4j.Logger;
@@ -23,15 +25,17 @@ public class LocalNode extends Node {
     private Role role;
 
 
-    public LocalNode(Raft raft, Node node) {
+    public LocalNode(Node node, Raft raft, Runnable heartbeat, Runnable election) {
         super(node);
 
+        this.role = new Assister();
 
         roleCache = new Role[]{
-                new Follower(raft, this),
-                new Candidate(raft, this),
-                new PreCandidate(),
-                new Leader()};
+                new Follower(raft, this, election),
+                new Candidate(raft, this, election),
+                new PreCandidate(election),
+                new Leader(heartbeat)
+        };
     }
 
     @Override
@@ -39,23 +43,28 @@ public class LocalNode extends Node {
         return super.id();
     }
 
-    NodeRole role() {
+    public RoleType role() {
         return role == null ? null : this.role.name();
     }
 
 
-    void becomeFollower() {
+    public Role role2(){
+        return role;
+    }
+
+
+    public void becomeFollower() {
         role = roleCache[0];
     }
 
-    void becomeCandidate() {
+    public void becomeCandidate() {
         role = roleCache[1];
     }
 
     /**
      * 成为PRE-备选人
      */
-    void becomePreCandidate() {
+    public void becomePreCandidate() {
         role = roleCache[2];
     }
 
@@ -63,7 +72,7 @@ public class LocalNode extends Node {
     /**
      * 成为Leader
      */
-    void becomeLeader() {
+    public void becomeLeader() {
         role = roleCache[3];
     }
 
@@ -76,7 +85,7 @@ public class LocalNode extends Node {
 //    }
 
 
-    public void sendTo(Node node,Message message){
+    public void sendTo(Node node, Message message){
         Connection conn = connections.get(node.id());
         if(conn!=null){
             conn.write(message);

@@ -2,7 +2,7 @@ package com.bh.spider.consistent.raft.transport;
 
 import com.bh.spider.consistent.raft.Message;
 import com.bh.spider.consistent.raft.MessageType;
-import com.bh.spider.consistent.raft.Node;
+import com.bh.spider.consistent.raft.node.Node;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

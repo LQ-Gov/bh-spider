@@ -1,4 +1,4 @@
-package com.bh.spider.consistent.raft;
+package com.bh.spider.consistent.raft.log;
 
 /**
  * @author liuqi19

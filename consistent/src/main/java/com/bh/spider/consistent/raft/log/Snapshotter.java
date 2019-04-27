@@ -1,4 +1,4 @@
-package com.bh.spider.consistent.raft.snap;
+package com.bh.spider.consistent.raft.log;
 
 import com.bh.spider.consistent.raft.pb.Snapshot;
 import org.apache.commons.io.FilenameUtils;

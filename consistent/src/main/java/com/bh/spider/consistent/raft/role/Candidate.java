@@ -1,6 +1,7 @@
 package com.bh.spider.consistent.raft.role;
 
 import com.bh.spider.consistent.raft.*;
+import com.bh.spider.consistent.raft.node.LocalNode;
 
 /**
  * @author liuqi19
@@ -11,15 +12,22 @@ public class Candidate implements Role {
     private Raft raft;
     private LocalNode node;
 
+    private Runnable election;
 
-    public Candidate(Raft raft, LocalNode node) {
+
+    public Candidate(Raft raft, LocalNode node,Runnable election) {
         this.raft = raft;
         this.node = node;
     }
 
     @Override
-    public NodeRole name() {
-        return NodeRole.CANDIDATE;
+    public RoleType name() {
+        return RoleType.CANDIDATE;
+    }
+
+    @Override
+    public void tick() {
+        election.run();
     }
 
     @Override

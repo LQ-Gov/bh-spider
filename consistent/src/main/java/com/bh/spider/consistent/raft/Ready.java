@@ -1,5 +1,6 @@
 package com.bh.spider.consistent.raft;
 
+import com.bh.spider.consistent.raft.log.Entry;
 import com.bh.spider.consistent.raft.pb.Snapshot;
 
 import java.util.List;

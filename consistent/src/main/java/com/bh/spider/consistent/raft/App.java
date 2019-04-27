@@ -1,6 +1,7 @@
 package com.bh.spider.consistent.raft;
 
 import com.bh.common.utils.ConvertUtils;
+import com.bh.spider.consistent.raft.node.Node;
 
 import java.util.concurrent.CompletableFuture;
 

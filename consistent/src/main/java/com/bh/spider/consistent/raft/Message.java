@@ -1,5 +1,7 @@
 package com.bh.spider.consistent.raft;
 
+import com.bh.spider.consistent.raft.node.Node;
+
 /**
  * @author liuqi19
  * @version : Message, 2019-04-08 14:40 liuqi19

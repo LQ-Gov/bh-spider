@@ -1,4 +1,4 @@
-package com.bh.spider.consistent.raft;
+package com.bh.spider.consistent.raft.log;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -21,7 +21,7 @@ public class NettyServer implements Server {
 
 
     @Override
-    public void listen(int port,ConnectionInitializer initializer) throws InterruptedException {
+    public void listen(int port,ConnectionInitializer initializer) {
         EventLoopGroup group = new NioEventLoopGroup(1);
         ServerBootstrap server = new ServerBootstrap().group(group, new NioEventLoopGroup())
                 .channel(NioServerSocketChannel.class)
@@ -44,10 +44,5 @@ public class NettyServer implements Server {
         logger.info("init local listen:{}", port);
 
 
-    }
-
-    @Override
-    public void join() throws InterruptedException {
-        channel.closeFuture().sync();
     }
 }
