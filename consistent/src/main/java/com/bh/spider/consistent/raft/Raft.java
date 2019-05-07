@@ -5,13 +5,13 @@ import com.bh.common.utils.ConvertUtils;
 import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.log.Entry;
 import com.bh.spider.consistent.raft.log.Log;
+import com.bh.spider.consistent.raft.log.Snapshot;
+import com.bh.spider.consistent.raft.log.Snapshotter;
 import com.bh.spider.consistent.raft.node.LocalNode;
 import com.bh.spider.consistent.raft.node.Node;
 import com.bh.spider.consistent.raft.role.RoleType;
-import com.bh.spider.consistent.raft.log.Snapshotter;
-import com.bh.spider.consistent.raft.storage.MemoryStorage;
-import com.bh.spider.consistent.raft.storage.Storage;
 import com.bh.spider.consistent.raft.transport.*;
+import com.bh.spider.consistent.raft.wal.Stashed;
 import com.bh.spider.consistent.raft.wal.WAL;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelInitializer;
@@ -22,10 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author liuqi19
@@ -34,11 +36,11 @@ import java.util.function.Function;
 public class Raft {
     private final static Logger logger = LoggerFactory.getLogger(Raft.class);
 
+
     /**
      * 定时器（leader:heart,other:election）
      */
     private Ticker ticker;
-
 
     /**
      * Raft分组内的成员
@@ -61,8 +63,12 @@ public class Raft {
 
     private WAL wal;
 
+    private Properties properties;
 
-    private Storage storage;
+    /**
+     * 实际执行者
+     */
+    private Actuator actuator;
 
 
     /**
@@ -81,7 +87,8 @@ public class Raft {
     private CompletableFuture<Void> future;
 
 
-    public Raft(Properties properties, Node local, Node... members) {
+    public Raft(Properties properties,Actuator actuator, Node local, Node... members) throws IOException {
+        assert actuator!=null;
 
 
         this.me = new LocalNode(local, this, this::broadcastHeartbeat, this::broadcastElection);
@@ -90,17 +97,18 @@ public class Raft {
 
         this.ticker = new Ticker(100, 5, () -> me.role2().tick());
 
-        this.log = new Log();
+        this.properties = properties;
+
+
+        this.snapshotter = Snapshotter.create(Paths.get(properties.getProperty("snapshot.path")));
+
+        this.actuator =actuator;
 
 
 //        this.persister =
 
-//        this.snapshotter = Snapshotter.create(Paths.get(properties.getProperty("snapshot.path")));
 
-//        this.wal = WAL.create(Paths.get(properties.getProperty("wal.path")),null);
-
-
-        this.storage = new MemoryStorage();
+//        this.storage = new MemoryStorage();
 
     }
 
@@ -438,6 +446,24 @@ public class Raft {
     }
 
 
+    private void recover(Snapshot snapshot, Stashed stashed) {
+
+        this.log = new Log(snapshot, stashed.entries());
+
+        //还原hard state
+        HardState state = stashed.state();
+        if (state != null && state.isValid()) {
+            if (state.committed() < this.log.committedIndex() || state.committed() > this.log.lastIndex()) {
+                logger.error("{} state.commit {} is out of range [{}, {}]", me.id(), state.committed(), this.log.committedIndex(), this.log.lastIndex());
+            } else {
+                this.log.commitTo(state.committed());
+                this.term = state.term();
+                this.voted = this.node(state.vote());
+            }
+        }
+    }
+
+
     public synchronized CompletableFuture<Void> exec() throws Exception {
 
         if (this.future != null)
@@ -446,7 +472,33 @@ public class Raft {
 
         this.future = new CompletableFuture<>();
 
-//        Snapshot snapshot = snapshotter.load();
+
+        Snapshot snapshot = snapshotter.load();
+
+        if(snapshot!=null){
+            actuator.recover(snapshot.data());
+        }
+
+
+        this.wal = WAL.open(Paths.get(properties.getProperty("wal.path")), snapshot==null?null:snapshot.metadata());
+
+        Stashed stashed = this.wal.readAll();
+
+
+
+        //如果本地有日志记录，则恢复，否则继续执行
+        if(stashed!=null&&stashed.validate()){
+            recover(snapshot,stashed);
+        }
+        else{
+            this.log = new Log();
+        }
+
+
+
+        this.persister = new Persistent();
+
+
 //
 //        if (snapshot != null) {
 //            storage.applySnapshot(snapshot);
@@ -512,6 +564,10 @@ public class Raft {
         //定时器启动
         ticker.run();
 
+        persister.start();
+
+
+
         return future;
 
     }
@@ -560,6 +616,8 @@ public class Raft {
         this.ticker.reset();
 
     }
+
+
 
 
     /**
@@ -648,6 +706,24 @@ public class Raft {
             this.campaign(true);
     }
 
+    public void write(byte[] data) {
+
+
+        Entry.Collection collection = new Entry.Collection(new Entry[]{new Entry(data)});
+        try {
+            Message msg = new Message(MessageType.PROP, this.term(), Json.get().writeValueAsBytes(collection), me);
+            this.me.sendTo(me, msg);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    private HardState hardState() {
+        return new HardState(this.term, this.voted == null ? -1 : this.voted.id(), this.log.committedIndex());
+    }
+
 
     private Ready ready() {
 
@@ -665,6 +741,7 @@ public class Raft {
             try {
                 Thread.sleep(1);
             } catch (Exception e) {
+                e.printStackTrace();
                 break;
             }
         }
@@ -675,38 +752,56 @@ public class Raft {
     }
 
 
-    public void write(byte[] data) {
-
-
-        Entry.Collection collection = new Entry.Collection(new Entry[]{new Entry(data)});
-        try {
-            Message msg = new Message(MessageType.PROP, this.term(), Json.get().writeValueAsBytes(collection), me);
-            this.me.sendTo(me, msg);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-
     public class Persistent extends Thread {
 
-        private Raft raft;
 
-        public Persistent(Raft raft) {
-            this.raft = raft;
+        public Persistent() {
+
+            this.setDaemon(true);
         }
+
+
+
 
 
         @Override
         public void run() {
-            Ready ready = null;
-            while ((ready = raft.ready()) != null) {
+            Ready data = null;
+            while ((data = Raft.this.ready()) != null) {
 
                 try {
+                    boolean hasUnstableEntries = CollectionUtils.isNotEmpty(data.entries());
+
+                    Raft.this.wal.save(Raft.this.hardState(), data.entries());
+
+                    if(hasUnstableEntries){
+                        Entry entry = data.entries().get(data.entries().size()-1);
+                        Raft.this.log.stableTo(entry.term(),entry.index());
+
+                    }
+
+                    //应用到状态机
+                    if(CollectionUtils.isNotEmpty( data.committedEntries())) {
+                        List<byte[]> committedEntries = data.committedEntries().stream().map(Entry::data).collect(Collectors.toList());
+                        Raft.this.actuator.apply(committedEntries);
+                    }
+
+                    //生成快照
+                    if(log.offset()- snapshotter.lastIndex()>=Snapshotter.SNAP_COUNT_THRESHOLD){
 
 
-                    raft.wal.save(null, null);
+                        Entry entry = log.entry(log.appliedIndex());
+
+                        byte[] snap = Raft.this.actuator.snapshot();
+
+                        Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(),entry.index()),snap);
+
+
+                        snapshotter.save(snapshot);
+
+
+                        Raft.this.wal.save(snapshot.metadata());
+                    }
 
 
                 } catch (Exception e) {

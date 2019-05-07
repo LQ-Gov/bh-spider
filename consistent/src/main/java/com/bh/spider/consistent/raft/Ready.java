@@ -1,7 +1,6 @@
 package com.bh.spider.consistent.raft;
 
 import com.bh.spider.consistent.raft.log.Entry;
-import com.bh.spider.consistent.raft.pb.Snapshot;
 
 import java.util.List;
 
@@ -17,6 +16,8 @@ public class Ready {
 
 
     public Ready(List<Entry> entries,List<Entry> committedEntries,Object o){
+        this.entries = entries;
+        this.committedEntries = committedEntries;
 
     }
 
@@ -32,7 +33,7 @@ public class Ready {
     }
 
 
-    public Snapshot snapshot(){
-        return null;
-    }
+//    public Snapshot snapshot(){
+//        return null;
+//    }
 }

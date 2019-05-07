@@ -9,6 +9,8 @@ public class Index {
     private long term;
 
 
+
+
     public long getIndex() {
         return index;
     }

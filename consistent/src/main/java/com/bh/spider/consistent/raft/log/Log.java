@@ -1,9 +1,11 @@
 package com.bh.spider.consistent.raft.log;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -18,11 +20,34 @@ public class Log {
     private Unstable unstable;
 
 
-    private long committed = -1;
+    // committed is the highest log position that is known to be in
+    // stable storage on a quorum of nodes.
+    private long committed;
+
+    // applied is the highest log position that the application has
+    // been instructed to apply to its state machine.
+    // Invariant: applied <= committed
+    private long applied;
+
+
+    private List<Entry> entries = new LinkedList<>();
 
 
     public Log() {
-        unstable = new Unstable();
+        this(null,null);
+    }
+
+
+    public Log(Snapshot snapshot,List<Entry> entries) {
+        long offset = 0, committed = -1;
+        if (CollectionUtils.isNotEmpty(entries)) {
+            offset = entries.get(entries.size() - 1).index();
+            committed = entries.get(0).index() - 1;
+        }
+
+        this.unstable = new Unstable(offset);
+
+        this.committed = committed;
     }
 
 
@@ -70,6 +95,12 @@ public class Log {
     }
 
 
+    public Entry entry(long index) {
+        Entry[] ents = entries(index, 1);
+        return ents != null && ents.length > 0 ? ents[0] : null;
+    }
+
+
     public List<Entry> unstableEntries() {
         return unstable.entries();
     }
@@ -112,6 +143,28 @@ public class Log {
 
         return unstable.entries().subList((int) (lo - unstable.offset()), (int) Math.min(hi - unstable.offset(), size));
     }
+
+
+    public void stableTo(long term,long index){
+        List<Entry> stabled = this.unstable.stableTo(term,index);
+        if(stabled!=null){
+            this.entries.addAll(stabled);
+        }
+    }
+
+
+    public long offset(){
+        return unstable.offset();
+    }
+
+
+    public long appliedIndex(){
+        return applied;
+    }
+
+
+
+
 
 
 //    public long term(int )

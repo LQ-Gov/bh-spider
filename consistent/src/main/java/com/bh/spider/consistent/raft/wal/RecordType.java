@@ -7,4 +7,6 @@ package com.bh.spider.consistent.raft.wal;
 public enum  RecordType {
     ENTRY,
     STATE,
+    METADATA,
+    SNAPSHOT
 }

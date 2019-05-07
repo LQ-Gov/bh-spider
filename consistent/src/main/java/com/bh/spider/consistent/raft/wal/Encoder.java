@@ -1,6 +1,6 @@
 package com.bh.spider.consistent.raft.wal;
 
-import com.bh.spider.consistent.raft.pb.Record;
+import com.bh.common.utils.Json;
 import com.bh.spider.consistent.utils.CrcUtils;
 
 import java.io.IOException;
@@ -18,39 +18,42 @@ public class Encoder {
         this.channel = channel;
     }
 
-    public void encode(Record.Builder recordBuilder) throws IOException {
+//    public void encode(Record.Builder recordBuilder) throws IOException {
+//
+//        long value = CrcUtils.sum32(recordBuilder.getData().toByteArray());
+//
+//        recordBuilder.setCrc((int) value);
+//
+//
+//        byte[] data = recordBuilder.build().toByteArray();
+//
+//        long dataLength = data.length;
+//        long padLength = computePadLength(dataLength);
+//
+//        if (padLength != 0) {
+//            dataLength |= (0x80 | padLength) << 56;
+//        }
+//
+//
+//        ByteBuffer buffer = ByteBuffer.allocate((int) (8 + dataLength + padLength))
+//                .putLong(dataLength).put(data).put(new byte[(int) padLength]);
+//
+//        synchronized (this) {
+//            this.channel.write(buffer);
+//        }
+//
+//    }
 
-        long value = CrcUtils.sum32(recordBuilder.getData().toByteArray());
 
-        recordBuilder.setCrc((int) value);
-
-
-        byte[] data = recordBuilder.build().toByteArray();
-
-        long dataLength = data.length;
-        long padLength = computePadLength(dataLength);
-
-        if (padLength != 0) {
-            dataLength |= (0x80 | padLength) << 56;
-        }
-
-
-        ByteBuffer buffer = ByteBuffer.allocate((int) (8 + dataLength + padLength))
-                .putLong(dataLength).put(data).put(new byte[(int) padLength]);
-
-        synchronized (this) {
-            this.channel.write(buffer);
-        }
-
-    }
-
-
-    public void encode(com.bh.spider.consistent.raft.wal.Record record) throws IOException {
+    public void encode(Record record) throws IOException {
         long crc32 = CrcUtils.sum32(record.data());
 
+        byte[] data = Json.get().writeValueAsBytes(record);
 
-        ByteBuffer buffer = ByteBuffer.allocate(8 + record.data().length);
-        buffer.putLong(record.data().length).put(record.data());
+        ByteBuffer buffer = ByteBuffer.allocate(8 + data.length);
+        buffer.putLong(data.length).put(data);
+
+        buffer.flip();
 
 
         channel.write(buffer);

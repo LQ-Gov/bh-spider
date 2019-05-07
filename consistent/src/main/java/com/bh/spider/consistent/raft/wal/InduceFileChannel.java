@@ -62,12 +62,12 @@ public class InduceFileChannel extends FileChannel {
 
     @Override
     public int write(ByteBuffer src) throws IOException {
-        return channel.read(src);
+        return channel.write(src);
     }
 
     @Override
     public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
-        return channel.read(srcs,offset,length);
+        return channel.write(srcs,offset,length);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.bh.spider.consistent.raft;
 import com.bh.common.utils.ConvertUtils;
 import com.bh.spider.consistent.raft.node.Node;
 
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -47,7 +48,11 @@ public class App {
 
         //启动Raft
 
-        Raft raft =new Raft(null,local,members);
+        Properties properties = new Properties();
+        properties.put("wal.path","data/wal-"+local.id());
+        properties.put("snapshot.path","data/snap-"+local.id());
+
+        Raft raft =new Raft(properties,new DefaultActuator(),local,members);
 
         CompletableFuture<Void> future = raft.exec();
 

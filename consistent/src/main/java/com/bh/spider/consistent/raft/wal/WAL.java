@@ -2,21 +2,17 @@ package com.bh.spider.consistent.raft.wal;
 
 import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.HardState;
-import com.bh.spider.consistent.raft.pb.Entry;
-import com.bh.spider.consistent.raft.pb.Record;
-import com.bh.spider.consistent.raft.pb.RecordType;
-import com.bh.spider.consistent.raft.pb.Snapshot;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
+import com.bh.spider.consistent.raft.log.Entry;
+import com.bh.spider.consistent.raft.log.Snapshot;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,7 +33,7 @@ public class WAL {
     private final static long SEGMENT_SIZE_BYTES = 64 * 1000 * 1000; // 64MB
 
 
-    private final static Pattern WAL_NAME_PATTERN=Pattern.compile("(\\d+)-(\\d+)\\.wal");
+    private final static Pattern WAL_NAME_PATTERN = Pattern.compile("(\\d+)-(\\d+)\\.wal");
 
 
     /**
@@ -72,7 +68,7 @@ public class WAL {
     /**
      * the locked files the WAL holds (the name is increasing)
      */
-    List<FileLock> locks;
+    private List<InduceFileChannel> channels;
 
 
     /**
@@ -93,13 +89,21 @@ public class WAL {
 //
 //    fp    *filePipeline
 
-    private WAL(){}
+    private WAL() {
+    }
 
-    private WAL(Path dir,byte[] metadata,Encoder encoder){
+    private WAL(Path dir, byte[] metadata, Encoder encoder) {
         this.dir = dir;
         this.metadata = metadata;
-        this.locks = new LinkedList<>();
+        this.channels = new LinkedList<>();
         this.encoder = encoder;
+    }
+
+
+    private WAL(Path dir, List<InduceFileChannel> channels) {
+        this.dir = dir;
+        this.channels = channels;
+        this.decoder = new Decoder(channels);
     }
 
     /**
@@ -111,8 +115,8 @@ public class WAL {
      * @return
      */
 
-    public static WAL create(Path dir, byte[] metadata) throws IOException {
-        if (!Files.exists(dir)) throw new IOException(dir.toString() + "不存在");
+    public static WAL open(Path dir, byte[] metadata) throws IOException {
+        Files.createDirectories(dir);
 
         // keep temporary wal directory so WAL initialization appears atomic
         Path tmp = Paths.get(dir.toString() + ".tmp");
@@ -126,7 +130,6 @@ public class WAL {
 
 
         InduceFileChannel channel = InduceFileChannel.open(walFilePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        FileLock lock = channel.lock();
 
 
         //跳转到文件结尾
@@ -139,16 +142,17 @@ public class WAL {
         }
 
 
-        WAL wal = new WAL(dir, metadata,new Encoder(channel));
+        WAL wal = new WAL(dir, metadata, new Encoder(channel));
         //创建encoder(已在构造函数中创建)
 
         //将锁假如wal locks
-        wal.locks.add(lock);
+        wal.channels.add(channel);
 
         wal.saveCRC(0);
-        wal.encoder.encode(Record.newBuilder().setType(RecordType.METADATA_VALUE).setData(ByteString.copyFrom(metadata)));;
+//        wal.encoder.encode(Record.newBuilder().setType(RecordType.METADATA_VALUE).setData(ByteString.copyFrom(metadata)));
+        ;
 
-        wal.saveSnapshot(Snapshot.newBuilder().build());
+//        wal.saveSnapshot(Snapshot.newBuilder().build());
 
         wal.renameWAL(tmp);
 
@@ -157,36 +161,35 @@ public class WAL {
     }
 
 
-
     public void saveCRC(int prevCrc) throws IOException {
-        Record.Builder recordBuilder = Record.newBuilder().setType(RecordType.CRC_VALUE).setCrc(prevCrc);
-        this.encoder.encode(recordBuilder);
+//        Record.Builder recordBuilder = Record.newBuilder().setType(RecordType.CRC_VALUE).setCrc(prevCrc);
+//        this.encoder.encode(recordBuilder);
     }
 
 
     public void saveSnapshot(Snapshot snapshot) throws IOException {
-        ByteString bs  = snapshot.toByteString();
+//        ByteString bs = snapshot.toByteString();
 
-        synchronized (this){
-            this.encoder.encode(Record.newBuilder().setType(RecordType.SNAPSHOT_VALUE).setData(bs));
+        synchronized (this) {
+//            this.encoder.encode(Record.newBuilder().setType(RecordType.SNAPSHOT_VALUE).setData(bs));
 //            if(this.lastIndex<snapshot.getIndex())
 //                this.lastIndex=snapshot.getIndex();
 
 
-             this.sync();
+            this.sync();
         }
 
     }
 
     public void sync() throws IOException {
-        if(this.encoder!=null)
+        if (this.encoder != null)
             this.encoder.flush();
     }
 
 
-    public InduceFileChannel tail(){
-        if(!this.locks.isEmpty())
-            return (InduceFileChannel) this.locks.get(this.locks.size()-1).channel();
+    public InduceFileChannel tail() {
+        if (!this.channels.isEmpty())
+            return this.channels.get(this.channels.size() - 1);
 
 
         return null;
@@ -205,123 +208,146 @@ public class WAL {
     }
 
 
+    public static WAL open(Path dir, Snapshot.Metadata metadata) throws IOException {
 
-    public static WAL open(Path dir, Index index) throws IOException {
-
-        List<FileLock> fileLocks = openAtIndex(dir,index,true);
-
-        Encoder encoder =new Encoder(fileLocks.get(fileLocks.size()-1).channel());
-        WAL wal = new WAL(dir,null,encoder);
-        wal.start=index;
-        wal.locks = fileLocks;
-
+        WAL wal = openAtIndex(dir, metadata == null ? 0 : 0, true);
 
 
         return wal;
 
-
-
-
     }
 
-    private static List<FileLock> openAtIndex(Path dir,Index index,boolean write) throws IOException {
+    private static WAL openAtIndex(Path dir, long index, boolean write) throws IOException {
+        if (!Files.exists(dir)) {
+            Files.createDirectories(dir);
+        }
+
+        List<InduceFileChannel> channels = new LinkedList<>();
         List<Path> wals = Files.list(dir).filter(x -> x.endsWith(".wal")).collect(Collectors.toList());
 
+        if (CollectionUtils.isNotEmpty(wals)) {
 
-        List<FileLock> fileLocks = new LinkedList<>();
-        for (int i = wals.size() - 1; i >= 0; i--) {
-            Matcher matcher = WAL_NAME_PATTERN.matcher(wals.get(i).toString());
-            if (matcher.find()) {
-                long currentIndex = Long.valueOf(matcher.group(2));
-                if (index.getIndex() >= currentIndex) {
-                    for (int j = i; j < wals.size(); j++) {
-                        FileLock lock = FileChannel.open(wals.get(j)).lock();
-                        fileLocks.add(lock);
+            index = Math.max(0, index);
+            for (int i = wals.size() - 1; i >= 0; i--) {
+                Matcher matcher = WAL_NAME_PATTERN.matcher(wals.get(i).toString());
+                if (matcher.find()) {
+                    long startIndex = Long.valueOf(matcher.group(2));
+                    if (index >= startIndex) {
+                        for (int j = i; j < wals.size(); j++) {
+                            InduceFileChannel ch = InduceFileChannel.open(wals.get(j), StandardOpenOption.WRITE, StandardOpenOption.READ);
+                            channels.add(ch);
+                        }
+                        break;
                     }
-
                 }
             }
+        } else {
+            Path path = Paths.get(dir.toString(), buildWalName(0, 0));
+            channels.add(InduceFileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ));
         }
 
-        return fileLocks;
-
-
+        return new WAL(dir, channels);
     }
 
 
-
-    public List<Entry> readAll() throws InvalidProtocolBufferException {
+    public Stashed readAll() throws IOException {
 
         List<Entry> entries = new LinkedList<>();
-
+        HardState state = null;
+        Snapshot.Metadata metadata = null;
+//
         Record record;
-        while ((record=decoder.decode())!=null) {
+        try {
+            while ((record = decoder.decode()) != null) {
 
-            switch ((int) record.getType()){
-                case RecordType.ENTRY_VALUE:{
-                    Entry entry = Entry.parseFrom(record.getData());
-                    if(entry.getIndex()>this.start.getIndex())
+                switch (record.type()) {
+                    case ENTRY:
+                        Entry entry = Json.get().readValue(record.data(), Entry.class);
+//                    if(entry.index()>start.getIndex())
                         entries.add(entry);
-                }break;
+                        break;
 
-                case RecordType.METADATA_VALUE:{
+                    case STATE:
+                        state = Json.get().readValue(record.data(), HardState.class);
+                        break;
 
+
+                    case SNAPSHOT:
+                        metadata =Json.get().readValue(record.data(), Snapshot.Metadata.class);
+                        break;
+
+//
+//                case METADATA:break;
                 }
 
             }
+        } catch (EOFException e) {
+
         }
 
-        return entries;
+        if (this.tail() != null) {
+            this.encoder = new Encoder(this.tail());
+        }
+
+
+        return new Stashed(state, entries,metadata);
 
     }
 
 
+    public synchronized void save(HardState state, List<Entry> entries) throws IOException {
 
-    public void save(HardState state, List<Entry> entries) throws IOException {
+
+        if (state == null || !state.isValid() || CollectionUtils.isEmpty(entries)) return;
+
 
         //保存Entries
-        for(Entry entry:entries) {
+        for (Entry entry : entries) {
             byte[] data = Json.get().writeValueAsBytes(entry);
 
 
-            com.bh.spider.consistent.raft.wal.Record record =
-                    new com.bh.spider.consistent.raft.wal.Record(com.bh.spider.consistent.raft.wal.RecordType.ENTRY, data);
+            Record record = new Record(RecordType.ENTRY, data);
 
             encoder.encode(record);
         }
 
         //保存state
-
-
-        com.bh.spider.consistent.raft.wal.Record record =
-                new com.bh.spider.consistent.raft.wal.Record(com.bh.spider.consistent.raft.wal.RecordType.STATE,Json.get().writeValueAsBytes(state));
+        Record record = new Record(RecordType.STATE, Json.get().writeValueAsBytes(state));
 
         encoder.encode(record);
 
+        encoder.flush();
 
-        tail().position(tail().size()-1);
-
-        if(tail().size()<SEGMENT_SIZE_BYTES){
+        if (tail().size() < SEGMENT_SIZE_BYTES) {
             return;
         }
 
 
         this.cut();
+    }
 
 
+    public void save(Snapshot.Metadata metadata) throws IOException{
 
+        Record record = new Record(RecordType.SNAPSHOT,Json.get().writeValueAsBytes(metadata));
+        encoder.encode(record);
+
+        if(metadata.index()>this.lastIndex)
+            this.lastIndex = metadata.index();
+
+
+        encoder.flush();
     }
 
 
     private void cut() throws IOException {
 
 
-        Path path = Paths.get(this.dir.toString(),this.buildWalName(this.seq()+1,this.lastIndex+1));
+        Path path = Paths.get(this.dir.toString(), buildWalName(this.seq() + 1, this.lastIndex + 1));
 
 //        Path tmp = Paths.get(path.toString()+".tmp");
-        InduceFileChannel channel = InduceFileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        FileLock lock = channel.lock();
-        this.locks.add(lock);
+        InduceFileChannel ch = InduceFileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
+        this.channels.add(ch);
 
         this.encoder = new Encoder(tail());
 
@@ -334,33 +360,19 @@ public class WAL {
         InduceFileChannel channel = tail();
         Matcher matcher = WAL_NAME_PATTERN.matcher(channel.filename());
 
-        if(matcher.find()){
-            return Long.valueOf( matcher.group(1));
+        if (matcher.find()) {
+            return Long.valueOf(matcher.group(1));
         }
 
         return 0;
     }
 
 
-
-
-
-
-
-    private String buildWalName(long seq, long index){
+    private static String buildWalName(long seq, long index) {
         return String.format("%016x-%016x.wal", seq, index);
     }
 
 
-
-
-
-
-
-
-
-
-
-
-    public void reply(){}
+    public void reply() {
+    }
 }

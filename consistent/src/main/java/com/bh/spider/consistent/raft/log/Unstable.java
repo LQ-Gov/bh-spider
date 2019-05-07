@@ -18,6 +18,12 @@ public class Unstable {
     private long offset;
     private List<Entry> entries = new LinkedList<>();
 
+    public Unstable(){}
+
+    public Unstable(long offset){
+        this.offset = offset;
+    }
+
 
     public void append(Entry[] entries) {
 
@@ -37,7 +43,6 @@ public class Unstable {
             // then append
 
             this.entries = new LinkedList<>(this.entries.subList(0, (int) (after-offset)));
-
 
             this.entries.addAll(Arrays.asList(entries));
 
@@ -68,6 +73,21 @@ public class Unstable {
             return offset+entries.size()-1;
 
         return -1;
+    }
+
+
+    public List<Entry> stableTo(long term,long index){
+
+        if(index>=offset) {
+
+            List<Entry> stabled = this.entries.subList(0, (int) (index - offset));
+            this.entries = new LinkedList<>(this.entries.subList((int) (index - offset), entries.size() - 1));
+
+            this.offset = index;
+
+            return stabled;
+        }
+        return null;
     }
 
 

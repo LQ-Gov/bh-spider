@@ -20,6 +20,7 @@ public class Follower implements Role {
     public Follower(Raft raft, LocalNode node,Runnable election){
         this.raft = raft;
         this.node = node;
+        this.election = election;
     }
 
 
