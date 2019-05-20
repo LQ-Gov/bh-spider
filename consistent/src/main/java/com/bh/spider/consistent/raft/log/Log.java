@@ -1,6 +1,7 @@
 package com.bh.spider.consistent.raft.log;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +41,11 @@ public class Log {
 
     public Log(Snapshot snapshot,List<Entry> entries) {
         long offset = 0, committed = -1;
+
         if (CollectionUtils.isNotEmpty(entries)) {
             offset = entries.get(entries.size() - 1).index();
             committed = entries.get(0).index() - 1;
+            this.entries = new LinkedList<>(entries);
         }
 
         this.unstable = new Unstable(offset);
@@ -57,7 +60,14 @@ public class Log {
 
 
     public long lastIndex() {
-        return unstable.lastIndex();
+        long i = unstable.lastIndex();
+        if(i>=0) return i;
+
+        if(!this.entries.isEmpty()){
+            return this.entries.get(this.entries.size()-1).index();
+        }
+
+        return -1;
     }
 
 
@@ -102,7 +112,7 @@ public class Log {
 
 
     public List<Entry> unstableEntries() {
-        return unstable.entries();
+        return new UnmodifiableList<>(unstable.entries());
     }
 
 
@@ -112,7 +122,12 @@ public class Log {
      * entries after the index of snapshot.
      */
 
-    public List<Entry> nextEntries() {
+    public List<Entry> committedEntries() {
+        long off = Math.max(this.applied,this.unstable.firstIndex());
+
+        if(committed+1>off){
+            return this.slice(off,committed+1,Integer.MAX_VALUE);
+        }
         return null;
     }
 
@@ -160,6 +175,16 @@ public class Log {
 
     public long appliedIndex(){
         return applied;
+    }
+
+
+    public void applyTo(long index) {
+
+        if (index > committed || applied > index) {
+            logger.error("applied({}) is out of range [prevApplied({}), committed({})]", index, applied, committed);
+            return;
+        }
+        this.applied = index;
     }
 
 

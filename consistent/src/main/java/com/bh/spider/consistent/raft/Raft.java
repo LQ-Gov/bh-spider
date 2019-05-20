@@ -23,11 +23,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * @author liuqi19
@@ -136,12 +138,8 @@ public class Raft {
 
 
     private void broadcastAdvance() throws JsonProcessingException {
-        List<Node> nodes = new LinkedList<>();
-//        nodes.add(me);
-        nodes.addAll(Arrays.asList(members));
 
-
-        for (Node node : nodes) {
+        for (Node node : members) {
 
             sync(node);
 
@@ -367,7 +365,11 @@ public class Raft {
                 boolean accept = ConvertUtils.toBoolean(message.data());
                 if (accept) {
                     message.from().advance(message.index());
-                    commit();
+                    if(this.commit())
+                        this.broadcastAdvance();
+
+                    sync(message.from());
+
                 }
                 break;
 
@@ -402,7 +404,7 @@ public class Raft {
     /**
      * 尝试进行commit,未必成功
      */
-    private void commit() {
+    private boolean commit() {
         long[] indexes = new long[members.length + 1];
 
         for (int i = 0; i < members.length; i++) {
@@ -416,7 +418,7 @@ public class Raft {
         long mci = indexes[indexes.length - quorum()];
 
 
-        this.log.commit(this.term, mci);
+        return this.log.commit(this.term, mci);
     }
 
 
@@ -564,7 +566,7 @@ public class Raft {
         //定时器启动
         ticker.run();
 
-        persister.start();
+//        persister.start();
 
 
 
@@ -731,7 +733,7 @@ public class Raft {
         while (true) {
             List<Entry> entries = this.log.unstableEntries();
 
-            List<Entry> committedEntries = this.log.nextEntries();
+            List<Entry> committedEntries = this.log.committedEntries();
 
 
             if (CollectionUtils.isNotEmpty(entries) || CollectionUtils.isNotEmpty(committedEntries))
@@ -739,7 +741,7 @@ public class Raft {
 
 
             try {
-                Thread.sleep(1);
+                Thread.sleep(5);
             } catch (Exception e) {
                 e.printStackTrace();
                 break;
@@ -766,8 +768,11 @@ public class Raft {
 
         @Override
         public void run() {
+
             Ready data = null;
             while ((data = Raft.this.ready()) != null) {
+
+
 
                 try {
                     boolean hasUnstableEntries = CollectionUtils.isNotEmpty(data.entries());
@@ -780,28 +785,37 @@ public class Raft {
 
                     }
 
+                    long appliedIndex = -1;
                     //应用到状态机
                     if(CollectionUtils.isNotEmpty( data.committedEntries())) {
-                        List<byte[]> committedEntries = data.committedEntries().stream().map(Entry::data).collect(Collectors.toList());
-                        Raft.this.actuator.apply(committedEntries);
+                        List<Entry> committedEntries = data.committedEntries();
+
+                        for(Entry entry:committedEntries){
+                            if(entry.data()==null||entry.data().length==0)
+                                continue;
+
+                            Raft.this.actuator.apply(entry.data());
+
+                            appliedIndex=entry.index();
+                        }
                     }
 
                     //生成快照
-                    if(log.offset()- snapshotter.lastIndex()>=Snapshotter.SNAP_COUNT_THRESHOLD){
-
-
-                        Entry entry = log.entry(log.appliedIndex());
-
-                        byte[] snap = Raft.this.actuator.snapshot();
-
-                        Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(),entry.index()),snap);
-
-
-                        snapshotter.save(snapshot);
-
-
-                        Raft.this.wal.save(snapshot.metadata());
-                    }
+//                    if(log.offset()- snapshotter.lastIndex()>=Snapshotter.SNAP_COUNT_THRESHOLD){
+//
+//
+//                        Entry entry = log.entry(log.appliedIndex());
+//
+//                        byte[] snap = Raft.this.actuator.snapshot();
+//
+//                        Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(),entry.index()),snap);
+//
+//
+//                        snapshotter.save(snapshot);
+//
+//
+//                        Raft.this.wal.save(snapshot.metadata());
+//                    }
 
 
                 } catch (Exception e) {

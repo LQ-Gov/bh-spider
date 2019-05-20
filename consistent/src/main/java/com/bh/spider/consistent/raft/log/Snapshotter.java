@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class Snapshotter {
     private final static Logger logger = LoggerFactory.getLogger(Snapshotter.class);
     public static final String SNAP_SUFFIX = ".snap";
-    public static final int SNAP_COUNT_THRESHOLD = 1000;
+    public static final int SNAP_COUNT_THRESHOLD = 100;
     private Path dir;
 
     public Snapshotter(Path dir) {

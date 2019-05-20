@@ -62,10 +62,14 @@ public class Decoder {
 
         ByteBuffer buffer = ByteBuffer.allocate(8);
 
-        channel.read(buffer);
+        if( channel.read(buffer)==8) {
+
+            buffer.flip();
 
 
-        return buffer.getLong();
+            return buffer.getLong();
+        }
+        return 0;
 
     }
 }

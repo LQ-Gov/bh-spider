@@ -1,7 +1,5 @@
 package com.bh.spider.consistent.raft;
 
-import java.util.List;
-
 /**
  * @author liuqi19
  * @version : DefaultActuator, 2019-05-07 12:02 liuqi19
@@ -18,7 +16,7 @@ public class DefaultActuator implements Actuator {
     }
 
     @Override
-    public void apply(List<byte[]> entries) {
+    public void apply(byte[] entries) {
 
     }
 }

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class Unstable {
     }
 
 
-    public void append(Entry[] entries) {
+    public synchronized void append(Entry[] entries) {
 
         long after = entries[0].index();
 
@@ -51,8 +52,9 @@ public class Unstable {
 
 
 
-    public List<Entry> entries(){
-        return entries;
+    public synchronized List<Entry> entries() {
+
+        return Collections.unmodifiableList(new LinkedList<>(entries));
     }
 
     public long term(long index){
@@ -76,14 +78,15 @@ public class Unstable {
     }
 
 
-    public List<Entry> stableTo(long term,long index){
+    public synchronized List<Entry> stableTo(long term,long index) {
 
-        if(index>=offset) {
+        if (index >= offset) {
 
-            List<Entry> stabled = this.entries.subList(0, (int) (index - offset));
-            this.entries = new LinkedList<>(this.entries.subList((int) (index - offset), entries.size() - 1));
+            List<Entry> stabled = this.entries.subList(0, (int) (index - offset) + 1);
 
-            this.offset = index;
+            this.entries = new LinkedList<>(this.entries.subList((int) (index - offset) + 1, entries.size()));
+
+            this.offset = index+1;
 
             return stabled;
         }

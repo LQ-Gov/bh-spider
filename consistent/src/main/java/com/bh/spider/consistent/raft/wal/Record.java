@@ -12,6 +12,7 @@ public class Record {
     private byte[] data;
 
 
+    public Record(){}
 
     public Record(RecordType type,byte[] data){
         this.type = type;

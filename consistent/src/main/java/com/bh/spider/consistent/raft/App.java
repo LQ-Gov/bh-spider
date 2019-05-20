@@ -63,8 +63,10 @@ public class App {
 
 
         if(raft.isLeader()){
-            raft.write(ConvertUtils.toBytes(123));
-            raft.write(ConvertUtils.toBytes(44832));
+
+            for(int i=0;i<101;i++) {
+                raft.write(ConvertUtils.toBytes(i));
+            }
         }
 
         future.join();
