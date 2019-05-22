@@ -10,6 +10,10 @@ public class Node {
     private int port;
     private long index=-1;
 
+    private long next;
+
+    private boolean paused = false;
+
 
 
     public Node(Node node){
@@ -39,14 +43,47 @@ public class Node {
     }
 
 
-    public void advance(long index){
+    public boolean advance(long index){
         if(this.index<index)
             this.index = index;
+
+
+        return true;
 
     }
 
     public long index(){
         return index;
+    }
+
+
+    /**
+     * 变为复制者
+     */
+    public void becomeProbe(){
+
+    }
+
+
+    public boolean isPaused(){
+        return paused;
+    }
+
+
+
+    public void pause(){
+        paused=true;
+    }
+    /**
+     * 重新启动
+     */
+    public void resume(){
+        paused=false;
+    }
+
+
+    public long next(){
+        return next;
     }
 
 

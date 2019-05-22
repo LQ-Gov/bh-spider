@@ -5,7 +5,7 @@ import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,15 +20,17 @@ public class Log {
 
     private Unstable unstable;
 
+    // applied is the highest log position that the application has
+    // been instructed to apply to its state machine.
+    // Invariant: applied <= committed
+    private long applied;
+
 
     // committed is the highest log position that is known to be in
     // stable storage on a quorum of nodes.
     private long committed;
 
-    // applied is the highest log position that the application has
-    // been instructed to apply to its state machine.
-    // Invariant: applied <= committed
-    private long applied;
+
 
 
     private List<Entry> entries = new LinkedList<>();
@@ -58,20 +60,7 @@ public class Log {
         return committed;
     }
 
-
-    public long lastIndex() {
-        long i = unstable.lastIndex();
-        if(i>=0) return i;
-
-        if(!this.entries.isEmpty()){
-            return this.entries.get(this.entries.size()-1).index();
-        }
-
-        return -1;
-    }
-
-
-    public boolean append(Entry[] entries) {
+    public synchronized boolean append(Entry[] entries) {
         unstable.append(entries);
         return true;
     }
@@ -100,7 +89,7 @@ public class Log {
     }
 
 
-    public Entry[] entries(long startIndex, int size) {
+    public synchronized Entry[] entries(long startIndex, int size) {
         return this.slice(startIndex, this.lastIndex() + 1, size).toArray(new Entry[0]);
     }
 
@@ -111,6 +100,10 @@ public class Log {
     }
 
 
+    /**
+     * 未持久化的entries
+     * @return
+     */
     public List<Entry> unstableEntries() {
         return new UnmodifiableList<>(unstable.entries());
     }
@@ -122,10 +115,10 @@ public class Log {
      * entries after the index of snapshot.
      */
 
-    public List<Entry> committedEntries() {
+    public List<Entry> nextEntries() {
         long off = Math.max(this.applied,this.unstable.firstIndex());
 
-        if(committed+1>off){
+        if(committed>off){
             return this.slice(off,committed+1,Integer.MAX_VALUE);
         }
         return null;
@@ -138,25 +131,73 @@ public class Log {
      * @return
      */
     public long term(long index) {
-        if (index < 0 || index > unstable.lastIndex())
+
+        if (index < firstIndex() || index > lastIndex())
             return -1;
 
+        long t = unstable.term(index);
 
-        return unstable.term(index);
+        if (t == -1) {
+            if (this.entries.isEmpty()) return -1;
+
+            long offset = this.entries.get(0).index();
+
+
+            if (index < offset) return -1;
+
+            if (index - offset >= this.entries.size()) return -1;
+
+            return this.entries.get((int) (index - offset)).term();
+        }
+
+        return t;
+    }
+
+
+    private long firstIndex(){
+        long fi = this.unstable.firstIndex();
+        if(fi==-1){
+            fi = CollectionUtils.isEmpty(this.entries)?-1:this.entries.get(0).index();
+        }
+
+        return fi;
+    }
+
+
+    public long lastIndex(){
+        long li = this.unstable.lastIndex();
+        if(li<0){
+            li = CollectionUtils.isEmpty(this.entries)?-1:this.entries.get(this.entries.size()-1).index();
+        }
+        return li;
     }
 
 
     private List<Entry> slice(long lo, long hi, int size) {
 
-        List<Entry> entries = new ArrayList<>();
+        List<Entry> entries = new LinkedList<>();
 
 
-        if (lo < unstable.offset()) {
+        if (lo < unstable.offset()&&CollectionUtils.isNotEmpty(this.entries)) {
+            long firstIndex = this.entries.get(0).index();
+            List<Entry> sub = this.entries.subList((int) (lo - firstIndex), (int) ((Math.min(hi, unstable.offset()) - firstIndex)));
 
+
+            if (sub.size() < Math.min(hi, unstable.offset()) - lo)
+                return entries;
+
+            entries.addAll(sub);
+        }
+
+        if(hi>unstable.offset()){
+            List<Entry> sub = unstable.slice(Math.max(unstable.offset(),lo),hi);
+            entries.addAll(sub);
         }
 
 
-        return unstable.entries().subList((int) (lo - unstable.offset()), (int) Math.min(hi - unstable.offset(), size));
+        if(entries.size()>size) entries = entries.subList(0,size);
+
+        return Collections.unmodifiableList(entries);
     }
 
 
@@ -166,12 +207,6 @@ public class Log {
             this.entries.addAll(stabled);
         }
     }
-
-
-    public long offset(){
-        return unstable.offset();
-    }
-
 
     public long appliedIndex(){
         return applied;

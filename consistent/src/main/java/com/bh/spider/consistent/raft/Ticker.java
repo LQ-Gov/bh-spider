@@ -42,9 +42,19 @@ public class Ticker {
     }
 
 
+    public int halfLease(){
+        return lease/2;
+    }
+
+
+    public int randomLease(){
+        return RandomUtils.nextInt(0, this.lease);
+    }
+
+
     public void reset(boolean randomInc) {
 
-        reset(randomInc ? RandomUtils.nextInt(0, this.lease) : 0);
+        reset(randomInc ? RandomUtils.nextInt(1, this.lease) : 0);
 
     }
 

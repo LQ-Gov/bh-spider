@@ -24,6 +24,8 @@ public class Snapshotter {
     public static final int SNAP_COUNT_THRESHOLD = 100;
     private Path dir;
 
+    private long lastIndex;
+
     public Snapshotter(Path dir) {
         this.dir = dir;
     }
@@ -68,7 +70,7 @@ public class Snapshotter {
 
 
     public long lastIndex() {
-        return 0;
+        return lastIndex;
     }
 
 
@@ -95,6 +97,9 @@ public class Snapshotter {
 
 
         Files.write(path, data);
+
+        if(metadata.index()>lastIndex)
+            this.lastIndex = metadata.index();
 
     }
 }

@@ -1,5 +1,7 @@
 package com.bh.spider.consistent.raft.log;
 
+import com.bh.common.utils.ArrayUtils;
+
 /**
  * @author liuqi19
  * @version : Entry, 2019-04-19 14:58 liuqi19
@@ -59,6 +61,20 @@ public class Entry {
 
 
         public Entry[] entries(){ return entries;}
+
+
+        public long committedIndex(){return committed;}
+
+
+
+        public long firstIndex(){
+            return ArrayUtils.isEmpty(entries)?-1:entries[0].index;
+        }
+
+
+        public long lastIndex(){
+            return ArrayUtils.isEmpty(entries)?-1:entries[entries.length-1].index;
+        }
 
 
 

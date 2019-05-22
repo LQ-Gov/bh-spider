@@ -57,9 +57,6 @@ public class Unstable {
         return Collections.unmodifiableList(new LinkedList<>(entries));
     }
 
-    public long term(long index){
-        return entries.get((int) (index-offset)).term();
-    }
 
     public long firstIndex(){
         return entries.isEmpty()?-1:entries.get(0).index();
@@ -91,6 +88,38 @@ public class Unstable {
             return stabled;
         }
         return null;
+    }
+
+
+    private boolean checkOutOfBounds(long lo,long hi) {
+        if (lo > hi) return false;
+
+        long upper = this.offset + this.entries.size();
+
+        return lo >= offset && upper >= hi;
+    }
+
+
+    public List<Entry> slice(long lo,long hi){
+        if(this.entries.isEmpty()) return Collections.emptyList();
+
+        if(checkOutOfBounds(lo,hi)){
+            return this.entries.subList((int)(lo-offset),(int)(hi-offset));
+        }
+
+
+        return Collections.emptyList();
+    }
+
+
+
+    public long term(long index) {
+
+        if (index < this.offset || index > lastIndex()) {
+            return -1;
+        }
+
+        return entries.get((int) (index - offset)).term();
     }
 
 
