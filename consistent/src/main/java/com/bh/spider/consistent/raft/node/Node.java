@@ -43,18 +43,9 @@ public class Node {
     }
 
 
-    public boolean advance(long index){
-        if(this.index<index)
-            this.index = index;
 
 
-        return true;
 
-    }
-
-    public long index(){
-        return index;
-    }
 
 
     /**
@@ -65,26 +56,7 @@ public class Node {
     }
 
 
-    public boolean isPaused(){
-        return paused;
-    }
 
-
-
-    public void pause(){
-        paused=true;
-    }
-    /**
-     * 重新启动
-     */
-    public void resume(){
-        paused=false;
-    }
-
-
-    public long next(){
-        return next;
-    }
 
 
 

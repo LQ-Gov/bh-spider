@@ -3,6 +3,8 @@ package com.bh.spider.consistent.raft.role;
 import com.bh.spider.consistent.raft.*;
 import com.bh.spider.consistent.raft.node.LocalNode;
 
+import java.util.function.Consumer;
+
 /**
  * @author liuqi19
  * @version : Follower, 2019-04-17 18:22 liuqi19
@@ -14,19 +16,21 @@ public class Follower implements Role {
     private Raft raft;
 
 
-    private Runnable election;
+    private Runnable tick;
+
+    private Consumer<Message> mh;
 
 
-    public Follower(Raft raft, LocalNode node,Runnable election){
+    public Follower(Raft raft, Runnable tick, Consumer<Message> messageHandler){
         this.raft = raft;
-        this.node = node;
-        this.election = election;
+        this.tick = tick;
+        this.mh = messageHandler;
     }
 
 
 
     public void tick(){
-        election.run();
+        tick.run();
     }
 
     @Override
@@ -36,12 +40,6 @@ public class Follower implements Role {
 
     @Override
     public void handler(Message message) {
-
-
-        switch (message.type()){
-            case HEARTBEAT:{
-                 node.sendTo( message.from(),new Message(MessageType.HEARTBEAT_RESP,raft.term(),null));
-            }break;
-        }
+        this.mh.accept(message);
     }
 }

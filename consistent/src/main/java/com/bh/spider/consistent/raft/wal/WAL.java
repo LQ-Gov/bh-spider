@@ -223,7 +223,7 @@ public class WAL {
         }
 
         List<InduceFileChannel> channels = new LinkedList<>();
-        List<Path> wals = Files.list(dir).filter(x -> x.endsWith(".wal")).collect(Collectors.toList());
+        List<Path> wals = Files.list(dir).filter(x -> x.toString().endsWith(".wal")).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(wals)) {
 

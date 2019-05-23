@@ -1,10 +1,15 @@
 package com.bh.spider.consistent.raft.log;
 
+import com.bh.spider.consistent.raft.Actuator;
+import com.bh.spider.consistent.raft.HardState;
+import com.bh.spider.consistent.raft.Raft;
+import com.bh.spider.consistent.raft.wal.WAL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,17 +36,16 @@ public class Log {
     private long committed;
 
 
-
-
     private List<Entry> entries = new LinkedList<>();
 
 
-    public Log() {
-        this(null,null);
-    }
 
 
-    public Log(Snapshot snapshot,List<Entry> entries) {
+
+    private Persistent persistent;
+
+
+    public Log(Raft raft, Snapshotter snapshotter,WAL wal,Actuator actuator){
         long offset = 0, committed = -1;
 
         if (CollectionUtils.isNotEmpty(entries)) {
@@ -53,6 +57,14 @@ public class Log {
         this.unstable = new Unstable(offset);
 
         this.committed = committed;
+
+        this.persistent = new Persistent(raft,wal,snapshotter,actuator);
+    }
+
+
+
+    public void recover(Snapshot snapshot,List<Entry> entries) {
+
     }
 
 
@@ -102,6 +114,7 @@ public class Log {
 
     /**
      * 未持久化的entries
+     *
      * @return
      */
     public List<Entry> unstableEntries() {
@@ -116,10 +129,10 @@ public class Log {
      */
 
     public List<Entry> nextEntries() {
-        long off = Math.max(this.applied,this.unstable.firstIndex());
+        long off = Math.max(this.applied, this.unstable.firstIndex());
 
-        if(committed>off){
-            return this.slice(off,committed+1,Integer.MAX_VALUE);
+        if (committed > off) {
+            return this.slice(off, committed + 1, Integer.MAX_VALUE);
         }
         return null;
     }
@@ -154,20 +167,20 @@ public class Log {
     }
 
 
-    private long firstIndex(){
+    private long firstIndex() {
         long fi = this.unstable.firstIndex();
-        if(fi==-1){
-            fi = CollectionUtils.isEmpty(this.entries)?-1:this.entries.get(0).index();
+        if (fi == -1) {
+            fi = CollectionUtils.isEmpty(this.entries) ? -1 : this.entries.get(0).index();
         }
 
         return fi;
     }
 
 
-    public long lastIndex(){
+    public long lastIndex() {
         long li = this.unstable.lastIndex();
-        if(li<0){
-            li = CollectionUtils.isEmpty(this.entries)?-1:this.entries.get(this.entries.size()-1).index();
+        if (li < 0) {
+            li = CollectionUtils.isEmpty(this.entries) ? -1 : this.entries.get(this.entries.size() - 1).index();
         }
         return li;
     }
@@ -178,7 +191,7 @@ public class Log {
         List<Entry> entries = new LinkedList<>();
 
 
-        if (lo < unstable.offset()&&CollectionUtils.isNotEmpty(this.entries)) {
+        if (lo < unstable.offset() && CollectionUtils.isNotEmpty(this.entries)) {
             long firstIndex = this.entries.get(0).index();
             List<Entry> sub = this.entries.subList((int) (lo - firstIndex), (int) ((Math.min(hi, unstable.offset()) - firstIndex)));
 
@@ -189,26 +202,26 @@ public class Log {
             entries.addAll(sub);
         }
 
-        if(hi>unstable.offset()){
-            List<Entry> sub = unstable.slice(Math.max(unstable.offset(),lo),hi);
+        if (hi > unstable.offset()) {
+            List<Entry> sub = unstable.slice(Math.max(unstable.offset(), lo), hi);
             entries.addAll(sub);
         }
 
 
-        if(entries.size()>size) entries = entries.subList(0,size);
+        if (entries.size() > size) entries = entries.subList(0, size);
 
         return Collections.unmodifiableList(entries);
     }
 
 
-    public void stableTo(long term,long index){
-        List<Entry> stabled = this.unstable.stableTo(term,index);
-        if(stabled!=null){
+    public void stableTo(long term, long index) {
+        List<Entry> stabled = this.unstable.stableTo(term, index);
+        if (stabled != null) {
             this.entries.addAll(stabled);
         }
     }
 
-    public long appliedIndex(){
+    public long appliedIndex() {
         return applied;
     }
 
@@ -223,9 +236,102 @@ public class Log {
     }
 
 
+    private class Persistent extends Thread {
 
 
 
+        private Raft raft;
 
-//    public long term(int )
+        private WAL wal;
+
+
+        private Snapshotter snapshotter;
+
+        private Actuator actuator;
+
+        public Persistent( Raft raft, WAL wal, Snapshotter snapshotter, Actuator actuator) {
+
+            this.raft = raft;
+
+            this.wal = wal;
+
+            this.snapshotter = snapshotter;
+
+            this.actuator = actuator;
+
+            this.setDaemon(true);
+        }
+
+
+        @Override
+        public void run() {
+
+            while (true) {
+
+                synchronized (this) {
+
+                    try {
+                        this.wait(1000 * 60 * 10);
+
+
+                        long appliedIndex = -1;
+                        List<Entry> entries = Log.this.unstableEntries();
+
+                        List<Entry> committedEntries = Log.this.nextEntries();
+
+                        HardState state = raft.hardState();
+
+                        if (CollectionUtils.isNotEmpty(entries)) {
+
+                            this.wal.save(state, entries);
+
+                            Entry entry = entries.get(entries.size() - 1);
+                            Log.this.stableTo(entry.term(), entry.index());
+
+                        }
+
+                        //应用到状态机
+                        if (CollectionUtils.isNotEmpty(committedEntries)) {
+
+                            for (Entry entry : committedEntries) {
+                                if (entry.data() == null || entry.data().length == 0)
+                                    continue;
+
+                                this.actuator.apply(entry.data());
+
+                                appliedIndex = entry.index();
+                            }
+                        }
+
+                        //生成快照
+                        if (appliedIndex - snapshotter.lastIndex() >= Snapshotter.SNAP_COUNT_THRESHOLD) {
+
+
+                            Entry entry = Log.this.entry(appliedIndex);
+
+                            byte[] snap = this.actuator.snapshot();
+
+                            Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
+
+
+                            snapshotter.save(snapshot);
+
+
+                            this.wal.save(snapshot.metadata());
+                        }
+
+                        if (appliedIndex > 0) {
+
+                            Log.this.applyTo(appliedIndex);
+                        }
+
+
+                    } catch (InterruptedException | IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }
+    }
 }

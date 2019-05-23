@@ -3,6 +3,8 @@ package com.bh.spider.consistent.raft.role;
 import com.bh.spider.consistent.raft.*;
 import com.bh.spider.consistent.raft.node.LocalNode;
 
+import java.util.function.Consumer;
+
 /**
  * @author liuqi19
  * @version : Candidate, 2019-04-17 18:31 liuqi19
@@ -12,12 +14,16 @@ public class Candidate implements Role {
     private Raft raft;
     private LocalNode node;
 
-    private Runnable election;
+    private Runnable tick;
 
 
-    public Candidate(Raft raft, LocalNode node,Runnable election) {
+    private Consumer<Message> ch;
+
+
+    public Candidate(Raft raft, Runnable tick, Consumer<Message> commandHandler) {
         this.raft = raft;
-        this.node = node;
+        this.tick = tick;
+        this.ch = commandHandler;
     }
 
     @Override
@@ -27,17 +33,12 @@ public class Candidate implements Role {
 
     @Override
     public void tick() {
-        election.run();
+        tick.run();
     }
 
     @Override
     public void handler(Message message) {
-
-        switch (message.type()){
-            case HEARTBEAT:{
-                node.sendTo( message.from(),new Message(MessageType.HEARTBEAT_RESP,raft.term(),null));
-            }break;
-        }
+        this.ch.accept(message);
 
     }
 }

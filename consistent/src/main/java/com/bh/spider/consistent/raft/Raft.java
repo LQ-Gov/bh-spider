@@ -9,27 +9,25 @@ import com.bh.spider.consistent.raft.log.Snapshot;
 import com.bh.spider.consistent.raft.log.Snapshotter;
 import com.bh.spider.consistent.raft.node.LocalNode;
 import com.bh.spider.consistent.raft.node.Node;
-import com.bh.spider.consistent.raft.role.RoleType;
+import com.bh.spider.consistent.raft.node.RemoteNode;
+import com.bh.spider.consistent.raft.role.*;
 import com.bh.spider.consistent.raft.transport.*;
 import com.bh.spider.consistent.raft.wal.Stashed;
 import com.bh.spider.consistent.raft.wal.WAL;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author liuqi19
@@ -47,23 +45,20 @@ public class Raft {
     /**
      * Raft分组内的成员
      */
-    private Node[] members;
-
-
-    private Node leader;
+    private Map<Integer, RemoteNode> remotes;
 
     private LocalNode me;
 
+
+    private Route route;
+
+    private Node leader;
 
     private long term;
     /**
      * entry 日志
      */
     private Log log;
-
-    private Snapshotter snapshotter;
-
-    private WAL wal;
 
     private Properties properties;
 
@@ -83,73 +78,43 @@ public class Raft {
      */
     private Node voted;
 
-    private Persistent persister;
-
-
     private CompletableFuture<Void> future;
 
 
     public Raft(Properties properties, Actuator actuator, Node local, Node... members) throws IOException {
         assert actuator != null;
 
+        this.me = new LocalNode(local, this,
+                new Follower(this, this::broadcastElection, this::followerCommandHandler),
+                new Candidate(this, this::broadcastElection, this::candidateCommandHandler),
+                new PreCandidate(this::broadcastElection, this::candidateCommandHandler),
+                new Leader(this::broadcastHeartbeat, this::leaderCommandHandler)
+        );
 
-        this.me = new LocalNode(local, this, this::broadcastHeartbeat, this::broadcastElection);
+        this.remotes = Arrays.stream(members).map(RemoteNode::new).collect(Collectors.toMap(Node::id, x -> x));
 
-        this.members = members;
+        this.route = new Route(me, remotes.values());
 
         /**
          * 定时器运行周期为100,租约时长为5*100=500ms
          */
         this.ticker = new Ticker(100, 5, () -> me.role2().tick());
 
-        this.properties = properties;
-
-
-        this.snapshotter = Snapshotter.create(Paths.get(properties.getProperty("snapshot.path")));
 
         this.actuator = actuator;
 
 
-//        this.persister =
+        this.properties = properties;
 
-
-//        this.storage = new MemoryStorage();
 
     }
 
 
-    private void broadcast(Message message, boolean sendToSelf) {
-
-        if (sendToSelf)
-            this.send(me, message);
-
-        for (Node node : members) {
-            try {
-                this.send(node, message);
-            } catch (Exception ignored) {
-            }
-        }
-
-    }
-
-
-    private void broadcast(Function<Node, Message> function) {
-        for (Node node : members) {
-            this.send(node, function.apply(node));
-        }
-    }
-
-
-    private void broadcastAdvance() throws JsonProcessingException {
-
-        for (Node node : members) {
-
-            sync(node);
-
-
-        }
-
-    }
+//
+//    private void broadcastAdvance() {
+//
+//        broadcast(this::sync);
+//    }
 
 
     /**
@@ -161,22 +126,47 @@ public class Raft {
         } else
             this.becomeCandidate();
 
-        long term = this.term() + (me.role() == RoleType.PRE_CANDIDATE ? 1 : 0);
+        long term = this.term + (me.role() == RoleType.PRE_CANDIDATE ? 1 : 0);
 
         Vote vote = new Vote(me.id(), term);
 
         logger.info("发起投票,role:{},id:{},term:{}", me.role(), me.id(), term);
 
         try {
-            Message message = new Message(MessageType.VOTE, this.term(), Json.get().writeValueAsBytes(vote));
+            Message message = new Message(MessageType.VOTE, this.term, Json.get().writeValueAsBytes(vote));
 
-            broadcast(message, true);
+            route.broadcast(message, true);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * 此方法多线程调用,需保证线程的安全
+     *
+     * @param connection
+     * @param message
+     * @throws IOException
+     */
     private synchronized void commandReceiverListener(Connection connection, Message message) throws IOException {
+        //接受所有的连接请求
+        if (message.type() == MessageType.CONNECT) {
+            Node remote = this.remotes.get(ConvertUtils.toInt(message.data()));
+            if (remote != null) {
+                this.me.bindConnection(remote, connection);
+                connection.removeChannelHandler("CIH");
+                connection.addChannelHandler("CIH", new CommandInBoundHandler(me, remote, this::commandReceiverListener));
+            }
+            return;
+        }
+
+        //如果消息小于当前term
+        if (message.term() < this.term()) {
+            if (message.type() == MessageType.HEARTBEAT || message.type() == MessageType.APP)
+                route.send(message.from(), new Message(MessageType.APP_RESP, this.term, this.log.lastIndex()));
+            return;
+        }
 
         /*
          * m.term>this.term的情况:
@@ -204,7 +194,6 @@ public class Raft {
          */
         if (message.term() > this.term()) {
             switch (message.type()) {
-                case CONNECT:
                 case VOTE:
                 case VOTE_RESP:
                     break;
@@ -219,29 +208,8 @@ public class Raft {
                 }
             }
         }
-        /*
-         * 如果m.term<this.term 忽略消息,不过如果是CONNECT消息，则放行
-         *
-         */
-
-        else if (message.term() < this.term() && message.type() != MessageType.CONNECT) {
-            return;
-
-        }
-
         //这里的所有的m.term>=this.term
         switch (message.type()) {
-            case CONNECT: {
-                Node remote = this.node(ConvertUtils.toInt(message.data()));
-                if (remote != null) {
-
-                    this.me.bindConnection(remote, connection);
-                    connection.removeChannelHandler("CIH");
-                    connection.addChannelHandler("CIH", new CommandInBoundHandler(me, remote, this::commandReceiverListener));
-                }
-            }
-            break;
-
             case VOTE: {
                 Vote vote = Json.get().readValue(message.data(), Vote.class);
 
@@ -253,7 +221,7 @@ public class Raft {
                 //如果已投票的节点等于msg.from()(重复接收投票信息),或者voted为空，且leader不存在
                 boolean canVote = vote.id() == 2 && ((voted == message.from()) || (voted == null && leader == null) || (vote.term() > this.term()));
 
-                this.send(message.from(), new Message(MessageType.VOTE_RESP, vote.term(), ConvertUtils.toBytes(canVote)));
+                this.route.send(message.from(), new Message(MessageType.VOTE_RESP, vote.term(), ConvertUtils.toBytes(canVote)));
 
                 if (canVote) {
                     this.voted = message.from();
@@ -278,28 +246,20 @@ public class Raft {
 
 
             //
-            default: {
-                switch (me.role()) {
-                    case FOLLOWER:
-                        followerCommandReceiverListener(message);
-                        break;
-                    case PRE_CANDIDATE:
-                    case CANDIDATE:
-                        candidateCommandReceiverListener(message);
-                        break;
-                    case LEADER:
-                        leaderCommandReceiverListener(message);
-                        break;
-                }
-//                me.commandHandler(message);
-            }
+            default:
+                this.me.role2().handler(message);
 
         }
 
     }
 
 
-    private void followerCommandReceiverListener(Message message) throws IOException {
+    /**
+     * 当前为follower角色时的消息处理器
+     *
+     * @param message
+     */
+    private void followerCommandHandler(Message message) {
 
         switch (message.type()) {
             case PROP: {
@@ -309,7 +269,7 @@ public class Raft {
                     return;
                 }
 
-                this.send(leader, message);
+                this.route.send(leader, message);
             }
             break;
 
@@ -317,8 +277,7 @@ public class Raft {
             case APP: {
                 this.ticker.reset(true);
                 this.leader = message.from();
-                this.handleAppendEntries(message);
-
+//                this.handleAppendEntries(message);
 
             }
             break;
@@ -332,7 +291,12 @@ public class Raft {
     }
 
 
-    private void candidateCommandReceiverListener(Message message) throws IOException {
+    /**
+     * 当前角色为candidate/preCandidate时的消息处理器
+     *
+     * @param message
+     */
+    private void candidateCommandHandler(Message message) {
         switch (message.type()) {
             case PROP:
                 //抛出异常
@@ -350,7 +314,7 @@ public class Raft {
     }
 
 
-    private void leaderCommandReceiverListener(Message message) throws IOException {
+    private void leaderCommandHandler(Message message) {
         final Node from = message.from();
         switch (message.type()) {
             case PROP:
@@ -432,7 +396,7 @@ public class Raft {
     }
 
 
-    private void sync(Node to) throws JsonProcessingException {
+    private void sync(Node to) {
 
         synchronized (to) {
             if (to.isPaused()) return;
@@ -460,14 +424,11 @@ public class Raft {
     private void handleHeartbeat(Message message) {
         long committed = ArrayUtils.isEmpty(message.data()) ? -1 : ConvertUtils.toLong(message.data());
         this.log.commitTo(committed);
-        this.send(message.from(), new Message(MessageType.HEARTBEAT_RESP, this.term(), null));
+        this.route.send(message.from(), new Message(MessageType.HEARTBEAT_RESP, this.term(), null));
     }
 
 
     private void recover(Snapshot snapshot, Stashed stashed) {
-
-        this.log = new Log(snapshot, stashed.entries());
-
         //还原hard state
         HardState state = stashed.state();
         if (state != null && state.isValid()) {
@@ -476,7 +437,8 @@ public class Raft {
             } else {
                 this.log.commitTo(state.committed());
                 this.term = state.term();
-                this.voted = this.node(state.vote());
+                this.voted = this.remotes.get(state.vote());
+                this.log.recover(snapshot, stashed.entries());
             }
         }
     }
@@ -489,51 +451,25 @@ public class Raft {
 
         this.future = new CompletableFuture<>();
 
+        Snapshotter snapshotter = Snapshotter.create(Paths.get(properties.getProperty("snapshot.path")));
 
         Snapshot snapshot = snapshotter.load();
+
+
+        WAL wal = WAL.open(Paths.get(properties.getProperty("wal.path")), snapshot == null ? null : snapshot.metadata());
+
+
+        Stashed stashed = wal.readAll();
+
+        this.log = new Log(this, snapshotter, wal, actuator);
 
         if (snapshot != null) {
             actuator.recover(snapshot.data());
         }
 
-
-        this.wal = WAL.open(Paths.get(properties.getProperty("wal.path")), snapshot == null ? null : snapshot.metadata());
-
-        Stashed stashed = this.wal.readAll();
-
-
         //如果本地有日志记录，则恢复，否则继续执行
-        if (stashed != null && stashed.validate()) {
+        if (stashed != null && stashed.validate())
             recover(snapshot, stashed);
-        } else {
-            this.log = new Log();
-        }
-
-
-        this.persister = new Persistent();
-
-
-//
-//        if (snapshot != null) {
-//            storage.applySnapshot(snapshot);
-//        }
-
-//        if(!Files.exists(local.snapPath)) {
-//            //创建wal
-//            WAL.create(local.walPath, null);
-//        }
-//
-//        WAL wal = WAL.open(local.walPath,null);
-
-
-//        if (snapshot != null)
-//            storage.applySnapshot(snapshot);
-//
-//        List<Entry> entries = wal.readAll();
-
-//        local.lastIndex= entries.get(entries.size()-1).getIndex();
-
-//        storage.append(entries);
 
 
         Raft self = this;
@@ -554,7 +490,7 @@ public class Raft {
         me.bindConnection(me, new LocalConnection(me, this::commandReceiverListener));
 
         //连接其他节点
-        for (Node member : members) {
+        for (Node member : remotes.values()) {
             if (member.id() > me.id()) {
                 ClientConnection conn = new ClientConnection(member.hostname(), member.port());
                 conn.connect(new ChannelInitializer<SocketChannel>() {
@@ -578,8 +514,6 @@ public class Raft {
         //定时器启动
         ticker.run();
 
-        persister.start();
-
 
         return future;
 
@@ -596,16 +530,8 @@ public class Raft {
     }
 
 
-    private Node node(int id) {
-        for (Node node : members) {
-            if (node.id() == id) return node;
-        }
-        return null;
-    }
-
-
     private int quorum() {
-        return (members.length + 1) / 2 + 1;
+        return (remotes.size() + 1) / 2 + 1;
     }
 
 
@@ -613,11 +539,8 @@ public class Raft {
         return term;
     }
 
-    private void send(Node to, Message msg) {
-        me.sendTo(to, msg);
-    }
 
-    private void reset(long term, int tickerRandomizedLease) {
+    private void reset(long term, int tickerLeaseInc) {
         if (this.term != term) {
             this.term = term;
             this.voted = null;
@@ -626,7 +549,7 @@ public class Raft {
 
         this.votes.clear();
 
-        this.ticker.reset(tickerRandomizedLease);
+        this.ticker.reset(tickerLeaseInc);
 
     }
 
@@ -734,106 +657,7 @@ public class Raft {
     }
 
 
-    private HardState hardState() {
+    public HardState hardState() {
         return new HardState(this.term, this.voted == null ? -1 : this.voted.id(), this.log.committedIndex());
-    }
-
-
-    private Ready ready() {
-
-
-        while (true) {
-            List<Entry> entries = this.log.unstableEntries();
-
-            List<Entry> committedEntries = this.log.nextEntries();
-
-
-            if (CollectionUtils.isNotEmpty(entries) || CollectionUtils.isNotEmpty(committedEntries))
-                return new Ready(entries, committedEntries, null);
-
-
-            try {
-                Thread.sleep(5);
-            } catch (Exception e) {
-                e.printStackTrace();
-                break;
-            }
-        }
-
-
-        return null;
-
-    }
-
-
-    public class Persistent extends Thread {
-
-
-        public Persistent() {
-
-            this.setDaemon(true);
-        }
-
-
-        @Override
-        public void run() {
-
-            Ready data = null;
-            while ((data = Raft.this.ready()) != null) {
-
-
-                long appliedIndex = -1;
-
-                try {
-                    boolean hasUnstableEntries = CollectionUtils.isNotEmpty(data.entries());
-
-                    Raft.this.wal.save(Raft.this.hardState(), data.entries());
-
-                    if (hasUnstableEntries) {
-                        Entry entry = data.entries().get(data.entries().size() - 1);
-                        Raft.this.log.stableTo(entry.term(), entry.index());
-
-                    }
-                    //应用到状态机
-                    if (CollectionUtils.isNotEmpty(data.committedEntries())) {
-                        List<Entry> committedEntries = data.committedEntries();
-
-                        for (Entry entry : committedEntries) {
-                            if (entry.data() == null || entry.data().length == 0)
-                                continue;
-
-                            Raft.this.actuator.apply(entry.data());
-
-                            appliedIndex = entry.index();
-                        }
-                    }
-
-                    //生成快照
-                    if (appliedIndex - snapshotter.lastIndex() >= Snapshotter.SNAP_COUNT_THRESHOLD) {
-
-
-                        Entry entry = log.entry(appliedIndex);
-
-                        byte[] snap = Raft.this.actuator.snapshot();
-
-                        Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
-
-
-                        snapshotter.save(snapshot);
-
-
-                        Raft.this.wal.save(snapshot.metadata());
-                    }
-
-                    if (appliedIndex > 0) {
-
-                        Raft.this.log.applyTo(appliedIndex);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 }

@@ -2,6 +2,8 @@ package com.bh.spider.consistent.raft.role;
 
 import com.bh.spider.consistent.raft.Message;
 
+import java.util.function.Consumer;
+
 /**
  * @author liuqi19
  * @version : Leader, 2019-04-17 19:15 liuqi19
@@ -9,9 +11,11 @@ import com.bh.spider.consistent.raft.Message;
 public class Leader implements Role {
 
     private Runnable heartbeat;
+    private Consumer<Message> ch;
 
-    public Leader(Runnable heartbeat){
+    public Leader(Runnable heartbeat, Consumer<Message> commandHandler){
         this.heartbeat = heartbeat;
+        this.ch = commandHandler;
     }
 
 
@@ -27,11 +31,6 @@ public class Leader implements Role {
 
     @Override
     public void handler(Message message) {
-
-        switch (message.type()){
-            case HEARTBEAT_RESP:{
-
-            }break;
-        }
+        ch.accept(message);
     }
 }
