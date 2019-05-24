@@ -4,7 +4,7 @@ package com.bh.spider.consistent.raft.node;
  * @author liuqi19
  * @version : RemoteNode, 2019-05-23 11:39 liuqi19
  */
-public class RemoteNode extends Node {
+public class RemoteNode extends RaftNode {
 
     /**
      * 当前已append的索引的位置
@@ -17,13 +17,13 @@ public class RemoteNode extends Node {
     private long next;
 
 
+
+
     public RemoteNode(Node node) {
         super(node);
     }
 
-    public long index(){
-        return index;
-    }
+
 
 
 //    public boolean isPaused(){
@@ -43,21 +43,10 @@ public class RemoteNode extends Node {
 //    }
 
 
-    public long next(){
-        return next;
-    }
 
 
-    /**
-     * 更改index
-     * @param index
-     * @return
-     */
-    public boolean advance(long index) {
-        if (this.index < index)
-            this.index = index;
-        return true;
-    }
+
+
 
 
 

@@ -296,6 +296,7 @@ public class WAL {
 
 
     public synchronized void save(HardState state, List<Entry> entries) throws IOException {
+        if(true) return;
 
 
         if (state == null || !state.isValid() || CollectionUtils.isEmpty(entries)) return;

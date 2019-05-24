@@ -3,12 +3,14 @@ package com.bh.spider.consistent.raft;
 import com.bh.common.utils.ArrayUtils;
 import com.bh.common.utils.ConvertUtils;
 import com.bh.common.utils.Json;
+import com.bh.spider.consistent.raft.exception.LeaderNotFoundException;
 import com.bh.spider.consistent.raft.log.Entry;
 import com.bh.spider.consistent.raft.log.Log;
 import com.bh.spider.consistent.raft.log.Snapshot;
 import com.bh.spider.consistent.raft.log.Snapshotter;
 import com.bh.spider.consistent.raft.node.LocalNode;
 import com.bh.spider.consistent.raft.node.Node;
+import com.bh.spider.consistent.raft.node.RaftNode;
 import com.bh.spider.consistent.raft.node.RemoteNode;
 import com.bh.spider.consistent.raft.role.*;
 import com.bh.spider.consistent.raft.transport.*;
@@ -27,6 +29,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -49,10 +53,7 @@ public class Raft {
 
     private LocalNode me;
 
-
-    private Route route;
-
-    private Node leader;
+    private RaftNode leader;
 
     private long term;
     /**
@@ -71,7 +72,7 @@ public class Raft {
     /**
      * 在当前轮次的投票结果
      */
-    private Map<Node, Boolean> votes = new ConcurrentHashMap<>();
+    private Map<RaftNode, Boolean> votes = new ConcurrentHashMap<>();
 
     /**
      * 我的投票
@@ -81,7 +82,7 @@ public class Raft {
     private CompletableFuture<Void> future;
 
 
-    public Raft(Properties properties, Actuator actuator, Node local, Node... members) throws IOException {
+    public Raft(Properties properties, Actuator actuator, Node local, Node... members) {
         assert actuator != null;
 
         this.me = new LocalNode(local, this,
@@ -92,8 +93,6 @@ public class Raft {
         );
 
         this.remotes = Arrays.stream(members).map(RemoteNode::new).collect(Collectors.toMap(Node::id, x -> x));
-
-        this.route = new Route(me, remotes.values());
 
         /**
          * 定时器运行周期为100,租约时长为5*100=500ms
@@ -108,14 +107,6 @@ public class Raft {
 
 
     }
-
-
-//
-//    private void broadcastAdvance() {
-//
-//        broadcast(this::sync);
-//    }
-
 
     /**
      * 进行选举
@@ -135,7 +126,7 @@ public class Raft {
         try {
             Message message = new Message(MessageType.VOTE, this.term, Json.get().writeValueAsBytes(vote));
 
-            route.broadcast(message, true);
+            this.broadcast(message, true);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -164,7 +155,7 @@ public class Raft {
         //如果消息小于当前term
         if (message.term() < this.term()) {
             if (message.type() == MessageType.HEARTBEAT || message.type() == MessageType.APP)
-                route.send(message.from(), new Message(MessageType.APP_RESP, this.term, this.log.lastIndex()));
+                this.send((RaftNode) message.from(), new Message(MessageType.APP_RESP, this.term, this.log.lastIndex()));
             return;
         }
 
@@ -204,7 +195,7 @@ public class Raft {
                         leader = message.from();
 
                     logger.info("接收到{},term:{},from leader:{}", message.type(), message.term(), leader == null ? null : leader.id());
-                    this.becomeFollower(message.term(), leader);
+                    this.becomeFollower(message.term(), (RaftNode) leader);
                 }
             }
         }
@@ -221,7 +212,7 @@ public class Raft {
                 //如果已投票的节点等于msg.from()(重复接收投票信息),或者voted为空，且leader不存在
                 boolean canVote = vote.id() == 2 && ((voted == message.from()) || (voted == null && leader == null) || (vote.term() > this.term()));
 
-                this.route.send(message.from(), new Message(MessageType.VOTE_RESP, vote.term(), ConvertUtils.toBytes(canVote)));
+                this.send((RaftNode) message.from(), new Message(MessageType.VOTE_RESP, vote.term(), ConvertUtils.toBytes(canVote)));
 
                 if (canVote) {
                     this.voted = message.from();
@@ -231,7 +222,7 @@ public class Raft {
             break;
 
             case VOTE_RESP: {
-                votes.put(message.from(), ConvertUtils.toBoolean(message.data()));
+                votes.put((RaftNode) message.from(), ConvertUtils.toBoolean(message.data()));
                 long agree = votes.values().stream().filter(x -> x).count();
                 logger.info("投票总数:{},同意数:{},quorum:{}", votes.size(), agree, this.quorum());
                 if (agree == this.quorum()) {
@@ -247,46 +238,47 @@ public class Raft {
 
             //
             default:
-                this.me.role2().handler(message);
+                this.me.role2().handler(message, new CompletableFuture<>());
 
         }
 
     }
-
 
     /**
      * 当前为follower角色时的消息处理器
      *
      * @param message
      */
-    private void followerCommandHandler(Message message) {
+    private void followerCommandHandler(Message message, CompletableFuture<Object> future) {
 
+        final RaftNode from = (RaftNode) message.from();
         switch (message.type()) {
-            case PROP: {
+            /*
+             *由客户端发送
+             */
+            case PROP:
                 if (this.leader == null) {
                     logger.info("{} no leader at term {}; dropping proposal", me.id(), this.term());
-                    //跑出异常
+                    future.completeExceptionally(new LeaderNotFoundException());
                     return;
                 }
+                this.send(leader, message);
+                break;
 
-                this.route.send(leader, message);
-            }
-            break;
-
-
-            case APP: {
+            /*
+             *由Leader进行日志同步时发送过来
+             */
+            case APP:
                 this.ticker.reset(true);
-                this.leader = message.from();
-//                this.handleAppendEntries(message);
+                this.leader = from;
+                handleAppendEntries(message);
+                break;
 
-            }
-            break;
-            case HEARTBEAT: {
+
+            case HEARTBEAT:
                 this.ticker.reset(true);
-                this.leader = message.from();
-                this.handleHeartbeat(message);
-
-            }
+                this.leader = from;
+                handleHeartbeat(message);
         }
     }
 
@@ -296,93 +288,112 @@ public class Raft {
      *
      * @param message
      */
-    private void candidateCommandHandler(Message message) {
+    private void candidateCommandHandler(Message message, CompletableFuture<Object> future) {
+        RaftNode from = (RaftNode) message.from();
         switch (message.type()) {
             case PROP:
+                future.completeExceptionally(new LeaderNotFoundException());
                 //抛出异常
                 return;
             case APP:
-                this.becomeFollower(message.term(), message.from());
+                this.becomeFollower(message.term(), from);
                 this.handleAppendEntries(message);
                 break;
-            case HEARTBEAT: {
-                this.becomeFollower(message.term(), message.from());
+            case HEARTBEAT:
+                this.becomeFollower(message.term(), from);
                 this.handleHeartbeat(message);
+                break;
+        }
+    }
+
+
+    private void leaderCommandHandler(Message message, CompletableFuture<Object> future) {
+        final RaftNode from = (RaftNode) message.from();
+
+        try {
+            switch (message.type()) {
+                case PROP:
+
+                    Entry.Collection ec = Json.get().readValue(message.data(), Entry.Collection.class);
+
+                    ec.update(this.term(), this.log.lastIndex() + 1);
+
+                    this.log.append(ec.entries());
+
+                    this.me.advance(this.log.lastIndex());
+
+                    this.broadcast(this::sync);
+                    break;
+
+                case APP_RESP:
+                    boolean accept = ConvertUtils.toBoolean(message.data());
+                    boolean ok = from.advance(message.index());
+
+                    synchronized (from) {
+                        from.resume();
+                    }
+                    if (accept && ok) {
+                        if (this.commit())
+                            this.broadcast(this::sync);
+                        else if (from.index() < this.log.lastIndex())
+                            sync(from);
+
+                    }
+                    break;
+
+
+                case HEARTBEAT_RESP:
+                    if (from.index() < this.log.lastIndex())
+                        this.sync(from);
             }
-            break;
+        } catch (Exception e) {
+            future.completeExceptionally(e);
         }
     }
 
 
-    private void leaderCommandHandler(Message message) {
-        final Node from = message.from();
-        switch (message.type()) {
-            case PROP:
-                Entry.Collection ec = Json.get().readValue(message.data(), Entry.Collection.class);
-                ec.update(this.term(), this.log.lastIndex() + 1);
-
-                this.log.append(ec.entries());
-
-                this.me.advance(this.log.lastIndex());
-
-                this.broadcastAdvance();
-//                this.me.advance(this.log.lastIndex());
-                break;
-
-            case APP_RESP:
-                boolean accept = ConvertUtils.toBoolean(message.data());
-                boolean ok = from.advance(message.index());
-
-                synchronized (from) {
-                    from.resume();
-                }
-                if (accept && ok) {
-                    if (this.commit())
-                        this.broadcastAdvance();
-                    else if (from.index() < this.log.lastIndex())
-                        sync(from);
-
-                }
-                break;
-
-
-            case HEARTBEAT_RESP:
-                if (from.index() < this.log.lastIndex())
-                    this.sync(from);
-        }
-    }
-
-
-    private void handleAppendEntries(Message message) throws IOException {
+    private void handleAppendEntries(Message message) {
         if (this.log.committedIndex() > message.index()) {
-            this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), log.committedIndex(), ConvertUtils.toBytes(true)));
+            this.send((RaftNode) message.from(), new Message(MessageType.APP_RESP, this.term(), log.committedIndex(), ConvertUtils.toBytes(true)));
             return;
         }
 
         if (ArrayUtils.isNotEmpty(message.data())) {
 
-            Entry.Collection collection = Json.get().readValue(message.data(), Entry.Collection.class);
+            try {
 
+                Entry.Collection collection = Json.get().readValue(message.data(), Entry.Collection.class);
 
-            if (this.log.append(collection.entries())) {
-                this.log.commitTo(Math.min(collection.committedIndex(), this.log.lastIndex()));
+                boolean ok;
+                if (ok = this.log.append(collection.entries())) {
+                    this.log.commitTo(Math.min(collection.committedIndex(), this.log.lastIndex()));
+                }
 
-                this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), log.lastIndex(), ConvertUtils.toBytes(true)));
-            } else {
-                this.send(message.from(), new Message(MessageType.APP_RESP, this.term(), message.index(), ConvertUtils.toBytes(false)));
+                this.send((RaftNode) message.from(), new Message(MessageType.APP_RESP, this.term, log.lastIndex(), ConvertUtils.toBytes(ok)));
+            } catch (Exception e) {
+                future.completeExceptionally(e);
             }
         }
+
     }
 
+    private void handleHeartbeat(Message message) {
+        long committed = ArrayUtils.isEmpty(message.data()) ? -1 : ConvertUtils.toLong(message.data());
+        this.log.commitTo(committed);
+        this.send((RaftNode) message.from(), new Message(MessageType.HEARTBEAT_RESP, this.term(), null));
+    }
 
     /**
      * 尝试进行commit,未必成功
      */
     private boolean commit() {
-        long[] indexes = new long[members.length + 1];
 
-        for (int i = 0; i < members.length; i++) {
-            indexes[i] = members[i].index();
+        RaftNode[] nodes = remotes.values().toArray(new RaftNode[0]);
+
+        long[] indexes = new long[nodes.length + 1];
+
+        for (int i = 0; i < nodes.length; i++) {
+            indexes[i] = nodes[i].index();
         }
 
         indexes[indexes.length - 1] = me.index();
@@ -396,7 +407,7 @@ public class Raft {
     }
 
 
-    private void sync(Node to) {
+    private void sync(RaftNode to) {
 
         synchronized (to) {
             if (to.isPaused()) return;
@@ -416,17 +427,13 @@ public class Raft {
         //TODO 此处还有一系列处理逻辑，暂未看懂
 
         logger.info("sync entries from {} to {}", ec.firstIndex(), ec.lastIndex());
-        Message message = new Message(MessageType.APP, this.term(), to.index(), Json.get().writeValueAsBytes(ec));
-        me.sendTo(to, message);
+        try {
+            Message message = new Message(MessageType.APP, this.term(), to.next(), Json.get().writeValueAsBytes(ec));
+            me.sendTo(to, message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-
-
-    private void handleHeartbeat(Message message) {
-        long committed = ArrayUtils.isEmpty(message.data()) ? -1 : ConvertUtils.toLong(message.data());
-        this.log.commitTo(committed);
-        this.route.send(message.from(), new Message(MessageType.HEARTBEAT_RESP, this.term(), null));
-    }
-
 
     private void recover(Snapshot snapshot, Stashed stashed) {
         //还原hard state
@@ -457,7 +464,6 @@ public class Raft {
 
 
         WAL wal = WAL.open(Paths.get(properties.getProperty("wal.path")), snapshot == null ? null : snapshot.metadata());
-
 
         Stashed stashed = wal.readAll();
 
@@ -560,7 +566,7 @@ public class Raft {
      * @param term
      * @param leader
      */
-    private void becomeFollower(long term, Node leader) {
+    private void becomeFollower(long term, RaftNode leader) {
 
 
         this.reset(term, this.ticker.randomLease());
@@ -620,7 +626,7 @@ public class Raft {
 
         logger.info("i am leader:{}", me.id());
 
-        broadcast(new Message(MessageType.APP, this.term(), null), false);
+        this.broadcast(new Message(MessageType.APP, this.term(), null), false);
     }
 
 
@@ -658,6 +664,40 @@ public class Raft {
 
 
     public HardState hardState() {
-        return new HardState(this.term, this.voted == null ? -1 : this.voted.id(), this.log.committedIndex());
+        return new HardState(this.term,
+                this.voted == null ? null : this.voted.id(),
+                this.log == null ? null : this.log.committedIndex());
+    }
+
+
+    public void broadcast(Message message, boolean toSelf) {
+
+        if (toSelf)
+            me.sendTo(me, message);
+
+        for (RaftNode node : remotes.values()) {
+            try {
+                me.sendTo(node, message);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+
+    public void broadcast(Function<RaftNode, Message> function) {
+        for (RaftNode node : remotes.values()) {
+            me.sendTo(node, function.apply(node));
+        }
+    }
+
+
+    public void broadcast(Consumer<RaftNode> consumer) {
+        for (RaftNode node : remotes.values()) {
+            consumer.accept(node);
+        }
+    }
+
+    public void send(RaftNode to, Message msg) {
+        me.sendTo(to, msg);
     }
 }

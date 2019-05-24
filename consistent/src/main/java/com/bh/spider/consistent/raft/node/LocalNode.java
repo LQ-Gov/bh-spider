@@ -14,7 +14,7 @@ import java.util.Map;
  * @author liuqi19
  * @version : LocalNode, 2019-04-11 10:05 liuqi19
  */
-public class LocalNode extends Node {
+public class LocalNode extends RaftNode {
     private final static Logger logger = LoggerFactory.getLogger(LocalNode.class);
 
     private final Role[] ROLE_CACHE;
@@ -67,7 +67,7 @@ public class LocalNode extends Node {
         role = ROLE_CACHE[3];
     }
 
-    public void sendTo(Node node, Message message){
+    public void sendTo(RaftNode node, Message message){
         Connection conn = connections.get(node.id());
         if(conn!=null){
             conn.write(message);
@@ -88,12 +88,5 @@ public class LocalNode extends Node {
     public void bindConnection(Node node, Connection connection) {
         connections.put(node.id(), connection);
 
-    }
-
-    public void commandHandler(Message message) {
-        Role r = this.role;
-        if (r != null) {
-            r.handler(message);
-        }
     }
 }

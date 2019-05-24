@@ -39,15 +39,23 @@ public class Log {
     private List<Entry> entries = new LinkedList<>();
 
 
+    private final Persistent persistent;
 
 
+    public Log(Raft raft, Snapshotter snapshotter, WAL wal, Actuator actuator) {
 
-    private Persistent persistent;
+        this.committed = -1;
+
+        this.unstable = new Unstable(0);
+
+        this.persistent = new Persistent(raft, wal, snapshotter, actuator);
+
+        this.persistent.start();
+    }
 
 
-    public Log(Raft raft, Snapshotter snapshotter,WAL wal,Actuator actuator){
+    public void recover(Snapshot snapshot, List<Entry> entries) {
         long offset = 0, committed = -1;
-
         if (CollectionUtils.isNotEmpty(entries)) {
             offset = entries.get(entries.size() - 1).index();
             committed = entries.get(0).index() - 1;
@@ -58,13 +66,6 @@ public class Log {
 
         this.committed = committed;
 
-        this.persistent = new Persistent(raft,wal,snapshotter,actuator);
-    }
-
-
-
-    public void recover(Snapshot snapshot,List<Entry> entries) {
-
     }
 
 
@@ -74,6 +75,10 @@ public class Log {
 
     public synchronized boolean append(Entry[] entries) {
         unstable.append(entries);
+
+        synchronized (this.persistent) {
+            this.persistent.notify();
+        }
         return true;
     }
 
@@ -85,6 +90,10 @@ public class Log {
                 logger.error("index {} is out of range [lastIndex{}]. Was the raft log corrupted, truncated, or lost?", index, this.lastIndex());
             } else
                 this.committed = index;
+        }
+
+        synchronized (this.persistent) {
+            this.persistent.notify();
         }
     }
 
@@ -239,7 +248,6 @@ public class Log {
     private class Persistent extends Thread {
 
 
-
         private Raft raft;
 
         private WAL wal;
@@ -249,7 +257,7 @@ public class Log {
 
         private Actuator actuator;
 
-        public Persistent( Raft raft, WAL wal, Snapshotter snapshotter, Actuator actuator) {
+        public Persistent(Raft raft, WAL wal, Snapshotter snapshotter, Actuator actuator) {
 
             this.raft = raft;
 
@@ -271,13 +279,18 @@ public class Log {
                 synchronized (this) {
 
                     try {
-                        this.wait(1000 * 60 * 10);
 
 
                         long appliedIndex = -1;
                         List<Entry> entries = Log.this.unstableEntries();
 
                         List<Entry> committedEntries = Log.this.nextEntries();
+
+                        if (CollectionUtils.isEmpty(entries) && CollectionUtils.isEmpty(committedEntries)) {
+                            this.wait(1000 * 60 * 10);
+                            continue;
+                        }
+
 
                         HardState state = raft.hardState();
 

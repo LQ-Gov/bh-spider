@@ -54,7 +54,7 @@ public class Ticker {
 
     public void reset(boolean randomInc) {
 
-        reset(randomInc ? RandomUtils.nextInt(1, this.lease) : 0);
+        reset(randomInc ?randomLease() : 0);
 
     }
 

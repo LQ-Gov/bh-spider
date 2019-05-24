@@ -8,11 +8,9 @@ public class Node {
     private int id;
     private String hostname;
     private int port;
-    private long index=-1;
 
-    private long next;
 
-    private boolean paused = false;
+
 
 
 

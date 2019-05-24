@@ -2,7 +2,8 @@ package com.bh.spider.consistent.raft.role;
 
 import com.bh.spider.consistent.raft.Message;
 
-import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 /**
  * @author liuqi19
@@ -11,9 +12,9 @@ import java.util.function.Consumer;
 public class Leader implements Role {
 
     private Runnable heartbeat;
-    private Consumer<Message> ch;
+    private BiConsumer<Message, CompletableFuture<Object>> ch;
 
-    public Leader(Runnable heartbeat, Consumer<Message> commandHandler){
+    public Leader(Runnable heartbeat, BiConsumer<Message, CompletableFuture<Object>> commandHandler){
         this.heartbeat = heartbeat;
         this.ch = commandHandler;
     }
@@ -30,7 +31,7 @@ public class Leader implements Role {
     }
 
     @Override
-    public void handler(Message message) {
-        ch.accept(message);
+    public void handler(Message message,CompletableFuture<Object> future) {
+        ch.accept(message,future);
     }
 }
