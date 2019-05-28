@@ -1,14 +1,17 @@
 package com.bh.spider.scheduler.event;
 
+import com.bh.common.utils.Json;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.event.timer.*;
 import com.bh.spider.scheduler.event.token.Token;
 import com.bh.spider.scheduler.watch.Markers;
-import com.bh.common.utils.Json;
 import com.fasterxml.jackson.databind.JavaType;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.quartz.JobDetail;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +22,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static org.quartz.JobBuilder.newJob;
+
 /**
  * Created by lq on 17-3-16.
  */
@@ -26,21 +31,29 @@ public class EventLoop extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(EventLoop.class);
     private String name;
     private List<Assistant> assists;
+
     private BlockingQueue<Pair<Command, CompletableFuture>> queue = new LinkedBlockingQueue<>();
 
     private List<Interceptor> interceptors = new LinkedList<>();
-    private Map<String, CommandRunner> handlers = new HashMap<>();
+
+
+    private final Map<String, CommandRunner> handlers = new HashMap<>();
+
+
+    private EventTimerScheduler timerScheduler;
 
     private boolean closed = true;
 
 
-    public EventLoop(String name, Assistant... assists) {
+    public EventLoop(String name, Assistant... assists) throws SchedulerException {
         this.name = name;
         this.assists = Arrays.asList(assists);
+        this.timerScheduler = new EventTimerScheduler();
+
     }
 
 
-    public EventLoop(Class cls, Assistant... assists) {
+    public EventLoop(Class cls, Assistant... assists) throws SchedulerException {
         this(cls.getName(), assists);
     }
 
@@ -119,21 +132,18 @@ public class EventLoop extends Thread {
 //                else {
 //                    //如果不是基本类型,就依次进行转化
 //                }
-            }
-            else if(Collection.class.isAssignableFrom(parameters[i].getType())){
+            } else if (Collection.class.isAssignableFrom(parameters[i].getType())) {
                 CollectionParams collectionParams = parameters[i].getAnnotation(CollectionParams.class);
-                if(collectionParams==null){
+                if (collectionParams == null) {
                     throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i);
                 }
                 try {
-                    JavaType jt = Json.get().getTypeFactory().constructCollectionType(collectionParams.collectionType(),collectionParams.argumentTypes()[0]);
+                    JavaType jt = Json.get().getTypeFactory().constructCollectionType(collectionParams.collectionType(), collectionParams.argumentTypes()[0]);
                     args[i] = ((Token) inputs[x++]).toObject(jt);
-                }catch (Exception e){
+                } catch (Exception e) {
                     throw new IllegalArgumentException("the runtime token can't cast to " + parameters[i].toString() + ",index:" + i);
                 }
-            }
-
-            else if (Token.class.isAssignableFrom(inputs[x].getClass())) {
+            } else if (Token.class.isAssignableFrom(inputs[x].getClass())) {
                 try {
                     args[i] = ((Token) inputs[x++]).toObject(parameters[i].getType());
                 } catch (Exception e) {
@@ -190,10 +200,46 @@ public class EventLoop extends Thread {
                     throw new Error("the " + key + " handler is already exists");
 
 
+                //如果是定时调度任务
+                if (StringUtils.isNotBlank(mapping.cron())) {
+                    initCommandTimer(o, method, key, mapping.cron());
+                }
+
+
                 handlers.put(key, new CommandRunner(o, method, mapping, pool, null));
 
             }
         }
+    }
+
+
+    private JobContext initCommandTimer(Object obj, Method method, String cmdKey, String cron) {
+        if (method.getParameterCount() > 0) throw new Error("timer task can't has any parameter:" + method.getName());
+
+        Class<?> cls = method.getDeclaringClass();
+
+        String id = cls.getName() + "(" + method.getName() + ")";
+
+        JobDetail detail = newJob(CommandTimerJob.class).withIdentity(id).build();
+        detail.getJobDataMap().put("COMMAND_EVENT_LOOP", this);
+        detail.getJobDataMap().put("COMMAND_COMMAND_KEY", cmdKey);
+        detail.getJobDataMap().put("COMMAND_CLASS_OBJECT", obj);
+        detail.getJobDataMap().put("COMMAND_TIMER_METHOD", method);
+
+
+
+        return this.timerScheduler.schedule(detail,cron);
+    }
+
+
+    public JobContext schedule(Runner runner, String cron) {
+        String id = UUID.randomUUID().toString();
+        JobDetail detail = newJob(DirectTimerJob.class).withIdentity(id).build();
+
+        detail.getJobDataMap().put("JOB_RUNNABLE", runner);
+
+
+        return this.timerScheduler.schedule(detail, cron);
     }
 
 
@@ -204,11 +250,12 @@ public class EventLoop extends Thread {
     }
 
 
-    public synchronized EventLoop listen() {
+    public synchronized EventLoop listen() throws Exception {
 
         if (closed) {
             assists.forEach(this::initAssist);
             this.start();
+            this.timerScheduler.start();
 
             closed = false;
             logger.info("event loop started...");
@@ -217,7 +264,9 @@ public class EventLoop extends Thread {
     }
 
 
-    public boolean running(){
+    public boolean running() {
         return !closed;
     }
+
+
 }

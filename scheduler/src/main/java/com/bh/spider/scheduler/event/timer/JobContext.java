@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.job;
+package com.bh.spider.scheduler.event.timer;
 
 public interface JobContext {
     enum State {

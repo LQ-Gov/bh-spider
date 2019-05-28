@@ -1,13 +1,12 @@
 package com.bh.spider.scheduler;
 
+import com.bh.common.utils.Json;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.*;
-import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.Assistant;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
+import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.store.base.Store;
-import com.bh.common.utils.Json;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 
 public class BasicSchedulerRuleAssistant implements Assistant {
     private BasicScheduler scheduler;
-    private JobCoreScheduler jobCoreScheduler;
     private DomainIndex domainIndex;
     private Map<Long, RuleFacade> facadeCache = new HashMap<>();
 
@@ -29,10 +27,9 @@ public class BasicSchedulerRuleAssistant implements Assistant {
     private Config cfg;
 
 
-    public BasicSchedulerRuleAssistant(Config config, BasicScheduler scheduler, Store store, JobCoreScheduler jobCoreScheduler, DomainIndex domainIndex) throws Exception {
+    public BasicSchedulerRuleAssistant(Config config, BasicScheduler scheduler, Store store, DomainIndex domainIndex) throws Exception {
         this.scheduler = scheduler;
         this.domainIndex = domainIndex;
-        this.jobCoreScheduler = jobCoreScheduler;
         this.cfg = config;
         this.store = store;
 
@@ -70,7 +67,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         facade.link(this.domainIndex);
 
         if (facade.controller() != null)
-            facade.controller().execute(jobCoreScheduler);
+            facade.controller().execute();
 
         return facade;
     }
@@ -80,7 +77,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         rule.setCron("*/1 * * * * ?");
         RuleFacade facade = new DaemonRuleFacade(this.scheduler, rule, new DaemonRuleScheduleController(this.scheduler, rule, store));
         facade.link(domainIndex);
-        facade.controller().execute(jobCoreScheduler);
+        facade.controller().execute();
         return facade;
 
     }
@@ -178,7 +175,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         RuleFacade decorator = facadeCache.get(id);
         if (decorator == null) return;
         if (valid)
-            decorator.controller().execute(jobCoreScheduler);
+            decorator.controller().execute();
         else
             decorator.controller().close();
     }

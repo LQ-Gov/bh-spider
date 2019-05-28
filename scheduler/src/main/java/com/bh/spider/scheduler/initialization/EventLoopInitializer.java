@@ -1,9 +1,7 @@
 package com.bh.spider.scheduler.initialization;
 
-import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.EventLoop;
-import com.bh.spider.scheduler.event.Interceptor;
 
 public class EventLoopInitializer implements Initializer<EventLoop> {
     private String name;
@@ -17,6 +15,9 @@ public class EventLoopInitializer implements Initializer<EventLoop> {
     public EventLoopInitializer(Class cls, Assistant... assists){
         this(cls.getName(),assists);
     }
+
+
+
 
     @Override
     public EventLoop exec() throws Exception {

@@ -18,5 +18,8 @@ public @interface Operation {
     String data();
 
 
+    boolean sync() default true;
+
+
 
 }

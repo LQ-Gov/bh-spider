@@ -3,16 +3,11 @@ package com.bh.spider.scheduler.domain;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.job.JobContext;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 
 public interface RuleScheduleController {
 
-    default void execute(JobCoreScheduler jobScheduler) throws Exception{
-        JobContext ctx = jobScheduler.schedule(this);
-        ctx.exec();
-    }
+    void execute() throws Exception;
 
     void close() throws Exception;
 

@@ -1,4 +1,4 @@
-package com.bh.spider.scheduler.job;
+package com.bh.spider.scheduler.event.timer;
 
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;

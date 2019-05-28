@@ -42,6 +42,9 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
         super.channelActive(ctx);
     }
 
+
+
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf buffer = (ByteBuf) msg;
@@ -51,7 +54,6 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
                 long id = buffer.readLong();//请求ID
 
                 CommandCode key = CommandCode.values()[buffer.readShort()];
-
                 int len = buffer.readInt();//数据长度
 
                 Context context = buildContext(ctx, id, key);

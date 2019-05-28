@@ -9,7 +9,6 @@ import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -339,7 +338,7 @@ public class Log {
                         }
 
 
-                    } catch (InterruptedException | IOException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }

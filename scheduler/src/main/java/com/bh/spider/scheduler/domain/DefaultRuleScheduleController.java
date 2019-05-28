@@ -6,8 +6,7 @@ import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.scheduler.job.JobContext;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
+import com.bh.spider.scheduler.event.timer.JobContext;
 import com.bh.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +70,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
                     store.accessor().find(rule.getId(), Request.State.GOING, unfinishedIndex, size) :
                     cacheQueue;
 
-            Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests, rule});
+            Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, requests, rule);
 
             List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
             if (!allocated.isEmpty())
@@ -86,7 +85,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
                     cacheQueue;
 
             if (!requests.isEmpty()) {
-                Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, new Object[]{requests, rule});
+                Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, requests, rule);
 
                 List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
 
@@ -121,8 +120,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void execute(JobCoreScheduler jobScheduler) throws Exception {
-        this.jobContext = jobScheduler.schedule(this);
-        this.jobContext.exec();
+    public void execute() throws Exception {
+        this.jobContext = scheduler.eventLoop().schedule(this::blast,this.rule.getCron());
     }
 }

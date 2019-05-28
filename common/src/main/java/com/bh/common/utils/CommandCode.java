@@ -70,4 +70,22 @@ public enum CommandCode {
     PROCESS,
     CLOSE;
 
+
+    private boolean needConsistent;
+
+
+    CommandCode(){
+        this.needConsistent=false;
+    }
+
+    CommandCode(boolean needConsistent){
+        this.needConsistent = needConsistent;
+    }
+
+
+
+    public boolean needConsistent(){
+        return needConsistent;
+    }
+
 }

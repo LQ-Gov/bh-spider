@@ -6,12 +6,12 @@ import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
-import com.bh.spider.scheduler.job.JobContext;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
+import com.bh.spider.scheduler.event.timer.JobContext;
 import com.bh.spider.store.base.Store;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class DaemonRuleScheduleController implements RuleScheduleController {
     private Scheduler scheduler;
@@ -43,8 +43,8 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void blast() throws Exception {
-        if(!scheduler.running()) return;
+    public void blast() throws ExecutionException, InterruptedException {
+        if (!scheduler.running()) return;
 
         List<Request> requests = store.accessor().find(rule().getId(), Request.State.GOING, 10);
 
@@ -54,7 +54,6 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
             cmd = new Command(new LocalContext(scheduler), CommandCode.SUBMIT_REQUEST, requests);
         else
             cmd = new Command(new LocalContext(scheduler), CommandCode.TERMINATION_RULE, rule().getId());
-
 
         scheduler.process(cmd).get();
 
@@ -68,8 +67,7 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
 
 
     @Override
-    public void execute(JobCoreScheduler jobScheduler) throws Exception {
-        jobContext = jobScheduler.schedule(this);
-        jobContext.exec();
+    public void execute() throws Exception {
+        this.jobContext = scheduler.eventLoop().schedule(this::blast,this.rule.getCron());
     }
 }

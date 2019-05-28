@@ -649,16 +649,21 @@ public class Raft {
             this.campaign(true);
     }
 
-    public void write(byte[] data) {
+    public <T> CompletableFuture<T> write(byte[] data) {
+
 
 
         Entry.Collection collection = new Entry.Collection(new Entry[]{new Entry(data)});
         try {
             Message msg = new Message(MessageType.PROP, this.term(), Json.get().writeValueAsBytes(collection), me);
             this.me.sendTo(me, msg);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return CompletableFuture.completedFuture(null);
 
     }
 

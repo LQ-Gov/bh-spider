@@ -2,11 +2,13 @@ package com.bh.spider.scheduler.cluster;
 
 import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
+import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
+import com.bh.spider.scheduler.cluster.initialization.RaftInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;
 import com.bh.spider.scheduler.domain.DomainIndex;
@@ -14,7 +16,6 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -33,12 +34,11 @@ import java.util.concurrent.TimeUnit;
 
 public class ClusterScheduler extends BasicScheduler {
     private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
-    private String mid;
+    private int mid;
 
     private Store store;
     private DomainIndex domainIndex;
 
-    private JobCoreScheduler jobCoreScheduler;
 
     private ServerBootstrap clientServer;
 
@@ -51,7 +51,7 @@ public class ClusterScheduler extends BasicScheduler {
 
     public ClusterScheduler(Config config) throws Exception {
         super(config);
-        mid = config().get(Config.MY_ID);
+        mid = Integer.valueOf(config().get(Config.MY_ID));
         workers = new Workers(this);
 
 
@@ -81,10 +81,6 @@ public class ClusterScheduler extends BasicScheduler {
         this.domainIndex = new DomainIndexInitializer().exec();
 
 
-        //初始化定时器
-        this.jobCoreScheduler = new JobSchedulerInitializer().exec();
-
-
         //初始化本地端口监听
         ClusterScheduler me = this;
         this.clientServer = new ServerInitializer(Integer.valueOf(config().get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
@@ -110,13 +106,15 @@ public class ClusterScheduler extends BasicScheduler {
 
         //初始化事件循环线程
         this.loop = new EventLoopInitializer(ClusterScheduler.class, this,
-                new BasicSchedulerRuleAssistant(config(), this, this.store, this.jobCoreScheduler, domainIndex),
+                new BasicSchedulerRuleAssistant(config(), this, this.store, domainIndex),
                 new ClusterSchedulerComponentAssistant(config(), this),
                 new ClusterSchedulerFetchAssistant(this, domainIndex, store),
                 new ClusterSchedulerWatchAssistant()).exec();
 
 
-        this.loop.addInterceptor(new OperationInterceptor());
+        Raft raft = new RaftInitializer(this.mid,this,null,config().all(Config.INIT_CLUSTER_MASTER_ADDRESS)).exec();
+
+        this.loop.addInterceptor(new OperationInterceptor(raft));
 
         this.loop.listen().join();
     }

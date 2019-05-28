@@ -1,8 +1,9 @@
-package com.bh.spider.scheduler.job;
+package com.bh.spider.scheduler.event.timer;
 
-import com.bh.spider.scheduler.domain.RuleScheduleController;
-import org.apache.commons.collections4.map.ReferenceMap;
-import org.quartz.*;
+import org.quartz.Job;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 
@@ -19,13 +20,13 @@ public class QuartzRuleJobFactory implements JobFactory {
 
         try {
 
-            if(jobClass.isAssignableFrom(QuartzJobImpl.class)) {
-                JobDataMap map = detail.getJobDataMap();
-
-                RuleScheduleController controller = (RuleScheduleController) map.get("controller");
-
-                return new QuartzJobImpl(controller);
-            }
+//            if(jobClass.isAssignableFrom(QuartzJobImpl.class)) {
+//                JobDataMap map = detail.getJobDataMap();
+//
+//                RuleScheduleController controller = (RuleScheduleController) map.get("controller");
+//
+//                return new QuartzJobImpl(controller);
+//            }
 
             return jobClass.newInstance();
         } catch (InstantiationException | IllegalAccessException e) {

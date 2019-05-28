@@ -1,6 +1,8 @@
 package com.bh.spider.scheduler;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Assistant;
@@ -8,10 +10,7 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
-import com.bh.spider.scheduler.job.JobCoreScheduler;
 import com.bh.spider.store.base.Store;
-import com.bh.common.utils.CommandCode;
-import com.bh.spider.common.member.Node;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -41,8 +40,6 @@ public class BasicScheduler implements Scheduler, Assistant {
     private ServerBootstrap server;
 
     private EventLoop loop = null;
-
-    private JobCoreScheduler jobCoreScheduler = null;
 
     private DomainIndex domainIndex = null;
 
@@ -102,10 +99,6 @@ public class BasicScheduler implements Scheduler, Assistant {
         //初始化
         this.domainIndex = new DomainIndexInitializer().exec();
 
-
-        //初始化定时器
-        this.jobCoreScheduler = new JobSchedulerInitializer().exec();
-
         //初始化本地端口监听
         Scheduler me = this;
         this.server = new ServerInitializer(Integer.valueOf(cfg.get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
@@ -122,7 +115,7 @@ public class BasicScheduler implements Scheduler, Assistant {
         //初始化事件循环线程
         this.loop = new EventLoopInitializer(BasicScheduler.class, this,
                 new BasicSchedulerComponentAssistant(cfg, this),
-                new BasicSchedulerRuleAssistant(cfg, this, this.store, this.jobCoreScheduler, domainIndex),
+                new BasicSchedulerRuleAssistant(cfg, this, this.store, domainIndex),
                 new BasicSchedulerFetchAssistant(this, domainIndex, store),
                 new BasicSchedulerWatchAssistant()).exec();
 
