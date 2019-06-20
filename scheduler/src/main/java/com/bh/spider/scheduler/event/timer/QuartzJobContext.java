@@ -1,26 +1,24 @@
 package com.bh.spider.scheduler.event.timer;
 
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.Trigger;
+import org.quartz.*;
 
 public class QuartzJobContext implements JobContext {
     private Scheduler scheduler;
-    private JobDetail detail;
-    private Trigger trigger;
+
+    private JobKey jobKey;
+    private TriggerKey triggerKey;
 
 
-    public QuartzJobContext(String id, Scheduler scheduler,JobDetail detail,Trigger trigger){
+    public QuartzJobContext(String id, Scheduler scheduler, JobKey jobKey,TriggerKey triggerKey){
         this.scheduler = scheduler;
-        this.detail = detail;
-        this.trigger = trigger;
+        this.jobKey = jobKey;
+        this.triggerKey = triggerKey;
     }
 
 
     @Override
     public State state() throws SchedulerException {
-        Trigger.TriggerState ts = scheduler.getTriggerState(trigger.getKey());
+//        Trigger.TriggerState ts = scheduler.getTriggerState(trigger.getKey());
 
 
 
@@ -30,14 +28,22 @@ public class QuartzJobContext implements JobContext {
 
     @Override
     public void exec() throws SchedulerException {
-        scheduler.scheduleJob(detail,trigger);
+//        scheduler.scheduleJob(detail,trigger);
 
+    }
+
+    private void stop() throws SchedulerException {
+        scheduler.pauseTrigger(triggerKey);
     }
 
     public void close() throws SchedulerException {
 
-        scheduler.pauseTrigger(trigger.getKey());;// 停止触发器
-        scheduler.unscheduleJob(trigger.getKey());// 移除触发器
-        scheduler.deleteJob(detail.getKey());// 删除任务
+        this.stop();
+        this.scheduler.unscheduleJob(triggerKey);
+        this.scheduler.deleteJob(jobKey);
+
+//        scheduler.pauseTrigger(trigger.getKey());;// 停止触发器
+//        scheduler.unscheduleJob(trigger.getKey());// 移除触发器
+//        scheduler.deleteJob(detail.getKey());// 删除任务
     }
 }

@@ -34,11 +34,13 @@ public class EventTimerScheduler {
                 .build();
 
 
-        JobContext ctx = new QuartzJobContext(null, quartz, detail, trigger);
+        JobContext ctx = new QuartzJobContext(null, quartz,detail.getKey(),trigger.getKey());
+
+
 
 
         try{
-            ctx.exec();
+            quartz.scheduleJob(detail,trigger);
         }catch (Exception e){e.printStackTrace();}
 
 

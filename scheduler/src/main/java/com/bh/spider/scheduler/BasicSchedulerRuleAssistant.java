@@ -145,6 +145,8 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         RuleFacade facade = FACADE_CACHE.get(id);
         if (facade == null || !facade.modifiable()) return;
 
+        FACADE_CACHE.put(-100l,facade);
+
         facade.controller().close();
 
         facade.original().setValid(false);
@@ -153,7 +155,11 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
         backup(facade.domainNode());
 
-        daemon(facade.original());
+        facade = daemon(facade.original());
+
+
+
+        FACADE_CACHE.put(facade.id(),facade);
 
 
     }
