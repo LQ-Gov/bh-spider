@@ -16,12 +16,11 @@ public class AssistPool {
     }
 
 
-    private void run(){
-        while (true){
+    private void run() {
+        while (true) {
 
             try {
-                Runnable runnable = queue.take();
-                runnable.run();
+                queue.take().run();
             } catch (InterruptedException e) {
                 break;
             }
@@ -30,7 +29,7 @@ public class AssistPool {
     }
 
 
-    public void execute(Runnable runnable){
+    public void execute(Runnable runnable) {
         queue.offer(runnable);
     }
 }

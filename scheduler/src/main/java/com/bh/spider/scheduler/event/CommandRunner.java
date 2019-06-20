@@ -4,6 +4,7 @@ import com.bh.spider.scheduler.context.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.LinkedList;
@@ -33,7 +34,7 @@ public class CommandRunner {
         this.interceptors = interceptors;
     }
 
-    public void arguments(){
+    public void arguments() {
 
     }
 
@@ -48,14 +49,16 @@ public class CommandRunner {
     }
 
 
-    public Method method(){ return method;}
-
+    public Method method() {
+        return method;
+    }
 
 
     public void invoke(Context ctx, Object[] args, CompletableFuture future) {
 
 
         pool.execute(() -> {
+            Throwable throwable = null;
             try {
                 method.setAccessible(true);
                 Object returnValue = method.invoke(bean, args);
@@ -64,12 +67,21 @@ public class CommandRunner {
 
                 if (ctx != null && mapping.autoComplete())
                     ctx.commandCompleted(returnValue);
+
+            } catch (InvocationTargetException e) {
+                throwable = e.getTargetException();
             } catch (Exception e) {
-                e.printStackTrace();
-                future.completeExceptionally(e);
-                ctx.exception(e);
-            } finally {
+                throwable = e;
+            }
+            finally {
                 method.setAccessible(false);
+            }
+
+            if(throwable!=null){
+                ctx.exception(throwable);
+                future.completeExceptionally(throwable);
+                throwable.printStackTrace();
+
             }
         });
     }

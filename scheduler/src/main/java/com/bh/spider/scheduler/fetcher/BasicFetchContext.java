@@ -1,19 +1,24 @@
 package com.bh.spider.scheduler.fetcher;
 
+import com.bh.common.utils.URLUtils;
 import com.bh.spider.common.fetch.*;
 import com.bh.spider.common.fetch.impl.RequestBuilder;
 import com.bh.spider.common.rule.Rule;
-import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.doc.Document;
-
+import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.context.LocalContext;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 实现了对于schedule和request的操作
+ */
 public class BasicFetchContext implements FetchContext {
 
     private Request original;
@@ -33,7 +38,7 @@ public class BasicFetchContext implements FetchContext {
 
     @Override
     public URL url() {
-        return null;
+        return original.url();
     }
 
     @Override
@@ -96,38 +101,69 @@ public class BasicFetchContext implements FetchContext {
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req, boolean local) {
+    public Map<String, Object> fields() {
+        return fields;
+    }
+
+    @Override
+    public void schedule(FetchContext ctx, Request req, boolean local) {
         if (ctx != null) {
             //格式化 req
         }
 
-        sch.submit(null,req);
+        sch.submit(new LocalContext(sch),req);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req) {
-        scheduler(ctx, req, false);
+    public void schedule(FetchContext ctx, Request req) throws Exception {
+        schedule(ctx, req, false);
     }
 
     @Override
-    public void scheduler(Request req) {
-        scheduler(null, req);
+    public void schedule(Request req) throws Exception {
+        schedule(null, req);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url, boolean local) throws MalformedURLException {
-        scheduler(ctx, RequestBuilder.create(url).build(),local);
+    public void schedule(FetchContext ctx, String url, boolean local) throws Exception {
+        schedule(ctx, RequestBuilder.create(url).build(),local);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url) throws MalformedURLException {
-        scheduler(ctx,url,false);
+    public void schedule(FetchContext ctx, String url) throws Exception {
+        schedule(ctx,url,false);
     }
 
     @Override
-    public void scheduler(String url) throws MalformedURLException {
-        scheduler(null,url);
+    public void schedule(String url) throws Exception {
+        schedule(null,url);
     }
+
+    public void schedule(FetchContext ctx,List<Request> requests,boolean local){
+        sch.submit(new LocalContext(sch),requests);
+    }
+
+
+    public void schedule(FetchContext ctx,List<String> requests) throws MalformedURLException {
+        List<Request> objs = new LinkedList<>();
+        for(String req:requests){
+            req = URLUtils.format(req,this.url().getProtocol(),this.url().getHost());
+            Request obj = RequestBuilder.create(req).build();
+            objs.add(obj);
+        }
+
+        schedule(ctx,objs,false);
+
+    }
+
+
+    public void schedule(List<String> urls) throws MalformedURLException {
+
+        schedule(null,urls);
+
+    }
+
+
 
     @Override
     public void termination() throws ExtractorChainException {

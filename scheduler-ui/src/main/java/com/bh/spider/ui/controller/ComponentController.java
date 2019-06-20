@@ -33,9 +33,9 @@ public class ComponentController {
     }
 
     @GetMapping(value = "/list")
-    public List<Component> list() {
+    public List<Component> list(Component.Type type) {
 
-        return client.component().select();
+        return client.component().select(type);
     }
 
 

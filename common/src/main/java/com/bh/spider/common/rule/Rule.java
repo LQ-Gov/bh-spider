@@ -43,6 +43,9 @@ public class Rule implements Serializable {
      */
     private String[] proxies;
 
+
+    private int timeout;
+
     private boolean valid;
 
     public Rule() {
@@ -152,5 +155,13 @@ public class Rule implements Serializable {
 
     public void setProxies(String[] proxies) {
         this.proxies = proxies;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 }

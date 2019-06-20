@@ -67,7 +67,7 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
 
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         this.jobContext = scheduler.eventLoop().schedule(this::blast,this.rule.getCron());
     }
 }

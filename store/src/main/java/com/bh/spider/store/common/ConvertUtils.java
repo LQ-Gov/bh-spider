@@ -20,11 +20,15 @@ public class ConvertUtils {
         List<Request> result = new LinkedList<>();
         while (rs.next()) {
             try {
-                Request request = new RequestImpl(
+
+                RequestImpl request = new RequestImpl(
                         rs.getLong("id"),
                         rs.getString("url"),
                         FetchMethod.valueOf(rs.getString("method")));
 
+                request.setState(Request.State.valueOf(rs.getString("state")));
+
+                request.setCreateTime(rs.getDate("create_time"));
 
                 MapType mapType = Json.get().getTypeFactory().constructMapType(HashMap.class, String.class, String.class);
                 request.headers().putAll(Json.get().readValue(StringUtils.defaultString(rs.getString("headers"), ""), mapType));

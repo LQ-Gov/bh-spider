@@ -11,12 +11,18 @@ import java.util.Map;
 public class FetchContent implements Request {
     private Request request;
 
+    private State state;
     private long id;
 
-
     public FetchContent(Request request) {
+        this(request, request.state());
+    }
+
+    public FetchContent(Request request,State state){
+        this.id = request.id() == 0 ? IdGenerator.instance.nextId() : request.id();
         this.request = request;
-        id = request.id() == 0 ? IdGenerator.instance.nextId() : request.id();
+        this.state = state;
+
     }
 
     @Override
@@ -52,6 +58,11 @@ public class FetchContent implements Request {
     @Override
     public Date createTime() {
         return request.createTime();
+    }
+
+    @Override
+    public State state() {
+        return state;
     }
 
     @Override

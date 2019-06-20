@@ -46,6 +46,7 @@ public class Config {
     //抓取参数陪配置
     public static final String INIT_PROCESSOR_THREADS_COUNT = "init.processor.threads.count";
     public static final String INIT_LOAD_CLASS_TIMEOUT="init.load.class.timeout";
+    public static final String INIT_DEFAULT_RULE_CRON="init.default.rule.cron";
 
     //集群参数配置
     public static final String SPIDER_CLUSTER_PREFIX = "spider.cluster.";
@@ -94,6 +95,7 @@ public class Config {
 
         //抓取配置
         config.GLOBAL.put(INIT_LOAD_CLASS_TIMEOUT,"10000");
+        config.GLOBAL.put(INIT_DEFAULT_RULE_CRON,"*/30 * * * * ?");
 
 
         return config;

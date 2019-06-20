@@ -1,9 +1,11 @@
 package com.bh.spider.client.context;
 
+import com.bh.common.utils.URLUtils;
 import com.bh.spider.common.fetch.*;
 import com.bh.spider.common.fetch.impl.RequestBuilder;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.doc.Document;
+import com.bh.spider.doc.impl.DocumentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,9 +21,11 @@ import java.util.Map;
 public class ClientFetchContext implements FetchContext {
     private Request request;
 
+    private Response response;
+
     private Map<String, Object> fields = new HashMap<>();
 
-    public ClientFetchContext(Request request) {
+    public ClientFetchContext(Request request,Response response) {
         this.request = request;
     }
 
@@ -39,7 +44,7 @@ public class ClientFetchContext implements FetchContext {
 
     @Override
     public Response response() {
-        return null;
+        return response;
     }
 
     @Override
@@ -49,22 +54,23 @@ public class ClientFetchContext implements FetchContext {
 
     @Override
     public Cookie cookie(String name) {
-        return null;
+        return response.cookie(name);
     }
 
     @Override
     public List<Cookie> cookies() {
-        return null;
+        return response.cookies();
     }
+
 
     @Override
     public Document document() {
-        return null;
+        return new DocumentImpl(this.response.data());
     }
 
     @Override
     public Document document(Charset charset) {
-        return null;
+        return new DocumentImpl(this.response.data(),charset);
     }
 
     @Override
@@ -90,34 +96,70 @@ public class ClientFetchContext implements FetchContext {
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req, boolean local) {
+    public Map<String, Object> fields() {
+        return fields;
+    }
+
+    @Override
+    public void schedule(FetchContext ctx, Request req, boolean local) {
         logger.info("submit new request scheduler local:{},url:{}", local, FetchContextUtils.instance().toURL(req));
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req) {
-        scheduler(ctx, req, false);
+    public void schedule(FetchContext ctx, Request req) {
+        schedule(ctx, req, false);
     }
 
     @Override
-    public void scheduler(Request req) {
-        scheduler(null, req);
+    public void schedule(Request req) {
+        schedule(null, req);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url, boolean local) throws MalformedURLException {
-        scheduler(ctx, RequestBuilder.create(url).build(), local);
+    public void schedule(FetchContext ctx, String url, boolean local) throws MalformedURLException {
+        schedule(ctx, RequestBuilder.create(url).build(), local);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url) throws MalformedURLException {
-        scheduler(ctx, url, false);
+    public void schedule(FetchContext ctx, String url) throws MalformedURLException {
+        schedule(ctx, url, false);
     }
 
     @Override
-    public void scheduler(String url) throws MalformedURLException {
-        scheduler(null, url);
+    public void schedule(String url) throws MalformedURLException {
+        schedule(null, url);
     }
+
+    @Override
+    public void schedule(FetchContext ctx, List<Request> requests, boolean local) throws Exception {
+        for (Request req : requests) {
+            schedule(ctx, req, local);
+        }
+    }
+
+    @Override
+    public void schedule(FetchContext ctx, List<String> requests) throws Exception {
+
+
+        List<Request> objs = new LinkedList<>();
+        for (String req : requests) {
+
+            req = URLUtils.format(req, this.url().getProtocol(), this.url().getHost());
+
+
+            Request obj = RequestBuilder.create(req).build();
+            objs.add(obj);
+        }
+
+        schedule(ctx, objs, false);
+    }
+
+    @Override
+    public void schedule(List<String> urls) throws Exception {
+        schedule(null, urls);
+
+    }
+
     @Override
     public void termination() throws ExtractorChainException {
 

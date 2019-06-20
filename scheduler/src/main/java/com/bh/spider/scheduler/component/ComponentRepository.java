@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class ComponentRepository {
 
@@ -43,7 +44,7 @@ public abstract class ComponentRepository {
     }
 
 
-    public Component get(String name,boolean loadContent) throws IOException, CloneNotSupportedException {
+    public Component get(String name, boolean loadContent) throws IOException, CloneNotSupportedException {
         Component component = metadata().get(name);
         if (component != null && loadContent) {
             Component o = component.clone();
@@ -64,7 +65,7 @@ public abstract class ComponentRepository {
 
 
     public Component save(byte[] data, String name, String description, boolean override, boolean expired) throws IOException {
-        Path old = Paths.get(base.toString(), name);
+        Path old = Paths.get(base.toString(), join(name,componentType));
         Path tmp = Paths.get(base.toString(), name + ".tmp");
 
         Files.write(tmp, data);
@@ -102,8 +103,18 @@ public abstract class ComponentRepository {
 
 
     public boolean waitFor(String name, long timeout) throws InterruptedException {
-        return metadata().waitFor(name,timeout);
+        return metadata().waitFor(name, timeout);
 
+    }
+
+
+    public Path basePath() {
+        return base;
+    }
+
+
+    protected String join(String name, Component.Type type) {
+        return Objects.toString(name, "") + (type == null ? "" : "." + type.text());
     }
 
 

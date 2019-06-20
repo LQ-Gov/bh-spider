@@ -7,7 +7,7 @@ import com.bh.spider.store.base.Store;
 
 public interface RuleScheduleController {
 
-    void execute() throws Exception;
+    void execute();
 
     void close() throws Exception;
 

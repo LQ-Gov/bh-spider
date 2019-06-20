@@ -3,7 +3,6 @@ package com.bh.spider.scheduler.fetcher;
 import com.bh.spider.common.fetch.FetchContext;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.fetch.impl.FetchResponse;
-import com.bh.spider.common.fetch.impl.FinalFetchContext;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.common.rule.SeleniumRule;
 import com.bh.spider.scheduler.BasicScheduler;
@@ -50,7 +49,7 @@ public class Fetcher {
         FetchClientBuilder builder = rule instanceof SeleniumRule ?
                 new SeleniumFetchClientBuilder() : new HttpFetchClientBuilder();
 
-        FetchClient client = builder.build();
+        FetchClient client = builder.build(scheduler.config());
 
         //对url进行预处理
         initHeaders(req);
@@ -102,8 +101,10 @@ public class Fetcher {
 
     //此方法由CompletableFuture回调调用
     private void fetchCallback(Context ctx, FetchContext fetchContext, FetchResponse response, Throwable e) {
-        if (e != null)
+        if (e != null) {
+            e.printStackTrace();
             ctx.exception(e);
+        }
         else {
             try {
                 //进行到此处则抓取完成,接下来则由跟踪过来的context进行处理进行处理

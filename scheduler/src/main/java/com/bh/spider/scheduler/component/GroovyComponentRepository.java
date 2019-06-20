@@ -44,7 +44,7 @@ public class GroovyComponentRepository extends ComponentRepository {
             return proxy.cls();
 
 
-        Path path = Paths.get(dir.toString(), component.getName());
+        Path path = Paths.get(dir.toString(), join(component.getName(),this.componentType()));
 
         GroovyComponentClassLoader classLoader = new GroovyComponentClassLoader(parentClassLoader);
 

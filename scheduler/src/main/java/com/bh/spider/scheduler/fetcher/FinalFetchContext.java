@@ -1,4 +1,4 @@
-package com.bh.spider.common.fetch.impl;
+package com.bh.spider.scheduler.fetcher;
 
 
 import com.bh.spider.common.fetch.*;
@@ -11,10 +11,14 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * FinalFetchContext包含了对response和document的操作
+ */
 public class FinalFetchContext implements FetchContext {
 
     private FetchContext parent;
     private Response response;
+
 
 
 
@@ -89,37 +93,56 @@ public class FinalFetchContext implements FetchContext {
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req, boolean local) throws Exception {
+    public Map<String, Object> fields() {
+        return parent.fields();
+    }
 
-        this.parent.scheduler(ctx,req,local);
+    @Override
+    public void schedule(FetchContext ctx, Request req, boolean local) throws Exception {
+
+        this.parent.schedule(ctx,req,local);
 
     }
 
     @Override
-    public void scheduler(FetchContext ctx, Request req) throws Exception {
-        this.parent.scheduler(ctx,req);
+    public void schedule(FetchContext ctx, Request req) throws Exception {
+        this.parent.schedule(ctx,req);
     }
 
     @Override
-    public void scheduler(Request req) throws Exception {
-        this.parent.scheduler(req);
+    public void schedule(Request req) throws Exception {
+        this.parent.schedule(req);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url, boolean local) throws Exception {
-        this.parent.scheduler(ctx,url,local);
+    public void schedule(FetchContext ctx, String url, boolean local) throws Exception {
+        this.parent.schedule(ctx,url,local);
     }
 
     @Override
-    public void scheduler(FetchContext ctx, String url) throws Exception {
-        this.parent.scheduler(ctx,url);
+    public void schedule(FetchContext ctx, String url) throws Exception {
+        this.parent.schedule(ctx,url);
     }
 
     @Override
-    public void scheduler(String url) throws Exception {
-        this.parent.scheduler(url);
+    public void schedule(String url) throws Exception {
+        this.parent.schedule(url);
     }
 
+    @Override
+    public void schedule(FetchContext ctx, List<Request> requests, boolean local) throws Exception {
+        this.parent.schedule(ctx,requests,local);
+    }
+
+    @Override
+    public void schedule(FetchContext ctx, List<String> requests) throws Exception {
+        this.parent.schedule(ctx,requests);
+    }
+
+    @Override
+    public void schedule(List<String> urls) throws Exception {
+        this.parent.schedule(urls);
+    }
 
 
     @Override

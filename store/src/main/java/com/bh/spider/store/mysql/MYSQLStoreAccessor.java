@@ -50,7 +50,7 @@ public class MYSQLStoreAccessor implements StoreAccessor {
             runner.update("INSERT bh_spider_url（id,url,method,headers,params,extra,hash,rule_id,state） " +
                             "VALUES(?,?,?,?,?,?,?,?,?,?) ",
                     request.id(), request.url(), request.method(), Json.get().writeValueAsString(request.headers())
-                    , null, Json.get().writeValueAsString(request.extra()), request.hash(), ruleId, Request.State.QUEUE);
+                    , null, Json.get().writeValueAsString(request.extra()), request.hash(), ruleId, request.state());
         } catch (SQLException | JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -67,8 +67,8 @@ public class MYSQLStoreAccessor implements StoreAccessor {
             String extra = Json.get().writeValueAsString(request.extra());
             runner.update("INSERT bh_spider_url(id,url,method,headers,params,extra,hash,rule_id,state) VALUES(?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
                             "headers=?,params=?,extra=?,rule_id=?,state=?",
-                    request.id(), request.url().toString(), request.method().toString(), headers, params, extra, request.hash(), ruleId, Request.State.QUEUE.name(),
-                    headers, params, extra, ruleId, Request.State.QUEUE.name());
+                    request.id(), request.url().toString(), request.method().toString(), headers, params, extra, request.hash(), ruleId, request.state().name(),
+                    headers, params, extra, ruleId, request.state().name());
             return true;
         }catch (Exception e){
             e.printStackTrace();

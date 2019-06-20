@@ -11,6 +11,7 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
 import com.bh.spider.store.base.Store;
+import com.google.common.eventbus.EventBus;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -46,20 +47,20 @@ public class BasicScheduler implements Scheduler, Assistant {
     private Node me;
 
 
+    private final EventBus eventBus = new EventBus();
+
+
+
+
     public BasicScheduler(Config config) throws Exception {
         this.cfg = config;
         this.me = Node.self();
         this.me.setType("DEFAULT");
 
-
     }
-
-
     public BasicScheduler(Config config,Node node){
 
     }
-
-
 
     @Override
     public <R> CompletableFuture<R> process(Command cmd) {
@@ -121,7 +122,6 @@ public class BasicScheduler implements Scheduler, Assistant {
 
 
         this.loop.listen().join();
-
     }
 
     public void submit(Context ctx, Request req) {
@@ -130,7 +130,10 @@ public class BasicScheduler implements Scheduler, Assistant {
     }
 
 
-
+    public void submit(Context ctx,List<Request> requests){
+        Command cmd = new Command(ctx,CommandCode.SUBMIT_REQUEST_BATCH,requests);
+        this.process(cmd);
+    }
 
 
     @CommandHandler

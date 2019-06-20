@@ -46,6 +46,8 @@ public enum CommandCode {
     //request operation
     SUBMIT_REQUEST,//提交任务
 
+    SUBMIT_REQUEST_BATCH,//批量提交任务
+
     GET_REQUEST_LIST,//查询请求列表
 
 
@@ -62,6 +64,8 @@ public enum CommandCode {
     REPORT,//正常抓取完成报告
 
     REPORT_EXCEPTION,//异常抓取完成报告
+
+    CLEAR_EXPIRED_FETCH,//清理过期的fetcher
 
 
     ALIVE,

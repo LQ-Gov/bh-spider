@@ -210,6 +210,8 @@ public class EventLoop extends Thread {
 
             }
         }
+
+        o.initialized();
     }
 
 

@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public interface Request extends Cloneable {
     enum State {
-        QUEUE, GOING, EXCEPTION, FINISHED
+        QUEUE, GOING, EXCEPTION, FINISHED,ASSIGNING
     }
 
     long id();
@@ -46,6 +46,9 @@ public interface Request extends Cloneable {
 
 
     Date createTime();
+
+
+    State state();
 
 
     Object clone() throws CloneNotSupportedException;

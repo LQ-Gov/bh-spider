@@ -13,6 +13,7 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.FetchContent;
 import com.bh.spider.scheduler.fetcher.Fetcher;
 import com.bh.spider.store.base.Store;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +72,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     public void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
         String host = req.url().getHost();
 
-        DomainIndex.Node node = domainIndex.match(host,false);
+        DomainIndex.Node node = domainIndex.match(host, false);
 
 
         while (node != domainIndex.root()) {
@@ -87,13 +88,26 @@ public class BasicSchedulerFetchAssistant implements Assistant {
                     List<RulePattern> patterns = new ArrayList<>(matches.keySet());
                     patterns.sort(new AntPatternComparator(req));
                     RuleFacade facade = matches.get(patterns.get(0));
-                    facade.controller().joinQueue(new FetchContent(req));
+                    facade.controller().joinQueue(new FetchContent(req, Request.State.QUEUE));
                     return;
                 }
             }
             node = node.parent();
         }
-        throw new Exception("绑定请求失败");
+
+        if (CollectionUtils.isNotEmpty(domainIndex.root().rules())) {
+            Iterator<RuleFacade> it = domainIndex.root().rules().iterator();
+            it.next().controller().joinQueue(new FetchContent(req));
+        }
+    }
+
+
+    @CommandHandler
+    public void SUBMIT_REQUEST_BATCH_HANDLER(Context ctx,List<Request> requests) throws Exception {
+        for (Request request : requests) {
+            SUBMIT_REQUEST_HANDLER(ctx, (RequestImpl) request);
+            int a =0;
+        }
     }
 
 
@@ -142,6 +156,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler(cron = "*/5 * * * * ?")
     public void CLEAR_EXPIRED_FETCH_HANDLER() {
+        logger.info("清理过期fetcher");
         //清理过期的抓取,暂时不完成
     }
 }

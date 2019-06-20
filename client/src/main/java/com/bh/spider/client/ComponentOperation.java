@@ -1,7 +1,7 @@
 package com.bh.spider.client;
 
-import com.bh.spider.client.sender.Sender;
 import com.bh.common.utils.CommandCode;
+import com.bh.spider.client.sender.Sender;
 import com.bh.spider.common.component.Component;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
@@ -52,13 +52,31 @@ public class ComponentOperation {
     }
 
     public void submit(String name, Class<?> cls, String desc) throws IOException {
-
         submit(name, cls,null, desc);
-
     }
 
     public void submit(String name, Class<?> cls, Component.Type type) throws IOException {
         submit(name, cls, type, null);
+    }
+
+    public void submit(Path path) throws IOException {
+        submit(null, path);
+    }
+
+    public void submit(Path path, Component.Type type) throws IOException {
+        submit(path, type, null);
+    }
+
+    public void submit(Path path, Component.Type type, String desc) throws IOException {
+        submit(null, path, type, desc);
+    }
+
+    public void submit(String name, Path path) throws IOException {
+        submit(name, path, null);
+    }
+
+    public void submit(String name, Path path, String desc) throws IOException {
+        submit(name, path, null, desc);
     }
 
     public void submit(String name, Class<?> cls, Component.Type type, String desc) throws IOException {
@@ -67,7 +85,7 @@ public class ComponentOperation {
 
         String clsPath = String.join(File.separator, cls.getName().split("\\."));
 
-        final Path path = StringUtils.isBlank(classBasePath) ? Paths.get(clsPath) : Paths.get(classBasePath, clsPath);
+        Path path = StringUtils.isBlank(classBasePath) ? Paths.get(clsPath) : Paths.get(classBasePath, clsPath);
 
         if (type == null) {
             final String prefix = path.toString();
@@ -78,48 +96,18 @@ public class ComponentOperation {
             if (list.size() > 1)
                 throw new RuntimeException("有多个文件匹配,请手动指定type");
 
-            type = Component.Type.textOf(FilenameUtils.getExtension(list.get(0).toString()));
+            path = list.get(0);
+
+
+            type = Component.Type.textOf(FilenameUtils.getExtension(path.toString()));
         }
         if (type == null)
             throw new RuntimeException("无法找到有效的文件类型");
 
 
-        submit(name, Paths.get(path.toString() + "." + type.text()), type, desc);
-    }
-
-
-    public void submit(Path path) throws IOException {
-        String name = path.getFileName().toString();
-        name = FilenameUtils.getBaseName(name);
-        submit(name, path);
-    }
-
-
-    public void submit(Path path, Component.Type type) throws IOException {
-        submit(path, type, null);
-    }
-
-    public void submit(Path path, Component.Type type, String desc) throws IOException {
-        String name = path.getFileName().toString();
-        name = FilenameUtils.getBaseName(name);
         submit(name, path, type, desc);
     }
 
-    public void submit(String name, Path path) throws IOException {
-        submit(name, path, null);
-    }
-    public void submit(String name, Path path, String desc) throws IOException {
-        String extension = FilenameUtils.getExtension(path.getFileName().toString());
-
-        Component.Type type = Component.Type.EXTRACTOR;
-
-        submit(name, path, type, desc);
-
-    }
-
-    public void submit(String name, String path, Component.Type type, String desc) throws IOException {
-        submit(name, Paths.get(path), type, desc);
-    }
 
     public void submit(String name, Path path, Component.Type type, String desc) throws IOException {
 
@@ -132,10 +120,7 @@ public class ComponentOperation {
 
         name = name == null ? FilenameUtils.getBaseName(filename) : name;
 
-        byte[] data = Files.readAllBytes(path);
-
-        sender.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
-
+        this.submit(name, Files.newInputStream(path), type, desc);
     }
 
 

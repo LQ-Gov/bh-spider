@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler.component;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -67,7 +66,7 @@ public class JarComponentClassLoader extends URLClassLoader {
 
     public void addJar(Path path) throws IOException {
         String p = path.toFile().getCanonicalPath();
-        classLoaders.put(p, new URLClassLoader(new URL[]{new URL(p)}, parent));
+        classLoaders.put(p, new URLClassLoader(new URL[]{new URL("file://"+p)}, parent));
     }
 
     public void removeJar(String path) throws IOException {
@@ -78,5 +77,4 @@ public class JarComponentClassLoader extends URLClassLoader {
         String p = path.toFile().getCanonicalPath();
         classLoaders.remove(p);
     }
-
 }

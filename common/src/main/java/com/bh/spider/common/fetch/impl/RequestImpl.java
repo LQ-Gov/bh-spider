@@ -13,7 +13,9 @@ import java.util.Map;
 public class RequestImpl implements Request {
 
     private long id;
-    private FetchState state;
+//    private FetchState state;
+
+    private State state;
     private URL base;
 
     private FetchMethod method;
@@ -43,6 +45,7 @@ public class RequestImpl implements Request {
         this(id, new URL(url), method);
     }
 
+
     public RequestImpl(URL url){
         this(url,FetchMethod.GET);
     }
@@ -59,6 +62,8 @@ public class RequestImpl implements Request {
         this.method = method == null ? FetchMethod.GET : method;
         this.createTime = new Date();
     }
+
+
 
     public long id() {
         return id;
@@ -104,7 +109,16 @@ public class RequestImpl implements Request {
         return createTime;
     }
 
-    void setCreateTime(Date date) {
+    @Override
+    public State state() {
+        return state;
+    }
+
+    public void setState(State state){
+        this.state = state;
+    }
+
+    public void setCreateTime(Date date) {
         this.createTime = date;
     }
 
@@ -126,9 +140,9 @@ public class RequestImpl implements Request {
         return cloneObject;
     }
 
-    public FetchState state() {
-        return state;
-    }
+//    public FetchState state() {
+//        return state;
+//    }
 
 
 

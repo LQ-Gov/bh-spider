@@ -1,18 +1,17 @@
 package com.bh.spider.client;
 
 import com.bh.common.WatchFilter;
+import com.bh.common.utils.CommandCode;
+import com.bh.common.utils.Json;
 import com.bh.spider.client.context.ClientFetchContext;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
 import com.bh.spider.client.sender.Sender;
 import com.bh.spider.common.fetch.*;
 import com.bh.spider.common.fetch.impl.FetchResponse;
-import com.bh.spider.common.fetch.impl.FinalFetchContext;
 import com.bh.spider.common.fetch.impl.RequestBuilder;
-import com.bh.spider.common.rule.Rule;
-import com.bh.common.utils.CommandCode;
-import com.bh.common.utils.Json;
 import com.bh.spider.common.member.Node;
+import com.bh.spider.common.rule.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
@@ -20,7 +19,10 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Map;
@@ -98,10 +100,11 @@ public class Client {
     @SafeVarargs
     public final Future<FetchResponse> crawler(Request req, Rule rule, Class<? extends Extractor>... extractors) throws MalformedURLException {
 
-        FetchContext base = new ClientFetchContext(req);
         return sender.stream(CommandCode.FETCH, response -> {
 
-            FetchContext ctx = new FinalFetchContext(base, response);
+
+
+            FetchContext ctx = new ClientFetchContext(req,response);
             try {
                 for (Class<?> it : extractors) {
 

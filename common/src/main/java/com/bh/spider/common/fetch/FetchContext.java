@@ -33,21 +33,33 @@ public interface FetchContext {
     void set(Map<String, Object> collection);
 
     Object get(String key);
+
     Object get(String key,Object defaultValue);
 
-
-    void scheduler(FetchContext ctx, Request req, boolean local) throws Exception;
-
-    void scheduler(FetchContext ctx, Request req) throws Exception;
-
-    void scheduler(Request req) throws Exception;
+    Map<String,Object> fields();
 
 
-    void scheduler(FetchContext ctx, String url, boolean local) throws Exception;
+    void schedule(FetchContext ctx, Request req, boolean local) throws Exception;
 
-    void scheduler(FetchContext ctx, String url) throws Exception;
+    void schedule(FetchContext ctx, Request req) throws Exception;
 
-    void scheduler(String url) throws Exception;
+    void schedule(Request req) throws Exception;
+
+
+    void schedule(FetchContext ctx, String url, boolean local) throws Exception;
+
+    void schedule(FetchContext ctx, String url) throws Exception;
+
+    void schedule(String url) throws Exception;
+
+
+    void schedule(FetchContext ctx, List<Request> requests, boolean local) throws Exception;
+
+
+    void schedule(FetchContext ctx, List<String> requests) throws Exception;
+
+
+    void schedule(List<String> urls) throws Exception;
 
     void termination() throws ExtractorChainException;
 
