@@ -10,23 +10,24 @@ import java.util.List;
 public class Watcher {
     private Context ctx;
     private WatchFilter filter;
+    private Point point;
 
 
     private List<Point> points = new LinkedList<>();
 
-    public Watcher(Context ctx, WatchFilter filter){
+    public Watcher(Context ctx, Point point){
         this.ctx = ctx;
-        this.filter = filter;
+        this.point = point;
+
+        this.watch(point);
 
     }
 
 
     public void watch(Point point) {
-        points.add(point);
-
 
         Point.Consumer consumer = filter == null ?
-                new DefaultPointConsumer(ctx) : new FilterPointConsumer(ctx, filter);
+                new DefaultPointConsumer(ctx) : new FilterPointConsumer(ctx, null);
 
 
         point.addConsumer(consumer);

@@ -16,6 +16,11 @@ public interface Point<T> {
 
     void set(Function<T,T> function);
 
+
+    Point<T> createChildPoint(String key);
+
+    boolean stable();
+
     interface Consumer<T>{
 
         public void consume(String key, T value);

@@ -25,7 +25,7 @@ public class OperationInterceptor implements Interceptor {
 
 
     @Override
-    public boolean before(CommandHandler mapping, Context ctx, Method method, Object[] args) {
+    public boolean before(String key, CommandHandler mapping, Context ctx, Method method, Object[] args) {
         Operation operation = method.getAnnotation(Operation.class);
         if (operation != null) {
 
@@ -84,7 +84,7 @@ public class OperationInterceptor implements Interceptor {
     }
 
     @Override
-    public void after() {
+    public void after(Method method, Object returnValue) {
 
     }
 }

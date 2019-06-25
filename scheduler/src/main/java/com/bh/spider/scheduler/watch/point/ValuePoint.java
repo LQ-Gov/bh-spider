@@ -7,18 +7,29 @@ public class ValuePoint<T> extends AbstractPoint<T> {
     private T value;
 
     public ValuePoint(String key) {
-        super(key);
+        super(key, true);
+    }
+
+    private ValuePoint(String key, boolean stable) {
+        super(key, stable);
     }
 
     @Override
     public void set(T value) {
         this.value = value;
-        if(value!=null)
+        if (value != null)
             produce(value);
+
+        super.set(value);
     }
 
     @Override
-    public void set(Function<T,T> function) {
+    public void set(Function<T, T> function) {
 
+    }
+
+    @Override
+    public Point<T> createChildPoint(String key) {
+        return new ValuePoint<>(key,false);
     }
 }

@@ -1,12 +1,12 @@
 package com.bh.spider.client;
 
-import com.bh.common.WatchFilter;
 import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.client.context.ClientFetchContext;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
 import com.bh.spider.client.sender.Sender;
+import com.bh.spider.client.watch.WatchOperation;
 import com.bh.spider.common.fetch.*;
 import com.bh.spider.common.fetch.impl.FetchResponse;
 import com.bh.spider.common.fetch.impl.RequestBuilder;
@@ -43,6 +43,8 @@ public class Client {
     private ComponentOperation componentOperation = null;
     private RequestOperation requestOperation = null;
 
+    private WatchOperation watchOperation = null;
+
     private Receiver receiver = null;
     private Sender sender = null;
 
@@ -66,15 +68,17 @@ public class Client {
     public boolean open() throws URISyntaxException, IOException {
         URI uri = new URI("tcp://" + server);
 
-        this.channel = SocketChannel.open(new InetSocketAddress(uri.getHost(),uri.getPort()));
+        this.channel = SocketChannel.open(new InetSocketAddress(uri.getHost(), uri.getPort()));
 
         receiver = new Receiver(this.channel.socket());
         receiver.start();
 
         this.sender = new Sender(channel, receiver);
+
         this.ruleOperation = new RuleOperation(this.sender);
         this.componentOperation = new ComponentOperation(this.sender, this.properties);
         this.requestOperation = new RequestOperation(this.sender);
+        this.watchOperation = new WatchOperation(this.sender);
         return true;
     }
 
@@ -103,8 +107,7 @@ public class Client {
         return sender.stream(CommandCode.FETCH, response -> {
 
 
-
-            FetchContext ctx = new ClientFetchContext(req,response);
+            FetchContext ctx = new ClientFetchContext(req, response);
             try {
                 for (Class<?> it : extractors) {
 
@@ -143,18 +146,24 @@ public class Client {
         return crawler(RequestBuilder.create(url).build(), rule, extractors);
     }
 
-    public <T> void watch(String point, Class<T> valueClass, Consumer<T> consumer) {
+    public <T> void watch(String point, Consumer<T> consumer, Class<T> valueClass) {
 
         sender.stream(CommandCode.WATCH, consumer, new TypeConverter<>(valueClass), point);
     }
 
+    public boolean watch(String point, Consumer<String> consumer) throws Exception {
+        this.watchOperation.watch(point, consumer, String.class);
 
-    public void watch(String point, WatchFilter filter, Consumer<String> consumer) {
-
+        return true;
     }
 
     public void unwatch(String point) {
-        sender.write(CommandCode.UNWATCH, null, point);
+        this.watchOperation.unwatch(point);
+    }
+
+
+    public void unwatch(String point, Consumer<?> consumer) {
+        this.watchOperation.unwatch(point, consumer);
     }
 
 

@@ -3,6 +3,7 @@ package com.bh.spider.scheduler.context;
 import com.bh.common.utils.Json;
 import com.bh.spider.common.fetch.FetchContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import org.slf4j.Logger;
@@ -98,5 +99,10 @@ public class ClientContext extends AbstractCloseableContext {
 
     public ChannelId channelId(){
         return source.channel().id();
+    }
+
+
+    public Channel channel(){
+        return source.channel();
     }
 }

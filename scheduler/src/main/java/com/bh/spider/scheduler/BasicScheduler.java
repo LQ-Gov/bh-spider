@@ -10,6 +10,7 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
+import com.bh.spider.scheduler.watch.WatchInterceptor;
 import com.bh.spider.store.base.Store;
 import com.google.common.eventbus.EventBus;
 import io.netty.bootstrap.ServerBootstrap;
@@ -50,15 +51,14 @@ public class BasicScheduler implements Scheduler, Assistant {
     private final EventBus eventBus = new EventBus();
 
 
-
-
     public BasicScheduler(Config config) throws Exception {
         this.cfg = config;
         this.me = Node.self();
         this.me.setType("DEFAULT");
 
     }
-    public BasicScheduler(Config config,Node node){
+
+    public BasicScheduler(Config config, Node node) {
 
     }
 
@@ -84,7 +84,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     @Override
     public boolean running() {
-        return eventLoop()!=null&&eventLoop().running();
+        return eventLoop() != null && eventLoop().running();
     }
 
 
@@ -121,6 +121,9 @@ public class BasicScheduler implements Scheduler, Assistant {
                 new BasicSchedulerWatchAssistant()).exec();
 
 
+        this.loop.addInterceptor(new WatchInterceptor());
+
+
         this.loop.listen().join();
     }
 
@@ -130,8 +133,8 @@ public class BasicScheduler implements Scheduler, Assistant {
     }
 
 
-    public void submit(Context ctx,List<Request> requests){
-        Command cmd = new Command(ctx,CommandCode.SUBMIT_REQUEST_BATCH,requests);
+    public void submit(Context ctx, List<Request> requests) {
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST_BATCH, requests);
         this.process(cmd);
     }
 

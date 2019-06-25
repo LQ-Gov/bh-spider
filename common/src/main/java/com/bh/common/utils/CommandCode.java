@@ -56,6 +56,7 @@ public enum CommandCode {
 
     WATCH,
     UNWATCH,
+    GET_WATCH_POINT_LIST,
 
     /*******抓取命令*******/
     FETCH,//单个抓取
@@ -73,6 +74,8 @@ public enum CommandCode {
     TASK,
     PROCESS,
     CLOSE;
+
+
 
 
     private boolean needConsistent;

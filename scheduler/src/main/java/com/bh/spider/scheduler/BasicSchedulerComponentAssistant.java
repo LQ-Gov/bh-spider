@@ -6,6 +6,7 @@ import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.common.component.Component;
+import com.bh.spider.scheduler.watch.Watch;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,6 +27,7 @@ public class BasicSchedulerComponentAssistant implements Assistant {
 
 
     @CommandHandler
+    @Watch(value = "component.submit",text = "${name}")
     public void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
 
         ComponentRepository repository = factory.proxy(name);
@@ -55,6 +57,7 @@ public class BasicSchedulerComponentAssistant implements Assistant {
     }
 
     @CommandHandler
+    @Watch(value = "component.delete",text = "${name}")
     public void DELETE_COMPONENT_HANDLER(Context ctx, String name) throws IOException {
         ComponentRepository repository = factory.proxy(name);
         if (repository != null)

@@ -22,7 +22,7 @@ public class WatchAppender extends AppenderBase<ILoggingEvent> {
         MarkerHandler handler;
         if (marker == null || (handler = markers.get(marker)) == null) return;
 
-        handler.handle(event);
+        handler.handle(event,event.getArgumentArray());
     }
 
 

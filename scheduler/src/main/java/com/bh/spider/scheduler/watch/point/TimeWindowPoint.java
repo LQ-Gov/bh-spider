@@ -12,7 +12,11 @@ public class TimeWindowPoint<T> extends AbstractPoint<T> {
 
 
     public TimeWindowPoint(String key) {
-        super(key);
+        super(key,true);
+    }
+
+    private TimeWindowPoint(String key,boolean stable){
+        super(key,stable);
     }
 
     @Override
@@ -28,8 +32,12 @@ public class TimeWindowPoint<T> extends AbstractPoint<T> {
         if(value!=null)
             produce(value);
 
+        super.set(function);
 
+    }
 
-
+    @Override
+    public Point<T> createChildPoint(String key) {
+        return new TimeWindowPoint<>(key,false);
     }
 }

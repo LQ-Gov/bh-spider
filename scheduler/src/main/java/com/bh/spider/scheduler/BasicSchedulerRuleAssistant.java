@@ -6,6 +6,7 @@ import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.*;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.CommandHandler;
+import com.bh.spider.scheduler.watch.Watch;
 import com.bh.spider.store.base.Store;
 import org.apache.commons.lang3.StringUtils;
 
@@ -185,6 +186,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
     }
 
     @CommandHandler
+    @Watch
     public RuleFacade RULE_FACADE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (rule == null || rule.getId() <= 0) return null;
 

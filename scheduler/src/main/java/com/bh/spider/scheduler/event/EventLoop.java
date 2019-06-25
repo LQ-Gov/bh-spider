@@ -1,10 +1,10 @@
 package com.bh.spider.scheduler.event;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.timer.*;
 import com.bh.spider.scheduler.event.token.Token;
-import com.bh.spider.scheduler.watch.Markers;
 import com.fasterxml.jackson.databind.JavaType;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -71,8 +71,7 @@ public class EventLoop extends Thread {
 
                 Command cmd = pair.getLeft();
                 CompletableFuture future = pair.getRight();
-                logger.info(Markers.EVENT_LOOP, "event loop for {}, execute command:{},params bytes size:{}",
-                        name, cmd.key(), 0);
+
 
                 try {
                     CommandRunner handler = handlers.get(cmd.key().name());
@@ -83,7 +82,7 @@ public class EventLoop extends Thread {
 
                     Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
-                    if (before(handler.mapping(), cmd.context(), handler.method(), args)) {
+                    if (before(cmd.key(), handler.mapping(), cmd.context(), handler.method(), args)) {
                         handler.invoke(cmd.context(), args, future);
                         after();
                     }
@@ -157,10 +156,10 @@ public class EventLoop extends Thread {
     }
 
 
-    private boolean before(CommandHandler mapping, Context ctx, Method method, Object[] args) {
+    private boolean before(CommandCode code, CommandHandler mapping, Context ctx, Method method, Object[] args) {
         if (interceptors != null && !interceptors.isEmpty()) {
             for (Interceptor interceptor : interceptors) {
-                if (!interceptor.before(mapping, ctx, method, args))
+                if (!interceptor.before(code.name(),mapping, ctx, method, args))
                     return false;
             }
         }
@@ -215,7 +214,7 @@ public class EventLoop extends Thread {
     }
 
 
-    private JobContext initCommandTimer(Object obj, Method method, String cmdKey, String cron) {
+    private void initCommandTimer(Object obj, Method method, String cmdKey, String cron) {
         if (method.getParameterCount() > 0) throw new Error("timer task can't has any parameter:" + method.getName());
 
         Class<?> cls = method.getDeclaringClass();
@@ -229,8 +228,7 @@ public class EventLoop extends Thread {
         detail.getJobDataMap().put("COMMAND_TIMER_METHOD", method);
 
 
-
-        return this.timerScheduler.schedule(detail,cron);
+        this.timerScheduler.schedule(detail, cron);
     }
 
 
