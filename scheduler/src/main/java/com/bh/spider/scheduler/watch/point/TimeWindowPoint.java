@@ -3,16 +3,23 @@ package com.bh.spider.scheduler.watch.point;
 
 import com.bh.common.utils.TimeWindow;
 
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class TimeWindowPoint<T> extends AbstractPoint<T> {
 
-    private TimeWindow<T> timeWindow = new TimeWindow<>(5,2, TimeUnit.SECONDS);
+    private TimeWindow<T> window = new TimeWindow<>(5,2, TimeUnit.SECONDS);
 
 
     public TimeWindowPoint(String key) {
         super(key,true);
+    }
+
+
+    public TimeWindowPoint(String key,TimeWindow<T> window){
+        super(key,true);
+        this.window = window;
     }
 
     private TimeWindowPoint(String key,boolean stable){
@@ -25,12 +32,12 @@ public class TimeWindowPoint<T> extends AbstractPoint<T> {
 
     @Override
     public void set(Function<T,T> function) {
-        timeWindow.update(function);
+        window.update(function);
 
-        T value = timeWindow.get();
+        T value = window.get();
 
         if(value!=null)
-            produce(value);
+            produce(new Date(),value);
 
         super.set(function);
 

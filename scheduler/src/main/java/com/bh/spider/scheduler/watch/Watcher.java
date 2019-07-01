@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.watch;
 
 import com.bh.common.WatchFilter;
+import com.bh.common.watch.WatchEvent;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.watch.point.Point;
 
@@ -26,7 +27,7 @@ public class Watcher {
 
     public void watch(Point point) {
 
-        Point.Consumer consumer = filter == null ?
+        Point.Consumer<WatchEvent> consumer = filter == null ?
                 new DefaultPointConsumer(ctx) : new FilterPointConsumer(ctx, null);
 
 
@@ -42,7 +43,7 @@ public class Watcher {
         return ctx;
     }
 
-    private class DefaultPointConsumer implements Point.Consumer {
+    private class DefaultPointConsumer implements Point.Consumer<WatchEvent>{
         private Context ctx;
 
         DefaultPointConsumer(Context ctx){
@@ -50,22 +51,24 @@ public class Watcher {
         }
 
         @Override
-        public void consume(String key, Object value) {
+        public void consume(String key, WatchEvent value) {
             this.ctx.write(value);
         }
     }
 
 
-    private class FilterPointConsumer implements Point.Consumer{
+    private class FilterPointConsumer implements Point.Consumer<WatchEvent> {
         private Context ctx;
         private WatchFilter filter;
         FilterPointConsumer(Context ctx, WatchFilter filter){
             this.ctx = ctx;
             this.filter = filter;
+
+
         }
 
         @Override
-        public void consume(String key, Object value) {
+        public void consume(String key, WatchEvent value) {
             if(filter.filter(value))
                 context().write(value);
         }

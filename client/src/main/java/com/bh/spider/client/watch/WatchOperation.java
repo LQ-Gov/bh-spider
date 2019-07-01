@@ -1,6 +1,8 @@
 package com.bh.spider.client.watch;
 
 import com.bh.common.utils.CommandCode;
+import com.bh.common.watch.WatchEvent;
+import com.bh.spider.client.converter.DefaultConverter;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.sender.Sender;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
@@ -24,7 +26,6 @@ public class WatchOperation {
     private final Set<String> points;
 
 
-
     public WatchOperation(Sender sender) {
 
 
@@ -34,9 +35,7 @@ public class WatchOperation {
     }
 
 
-
-
-    private Set<String> watchedPoints(){
+    private Set<String> watchedPoints() {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
         List<String> list = sender.write(CommandCode.GET_WATCH_POINT_LIST, returnType);
 
@@ -56,7 +55,7 @@ public class WatchOperation {
         return points.contains(point.substring(0, colonIndex));
     }
 
-    public synchronized  <T> void watch(String point,Consumer<T> consumer,Class<T> cls) throws Exception {
+    public synchronized <T> void watch(String point, Consumer<T> consumer, Class<T> cls) throws Exception {
 
         if (validate(point)) {
 
@@ -67,14 +66,25 @@ public class WatchOperation {
             consumers.add(consumer);
 
             if (!initialized) {
-                sender.stream(CommandCode.WATCH, (Consumer<T>) t -> {
-                    List<Consumer> list = new LinkedList<>(consumers);
+                sender.stream(CommandCode.WATCH, bytes -> {
+                    try {
+                        WatchEvent event = new TypeConverter<WatchEvent>(WatchEvent.class).convert(bytes);
 
-                    for (Consumer it : list)
-                        it.accept(t);
+                        Object value = cls==WatchEvent.class?event:event.value();
+
+                        List<Consumer> list = new LinkedList<>(consumers);
+
+                        for (Consumer it : list)
+                            it.accept(value);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
 
-                }, new TypeConverter<>(cls));
+
+
+                }, new DefaultConverter(), point);
             }
 
             return;
@@ -85,7 +95,7 @@ public class WatchOperation {
     }
 
 
-    public synchronized void unwatch(String point,Consumer consumer) {
+    public synchronized void unwatch(String point, Consumer consumer) {
         if (watched.containsKey(point)) {
             Set<Consumer> consumers = watched.get(point);
 
@@ -98,14 +108,13 @@ public class WatchOperation {
     }
 
 
-    public synchronized void unwatch(String point){
-        if(watched.containsKey(point)) {
+    public synchronized void unwatch(String point) {
+        if (watched.containsKey(point)) {
             watched.remove(point);
 
             sender.write(CommandCode.UNWATCH, null, point);
         }
     }
-
 
 
 }

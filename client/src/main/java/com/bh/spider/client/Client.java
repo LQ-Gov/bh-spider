@@ -2,6 +2,7 @@ package com.bh.spider.client;
 
 import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
+import com.bh.common.watch.WatchEvent;
 import com.bh.spider.client.context.ClientFetchContext;
 import com.bh.spider.client.converter.TypeConverter;
 import com.bh.spider.client.receiver.Receiver;
@@ -151,8 +152,8 @@ public class Client {
         sender.stream(CommandCode.WATCH, consumer, new TypeConverter<>(valueClass), point);
     }
 
-    public boolean watch(String point, Consumer<String> consumer) throws Exception {
-        this.watchOperation.watch(point, consumer, String.class);
+    public boolean watch(String point, Consumer<WatchEvent> consumer) throws Exception {
+        this.watchOperation.watch(point, consumer, WatchEvent.class);
 
         return true;
     }

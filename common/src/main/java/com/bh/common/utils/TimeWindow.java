@@ -3,9 +3,8 @@ package com.bh.common.utils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import sun.misc.Unsafe;
 
-import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -44,13 +43,20 @@ public class TimeWindow<T> {
 
 
     public TimeWindow(int size,int time,  TimeUnit timeUnit) {
+        this(new Date(),size,time,timeUnit);
+
+    }
+
+    public TimeWindow(Date startTime,int size,int time, TimeUnit timeUnit) {
+
         this.capacity = timeUnit.toMillis(time);
         this.window = new Item[size];
 
         for (int i = 0; i < this.window.length; i++)
             this.window[i] = new Item<>();
 
-        this.startTimeMillis = System.currentTimeMillis();
+        this.startTimeMillis = startTime.getTime();
+
     }
 
 

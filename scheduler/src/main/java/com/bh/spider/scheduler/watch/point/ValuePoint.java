@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.watch.point;
 
+import java.util.Date;
 import java.util.function.Function;
 
 public class ValuePoint<T> extends AbstractPoint<T> {
@@ -18,7 +19,7 @@ public class ValuePoint<T> extends AbstractPoint<T> {
     public void set(T value) {
         this.value = value;
         if (value != null)
-            produce(value);
+            produce(new Date(),value);
 
         super.set(value);
     }

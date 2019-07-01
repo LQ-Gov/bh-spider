@@ -1,7 +1,10 @@
 package com.bh.spider.scheduler.watch.point;
 
+import com.bh.common.watch.WatchEvent;
+
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public abstract class AbstractPoint<T> implements Point<T> {
@@ -9,9 +12,10 @@ public abstract class AbstractPoint<T> implements Point<T> {
 
     private boolean stable;
 
-    private Set<Consumer<T>> consumers = ConcurrentHashMap.newKeySet();
+    private Set<Consumer<WatchEvent>> consumers = new HashSet<>();
 
-    public AbstractPoint(String key,boolean stable) {
+
+    public AbstractPoint(String key, boolean stable) {
         this.key = key;
         this.stable = stable;
     }
@@ -22,17 +26,17 @@ public abstract class AbstractPoint<T> implements Point<T> {
     }
 
 
-    protected void produce(T value) {
-        consumers.forEach(x -> x.consume(key(), value));
+    protected void produce(Date time, T value) {
+        consumers.forEach(x -> x.consume(key(), new WatchEvent(time, value)));
     }
 
     @Override
-    public void addConsumer(Consumer<T> consumer) {
+    public void addConsumer(Consumer<WatchEvent> consumer) {
         consumers.add(consumer);
     }
 
     @Override
-    public void removeConsumer(Consumer<T> consumer) {
+    public void removeConsumer(Consumer<WatchEvent> consumer) {
         consumers.remove(consumer);
     }
 

@@ -8,6 +8,7 @@ import com.bh.spider.scheduler.watch.point.Point;
 import com.bh.spider.scheduler.watch.point.PointNotFoundException;
 import com.bh.spider.scheduler.watch.point.Points;
 import io.netty.channel.Channel;
+import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 
 import java.util.HashMap;
@@ -23,10 +24,11 @@ public class BasicSchedulerWatchAssistant implements Assistant {
     @CommandHandler(autoComplete = false)
     public void WATCH_HANDLER(ClientContext ctx, String key) throws Exception {
 
-        Channel channel = ctx.channel();
+        Attribute<Map<String,Watcher>> attribute = ctx.channel().attr(CHANNEL_WATCH_ATTR_KEY);
 
+        attribute.setIfAbsent(new HashMap<>());
 
-        Map<String, Watcher> watchers = channel.attr(CHANNEL_WATCH_ATTR_KEY).setIfAbsent(new HashMap<>());
+        Map<String, Watcher> watchers = attribute.get();
 
         if (watchers != null && watchers.containsKey(key)) throw new Exception("已绑定");
 
@@ -40,10 +42,7 @@ public class BasicSchedulerWatchAssistant implements Assistant {
 
         watchers.put(key, watcher);
 
-        ctx.whenComplete(x -> {
-            watchers.remove(key);
-            Points.autoClean(key);
-        });
+        ctx.whenComplete(x -> watchers.remove(key));
     }
 
 
