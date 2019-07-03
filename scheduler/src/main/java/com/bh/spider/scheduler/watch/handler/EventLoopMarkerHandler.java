@@ -12,7 +12,6 @@ public class EventLoopMarkerHandler implements MarkerHandler {
         Points.<Long>of("event.loop.total.count").set(value -> value == null ? 1 : value + 1);
         Points.<Long>of("event.loop.second.count").set(value -> value == null ? 1 : value + 1);
         Points.<Long>of("event.loop.day.count").set(value -> value == null ? 1 : value + 1);
-
-        Points.<Long>of("event.loop.count:" + args[0]).set(value -> value == null ? 1 : value + 1);
+        
     }
 }

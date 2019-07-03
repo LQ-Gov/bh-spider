@@ -12,6 +12,7 @@ import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.FetchContent;
 import com.bh.spider.scheduler.fetcher.Fetcher;
+import com.bh.spider.scheduler.watch.Watch;
 import com.bh.spider.store.base.Store;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
@@ -69,13 +70,14 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
 
     @CommandHandler
-    public void SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
+    @Watch(value = "submit.request",log ="submit requests,final insert count:{}",params = {"${returnValue?1:0}"})
+    public boolean SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
         String host = req.url().getHost();
 
         DomainIndex.Node node = domainIndex.match(host, false);
 
 
-        while (node != domainIndex.root()) {
+        while (node!=null&&node != domainIndex.root()) {
             Collection<RuleFacade> rules = node.rules();
             if (rules != null) {
                 Map<RulePattern, RuleFacade> matches = new HashMap<>();
@@ -88,8 +90,8 @@ public class BasicSchedulerFetchAssistant implements Assistant {
                     List<RulePattern> patterns = new ArrayList<>(matches.keySet());
                     patterns.sort(new AntPatternComparator(req));
                     RuleFacade facade = matches.get(patterns.get(0));
-                    facade.controller().joinQueue(new FetchContent(req, Request.State.QUEUE));
-                    return;
+                    return facade.controller().joinQueue(new FetchContent(req, Request.State.QUEUE));
+
                 }
             }
             node = node.parent();
@@ -97,17 +99,22 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
         if (CollectionUtils.isNotEmpty(domainIndex.root().rules())) {
             Iterator<RuleFacade> it = domainIndex.root().rules().iterator();
-            it.next().controller().joinQueue(new FetchContent(req));
+            return it.next().controller().joinQueue(new FetchContent(req));
         }
+
+        throw new Exception("no rule match");
     }
 
 
     @CommandHandler
-    public void SUBMIT_REQUEST_BATCH_HANDLER(Context ctx,List<Request> requests) throws Exception {
+    @Watch(value = "submit.request.batch",log ="submit requests batch,submit count:{},final insert count:{}",params = {"${requests.size()}","${returnValue}"})
+    public int SUBMIT_REQUEST_BATCH_HANDLER(Context ctx,List<Request> requests) throws Exception {
+        int count =0;
         for (Request request : requests) {
-            SUBMIT_REQUEST_HANDLER(ctx, (RequestImpl) request);
-            int a =0;
+            count+= SUBMIT_REQUEST_HANDLER(ctx, (RequestImpl) request)?1:0;
         }
+
+        return count;
     }
 
 

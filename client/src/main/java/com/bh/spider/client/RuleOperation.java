@@ -1,8 +1,10 @@
 package com.bh.spider.client;
 
+import com.bh.common.watch.Rank;
 import com.bh.spider.client.sender.Sender;
 import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
+import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.rule.Rule;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
@@ -65,6 +67,11 @@ public class RuleOperation {
 
     public void pause(String host, String id) {
         sender.write(CommandCode.SCHEDULER_RULE_EXECUTOR, null, host, id, false);
+    }
+
+
+    public Rank rank(Request.State state,int size){
+        return sender.write(CommandCode.GET_RULE_RANK,Rank.class,state,size);
     }
 
 

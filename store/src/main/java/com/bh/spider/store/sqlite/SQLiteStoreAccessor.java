@@ -1,6 +1,7 @@
 package com.bh.spider.store.sqlite;
 
 import com.bh.common.utils.Json;
+import com.bh.common.watch.Rank;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.store.common.ConvertUtils;
@@ -140,6 +141,11 @@ public class SQLiteStoreAccessor implements StoreAccessor {
         }catch (Exception ignored){
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public Rank rank(Request.State state, int size) throws SQLException {
+        return null;
     }
 
     @Override

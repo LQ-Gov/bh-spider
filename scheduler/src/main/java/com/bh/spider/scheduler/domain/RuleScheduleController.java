@@ -20,7 +20,7 @@ public interface RuleScheduleController {
     void blast() throws Exception;
 
 
-    void joinQueue(Request request);
+    boolean joinQueue(Request request);
 
 
     static RuleScheduleController build(Rule rule, BasicScheduler scheduler, Store store) {

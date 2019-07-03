@@ -1,6 +1,7 @@
 package com.bh.spider.store.mysql;
 
 import com.bh.common.utils.Json;
+import com.bh.common.watch.Rank;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.store.common.ConvertUtils;
@@ -39,7 +40,7 @@ public class MYSQLStoreAccessor implements StoreAccessor {
                 "  `create_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'," +
                 "  `update_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'," +
                 "  PRIMARY KEY (`id`)," +
-                "  UNIQUE INDEX `uniq_hash_index`(`hash`) USING BTREE"+
+                "  UNIQUE INDEX `uniq_hash_index`(`hash`) USING BTREE" +
                 ") ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_unicode_ci;");
     }
 
@@ -65,12 +66,15 @@ public class MYSQLStoreAccessor implements StoreAccessor {
             String headers = Json.get().writeValueAsString(request.headers());
             String params = null;
             String extra = Json.get().writeValueAsString(request.extra());
-            runner.update("INSERT bh_spider_url(id,url,method,headers,params,extra,hash,rule_id,state) VALUES(?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
+            int returnValue = runner.update("INSERT bh_spider_url(id,url,method,headers,params,extra,hash,rule_id,state) VALUES(?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
                             "headers=?,params=?,extra=?,rule_id=?,state=?",
                     request.id(), request.url().toString(), request.method().toString(), headers, params, extra, request.hash(), ruleId, request.state().name(),
                     headers, params, extra, ruleId, request.state().name());
-            return true;
-        }catch (Exception e){
+
+
+            //如果是1 则是insert，2是update
+            return returnValue == 1;
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -80,7 +84,7 @@ public class MYSQLStoreAccessor implements StoreAccessor {
     public void update(long ruleId, Long[] reIds, Request.State state) {
         try {
             String sql = String.format("UPDATE bh_spider_url SET state=? WHERE rule_id=? AND id in (%s)", StringUtils.join(reIds, ","));
-            runner.update(sql,state.name(),ruleId);
+            runner.update(sql, state.name(), ruleId);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -91,7 +95,7 @@ public class MYSQLStoreAccessor implements StoreAccessor {
     @Override
     public void update(long id, Integer code, Request.State state, String message) {
         try {
-            int res = runner.update("UPDATE bh_spider_url SET code=?,state=? WHERE id=?",code,state.name(),id);
+            int res = runner.update("UPDATE bh_spider_url SET code=?,state=? WHERE id=?", code, state.name(), id);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -103,8 +107,8 @@ public class MYSQLStoreAccessor implements StoreAccessor {
     public List<Request> find(long ruleId, Request.State state, long size) {
 
         try {
-            return find(ruleId,state,0,size);
-        }catch (Exception e){
+            return find(ruleId, state, 0, size);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -123,10 +127,25 @@ public class MYSQLStoreAccessor implements StoreAccessor {
     }
 
     @Override
+    public Rank rank(Request.State state, final int size) throws SQLException {
+
+        String sql = "SELECT rule_id, COUNT(0) as cnt FROM bh_spider_url WHERE state=? GROUP BY rule_id ORDER BY cnt DESC LIMIT ?";
+
+        return runner.query(sql, rs -> {
+            Rank rank = new Rank(size);
+            while (rs.next()) {
+                Rank.Item it = new Rank.Item(String.valueOf(rs.getLong("rule_id")), rs.getLong("cnt"));
+                rank.add(it);
+            }
+            return rank;
+        }, state.name(), size);
+    }
+
+    @Override
     public long count(long ruleId, Request.State state) {
-        try{
+        try {
             long count = runner.query("SELECT COUNT(1) FROM bh_spider_url WHERE rule_id=? AND state=?"
-                    ,new ScalarHandler<>(),ruleId,state.name());
+                    , new ScalarHandler<>(), ruleId, state.name());
             return count;
         } catch (SQLException e) {
             e.printStackTrace();

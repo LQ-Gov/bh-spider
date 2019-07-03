@@ -104,10 +104,12 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void joinQueue(Request request) {
-        if (store.accessor().save(request, rule.getId())) {
-            waitingCount.incrementAndGet();
-        }
+    public boolean joinQueue(Request request) {
+        boolean returnValue = store.accessor().save(request, rule.getId());
+        waitingCount.incrementAndGet();
+
+        return returnValue;
+
     }
 
 

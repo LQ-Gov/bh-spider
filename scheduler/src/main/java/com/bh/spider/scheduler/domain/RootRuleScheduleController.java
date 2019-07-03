@@ -68,10 +68,12 @@ public class RootRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void joinQueue(Request request) {
+    public boolean joinQueue(Request request) {
         if(request.state()!= Request.State.ASSIGNING) {
             request = new FetchContent(request, Request.State.ASSIGNING);
-            store.accessor().save(request, rule.getId());
+            return store.accessor().save(request, rule.getId());
         }
+
+        return false;
     }
 }

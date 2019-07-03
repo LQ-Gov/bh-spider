@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler.event;
 
-import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.timer.*;
@@ -82,10 +81,10 @@ public class EventLoop extends Thread {
 
                     Object[] args = buildArgs(cmd.context(), parameters, cmd.params());
 
-                    if (before(cmd.key(), handler.mapping(), cmd.context(), handler.method(), args)) {
-                        handler.invoke(cmd.context(), args, future);
-                        after();
-                    }
+
+                    handler.invoke(cmd.context(), args, interceptors, future);
+
+
                 } catch (Exception e) {
                     cmd.context().exception(e);
                     future.completeExceptionally(e);
@@ -156,22 +155,7 @@ public class EventLoop extends Thread {
     }
 
 
-    private boolean before(CommandCode code, CommandHandler mapping, Context ctx, Method method, Object[] args) {
-        if (interceptors != null && !interceptors.isEmpty()) {
-            for (Interceptor interceptor : interceptors) {
-                if (!interceptor.before(code.name(),mapping, ctx, method, args))
-                    return false;
-            }
-        }
 
-        return true;
-
-    }
-
-
-    private void after() {
-
-    }
 
 
     private void initAssist(Assistant o) {
@@ -205,7 +189,7 @@ public class EventLoop extends Thread {
                 }
 
 
-                handlers.put(key, new CommandRunner(o, method, mapping, pool, null));
+                handlers.put(key, new CommandRunner(key,o, method, mapping, pool, null));
 
             }
         }

@@ -44,6 +44,11 @@ public class TimeWindowPoint<T> extends AbstractPoint<T> {
     }
 
     @Override
+    public T get() {
+        return window.get();
+    }
+
+    @Override
     public Point<T> createChildPoint(String key) {
         return new TimeWindowPoint<>(key,false);
     }

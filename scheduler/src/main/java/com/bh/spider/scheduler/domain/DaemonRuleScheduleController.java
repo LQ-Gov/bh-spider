@@ -61,8 +61,8 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void joinQueue(Request request) {
-
+    public boolean joinQueue(Request request) {
+        return false;
     }
 
 

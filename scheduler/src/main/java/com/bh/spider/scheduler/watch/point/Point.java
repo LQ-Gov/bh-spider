@@ -18,6 +18,8 @@ public interface Point<T> {
 
     void set(Function<T,T> function);
 
+    T get();
+
     Point<T> createChildPoint(String key);
 
     boolean stable();

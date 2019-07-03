@@ -26,7 +26,15 @@ public class ValuePoint<T> extends AbstractPoint<T> {
 
     @Override
     public void set(Function<T, T> function) {
+        this.value=function.apply(value);
+        if(value!=null){
+            produce(new Date(),value);
+        }
+    }
 
+    @Override
+    public T get() {
+        return value;
     }
 
     @Override

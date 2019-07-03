@@ -15,11 +15,11 @@ public class WatchPointKeys {
     public final static String URL_DAY_COUNT="url.day.count";
     public final static String URL_WEEK_COUNT="url.week.count";
     /**
-     * 周同比
+     * 周同比(暂未实现)
      */
     public final static String URL_WEEK_ON_WEEK_GROWN="url.week.on.week.grown";
     /**
-     * 日同比
+     * 日同比(暂未实现)
      */
     public final static String URL_DAY_ON_DAY_GROWN="url.day.on.day.grown";
 
@@ -34,25 +34,6 @@ public class WatchPointKeys {
      * 优化建议
      */
     public final static String OPTIMIZE_ADVICE="optimize.advice";
-
-
-    /**
-     * 抓取量 排行榜(
-     */
-    public final static String CRAWL_COUNT_RANK="crawl.count.rank";
-
-
-    /**
-     * 错误数排行榜
-     */
-    public final static String ERROR_COUNT_RANK="error.count.rank";
-
-
-    /**
-     * 队列等待数排行榜
-     */
-    public final static String WAITING_COUNT_RANK="waiting.count.rank";
-
 
     /**
      * url分布(错误，正在抓取,队列)

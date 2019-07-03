@@ -12,5 +12,7 @@ import java.lang.annotation.*;
 public @interface Watch {
     String value() default "";
 
-    String text() default "";
+    String log() default "";
+
+    String[] params() default {};
 }

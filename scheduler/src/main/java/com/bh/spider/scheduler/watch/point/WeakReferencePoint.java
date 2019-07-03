@@ -60,6 +60,15 @@ public class WeakReferencePoint<T> implements Point<T> {
     }
 
     @Override
+    public T get() {
+        Point<T> point = reference.get();
+        if(point!=null) {
+            return point.get();
+        }
+        return null;
+    }
+
+    @Override
     public Point<T> createChildPoint(String key) {
         Point<T> point = reference.get();
         if(point!=null) {

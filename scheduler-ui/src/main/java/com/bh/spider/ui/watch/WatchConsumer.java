@@ -23,6 +23,14 @@ public class WatchConsumer<T> implements Consumer<T> {
     }
 
 
+    protected Client client(){return client;}
+
+
+    protected String point(){return point;}
+
+    protected SseEmitter emitter(){return emitter;}
+
+
     @Override
     public boolean equals(Object obj) {
         return super.equals(obj);
@@ -37,4 +45,7 @@ public class WatchConsumer<T> implements Consumer<T> {
             emitter.complete();
         }
     }
+
+
+    public void close(){}
 }

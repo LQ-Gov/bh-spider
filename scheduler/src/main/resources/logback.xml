@@ -7,18 +7,20 @@
         </encoder>
     </appender>
 
-<!--    <appender name="FILE" class="ch.qos.logback.core.FileAppender">-->
-<!--        <file>scheduler.log</file>-->
-<!--        <append>true</append>-->
-<!--        <encoder>-->
-<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} %M - %msg%n</pattern>-->
-<!--        </encoder>-->
-<!--    </appender>-->
+    <!--    <appender name="FILE" class="ch.qos.logback.core.FileAppender">-->
+    <!--        <file>scheduler.log</file>-->
+    <!--        <append>true</append>-->
+    <!--        <encoder>-->
+    <!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} %M - %msg%n</pattern>-->
+    <!--        </encoder>-->
+    <!--    </appender>-->
 
     <appender name="ANALYSIS" class="com.bh.spider.scheduler.watch.WatchAppender">
         <handler class="com.bh.spider.scheduler.watch.handler.EventLoopMarkerHandler"/>
         <handler class="com.bh.spider.scheduler.watch.handler.RuleMarkerHandler"/>
         <handler class="com.bh.spider.scheduler.watch.handler.ComponentMarkerHandler"/>
+        <handler class="com.bh.spider.scheduler.watch.handler.RequestMarkerHandler"/>
+        <handler class="com.bh.spider.scheduler.watch.handler.NodeMarkerHandler"/>
     </appender>
 
     <!-- 异步输出 -->

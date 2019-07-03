@@ -71,6 +71,7 @@ public class Client {
 
         this.channel = SocketChannel.open(new InetSocketAddress(uri.getHost(), uri.getPort()));
 
+
         receiver = new Receiver(this.channel.socket());
         receiver.start();
 

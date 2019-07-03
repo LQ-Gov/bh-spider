@@ -67,7 +67,7 @@ public class TimeWindow<T> {
      * @return
      */
     private long advance(long currentIndex) {
-        long currentIndexTimeMillis = startTimeMillis + currentIndex * capacity;
+        long currentIndexTimeMillis = startTimeMillis + (currentIndex+1) * capacity;
         //计算出当前时间和索引处时间段的差,有可能一次跳多个
 
         long interval = System.currentTimeMillis() - currentIndexTimeMillis;

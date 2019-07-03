@@ -10,6 +10,7 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
+import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.watch.WatchInterceptor;
 import com.bh.spider.store.base.Store;
 import com.google.common.eventbus.EventBus;
@@ -55,6 +56,7 @@ public class BasicScheduler implements Scheduler, Assistant {
         this.cfg = config;
         this.me = Node.self();
         this.me.setType("DEFAULT");
+
 
     }
 
@@ -124,6 +126,7 @@ public class BasicScheduler implements Scheduler, Assistant {
         this.loop.addInterceptor(new WatchInterceptor());
 
 
+
         this.loop.listen().join();
     }
 
@@ -156,5 +159,11 @@ public class BasicScheduler implements Scheduler, Assistant {
     @CommandHandler
     public void HEART_BEAT_HANDLER(Context ctx) {
         logger.info("收到心跳信息");
+    }
+
+
+    @Override
+    public void initialized() {
+        logger.info(Markers.INIT,"scheduler init completed");
     }
 }

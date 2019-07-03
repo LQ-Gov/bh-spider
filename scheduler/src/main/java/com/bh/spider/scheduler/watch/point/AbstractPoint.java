@@ -33,6 +33,7 @@ public abstract class AbstractPoint<T> implements Point<T> {
     @Override
     public void addConsumer(Consumer<WatchEvent> consumer) {
         consumers.add(consumer);
+        notify(consumer);
     }
 
     @Override
@@ -55,5 +56,10 @@ public abstract class AbstractPoint<T> implements Point<T> {
     @Override
     public boolean stable() {
         return stable;
+    }
+
+
+    protected void notify(Consumer<WatchEvent> consumer){
+        consumer.consume(key(),new WatchEvent(new Date(),get()));
     }
 }

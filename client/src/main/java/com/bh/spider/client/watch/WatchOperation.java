@@ -91,7 +91,7 @@ public class WatchOperation {
 
         }
 
-        throw new Exception("不存在的监控点");
+        throw new Exception("不存在的监控点"+point);
     }
 
 

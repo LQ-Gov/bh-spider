@@ -17,6 +17,8 @@ public enum CommandCode {
 
     SCHEDULER_RULE_EXECUTOR,//启动或暂停
 
+    GET_RULE_RANK,
+
 
 
     PROFILE,
