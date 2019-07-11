@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.domain;
 import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.rule.Rule;
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.timer.JobContext;
@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DefaultRuleScheduleController implements RuleScheduleController {
     private final static Logger logger = LoggerFactory.getLogger(DefaultRuleScheduleController.class);
     private Rule rule;
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
     private Store store;
     private JobContext jobContext;
 
@@ -31,7 +31,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     private AtomicLong waitingCount;
     private Queue<Request> cacheQueue = new LinkedList<>();
 
-    public DefaultRuleScheduleController(BasicScheduler scheduler, Rule rule, Store store) {
+    public DefaultRuleScheduleController(Scheduler scheduler, Rule rule, Store store) {
         this.rule = rule;
         this.scheduler = scheduler;
         this.store = store;

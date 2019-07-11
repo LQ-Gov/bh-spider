@@ -55,7 +55,7 @@ public class Config {
 
 
     //节点信息配置
-    public static final String MY_ID = "cluster.node.id";
+    public static final String MY_ID = "init.cluster.node.id";
     public static final String INIT_CLUSTER_MASTER_ADDRESS="init.cluster.master.address.";
     public static final String INIT_CLUSTER_MASTER_LISTEN_PORT="init.cluster.master.listen.port";
     public static final String INIT_CLUSTER_MASTER_SYNC_PORT="init.cluster.master.sync.port";

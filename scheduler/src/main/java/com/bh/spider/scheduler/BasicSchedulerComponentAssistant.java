@@ -21,7 +21,7 @@ public class BasicSchedulerComponentAssistant implements Assistant {
         this(cfg,scheduler,new ComponentCoreFactory(cfg));
     }
 
-    public BasicSchedulerComponentAssistant(Config cfg, BasicScheduler scheduler, ComponentCoreFactory factory){
+    public BasicSchedulerComponentAssistant(Config cfg, Scheduler scheduler, ComponentCoreFactory factory){
         this.factory = factory;
     }
 

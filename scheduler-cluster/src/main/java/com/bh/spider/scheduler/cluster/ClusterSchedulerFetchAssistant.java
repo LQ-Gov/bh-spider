@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.fetch.impl.RequestImpl;
 import com.bh.spider.common.rule.Rule;
@@ -7,12 +8,13 @@ import com.bh.spider.scheduler.BasicSchedulerFetchAssistant;
 import com.bh.spider.scheduler.cluster.dispatch.Allocation;
 import com.bh.spider.scheduler.cluster.dispatch.IdlePolicy;
 import com.bh.spider.scheduler.cluster.worker.Worker;
+import com.bh.spider.scheduler.cluster.worker.Workers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.store.base.Store;
-import com.bh.common.utils.CommandCode;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
 
@@ -33,9 +35,19 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
 
     @Override
     @CommandHandler(autoComplete = false)
-    public  List<Request> FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
+    public List<Request> FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
 
-        Allocation allocation = new Allocation(scheduler.workers(), new ArrayList<>(requests));
+        Workers workers = scheduler.workers();
+        if (ArrayUtils.isNotEmpty(rule.getNodes())) {
+            List<Worker> list = new LinkedList<>();
+            Arrays.stream(rule.getNodes()).map(workers::search).forEach(list::addAll);
+            workers = new Workers(list);
+        }
+
+        if(workers.size()==0) return Collections.emptyList();
+
+
+        Allocation allocation = new Allocation(workers, new ArrayList<>(requests));
 
         allocation.consult(new IdlePolicy());
 
@@ -44,21 +56,19 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
 
 
         List<Request> returnValue = new LinkedList<>();
-        for (Map.Entry<Worker, List<Request>> entry : result.entrySet()) {
-            try {
-                Worker worker = entry.getKey();
-                List<Request> allocated = entry.getValue();
-                if(!allocated.isEmpty()) {
+        result.forEach((worker,allocated)->{
 
-                    Command cmd = new Command(ctx, CommandCode.FETCH_BATCH, allocated, rule);
-                    worker.write(cmd);
-                    returnValue.addAll(allocated);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        cacheFetchContext(ctx,returnValue);
+            if( allocated.isEmpty()) return;
+
+            Command cmd = new Command(ctx, CommandCode.FETCH_BATCH, allocated, rule);
+            worker.write(cmd);
+
+
+            returnValue.addAll(allocated);
+
+        });
+
+        cacheFetchContext(ctx, returnValue);
         return returnValue;
     }
 }

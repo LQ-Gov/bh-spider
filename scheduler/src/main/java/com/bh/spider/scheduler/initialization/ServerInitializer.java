@@ -1,17 +1,14 @@
 package com.bh.spider.scheduler.initialization;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServerInitializer implements Initializer<ServerBootstrap> {
+public class ServerInitializer implements Initializer<ChannelFuture> {
     private final static Logger logger = LoggerFactory.getLogger(ServerInitializer.class);
     private int port;
     public ChannelInitializer<SocketChannel> channelInitializer;
@@ -23,7 +20,7 @@ public class ServerInitializer implements Initializer<ServerBootstrap> {
     }
 
     @Override
-    public ServerBootstrap exec() throws Exception {
+    public ChannelFuture exec() throws Exception {
         EventLoopGroup group = new NioEventLoopGroup(1);
         ServerBootstrap server = new ServerBootstrap().group(group, new NioEventLoopGroup())
                 .channel(NioServerSocketChannel.class)
@@ -33,6 +30,8 @@ public class ServerInitializer implements Initializer<ServerBootstrap> {
         ChannelFuture local = server.bind(port).sync();
         logger.info("init command listen server:{}", port);
 
-        return server;
+
+
+        return local;
     }
 }

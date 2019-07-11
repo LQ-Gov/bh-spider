@@ -59,6 +59,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
         componentOperationRecorder.writeAll(entries);
         node.setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
 
+
     }
 
 
@@ -72,7 +73,7 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
             if (component == null) return null;
 
             if (component.isExpired()) {
-                Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT, new Object[]{name});
+                Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT, name);
                 ctx.write(cmd);
 
                 repository.waitFor(name, loadClassTimeout);

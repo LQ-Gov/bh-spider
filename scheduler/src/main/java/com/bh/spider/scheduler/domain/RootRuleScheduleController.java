@@ -3,7 +3,7 @@ package com.bh.spider.scheduler.domain;
 import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.rule.Rule;
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.fetcher.FetchContent;
@@ -22,12 +22,12 @@ public class RootRuleScheduleController implements RuleScheduleController {
     private final static Logger logger = LoggerFactory.getLogger(DefaultRuleScheduleController.class);
 
     private Rule rule;
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
     private Store store;
 
     private long offset;
 
-    public RootRuleScheduleController(BasicScheduler scheduler, Rule rule, Store store) {
+    public RootRuleScheduleController(Scheduler scheduler, Rule rule, Store store) {
         this.rule = rule;
         this.scheduler = scheduler;
         this.store = store;
@@ -51,7 +51,6 @@ public class RootRuleScheduleController implements RuleScheduleController {
     @Override
     public void blast() throws Exception {
         if (!scheduler.running()) return;
-        logger.info("Root rule blast!!!");
         List<Request> requests = store.accessor().find(rule().getId(), Request.State.ASSIGNING, offset,10);
         if(CollectionUtils.isEmpty(requests)) {
             offset = 0;

@@ -1,12 +1,14 @@
 package com.bh.spider.scheduler.fetcher;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.URLUtils;
 import com.bh.spider.common.fetch.*;
 import com.bh.spider.common.fetch.impl.RequestBuilder;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.doc.Document;
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.LocalContext;
+import com.bh.spider.scheduler.event.Command;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -22,13 +24,13 @@ import java.util.Map;
 public class BasicFetchContext implements FetchContext {
 
     private Request original;
-    private BasicScheduler sch;
+    private Scheduler sch;
 
     private Rule rule;
 
     private Map<String, Object> fields = new HashMap<>();
 
-    public BasicFetchContext(BasicScheduler scheduler, Request original, Rule rule) {
+    public BasicFetchContext(Scheduler scheduler, Request original, Rule rule) {
 
         this.sch = scheduler;
         this.original = original;
@@ -111,7 +113,8 @@ public class BasicFetchContext implements FetchContext {
             //格式化 req
         }
 
-        sch.submit(new LocalContext(sch),req);
+        sch.process(new Command(new LocalContext(sch), CommandCode.SUBMIT_REQUEST,req));
+
     }
 
     @Override
@@ -140,7 +143,7 @@ public class BasicFetchContext implements FetchContext {
     }
 
     public void schedule(FetchContext ctx,List<Request> requests,boolean local){
-        sch.submit(new LocalContext(sch),requests);
+        sch.process(new Command(new LocalContext(sch), CommandCode.SUBMIT_REQUEST_BATCH,requests));
     }
 
 

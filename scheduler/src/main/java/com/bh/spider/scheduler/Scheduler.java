@@ -17,7 +17,9 @@ public interface Scheduler {
      * @param <R>
      * @return
      */
-    <R> CompletableFuture<R> process(Command cmd);
+    default  <R> CompletableFuture<R> process(Command cmd){
+        return eventLoop().execute(cmd);
+    }
 
     /**
      * 执行调度器
@@ -46,7 +48,9 @@ public interface Scheduler {
     Node self();
 
 
-    boolean running();
+    default boolean running(){
+        return eventLoop() != null && eventLoop().running();
+    }
 
 
 

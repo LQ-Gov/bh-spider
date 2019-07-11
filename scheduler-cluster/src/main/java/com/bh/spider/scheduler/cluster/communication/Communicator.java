@@ -1,44 +1,42 @@
 package com.bh.spider.scheduler.cluster.communication;
 
-import com.bh.spider.scheduler.Config;
-import com.bh.spider.scheduler.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Set;
 
 public class Communicator {
     private final static Logger logger = LoggerFactory.getLogger(Communicator.class);
 
-    private Config cfg;
-
-
-    private Map<URI, Connection> connections = new HashMap<>();
 
     private volatile int connectionIndex=0;
 
-    public Communicator(Scheduler scheduler, Config cfg) throws URISyntaxException {
-        this.cfg = cfg;
+    private Map<InetSocketAddress,Connection> connections = new HashMap<>();
 
-        Properties properties = cfg.all(Config.INIT_CLUSTER_MASTER_ADDRESS);
+    public Communicator(List<InetSocketAddress> addresses) {
+        addresses.forEach(x->connections.put(x,null));
 
-        logger.info("cluster master address is {}",properties);
-
-        for (Object prop : properties.values()) {
-            URI uri = new URI("ftp://"+ prop);
-
-            connections.put(uri, new Connection(uri,this,scheduler));
-        }
     }
 
 
-    public void connect() throws InterruptedException {
-        for (Connection connection : connections.values())
-            connection.open();
+    public synchronized void connect(ConnectionInitializer initializer) {
+        Set<InetSocketAddress> addresses = connections.keySet();
+
+        for(InetSocketAddress address:addresses)
+            connect0(address,initializer);
+
+    }
+
+    private synchronized void connect0(InetSocketAddress address,ConnectionInitializer initializer) {
+        if (connections.get(address)==null) {
+            Connection conn = new Connection(address);
+            connections.put(address, conn);
+            conn.connect(initializer);
+        }
     }
 
 
@@ -51,5 +49,11 @@ public class Communicator {
     }
 
 
-    public void tellAll(){}
+    public void ping(Sync sync) {
+
+        for (Connection connection : connections.values()) {
+            if (connection == null) continue;
+            connection.ping(sync);
+        }
+    }
 }

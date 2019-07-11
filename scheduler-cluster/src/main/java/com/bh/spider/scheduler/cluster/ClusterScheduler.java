@@ -1,23 +1,22 @@
 package com.bh.spider.scheduler.cluster;
 
-import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
-import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.scheduler.*;
+import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
-import com.bh.spider.scheduler.cluster.initialization.RaftInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
-import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
+import com.bh.spider.scheduler.watch.Watch;
+import com.bh.spider.scheduler.watch.WatchInterceptor;
 import com.bh.spider.store.base.Store;
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
@@ -39,22 +38,17 @@ public class ClusterScheduler extends BasicScheduler {
     private Store store;
     private DomainIndex domainIndex;
 
-
-    private ServerBootstrap clientServer;
-
-    private ServerBootstrap workerServer;
-
     private EventLoop loop;
 
 
-    private Workers workers;
+
+
+    private ChannelFuture[] servers =new ChannelFuture[3];
+
+    private Workers workers = new Workers();
 
     public ClusterScheduler(Config config) throws Exception {
         super(config);
-        mid = Integer.valueOf(config().get(Config.MY_ID));
-        workers = new Workers(this);
-
-
     }
 
 
@@ -83,7 +77,7 @@ public class ClusterScheduler extends BasicScheduler {
 
         //初始化本地端口监听
         ClusterScheduler me = this;
-        this.clientServer = new ServerInitializer(Integer.valueOf(config().get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
+        servers[0] = new ServerInitializer(Integer.valueOf(config().get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
             @Override
             public void initChannel(SocketChannel ch) {
                 ch.pipeline().addLast("ping", new IdleStateHandler(60, 20, 60 * 10, TimeUnit.SECONDS));
@@ -94,11 +88,12 @@ public class ClusterScheduler extends BasicScheduler {
         }).exec();
 
 
-        this.workerServer = new ServerInitializer(Integer.valueOf(config().get(Config.INIT_CLUSTER_MASTER_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
+        servers[1] = new ServerInitializer(Integer.valueOf(config().get(Config.INIT_CLUSTER_MASTER_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
             @Override
             public void initChannel(SocketChannel ch) {
                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
                 ch.pipeline().addLast(new ClusterCommandReceiveHandler(me));
+                ch.pipeline().addLast(new ClusterCommandOutBoundHandler());
 
             }
         }).exec();
@@ -109,12 +104,15 @@ public class ClusterScheduler extends BasicScheduler {
                 new BasicSchedulerRuleAssistant(config(), this, this.store, domainIndex),
                 new ClusterSchedulerComponentAssistant(config(), this),
                 new ClusterSchedulerFetchAssistant(this, domainIndex, store),
-                new ClusterSchedulerWatchAssistant()).exec();
+                new ClusterSchedulerWatchAssistant(this),
+                new ClusterSchedulerStreamAssistant(this)).exec();
+
+        this.loop.addInterceptor(new WatchInterceptor());
+
+//        Raft raft = new RaftInitializer(this.mid,this,null,config().all(Config.INIT_CLUSTER_MASTER_ADDRESS)).exec();
 
 
-        Raft raft = new RaftInitializer(this.mid,this,null,config().all(Config.INIT_CLUSTER_MASTER_ADDRESS)).exec();
-
-        this.loop.addInterceptor(new OperationInterceptor(raft));
+//        this.loop.addInterceptor(new OperationInterceptor(raft));
 
         this.loop.listen().join();
     }
@@ -127,13 +125,16 @@ public class ClusterScheduler extends BasicScheduler {
     @CommandHandler
     public void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
 
+
         Worker worker = workers.get(ctx.sessionId());
+        if(worker!=null) {
 
-        worker.update(sync);
+            worker.update(sync);
 
-        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, sync.getComponentOperationCommittedIndex());
-
-        process(cmd);
+//            Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, sync.getComponentOperationCommittedIndex());
+//
+//            process(cmd);
+        }
     }
 
 
@@ -162,11 +163,22 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     @CommandHandler
+    @Watch(value = "worker.connected",log = "worker connected,node name:{}",params = {"${node.hostname}"})
     public void CONNECT_HANDLER(WorkerContext ctx, ClusterNode node) {
-        Worker worker = new Worker(ctx.session(), node);
-        workers.add(worker);
+        //将worker添加到workers,并分配ID
+        long id = workers.bind(new Worker(ctx.session(), node));
 
-        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, node.getComponentOperationCommittedIndex());
-        process(cmd);
+
+        //检查worker的一系列参数
+//        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, node.getComponentOperationCommittedIndex());
+//        process(cmd);
+    }
+
+    @CommandHandler
+    @Watch(value = "worker.disconnected",log="worker is disconnected,node id:{}",params = {"${session.id()}"})
+    public void DISCONNECT_HANDLER(Context ctx, Session session){
+
+        workers.unbind(session.id());
+
     }
 }

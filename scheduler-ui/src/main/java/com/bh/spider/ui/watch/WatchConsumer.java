@@ -38,7 +38,6 @@ public class WatchConsumer<T> implements Consumer<T> {
 
     @Override
     public void accept(T t) {
-        System.out.println(t);
         try {
             emitter.send(SseEmitter.event().name(point).data(t));
         } catch (Exception e) {

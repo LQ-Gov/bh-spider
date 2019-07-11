@@ -11,7 +11,7 @@ import java.util.*;
 @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS,include = JsonTypeInfo.As.EXISTING_PROPERTY,property = "_class")
 public class Rule implements Serializable {
 
-    private Class<?> _class = Rule.class;
+    private final Class<?> _class = Rule.class;
 
     private long id;
 
@@ -45,6 +45,12 @@ public class Rule implements Serializable {
 
 
     private int timeout;
+
+
+    /**
+     * 分发的节点
+     */
+    private String[] nodes;
 
     private boolean valid;
 
@@ -163,5 +169,13 @@ public class Rule implements Serializable {
 
     public void setTimeout(int timeout) {
         this.timeout = timeout;
+    }
+
+    public String[] getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(String[] nodes) {
+        this.nodes = nodes;
     }
 }

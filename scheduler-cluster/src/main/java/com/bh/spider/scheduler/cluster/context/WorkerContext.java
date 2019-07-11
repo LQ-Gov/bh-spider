@@ -1,7 +1,7 @@
 package com.bh.spider.scheduler.cluster.context;
 
 import com.bh.spider.common.fetch.FetchContext;
-import com.bh.spider.scheduler.Session;
+import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.context.AbstractCloseableContext;
 import com.bh.spider.scheduler.event.Command;
 
@@ -9,8 +9,8 @@ public class WorkerContext extends AbstractCloseableContext {
     private Session session;
     private long commandId;
 
-    public WorkerContext(Session session,long commandId){
-        this.session = session;
+    public WorkerContext(Session connection, long commandId){
+        this.session = connection;
         this.commandId = commandId;
 
     }

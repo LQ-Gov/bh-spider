@@ -25,17 +25,29 @@ public class Watcher {
     }
 
 
+    public Watcher(Context ctx, Point point, Point.Consumer<WatchEvent> consumer) {
+        this.ctx = ctx;
+        this.point = point;
+
+        this.watch(point, consumer);
+    }
+
+
     public void watch(Point point) {
 
         Point.Consumer<WatchEvent> consumer = filter == null ?
                 new DefaultPointConsumer(ctx) : new FilterPointConsumer(ctx, null);
 
+        this.watch(point, consumer);
 
+    }
+
+
+    public void watch(Point point, Point.Consumer<WatchEvent> consumer){
         point.addConsumer(consumer);
 
 
         this.ctx.whenComplete(x->point.removeConsumer(consumer));
-
     }
 
 
@@ -72,5 +84,10 @@ public class Watcher {
             if(filter.filter(value))
                 context().write(value);
         }
+    }
+
+
+    public Point point(){
+        return point;
     }
 }

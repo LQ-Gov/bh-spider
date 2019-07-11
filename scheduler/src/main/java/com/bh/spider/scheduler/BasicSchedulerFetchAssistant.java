@@ -25,19 +25,19 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
     private static final Logger logger = LoggerFactory.getLogger(BasicSchedulerFetchAssistant.class);
 
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
     private Fetcher fetcher;
     private DomainIndex domainIndex;
     private Store store;
 
     private Map<Long, Request> fetchContextCache = new ConcurrentHashMap<>();
 
-    public BasicSchedulerFetchAssistant(BasicScheduler scheduler, DomainIndex domainIndex, Store store) {
+    public BasicSchedulerFetchAssistant(Scheduler scheduler, DomainIndex domainIndex, Store store) {
         this(scheduler, new Fetcher(scheduler), domainIndex, store);
     }
 
 
-    public BasicSchedulerFetchAssistant(BasicScheduler scheduler, Fetcher fetcher, DomainIndex domainIndex, Store store){
+    public BasicSchedulerFetchAssistant(Scheduler scheduler, Fetcher fetcher, DomainIndex domainIndex, Store store){
         this.scheduler = scheduler;
         this.fetcher = fetcher;
         this.domainIndex = domainIndex;
@@ -148,6 +148,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
             fetchContextCache().remove(id);
         }
 
+
         logger.info("{}抓取完成,生成报告",id);
     }
 
@@ -163,7 +164,6 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler(cron = "*/5 * * * * ?")
     public void CLEAR_EXPIRED_FETCH_HANDLER() {
-        logger.info("清理过期fetcher");
         //清理过期的抓取,暂时不完成
     }
 }

@@ -1,37 +1,34 @@
 package com.bh.spider.scheduler.cluster.worker;
 
-import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.Session;
 import com.bh.spider.scheduler.cluster.ClusterNode;
+import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.event.Command;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
  * Created by lq on 17-3-16.
  */
 public class Worker {
 
-    private BasicScheduler scheduler = null;
-
     private transient Session session;
 
     private ClusterNode node;
 
-    public Worker(Session session,ClusterNode node) {
+    public Worker(Session session, ClusterNode node) {
         this.session = session;
 
         this.node = node;
+        this.node.setId(session.id());
     }
 
 
     public long id() {
-        return session.id();
+        return node.getId();
     }
 
 
 
-    public void write(Command cmd) throws JsonProcessingException {
+    public void write(Command cmd) {
         session.write(cmd);
     }
 
@@ -40,14 +37,15 @@ public class Worker {
         return node;
     }
 
-    public Session session(){ return session;}
 
-
-    public void update(Sync sync){
+    public void update(Sync sync) {
         node.setCapacity(sync.getCapacity());
         node.setComponentOperationCommittedIndex(sync.getComponentOperationCommittedIndex());
-    }
+        node.setCPUUtilization(sync.getCPUUtilization());
+        node.setMemoryOccupancy(sync.getMemoryOccupancy());
+        node.setDiskOccupancy(sync.getDiskOccupancy());
 
+    }
 
 
 }

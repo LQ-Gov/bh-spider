@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class BasicSchedulerRuleAssistant implements Assistant {
     private final Map<Long, RuleFacade> FACADE_CACHE = new HashMap<>();
-    private BasicScheduler scheduler;
+    private Scheduler scheduler;
     private DomainIndex domainIndex;
 
 
@@ -31,7 +31,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
     private Config cfg;
 
 
-    public BasicSchedulerRuleAssistant(Config config, BasicScheduler scheduler, Store store, DomainIndex domainIndex) throws Exception {
+    public BasicSchedulerRuleAssistant(Config config, Scheduler scheduler, Store store, DomainIndex domainIndex) throws Exception {
         this.scheduler = scheduler;
         this.domainIndex = domainIndex;
         this.cfg = config;

@@ -15,4 +15,6 @@ public @interface Watch {
     String log() default "";
 
     String[] params() default {};
+
+    boolean filterd() default false;
 }

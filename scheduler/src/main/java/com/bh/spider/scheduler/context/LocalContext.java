@@ -29,6 +29,8 @@ public class LocalContext extends AbstractCloseableContext {
 
     }
 
+
+
     @Override
     public void exception(Throwable cause) {
         cause.printStackTrace();

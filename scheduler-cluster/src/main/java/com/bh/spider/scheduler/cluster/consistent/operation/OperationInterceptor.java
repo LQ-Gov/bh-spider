@@ -27,6 +27,8 @@ public class OperationInterceptor implements Interceptor {
     @Override
     public boolean before(String key, CommandHandler mapping, Context ctx, Method method, Object[] args) {
         Operation operation = method.getAnnotation(Operation.class);
+        if(true) return true;
+
         if (operation != null) {
 
             //进行Raft同步

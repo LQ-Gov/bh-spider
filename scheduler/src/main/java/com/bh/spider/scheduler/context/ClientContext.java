@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * Created by lq on 17-4-8.
  */
-public class ClientContext extends AbstractCloseableContext {
+public class ClientContext extends AbstractCloseableContext implements WatchContext {
     private static final Logger logger = LoggerFactory.getLogger(ClientContext.class);
 
     private final static byte EXCEPTION_BYTE=0x02;

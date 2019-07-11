@@ -22,6 +22,11 @@ public interface Point<T> {
 
     Point<T> createChildPoint(String key);
 
+
+    boolean createBy(String parent);
+
+    String extendKey();
+
     boolean stable();
 
     interface Consumer<T>{

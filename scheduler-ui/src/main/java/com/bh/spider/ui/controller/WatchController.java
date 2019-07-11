@@ -35,7 +35,7 @@ public class WatchController {
     public synchronized SseEmitter watch(HttpServletRequest request, @RequestParam("point") String[] points) throws Exception {
         final HttpSession session = request.getSession();
 
-        SseEmitter emitter = new SseEmitter(30000L);
+        SseEmitter emitter = new SseEmitter(0L);
 
         System.out.println("建立了sse连接");
 

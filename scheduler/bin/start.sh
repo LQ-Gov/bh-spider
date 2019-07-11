@@ -17,7 +17,7 @@ STDOUT_FILE=$LOGS_DIR/stdout.log
 
 OPTION_ARGS=" /conf/config.properties"
 
-JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dinit.run.mode=stand-alone"
+JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dinit.run.mode=stand-alone -Dlogback.home=conf"
 
 JAVA_DEBUG_OPTS=""
 if [ "$1" = "debug" ]; then

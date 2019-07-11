@@ -6,7 +6,8 @@ public class ClusterNode extends Node {
     /**
      * 组件的操作日志索引
      */
-    private boolean alive;
+    private boolean online;
+
     private long componentOperationCommittedIndex;
 
     /**
@@ -22,6 +23,9 @@ public class ClusterNode extends Node {
         this.setIp(node.getIp());
         this.setOs(node.getOs());
         this.setType(node.getType());
+        this.setDiskOccupancy(node.getDiskOccupancy());
+        this.setMemoryOccupancy(node.getMemoryOccupancy());
+        this.setCPUUtilization(node.getCPUUtilization());
     }
 
 

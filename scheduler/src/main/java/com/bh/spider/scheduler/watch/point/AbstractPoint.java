@@ -43,6 +43,17 @@ public abstract class AbstractPoint<T> implements Point<T> {
 
 
     @Override
+    public boolean createBy(String parent) {
+        return key().startsWith(parent+":");
+    }
+
+    @Override
+    public String extendKey() {
+        int index = key().indexOf(":");
+        return index<0?null:key().substring(index+1);
+    }
+
+    @Override
     public void set(T value) {
         stable = true;
     }
@@ -59,7 +70,10 @@ public abstract class AbstractPoint<T> implements Point<T> {
     }
 
 
-    protected void notify(Consumer<WatchEvent> consumer){
-        consumer.consume(key(),new WatchEvent(new Date(),get()));
+    protected void notify(Consumer<WatchEvent> consumer) {
+        T value = get();
+        if (value != null) {
+            consumer.consume(key(), new WatchEvent(new Date(), get()));
+        }
     }
 }

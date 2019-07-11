@@ -42,6 +42,10 @@ public class WatchPointKeys {
 
 
 
+    public final static String LOG_STREAM="log.stream";
+
+
+
 
 
 }

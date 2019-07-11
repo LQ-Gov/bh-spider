@@ -24,6 +24,7 @@ public enum CommandCode {
     PROFILE,
     GET_NODE_LIST,
     CONNECT,
+    DISCONNECT,
 
 
 
@@ -69,6 +70,9 @@ public enum CommandCode {
     REPORT_EXCEPTION,//异常抓取完成报告
 
     CLEAR_EXPIRED_FETCH,//清理过期的fetcher
+
+
+    LOG_STREAM,
 
 
     ALIVE,

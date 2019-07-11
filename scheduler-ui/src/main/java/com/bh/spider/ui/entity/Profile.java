@@ -1,6 +1,6 @@
 package com.bh.spider.ui.entity;
 
-import com.bh.spider.common.member.Node;
+import com.bh.spider.ui.vo.NodeVo;
 
 import java.util.List;
 import java.util.Map;
@@ -8,11 +8,11 @@ import java.util.Map;
 public class Profile {
     private Map<String,String> base;
 
-    private List<Node> nodes;
+    private List<NodeVo> nodes;
 
     public Profile(){}
 
-    public Profile(Map<String,String> base,List<Node> nodes){
+    public Profile(Map<String,String> base,List<NodeVo> nodes){
         this.base = base;
         this.nodes = nodes;
     }
@@ -25,11 +25,11 @@ public class Profile {
         this.base = base;
     }
 
-    public List<Node> getNodes() {
+    public List<NodeVo> getNodes() {
         return nodes;
     }
 
-    public void setNodes(List<Node> nodes) {
+    public void setNodes(List<NodeVo> nodes) {
         this.nodes = nodes;
     }
 }

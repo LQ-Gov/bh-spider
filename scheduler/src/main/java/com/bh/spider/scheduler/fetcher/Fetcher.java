@@ -5,7 +5,7 @@ import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.fetch.impl.FetchResponse;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.common.rule.SeleniumRule;
-import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.Context;
 
 import java.util.Collection;
@@ -19,12 +19,12 @@ import java.util.stream.Collectors;
  * Created by lq on 17-3-17.
  */
 public class Fetcher {
-    private BasicScheduler scheduler = null;
+    private Scheduler scheduler = null;
 
 
     private volatile ThreadPoolExecutor workers = null;
 
-    public Fetcher(BasicScheduler scheduler, int workerCount) {
+    public Fetcher(Scheduler scheduler, int workerCount) {
 
         this.scheduler = scheduler;
         workerCount = workerCount <= 0 ? Runtime.getRuntime().availableProcessors() : workerCount;
@@ -33,7 +33,7 @@ public class Fetcher {
 
     }
 
-    public Fetcher(BasicScheduler scheduler) {
+    public Fetcher(Scheduler scheduler) {
         this(scheduler, 0);
     }
 

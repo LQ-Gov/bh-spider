@@ -14,7 +14,7 @@ import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.watch.WatchInterceptor;
 import com.bh.spider.store.base.Store;
 import com.google.common.eventbus.EventBus;
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,7 +39,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     private Store store = null;
 
-    private ServerBootstrap server;
+    private ChannelFuture server;
 
     private EventLoop loop = null;
 
@@ -54,19 +53,11 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     public BasicScheduler(Config config) throws Exception {
         this.cfg = config;
-        this.me = Node.self();
-        this.me.setType("DEFAULT");
-
-
+        this.me = Node.self("DEFAULT");
     }
 
     public BasicScheduler(Config config, Node node) {
 
-    }
-
-    @Override
-    public <R> CompletableFuture<R> process(Command cmd) {
-        return eventLoop().execute(cmd);
     }
 
     @Override
@@ -84,11 +75,6 @@ public class BasicScheduler implements Scheduler, Assistant {
         return me;
     }
 
-    @Override
-    public boolean running() {
-        return eventLoop() != null && eventLoop().running();
-    }
-
 
     @Override
     public synchronized void exec() throws Exception {
@@ -104,6 +90,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
         //初始化本地端口监听
         Scheduler me = this;
+
         this.server = new ServerInitializer(Integer.valueOf(cfg.get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
             @Override
             public void initChannel(SocketChannel ch) {

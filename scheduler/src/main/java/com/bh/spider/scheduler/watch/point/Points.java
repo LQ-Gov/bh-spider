@@ -107,6 +107,9 @@ public class Points {
         register(new ValuePoint<Component>(WatchPointKeys.SUBMIT_COMPONENT));
         register(new TimeWindowPoint<>(WatchPointKeys.REQUEST_FREQUENCY));
 
+
+        register(new ValuePoint<String>(WatchPointKeys.LOG_STREAM));
+
     }
 
 }
