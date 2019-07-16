@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler.cluster.context;
 
-import com.bh.spider.common.fetch.FetchContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.context.ContextEventHandler;
 
@@ -16,11 +15,6 @@ public class RaftContext implements Context {
 
     @Override
     public void exception(Throwable cause) {
-
-    }
-
-    @Override
-    public void crawled(FetchContext fetchContext) throws Exception {
 
     }
 

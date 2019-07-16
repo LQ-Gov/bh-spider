@@ -16,7 +16,6 @@
     <!--    </appender>-->
 
     <appender name="ANALYSIS" class="com.bh.spider.scheduler.watch.WatchAppender">
-        <filter class="com.bh.spider.scheduler.watch.StreamFilter"/>
         <handler class="com.bh.spider.scheduler.watch.handler.EventLoopMarkerHandler"/>
         <handler class="com.bh.spider.scheduler.watch.handler.RuleMarkerHandler"/>
         <handler class="com.bh.spider.scheduler.watch.handler.ComponentMarkerHandler"/>

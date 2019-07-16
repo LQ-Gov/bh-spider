@@ -1,15 +1,18 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.*;
@@ -112,7 +115,7 @@ public class ClusterScheduler extends BasicScheduler {
 //        Raft raft = new RaftInitializer(this.mid,this,null,config().all(Config.INIT_CLUSTER_MASTER_ADDRESS)).exec();
 
 
-//        this.loop.addInterceptor(new OperationInterceptor(raft));
+        this.loop.addInterceptor(new OperationInterceptor(null));
 
         this.loop.listen().join();
     }
@@ -131,9 +134,9 @@ public class ClusterScheduler extends BasicScheduler {
 
             worker.update(sync);
 
-//            Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, sync.getComponentOperationCommittedIndex());
-//
-//            process(cmd);
+            Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, sync.getComponentOperationCommittedIndex());
+
+            process(cmd);
         }
     }
 
@@ -176,7 +179,7 @@ public class ClusterScheduler extends BasicScheduler {
 
     @CommandHandler
     @Watch(value = "worker.disconnected",log="worker is disconnected,node id:{}",params = {"${session.id()}"})
-    public void DISCONNECT_HANDLER(Context ctx, Session session){
+    public void DISCONNECT_HANDLER(Context ctx, Session session) {
 
         workers.unbind(session.id());
 

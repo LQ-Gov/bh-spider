@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public interface Request extends Cloneable {
     enum State {
-        QUEUE, GOING, EXCEPTION, FINISHED,ASSIGNING
+        QUEUE, GOING, EXCEPTION, FINISHED,ASSIGNING,TIMEOUT
     }
 
     long id();

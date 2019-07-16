@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster.worker;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
@@ -8,7 +9,9 @@ import com.bh.spider.scheduler.cluster.communication.Communicator;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.initialization.CommunicatorInitializer;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Assistant;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.DirectoriesInitializer;
@@ -90,7 +93,7 @@ public class WorkerScheduler implements Scheduler, Assistant {
     }
 
     @CommandHandler
-    public void HEARTBEAT_HANDLER(Sync sync){
+    public void HEARTBEAT_HANDLER(Context ctx, Sync sync) {
 
     }
 

@@ -30,7 +30,7 @@ public class ExtractFacade {
 
     public static ExtractFacade facadeAsync(Scheduler scheduler, Context ctx, String name)throws Exception {
         Future<Callable<Class<Extractor>>> future = scheduler.process(new Command(ctx, CommandCode.LOAD_COMPONENT_ASYNC,
-                new Object[]{name, Component.Type.GROOVY}));
+                name, Component.Type.GROOVY));
 
         Callable<Class<Extractor>> callable = future.get();
 

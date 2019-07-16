@@ -58,9 +58,9 @@ public class WorkerSchedulerComponentAssistant extends BasicSchedulerComponentAs
         //写入数据
         componentOperationRecorder.writeAll(entries);
         node.setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
-
-
     }
+
+
 
 
     @CommandHandler

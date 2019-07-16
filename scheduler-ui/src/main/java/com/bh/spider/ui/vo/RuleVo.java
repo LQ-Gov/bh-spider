@@ -1,6 +1,6 @@
 package com.bh.spider.ui.vo;
 
-import com.bh.spider.common.rule.ExtractQueue;
+import com.bh.spider.common.rule.Chain;
 import com.bh.spider.common.rule.Rule;
 
 import java.util.LinkedList;
@@ -11,7 +11,7 @@ public class RuleVo  {
     private String id;
 
 
-    private List<ExtractQueue> extractors = new LinkedList<>();
+    private List<Chain> chains = new LinkedList<>();
     /**
      * 定时器
      */
@@ -37,7 +37,7 @@ public class RuleVo  {
         this.setId(String.valueOf(rule.getId()));
         this.setCron(rule.getCron());
         this.setDescription(rule.getDescription());
-        this.setExtractors(rule.getExtractors());
+        this.setChains(rule.chains());
         this.setParallelCount(rule.getParallelCount());
         this.setPattern(rule.getPattern());
         this.setPolicy(rule.getPolicy());
@@ -54,12 +54,12 @@ public class RuleVo  {
         this.id = id;
     }
 
-    public List<ExtractQueue> getExtractors() {
-        return extractors;
+    public List<Chain> getChains() {
+        return chains;
     }
 
-    public void setExtractors(List<ExtractQueue> extractors) {
-        this.extractors = extractors;
+    public void setChains(List<Chain> chains) {
+        this.chains = chains;
     }
 
     public String getCron() {

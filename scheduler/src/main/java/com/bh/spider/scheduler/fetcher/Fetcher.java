@@ -40,10 +40,11 @@ public class Fetcher {
 
     /**
      * 主要的抓取方法
+     *
      * @param ctx 从客户端或其他端跟踪过来的Context
      * @param req 要抓取的请求
      */
-    public void fetch(Context ctx, Request req, Rule rule) {
+    public void fetch(Context ctx, Request req, Rule rule, FetchCallback callback) {
 
 
         FetchClientBuilder builder = rule instanceof SeleniumRule ?
@@ -59,20 +60,20 @@ public class Fetcher {
         //这里还需执行component yeah!!!
 
 
-        execute(client, context).whenComplete((result, e) -> this.fetchCallback(ctx, context, result, e));
+        execute(client, context).whenComplete((response, e) -> executeCallback(context, response, e, callback));
 
 
     }
 
 
-    public int  capacity() {
+    public int capacity() {
         return Math.max(workers.getCorePoolSize() * 2 - workers.getQueue().size(), 0);
     }
 
 
-    public void fetch(Context ctx,Collection<Request> requests,Rule rule) {
-        for(Request req:requests)
-            fetch(ctx,req,rule);
+    public void fetch(Context ctx, Collection<Request> requests, Rule rule, FetchCallback callback) {
+        for (Request req : requests)
+            fetch(ctx, req, rule, callback);
     }
 
 
@@ -98,27 +99,43 @@ public class Fetcher {
     }
 
 
+    //此方法由CompletableFuture回调调用
+//    private void executeCallback(Context ctx, FetchContext fetchContext, FetchResponse response, Throwable e,FetchCallback callback) {
+//        if (e != null) {
+//            e.printStackTrace();
+//            ctx.exception(e);
+//            return;
+//        }
+//
+//        try {
+//            //进行到此处则抓取完成,接下来则由跟踪过来的context进行处理进行处理
+//            fetchContext = new FinalFetchContext(fetchContext, response);
+//
+//
+//            ctx.crawled(fetchContext);
+//        } catch (Exception ex) {
+//            ctx.exception(ex);
+//        }
+//
+//    }
 
     //此方法由CompletableFuture回调调用
-    private void fetchCallback(Context ctx, FetchContext fetchContext, FetchResponse response, Throwable e) {
+    private void executeCallback(FetchContext fetchContext, FetchResponse response, Throwable e, FetchCallback callback) {
         if (e != null) {
-            e.printStackTrace();
-            ctx.exception(e);
+            callback.exception(e);
+            return;
         }
-        else {
-            try {
-                //进行到此处则抓取完成,接下来则由跟踪过来的context进行处理进行处理
-                fetchContext = new FinalFetchContext(fetchContext, response);
-                ctx.crawled(fetchContext);
-            } catch (Exception ex) {
-                ctx.exception(ex);
-            }
-        }
+
+        //进行到此处则抓取完成,接下来则由跟踪过来的context进行处理进行处理
+        fetchContext = new FinalFetchContext(fetchContext, response);
+
+        callback.run(fetchContext, response);
+
+
     }
 
 
-
-    private CompletableFuture<FetchResponse> execute(FetchClient client,FetchContext ctx) {
+    private CompletableFuture<FetchResponse> execute(FetchClient client, FetchContext ctx) {
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         this.workers.execute(() -> {
             try {

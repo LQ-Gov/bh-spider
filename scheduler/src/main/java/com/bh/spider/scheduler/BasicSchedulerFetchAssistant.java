@@ -12,14 +12,16 @@ import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.FetchContent;
 import com.bh.spider.scheduler.fetcher.Fetcher;
+import com.bh.spider.scheduler.fetcher.callback.ClientFetchCallback;
+import com.bh.spider.scheduler.fetcher.callback.ScheduleFetchCallback;
 import com.bh.spider.scheduler.watch.Watch;
 import com.bh.spider.store.base.Store;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicSchedulerFetchAssistant implements Assistant {
 
@@ -30,14 +32,15 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     private DomainIndex domainIndex;
     private Store store;
 
-    private Map<Long, Request> fetchContextCache = new ConcurrentHashMap<>();
+    private HashMap<Long, Cache> fetchContextCache = new HashMap<>();
+
 
     public BasicSchedulerFetchAssistant(Scheduler scheduler, DomainIndex domainIndex, Store store) {
         this(scheduler, new Fetcher(scheduler), domainIndex, store);
     }
 
 
-    public BasicSchedulerFetchAssistant(Scheduler scheduler, Fetcher fetcher, DomainIndex domainIndex, Store store){
+    public BasicSchedulerFetchAssistant(Scheduler scheduler, Fetcher fetcher, DomainIndex domainIndex, Store store) {
         this.scheduler = scheduler;
         this.fetcher = fetcher;
         this.domainIndex = domainIndex;
@@ -45,39 +48,46 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     }
 
 
-    protected Scheduler scheduler(){return scheduler;}
-
-
-    protected Fetcher fetcher(){return fetcher;}
-
-
-    protected void cacheFetchContext(Context ctx,Request request){
-        if(request!=null) this.fetchContextCache.put(request.id(),request);
+    protected Scheduler scheduler() {
+        return scheduler;
     }
 
 
-    protected void cacheFetchContext(Context ctx,List<Request> requests) {
+    protected Fetcher fetcher() {
+        return fetcher;
+    }
+
+
+    protected void cacheFetchContext(Context ctx, Request request, Rule rule) {
+        if (request != null) {
+            long timeout = rule.getTimeout() <= 0 ? 10000 : rule.getTimeout();
+            Cache cache = new Cache(rule.getId(), request, timeout);
+            this.fetchContextCache.put(request.id(), cache);
+        }
+    }
+
+
+    protected void cacheFetchContext(Context ctx, List<Request> requests, Rule rule) {
         if (requests == null) return;
 
         for (Request request : requests)
-            cacheFetchContext(ctx, request);
+            cacheFetchContext(ctx, request, rule);
     }
 
-    protected Map<Long,Request> fetchContextCache(){
+    protected Map<Long, Cache> fetchContextCache() {
         return fetchContextCache;
     }
 
 
-
     @CommandHandler
-    @Watch(value = "submit.request",log ="submit requests,final insert count:{}",params = {"${returnValue?1:0}"})
+    @Watch(value = "submit.request", log = "submit requests,final insert count:{}", params = {"${returnValue?1:0}"})
     public boolean SUBMIT_REQUEST_HANDLER(Context ctx, RequestImpl req) throws Exception {
         String host = req.url().getHost();
 
         DomainIndex.Node node = domainIndex.match(host, false);
 
 
-        while (node!=null&&node != domainIndex.root()) {
+        while (node != null && node != domainIndex.root()) {
             Collection<RuleFacade> rules = node.rules();
             if (rules != null) {
                 Map<RulePattern, RuleFacade> matches = new HashMap<>();
@@ -107,26 +117,27 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
 
     @CommandHandler
-    @Watch(value = "submit.request.batch",log ="submit requests batch,submit count:{},final insert count:{}",params = {"${requests.size()}","${returnValue}"})
-    public int SUBMIT_REQUEST_BATCH_HANDLER(Context ctx,List<Request> requests) throws Exception {
-        int count =0;
+    @Watch(value = "submit.request.batch", log = "submit requests batch,submit count:{},final insert count:{}", params = {"${requests.size()}", "${returnValue}"})
+    public int SUBMIT_REQUEST_BATCH_HANDLER(Context ctx, List<Request> requests) throws Exception {
+        int count = 0;
         for (Request request : requests) {
-            count+= SUBMIT_REQUEST_HANDLER(ctx, (RequestImpl) request)?1:0;
+            count += SUBMIT_REQUEST_HANDLER(ctx, (RequestImpl) request) ? 1 : 0;
         }
 
         return count;
     }
 
-
     /**
      * 重要的 command handler，正式开始抓取!!!
-     * @param ctx 该ctx可能的来源:1.client,2.平台本身的常规任务调度
+     *
+     * @param ctx  该ctx可能的来源:1.client,2.平台本身的常规任务调度
      * @param req
      * @param rule
      */
     @CommandHandler(autoComplete = false)
     public boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
-        fetcher.fetch(ctx, req, rule);
+
+        fetcher.fetch(ctx, req, rule,new ClientFetchCallback(ctx));
         return true;
     }
 
@@ -136,25 +147,25 @@ public class BasicSchedulerFetchAssistant implements Assistant {
         List<Request> returnValue = new LinkedList<>(requests);
 
 
-        fetcher.fetch(ctx, requests, rule);
-        cacheFetchContext(ctx, returnValue);
+        fetcher.fetch(ctx, requests, rule,new ScheduleFetchCallback(scheduler,ctx));
+        cacheFetchContext(ctx, returnValue, rule);
         return returnValue;
     }
 
     @CommandHandler
-    public void REPORT_HANDLER(Context ctx, long id,int code) {
-        if(fetchContextCache().containsKey(id)) {
-            store.accessor().update(id, code, Request.State.FINISHED,null);
+    public void REPORT_HANDLER(Context ctx, long id, int code) {
+        if (fetchContextCache().containsKey(id)) {
+            store.accessor().update(id, code, Request.State.FINISHED, null);
             fetchContextCache().remove(id);
         }
 
 
-        logger.info("{}抓取完成,生成报告",id);
+        logger.info("{}抓取完成,生成报告", id);
     }
 
 
     @CommandHandler
-    public void REPORT_EXCEPTION_HANDLER(Context ctx,long id,String message) {
+    public void REPORT_EXCEPTION_HANDLER(Context ctx, long id, String message) {
         if (fetchContextCache().containsKey(id)) {
             store.accessor().update(id, null, Request.State.EXCEPTION, message);
             fetchContextCache().remove(id);
@@ -162,8 +173,64 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     }
 
 
+    /**
+     * 暂时是比较粗暴的完成方式，
+     */
     @CommandHandler(cron = "*/5 * * * * ?")
     public void CLEAR_EXPIRED_FETCH_HANDLER() {
-        //清理过期的抓取,暂时不完成
+
+        Long[] keys = fetchContextCache().keySet().toArray(new Long[0]);
+
+
+        Set<Long> choices = new HashSet<>();
+        if (keys.length >= 30) {
+            while (choices.size() < 20) {
+                choices.add(keys[RandomUtils.nextInt(0, keys.length)]);
+            }
+        } else choices.addAll(Arrays.asList(keys));
+
+
+        Map<Long, Collection<Long>> mapping = new HashMap<>();
+
+
+        choices.stream()
+                .map(x -> fetchContextCache().get(x))
+                .filter(Cache::expired)
+                .forEach(cache -> mapping.computeIfAbsent(cache.ruleId, x -> new LinkedList<>()).add(cache.request.id()));
+
+
+        mapping.forEach((k, v) -> {
+            store.accessor().update(k, v.toArray(new Long[0]), Request.State.QUEUE);
+            v.forEach(x -> fetchContextCache().remove(x));
+        });
+
+
+    }
+
+    private static class Cache {
+        private Request request;
+
+        private long ruleId;
+        private long timeout;
+
+        private long createTime;
+
+
+        public Cache(long ruleId, Request request, long timeout) {
+            this.ruleId = ruleId;
+
+            this.request = request;
+
+            this.timeout = timeout;
+
+            this.createTime = System.currentTimeMillis();
+        }
+
+
+        public boolean expired() {
+            return timeout != 0 && (System.currentTimeMillis() - createTime) > timeout;
+        }
+
+
     }
 }

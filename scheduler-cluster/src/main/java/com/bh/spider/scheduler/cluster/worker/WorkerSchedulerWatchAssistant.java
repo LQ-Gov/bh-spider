@@ -9,7 +9,6 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.watch.Watcher;
 import com.bh.spider.scheduler.watch.point.Point;
 import com.bh.spider.scheduler.watch.point.Points;
-import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +39,5 @@ public class WorkerSchedulerWatchAssistant implements Assistant {
         if(watcher!=null){
             ((WatchContext)watcher.context()).close();
         }
-    }
-
-
-
-    @CommandHandler(cron = "*/5 * * * * ?")
-    public void CLEAR_EXPIRED_FETCH_HANDLER(){
-        logger.info("测试日志watch:{}", RandomUtils.nextLong());
     }
 }

@@ -15,7 +15,7 @@ public class Rule implements Serializable {
 
     private long id;
 
-    private List<ExtractQueue> extractors = new LinkedList<>();
+    private List<Chain> chains = new LinkedList<>();
     /**
      * 定时器
      */
@@ -47,6 +47,9 @@ public class Rule implements Serializable {
     private int timeout;
 
 
+    private boolean repeat;
+
+
     /**
      * 分发的节点
      */
@@ -76,7 +79,7 @@ public class Rule implements Serializable {
 
     public Rule(long id, Rule rule) {
         this.id = id;
-        this.extractors = rule.extractors;
+        this.chains = rule.chains;
         this.cron = rule.cron;
         this.pattern = rule.pattern;
         this.parallelCount = rule.parallelCount;
@@ -139,12 +142,12 @@ public class Rule implements Serializable {
         this.parallelCount = parallelCount;
     }
 
-    public List<ExtractQueue> getExtractors() {
-        return extractors;
+    public List<Chain> chains() {
+        return chains;
     }
 
-    public void setExtractors(List<ExtractQueue> extractors) {
-        this.extractors = extractors;
+    public void setChains(List<Chain> chains) {
+        this.chains = chains;
     }
 
     public String[] getPolicy() {
@@ -177,5 +180,13 @@ public class Rule implements Serializable {
 
     public void setNodes(String[] nodes) {
         this.nodes = nodes;
+    }
+
+    public boolean isRepeat() {
+        return repeat;
+    }
+
+    public void setRepeat(boolean repeat) {
+        this.repeat = repeat;
     }
 }

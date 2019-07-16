@@ -1,7 +1,6 @@
 package com.bh.spider.scheduler.context;
 
 import com.bh.common.utils.Json;
-import com.bh.spider.common.fetch.FetchContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -77,18 +76,6 @@ public class ClientContext extends AbstractCloseableContext implements WatchCont
     @Override
     public synchronized void exception(Throwable cause) {
         write0(cause);
-    }
-
-    @Override
-    public void crawled(FetchContext fetchContext) {
-
-        try {
-            write0(true, fetchContext.response());
-        } catch (Exception e) {
-            write0(e);
-        }
-
-
     }
 
     @Override

@@ -16,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class DefaultRuleScheduleController implements RuleScheduleController {
     private final static Logger logger = LoggerFactory.getLogger(DefaultRuleScheduleController.class);
@@ -28,16 +27,14 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
     private long unfinishedIndex;
     private long unfinishedCount;
-    private AtomicLong waitingCount;
     private Queue<Request> cacheQueue = new LinkedList<>();
 
     public DefaultRuleScheduleController(Scheduler scheduler, Rule rule, Store store) {
         this.rule = rule;
         this.scheduler = scheduler;
         this.store = store;
-        this.unfinishedIndex=0;
+        this.unfinishedIndex = 0;
         this.unfinishedCount = store.accessor().count(rule.getId(), Request.State.GOING);
-        this.waitingCount = new AtomicLong(store.accessor().count(rule.getId(), Request.State.QUEUE));
     }
 
     @Override
@@ -52,61 +49,68 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
     @Override
     public void blast() throws ExecutionException, InterruptedException {
-        if(!scheduler.running()) return;
-
-        boolean unfinished=unfinishedIndex< unfinishedCount;
-        if (waitingCount.get() <= 0 && !unfinished) return;
-
-        //当前队列里的任务总数
-        long count = unfinished?(unfinishedCount-unfinishedIndex):waitingCount.get();
-
-        //如果parallelCount为0，则为自动分配大小,这里暂时写死为10
-        long size =Math.min(rule.getParallelCount()==0?10:rule.getParallelCount(),count);
+        if (!scheduler.running()) return;
 
 
-        //先处理上次未完成的url
-        if (unfinished) {
-            Collection<Request> requests = cacheQueue.isEmpty() ?
-                    store.accessor().find(rule.getId(), Request.State.GOING, unfinishedIndex, size) :
-                    cacheQueue;
 
-            Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, requests, rule);
 
-            List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
-            if (!allocated.isEmpty())
-                unfinishedIndex += allocated.size();
+        boolean unfinished = unfinishedIndex < unfinishedCount;
 
-            requests.removeAll(allocated);
-            setCacheQueue(requests);
+        Collection<Request> requests = new LinkedList<>(cacheQueue);
 
-        } else {
-            Collection<Request> requests = cacheQueue.isEmpty() ?
-                    store.accessor().find(rule.getId(), Request.State.QUEUE, size) :
-                    cacheQueue;
+        if(requests.isEmpty()) {
+            //如果parallelCount为0，则为自动分配大小,这里暂时写死为10
+            final int total = (rule.getParallelCount() == 0 ? 10 : rule.getParallelCount()) - requests.size();
 
-            if (!requests.isEmpty()) {
-                Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, requests, rule);
+            if (total > 0) {
 
-                List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
+                int size = total - requests.size();
 
-                logger.info("任务提交完成，提交成功数量:{},剩余数量:{}", allocated.size(), requests.size() - allocated.size());
+                //先处理上次宕机未完成的
+                if (unfinished) {
+                    requests.addAll(store.accessor().find(rule.getId(), Request.State.GOING, unfinishedIndex, size));
+                } else {
+                    requests.addAll(store.accessor().find(rule.getId(), Request.State.QUEUE, size));
 
-                if (!allocated.isEmpty()) {
-                    store.accessor().update(rule.getId(),
-                            allocated.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);
-                    waitingCount.addAndGet(-1 * allocated.size());
+                    size = total - requests.size();
+
+                    if (size > 0) {
+                        requests.addAll(store.accessor().find(rule.getId(), Request.State.EXCEPTION, size));
+                        size = total - requests.size();
+                    }
+
+                    //如果 rule是repeat,则重新抓取finished状态的
+                    if (size > 0 && rule().isRepeat()) {
+                        requests.addAll(store.accessor().find(rule.getId(), Request.State.FINISHED, size));
+                    }
                 }
-
-                requests.removeAll(allocated);
-                setCacheQueue(requests);
             }
+            if (requests.isEmpty()) return;
+        }
+
+        Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, requests, rule);
+
+        List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
+
+        logger.info("任务提交完成，提交成功数量:{},剩余数量:{}", allocated.size(), requests.size() - allocated.size());
+
+        if (unfinished)
+            unfinishedIndex += allocated.size();
+
+        requests.removeAll(allocated);
+
+        setCacheQueue(requests);
+
+
+        if (!allocated.isEmpty()) {
+            store.accessor().update(rule.getId(),
+                    allocated.stream().map(Request::id).toArray(Long[]::new), Request.State.GOING);
         }
     }
 
     @Override
     public boolean joinQueue(Request request) {
         boolean returnValue = store.accessor().save(request, rule.getId());
-        waitingCount.incrementAndGet();
 
         return returnValue;
 
@@ -123,6 +127,6 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
     @Override
     public void execute() {
-        this.jobContext = scheduler.eventLoop().schedule(this::blast,this.rule.getCron());
+        this.jobContext = scheduler.eventLoop().schedule(this::blast, this.rule.getCron());
     }
 }

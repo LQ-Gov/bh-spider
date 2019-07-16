@@ -12,6 +12,8 @@ import com.bh.spider.scheduler.event.CollectionParams;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.Fetcher;
+import com.bh.spider.scheduler.fetcher.callback.ClientFetchCallback;
+import com.bh.spider.scheduler.fetcher.callback.ScheduleFetchCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +26,9 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
 
     private final ClusterNode node;
     private Fetcher fetcher;
+    private Scheduler scheduler;
     public WorkerSchedulerFetchAssistant(Scheduler scheduler) {
+        this.scheduler = scheduler;
         this.fetcher = new Fetcher(scheduler);
         this.node = (ClusterNode) scheduler.self();
 
@@ -34,7 +38,7 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler
     public boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
-        fetcher.fetch(ctx, req, rule);
+        fetcher.fetch(ctx, req, rule,new ClientFetchCallback(ctx));
         node.setCapacity(fetcher.capacity());
         return true;
     }
@@ -43,7 +47,7 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
     public List<Request> FETCH_BATCH_HANDLER(Context ctx, @CollectionParams(collectionType = List.class,argumentTypes = {RequestImpl.class}) Collection<Request> requests, Rule rule) {
         List<Request> returnValue = new LinkedList<>(requests);
 
-        fetcher.fetch(ctx, requests, rule);
+        fetcher.fetch(ctx, requests, rule,new ScheduleFetchCallback(this.scheduler,ctx));
 
         node.setCapacity(fetcher.capacity());
 

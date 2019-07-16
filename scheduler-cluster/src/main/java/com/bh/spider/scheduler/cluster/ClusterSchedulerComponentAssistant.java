@@ -1,5 +1,7 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.component.Component;
 import com.bh.spider.scheduler.BasicSchedulerComponentAssistant;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
@@ -10,8 +12,6 @@ import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
-import com.bh.common.utils.CommandCode;
-import com.bh.spider.common.component.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,6 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
         logger.info("WORKER_GET_COMPONENT_HANDLER 执行");
     }
 
-    //向worker同步component 日志
     @CommandHandler
     public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(Context ctx, long committedIndex) throws IOException {
         long localCommittedIndex = componentOperationRecorder.committedIndex();
@@ -60,6 +59,7 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
             }
         }
     }
+
 
     @Override
     @CommandHandler
