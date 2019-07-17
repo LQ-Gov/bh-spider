@@ -42,8 +42,8 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
         Component component = repository.get(name, true);
 //
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT,
-                component.getData(), component.getName(), component.getType(), component.getDescription());
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT,component);
+
         ctx.write(cmd);
         logger.info("WORKER_GET_COMPONENT_HANDLER 执行");
     }

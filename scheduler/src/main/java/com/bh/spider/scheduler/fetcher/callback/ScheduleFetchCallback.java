@@ -2,10 +2,7 @@ package com.bh.spider.scheduler.fetcher.callback;
 
 import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.component.Component;
-import com.bh.spider.common.fetch.Behaviour;
-import com.bh.spider.common.fetch.Extractor;
-import com.bh.spider.common.fetch.ExtractorChainException;
-import com.bh.spider.common.fetch.FetchContext;
+import com.bh.spider.common.fetch.*;
 import com.bh.spider.common.fetch.impl.FetchResponse;
 import com.bh.spider.common.rule.Chain;
 import com.bh.spider.common.rule.Rule;
@@ -13,10 +10,12 @@ import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.fetcher.FetchCallback;
+import com.bh.spider.scheduler.fetcher.FinalFetchContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -39,6 +38,9 @@ public class ScheduleFetchCallback implements FetchCallback {
 
     @Override
     public void run(FetchContext fetchContext, FetchResponse response) {
+        fetchContext = new ScheduleFetchContext(fetchContext,scheduler,commandContext);
+
+
         int code = fetchContext.response().code();
 
         logger.info("抓取完成:URI:{}  ,RESPONSE CODE:{}", fetchContext.url(), code);
@@ -67,10 +69,9 @@ public class ScheduleFetchCallback implements FetchCallback {
     private void execute(Chain chain, FetchContext fetchContext) throws Exception {
         String[] components = chain.components();
         for (String component : components) {
-            Future<Class<Extractor>> future = scheduler.process(new Command(commandContext, CommandCode.LOAD_COMPONENT,
-                    component, Component.Type.GROOVY));
 
-            Class<Extractor> extractorClass = future.get();
+            Class<Extractor> extractorClass = loadComponent(component);
+
 
             if (extractorClass != null) {
                 Extractor extractor = extractorClass.newInstance();
@@ -84,8 +85,56 @@ public class ScheduleFetchCallback implements FetchCallback {
 
     }
 
+    protected Class<Extractor> loadComponent(String name) throws Exception {
+        Future<Class<Extractor>> future = scheduler.process(new Command(commandContext, CommandCode.LOAD_COMPONENT,
+                name, Component.Type.GROOVY));
+
+        return future.get();
+
+    }
+
+
+
+    protected Scheduler scheduler(){
+        return scheduler;
+    }
+
+
+    protected Context context(){
+        return commandContext;
+    }
+
     @Override
     public void exception(Throwable e) {
 
+    }
+
+
+
+    private static class ScheduleFetchContext extends FinalFetchContext {
+        private Scheduler scheduler;
+
+        private Context context;
+
+
+        public ScheduleFetchContext(com.bh.spider.common.fetch.FetchContext parent, Scheduler scheduler, Context context) {
+            super(parent, parent.response());
+
+            this.scheduler = scheduler;
+
+            this.context = context;
+        }
+
+
+        @Override
+        public void schedule(com.bh.spider.common.fetch.FetchContext ctx, Request request, boolean local) {
+            this.schedule(ctx, Collections.singletonList(request), local);
+
+        }
+
+        public void schedule(com.bh.spider.common.fetch.FetchContext ctx, List<Request> requests, boolean local) {
+
+            this.scheduler.process(new Command(context, CommandCode.SUBMIT_REQUEST_BATCH, requests));
+        }
     }
 }

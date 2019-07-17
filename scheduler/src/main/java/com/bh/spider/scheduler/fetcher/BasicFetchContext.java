@@ -1,20 +1,16 @@
 package com.bh.spider.scheduler.fetcher;
 
-import com.bh.common.utils.CommandCode;
-import com.bh.common.utils.URLUtils;
-import com.bh.spider.common.fetch.*;
-import com.bh.spider.common.fetch.impl.RequestBuilder;
+import com.bh.spider.common.fetch.Cookie;
+import com.bh.spider.common.fetch.FetchContext;
+import com.bh.spider.common.fetch.Request;
+import com.bh.spider.common.fetch.Response;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.doc.Document;
 import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.context.LocalContext;
-import com.bh.spider.scheduler.event.Command;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +26,19 @@ public class BasicFetchContext implements FetchContext {
 
     private Map<String, Object> fields = new HashMap<>();
 
-    public BasicFetchContext(Scheduler scheduler, Request original, Rule rule) {
+    public BasicFetchContext(Request original, Rule rule) {
+        this(original,rule,null);
 
-        this.sch = scheduler;
+
+
+    }
+
+    public BasicFetchContext(Request original, Rule rule,Map<String,Object> fields) {
+
         this.original = original;
         this.rule = rule;
+        if (fields != null)
+            this.fields.putAll(fields);
 
     }
 
@@ -108,68 +112,29 @@ public class BasicFetchContext implements FetchContext {
     }
 
     @Override
-    public void schedule(FetchContext ctx, Request req, boolean local) {
-        if (ctx != null) {
-            //格式化 req
-        }
-
-        sch.process(new Command(new LocalContext(sch), CommandCode.SUBMIT_REQUEST,req));
-
-    }
-
-    @Override
-    public void schedule(FetchContext ctx, Request req) throws Exception {
-        schedule(ctx, req, false);
-    }
-
-    @Override
-    public void schedule(Request req) throws Exception {
-        schedule(null, req);
-    }
-
-    @Override
-    public void schedule(FetchContext ctx, String url, boolean local) throws Exception {
-        schedule(ctx, RequestBuilder.create(url).build(),local);
-    }
-
-    @Override
-    public void schedule(FetchContext ctx, String url) throws Exception {
-        schedule(ctx,url,false);
-    }
-
-    @Override
-    public void schedule(String url) throws Exception {
-        schedule(null,url);
-    }
-
-    public void schedule(FetchContext ctx,List<Request> requests,boolean local){
-        sch.process(new Command(new LocalContext(sch), CommandCode.SUBMIT_REQUEST_BATCH,requests));
-    }
-
-
-    public void schedule(FetchContext ctx,List<String> requests) throws MalformedURLException {
-        List<Request> objs = new LinkedList<>();
-        for(String req:requests){
-            req = URLUtils.format(req,this.url().getProtocol(),this.url().getHost());
-            Request obj = RequestBuilder.create(req).build();
-            objs.add(obj);
-        }
-
-        schedule(ctx,objs,false);
-
-    }
-
-
-    public void schedule(List<String> urls) throws MalformedURLException {
-
-        schedule(null,urls);
+    public void schedule(FetchContext ctx, Request req, boolean local) throws Exception {
+//        if (ctx != null) {
+//            //格式化 req
+//        }
+//
+//        sch.process(new Command(new LocalContext(sch), CommandCode.SUBMIT_REQUEST,req));
 
     }
 
 
 
-    @Override
-    public void termination() throws ExtractorChainException {
 
+
+
+
+
+
+
+     public void schedule(FetchContext ctx, List<Request> requests, boolean local){
+
+//        sch.process(new Command(new LocalContext(sch), CommandCode.SUBMIT_REQUEST_BATCH,requests));
     }
+
+
+
 }

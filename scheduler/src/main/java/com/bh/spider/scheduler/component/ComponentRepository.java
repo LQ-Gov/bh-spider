@@ -49,7 +49,7 @@ public abstract class ComponentRepository {
         if (component != null && loadContent) {
             Component o = component.clone();
 
-            Path path = Paths.get(base.toString(), component.getName());
+            Path path = Paths.get(base.toString(),join(component.getName(),componentType()));
             byte[] bytes = Files.readAllBytes(path);
             o.setData(bytes);
 

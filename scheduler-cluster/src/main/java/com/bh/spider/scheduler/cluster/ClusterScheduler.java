@@ -172,9 +172,9 @@ public class ClusterScheduler extends BasicScheduler {
         long id = workers.bind(new Worker(ctx.session(), node));
 
 
-        //检查worker的一系列参数
-//        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, node.getComponentOperationCommittedIndex());
-//        process(cmd);
+//        检查worker的一系列参数
+        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, node.getComponentOperationCommittedIndex());
+        process(cmd);
     }
 
     @CommandHandler

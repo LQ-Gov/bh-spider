@@ -9,6 +9,7 @@ import com.bh.spider.scheduler.domain.RuleFacade;
 import com.bh.spider.scheduler.domain.RulePattern;
 import com.bh.spider.scheduler.domain.pattern.AntPatternComparator;
 import com.bh.spider.scheduler.event.Assistant;
+import com.bh.spider.scheduler.event.CollectionParams;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.FetchContent;
 import com.bh.spider.scheduler.fetcher.Fetcher;
@@ -118,7 +119,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler
     @Watch(value = "submit.request.batch", log = "submit requests batch,submit count:{},final insert count:{}", params = {"${requests.size()}", "${returnValue}"})
-    public int SUBMIT_REQUEST_BATCH_HANDLER(Context ctx, List<Request> requests) throws Exception {
+    public int SUBMIT_REQUEST_BATCH_HANDLER(Context ctx,@CollectionParams(collectionType = List.class,argumentTypes = {Request.class}) List<Request> requests) throws Exception {
         int count = 0;
         for (Request request : requests) {
             count += SUBMIT_REQUEST_HANDLER(ctx, (RequestImpl) request) ? 1 : 0;

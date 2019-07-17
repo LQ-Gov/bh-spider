@@ -56,7 +56,7 @@ public class Fetcher {
         initHeaders(req);
 
         //抓取上下文
-        final FetchContext context = new BasicFetchContext(this.scheduler, req, rule);
+        final FetchContext context = new BasicFetchContext(req, rule);
         //这里还需执行component yeah!!!
 
 

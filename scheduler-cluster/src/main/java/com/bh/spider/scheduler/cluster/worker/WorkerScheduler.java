@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler.cluster.worker;
 
-import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
@@ -11,11 +10,11 @@ import com.bh.spider.scheduler.cluster.initialization.CommunicatorInitializer;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Assistant;
-import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.DirectoriesInitializer;
 import com.bh.spider.scheduler.initialization.EventLoopInitializer;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 import java.nio.file.Paths;
 
@@ -101,6 +100,7 @@ public class WorkerScheduler implements Scheduler, Assistant {
     public void initialized() {
         Scheduler scheduler = this;
         this.communicator.connect(connection -> {
+                    connection.channel().pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 8+2, 4));
                     connection.channel().pipeline().addLast(new WorkerCommandInBoundHandler(scheduler, connection));
                     connection.channel().pipeline().addLast(new WorkerCommandOutBoundHandler());
                 }

@@ -41,7 +41,7 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
 
     @Override
     @CommandHandler(autoComplete = false)
-    public List<Request> FETCH_BATCH_HANDLER(Context ctx, Collection<Request> requests, Rule rule) {
+    public List<Request> FETCH_BATCH_HANDLER(Context ctx,  Collection<Request> requests, Rule rule) {
 
         Workers workers = scheduler.workers();
 
