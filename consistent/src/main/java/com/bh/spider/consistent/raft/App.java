@@ -15,9 +15,9 @@ public class App {
     public static void main(String[] args) throws Exception {
         //建立raftNode
 
-        Node[] nodes = new Node[2];
+        Node[] nodes = new Node[1];
         nodes[0] = new Node(1,"127.0.0.1",9930);
-        nodes[1] = new Node(2,"127.0.0.1",9931);
+//        nodes[1] = new Node(2,"127.0.0.1",9931);
 //        nodes[2] = new Node(3,"127.0.0.1",9932);
 
 
@@ -38,7 +38,7 @@ public class App {
         }
 
 
-        //建立kv store
+        //建立kv store(状态机)
 
 
 

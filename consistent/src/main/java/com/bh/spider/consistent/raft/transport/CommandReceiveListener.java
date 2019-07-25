@@ -1,6 +1,7 @@
 package com.bh.spider.consistent.raft.transport;
 
 import com.bh.spider.consistent.raft.Message;
+import com.bh.spider.consistent.raft.node.RaftNode;
 
 /**
  * @author liuqi19
@@ -9,5 +10,5 @@ import com.bh.spider.consistent.raft.Message;
 public interface CommandReceiveListener {
 
 
-    void receive(Connection connection, Message message) throws Exception;
+    void receive(RaftNode from, Message message);
 }

@@ -6,10 +6,6 @@ package com.bh.spider.consistent.raft;
  */
 public enum  MessageType {
     /**
-     * 连接消息
-     */
-    CONNECT,
-    /**
      * 当Follower节点的选举计时器超时，会发送MsgHup消息
      */
     HUP,
@@ -17,6 +13,8 @@ public enum  MessageType {
      * Leader发送心跳，主要作用是探活，Follower接收到MsgBeat会重置选举计时器，防止Follower发起新一轮选举
      */
     BEAT,
+
+    //region 几个基本常用消息类型
     /**
      * 客户端发往到集群的写请求是通过MsgProp消息表示的
      */
@@ -31,20 +29,6 @@ public enum  MessageType {
     APP_RESP,
 
     /**
-     * 当PreCandidate状态节点收到半数以上的投票之后，会发起新一轮的选举，即向集群中的其他节点发送MsgVote消息
-     */
-    VOTE,
-
-    /**
-     * MsgVote选举消息响应的消息
-     */
-    VOTE_RESP,
-    /**
-     * Leader向Follower发送快照信息
-     */
-    SNAP,
-
-    /**
      * Leader发送的心跳消息
      */
     HEARTBEAT,
@@ -53,6 +37,29 @@ public enum  MessageType {
      * Follower处理心跳回复返回的消息类型
      */
     HEARTBEAT_RESP,
+
+    /**
+     * Leader向Follower发送快照信息
+     */
+    SNAP,
+
+
+    //endregion
+
+    /**
+     * 当PreCandidate状态节点收到半数以上的投票之后，会发起新一轮的选举，即向集群中的其他节点发送MsgVote消息
+     */
+    VOTE,
+
+    /**
+     * MsgVote选举消息响应的消息
+     */
+    VOTE_RESP,
+
+
+
+
+
 
     /**
      * Follower消息不可达

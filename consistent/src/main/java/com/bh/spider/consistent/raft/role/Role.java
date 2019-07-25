@@ -1,8 +1,7 @@
 package com.bh.spider.consistent.raft.role;
 
 import com.bh.spider.consistent.raft.Message;
-
-import java.util.concurrent.CompletableFuture;
+import com.bh.spider.consistent.raft.RaftContext;
 
 /**
  * @author liuqi19
@@ -13,5 +12,5 @@ public interface Role {
 
     void tick();
 
-    void handler(Message message, CompletableFuture<Object> future);
+    void handle(RaftContext context, Message message);
 }

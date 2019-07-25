@@ -5,6 +5,7 @@ package com.bh.spider.consistent.raft;
  * @version : HardState, 2019-04-23 17:12 liuqi19
  */
 public class HardState {
+    public final static HardState EMPTY=new HardState(0L,0,0L);
     private Long term;
 
     private Integer vote;
@@ -29,9 +30,4 @@ public class HardState {
 
     public Long committed(){return committed;}
 
-
-
-    public boolean isValid(){
-        return !(term==null&&vote==null&&committed==null);
-    }
 }

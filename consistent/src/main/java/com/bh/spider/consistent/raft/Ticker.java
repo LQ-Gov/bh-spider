@@ -24,6 +24,8 @@ public class Ticker {
 
     private Runnable runnable;
 
+    private boolean resting = true;
+
 
     private Timer timer = new Timer();
 
@@ -34,27 +36,25 @@ public class Ticker {
     }
 
 
-
-
-    public Ticker run(){
-        timer.schedule(new Task(),0,period);
+    public Ticker run() {
+        timer.schedule(new Task(), 0, period);
         return this;
     }
 
 
-    public int halfLease(){
-        return lease/2;
+    public int halfLease() {
+        return lease / 2;
     }
 
 
-    public int randomLease(){
+    public int randomLease() {
         return RandomUtils.nextInt(0, this.lease);
     }
 
 
     public void reset(boolean randomInc) {
 
-        reset(randomInc ?randomLease() : 0);
+        reset(randomInc ? randomLease() : 0);
 
     }
 
@@ -66,10 +66,19 @@ public class Ticker {
     }
 
 
-    public void reset(){
+    public void reset() {
         reset(0);
     }
 
+
+    public boolean resting() {
+        return resting;
+    }
+
+
+    public long remain() {
+        return (lease + randomizedLease) - elapsed;
+    }
 
 
     private class Task extends TimerTask {
@@ -78,10 +87,14 @@ public class Ticker {
         @Override
         public synchronized void run() {
             if (++elapsed >= (lease + randomizedLease)) {
+                resting = false;
+
 
                 runnable.run();
 
                 elapsed = 0;
+
+                resting = true;
             }
         }
     }

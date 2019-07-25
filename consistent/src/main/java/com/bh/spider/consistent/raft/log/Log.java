@@ -1,5 +1,6 @@
 package com.bh.spider.consistent.raft.log;
 
+import com.bh.common.utils.ArrayUtils;
 import com.bh.spider.consistent.raft.Actuator;
 import com.bh.spider.consistent.raft.HardState;
 import com.bh.spider.consistent.raft.Raft;
@@ -21,6 +22,7 @@ public class Log {
 
     private final static Logger logger = LoggerFactory.getLogger(Log.class);
 
+    private final Raft raft;
 
     private Unstable unstable;
 
@@ -43,6 +45,8 @@ public class Log {
 
     public Log(Raft raft, Snapshotter snapshotter, WAL wal, Actuator actuator) {
 
+        this.raft = raft;
+
         this.committed = -1;
 
         this.unstable = new Unstable(0);
@@ -53,10 +57,10 @@ public class Log {
     }
 
 
-    public void recover(Snapshot snapshot, List<Entry> entries) {
+    public void recover(Snapshot.Metadata metadata, List<Entry> entries) {
         long offset = 0, committed = -1;
         if (CollectionUtils.isNotEmpty(entries)) {
-            offset = entries.get(entries.size() - 1).index();
+            offset = entries.get(entries.size() - 1).index()+1;
             committed = entries.get(0).index() - 1;
             this.entries = new LinkedList<>(entries);
         }
@@ -64,6 +68,7 @@ public class Log {
         this.unstable = new Unstable(offset);
 
         this.committed = committed;
+        this.applied = committed;
 
     }
 
@@ -72,13 +77,67 @@ public class Log {
         return committed;
     }
 
-    public synchronized boolean append(Entry[] entries) {
+    public long append(Entry[] entries) {
+        if (ArrayUtils.isEmpty(entries)) return this.lastIndex();
+
+        if (entries[0].index() - 1 < this.committed) {
+            logger.error("after({}) is out of range [committed({})]", entries[0].index(), this.committed);
+        }
+
+
         unstable.append(entries);
 
-        synchronized (this.persistent) {
-            this.persistent.notify();
+
+        synchronized (raft) {
+            this.raft.notify();
         }
-        return true;
+
+        return this.lastIndex();
+    }
+
+
+    public long append(Entry.Collection collection) {
+        if (collection == null) return -1;
+
+        if (this.term(collection.index()) != collection.term()) {
+            logger.error("Entry collection term:({}),index:({}),not match with current log", collection.term(), collection.index());
+            return -1;
+        }
+
+        long conflictIndex = findConflict(collection.entries());
+
+
+        Entry[] entries = ArrayUtils.subarray(collection.entries(), (int) (conflictIndex - collection.firstIndex()), collection.size());
+
+        this.append(entries);
+
+        this.commitTo(Math.min(collection.committedIndex(), collection.lastIndex()));
+
+        synchronized (raft) {
+            this.raft.notify();
+        }
+
+        return collection.lastIndex();
+
+    }
+
+
+    private long findConflict(Entry[] entries) {
+        for (Entry entry : entries) {
+            long index = entry.index();
+
+            if (this.term(index) != entry.index()) {
+
+                if (index < this.lastIndex()) {
+                    logger.error("found conflict at index {} [existing term: {}, conflicting term: {}]",
+                            index, this.term(index), entry.term());
+                }
+
+                return index;
+            }
+        }
+
+        return 0;
     }
 
 
@@ -99,7 +158,7 @@ public class Log {
 
     public boolean commit(long term, long index) {
 
-        if (index > this.committed) {
+        if (index > this.committed && this.term(index) == term) {
             this.commitTo(index);
             return true;
         }
@@ -125,7 +184,7 @@ public class Log {
      *
      * @return
      */
-    public List<Entry> unstableEntries() {
+    private List<Entry> unstableEntries() {
         return new UnmodifiableList<>(unstable.entries());
     }
 
@@ -136,8 +195,8 @@ public class Log {
      * entries after the index of snapshot.
      */
 
-    public List<Entry> nextEntries() {
-        long off = Math.max(this.applied, this.unstable.firstIndex());
+    private List<Entry> nextEntries() {
+        long off = Math.max(this.applied, this.firstIndex());
 
         if (committed > off) {
             return this.slice(off, committed + 1, Integer.MAX_VALUE);
@@ -156,8 +215,11 @@ public class Log {
         if (index < firstIndex() || index > lastIndex())
             return -1;
 
+        //先检查unstable状态的数据
+
         long t = unstable.term(index);
 
+        //检查已
         if (t == -1) {
             if (this.entries.isEmpty()) return -1;
 
@@ -194,6 +256,11 @@ public class Log {
     }
 
 
+    public long lastTerm() {
+        return 0;
+    }
+
+
     private List<Entry> slice(long lo, long hi, int size) {
 
         List<Entry> entries = new LinkedList<>();
@@ -222,6 +289,11 @@ public class Log {
     }
 
 
+    public boolean compare(long term, long index) {
+        return true;
+    }
+
+
     public void stableTo(long term, long index) {
         List<Entry> stabled = this.unstable.stableTo(term, index);
         if (stabled != null) {
@@ -247,7 +319,7 @@ public class Log {
     private class Persistent extends Thread {
 
 
-        private Raft raft;
+        private final Raft raft;
 
         private WAL wal;
 
@@ -275,19 +347,17 @@ public class Log {
 
             while (true) {
 
-                synchronized (this) {
-
+                synchronized (raft) {
                     try {
-
-
                         long appliedIndex = -1;
                         List<Entry> entries = Log.this.unstableEntries();
 
                         List<Entry> committedEntries = Log.this.nextEntries();
 
                         if (CollectionUtils.isEmpty(entries) && CollectionUtils.isEmpty(committedEntries)) {
-                            this.wait(1000 * 60 * 10);
+                            raft.wait(1000 * 60 * 10);
                             continue;
+
                         }
 
 
@@ -296,8 +366,8 @@ public class Log {
                         if (CollectionUtils.isNotEmpty(entries)) {
 
                             this.wal.save(state, entries);
-
                             Entry entry = entries.get(entries.size() - 1);
+
                             Log.this.stableTo(entry.term(), entry.index());
 
                         }
@@ -311,26 +381,29 @@ public class Log {
 
                                 this.actuator.apply(entry.data());
 
+
+                                logger.info("applyIndex:{}",appliedIndex);
+
                                 appliedIndex = entry.index();
                             }
                         }
 
                         //生成快照
-                        if (appliedIndex - snapshotter.lastIndex() >= Snapshotter.SNAP_COUNT_THRESHOLD) {
-
-
-                            Entry entry = Log.this.entry(appliedIndex);
-
-                            byte[] snap = this.actuator.snapshot();
-
-                            Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
-
-
-                            snapshotter.save(snapshot);
-
-
-                            this.wal.save(snapshot.metadata());
-                        }
+//                        if (appliedIndex - snapshotter.lastIndex() >= Snapshotter.SNAP_COUNT_THRESHOLD) {
+//
+//
+//                            Entry entry = Log.this.entry(appliedIndex);
+//
+//                            byte[] snap = this.actuator.snapshot();
+//
+//                            Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
+//
+//
+//                            snapshotter.save(snapshot);
+//
+//
+//                            this.wal.save(snapshot.metadata());
+//                        }
 
                         if (appliedIndex > 0) {
 

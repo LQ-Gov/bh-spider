@@ -1,7 +1,6 @@
 package com.bh.spider.consistent.raft.node;
 
 import com.bh.spider.consistent.raft.Message;
-import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.consistent.raft.role.*;
 import com.bh.spider.consistent.raft.transport.Connection;
 import org.slf4j.Logger;
@@ -25,11 +24,13 @@ public class LocalNode extends RaftNode {
     private Role role;
 
 
-    public LocalNode(Node node,Raft raft,Follower follower,Candidate candidate,PreCandidate preCandidate,Leader leader) {
+    public LocalNode(Node node,Follower follower,Candidate candidate,PreCandidate preCandidate,Leader leader) {
         super(node);
         this.role = new Assister();
 
         this.ROLE_CACHE = new Role[]{follower, candidate, preCandidate, leader};
+
+        this.active(true);
 
     }
     @Override

@@ -2,6 +2,7 @@ package com.bh.spider.consistent.raft.transport;
 
 import com.bh.spider.consistent.raft.Message;
 import com.bh.spider.consistent.raft.node.Node;
+import com.bh.spider.consistent.raft.node.RaftNode;
 
 /**
  * @author liuqi19
@@ -13,7 +14,7 @@ public class LocalConnection extends Connection {
     private Node node;
 
 
-    public LocalConnection(Node node, CommandReceiveListener listener ){
+    public LocalConnection(Node node, CommandReceiveListener listener) {
         this.listener = listener;
         this.node = node;
     }
@@ -21,15 +22,9 @@ public class LocalConnection extends Connection {
 
     @Override
     public void write(Object object) {
-        if(object instanceof Message) {
+        if (object instanceof Message) {
             Message msg = (Message) object;
-
-            Message result = new Message(msg.type(),msg.term(), msg.data(), node);
-
-            try {
-                listener.receive(this, result);
-            }catch (Exception e){}
-
+            listener.receive((RaftNode) node, msg);
         }
     }
 }

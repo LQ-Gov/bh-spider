@@ -19,9 +19,10 @@ public class Unstable {
     private long offset;
     private List<Entry> entries = new LinkedList<>();
 
-    public Unstable(){}
+    public Unstable() {
+    }
 
-    public Unstable(long offset){
+    public Unstable(long offset) {
         this.offset = offset;
     }
 
@@ -36,20 +37,19 @@ public class Unstable {
             // The log is being truncated to before our current offset
             // portion, so set the offset and replace the entries
         else if (after <= offset) {
-            offset = after;
+            this.offset = after;
             this.entries = new LinkedList<>(Arrays.asList(entries));
         } else {
             logger.info("truncate the unstable entries before index {}", after);
             // truncate to after and copy to u.entries
             // then append
 
-            this.entries = new LinkedList<>(this.entries.subList(0, (int) (after-offset)));
+            this.entries = new LinkedList<>(this.slice(this.offset, after));
 
             this.entries.addAll(Arrays.asList(entries));
 
         }
     }
-
 
 
     public synchronized List<Entry> entries() {
@@ -58,24 +58,24 @@ public class Unstable {
     }
 
 
-    public long firstIndex(){
-        return entries.isEmpty()?-1:entries.get(0).index();
+    public long firstIndex() {
+        return entries.isEmpty() ? -1 : entries.get(0).index();
     }
 
 
-    public long offset(){
+    public long offset() {
         return offset;
     }
 
-    public long lastIndex(){
-        if(!entries.isEmpty())
-            return offset+entries.size()-1;
+    public long lastIndex() {
+        if (!entries.isEmpty())
+            return offset + entries.size() - 1;
 
         return -1;
     }
 
 
-    public synchronized List<Entry> stableTo(long term,long index) {
+    public synchronized List<Entry> stableTo(long term, long index) {
 
         if (index >= offset) {
 
@@ -83,7 +83,7 @@ public class Unstable {
 
             this.entries = new LinkedList<>(this.entries.subList((int) (index - offset) + 1, entries.size()));
 
-            this.offset = index+1;
+            this.offset = index + 1;
 
             return stabled;
         }
@@ -91,7 +91,7 @@ public class Unstable {
     }
 
 
-    private boolean checkOutOfBounds(long lo,long hi) {
+    private boolean checkOutOfBounds(long lo, long hi) {
         if (lo > hi) return false;
 
         long upper = this.offset + this.entries.size();
@@ -100,11 +100,11 @@ public class Unstable {
     }
 
 
-    public List<Entry> slice(long lo,long hi){
-        if(this.entries.isEmpty()) return Collections.emptyList();
+    public List<Entry> slice(long lo, long hi) {
+        if (this.entries.isEmpty()) return Collections.emptyList();
 
-        if(checkOutOfBounds(lo,hi)){
-            return this.entries.subList((int)(lo-offset),(int)(hi-offset));
+        if (checkOutOfBounds(lo, hi)) {
+            return this.entries.subList((int) (lo - offset), (int) (hi - offset));
         }
 
 
@@ -112,17 +112,18 @@ public class Unstable {
     }
 
 
-
     public long term(long index) {
 
-        if (index < this.offset || index > lastIndex()) {
+        if (index < this.offset) {
             return -1;
         }
 
+        long lastIndex = lastIndex();
+
+        if (lastIndex == -1 || index > lastIndex) return -1;
+
         return entries.get((int) (index - offset)).term();
     }
-
-
 
 
 }

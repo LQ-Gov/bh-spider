@@ -35,6 +35,6 @@ public class Stashed {
 
 
     public boolean validate(){
-        return (state!=null&&state.isValid())|| CollectionUtils.isNotEmpty(entries);
+        return (state!=null&&state!=HardState.EMPTY)|| CollectionUtils.isNotEmpty(entries);
     }
 }

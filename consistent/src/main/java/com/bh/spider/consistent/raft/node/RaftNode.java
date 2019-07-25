@@ -6,40 +6,46 @@ package com.bh.spider.consistent.raft.node;
  */
 public class RaftNode extends Node {
 
-    private long index=-1;
+    private long match = -1;
 
     private long next;
 
 
     private boolean paused = false;
 
+    private boolean active = false;
 
 
     public RaftNode(Node node) {
         super(node);
-        this.next = index+1;
+        this.next = match + 1;
     }
 
-    public long next(){
+    public long next() {
         return next;
     }
 
-    public long index(){
-        return index;
+    public long match() {
+        return match;
     }
 
 
     /**
      * 更改index
+     *
      * @param index
      * @return
      */
-    public boolean advance(long index) {
-        if (this.index < index) {
-            this.index = index;
-            this.next = index+1;
+    public boolean update(long index) {
+        boolean updated = false;
+        if (this.match < index) {
+            this.match = index;
+            updated = true;
         }
-        return true;
+
+        if (this.next < index + 1)
+            this.next = index + 1;
+        return updated;
     }
 
     public boolean isPaused() {
@@ -56,5 +62,23 @@ public class RaftNode extends Node {
      */
     public void resume() {
         paused = false;
+    }
+
+
+    public void active(boolean value) {
+        this.active = value;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    /**
+     * 变为复制者
+     */
+    public void becomeProbe(){
+
+        this.next = this.match+1;
+
     }
 }

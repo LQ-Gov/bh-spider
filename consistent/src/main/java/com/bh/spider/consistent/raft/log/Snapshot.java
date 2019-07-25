@@ -1,5 +1,7 @@
 package com.bh.spider.consistent.raft.log;
 
+import com.bh.spider.consistent.raft.serialize.ProtoBufUtils;
+
 /**
  * @author liuqi19
  * @version : Snapshot, 2019-04-29 17:46 liuqi19
@@ -26,8 +28,16 @@ public class Snapshot {
 
 
 
+    public static Snapshot deserialize(byte[] data) {
+        return ProtoBufUtils.deserialize(data, Snapshot.class);
+    }
+
+
+
 
     public static class Metadata{
+        public final static Metadata EMPTY=new Metadata(-1,-1);
+
         private long term;
         private long index;
 

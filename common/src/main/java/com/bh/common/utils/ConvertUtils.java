@@ -14,7 +14,7 @@ public class ConvertUtils {
     }
 
 
-    public static int toInt(byte[] data){
+    public static Integer toInt(byte[] data){
         return ByteBuffer.wrap(data).getInt();
     }
 
@@ -23,7 +23,7 @@ public class ConvertUtils {
     }
 
 
-    public static boolean toBoolean(byte[] data){
+    public static Boolean toBoolean(byte[] data){
         return data.length==1&&data[0]>0;
     }
 
@@ -34,7 +34,7 @@ public class ConvertUtils {
     }
 
 
-    public static long toLong(byte[] data){
+    public static Long toLong(byte[] data){
         return ByteBuffer.wrap(data).getLong();
     }
 }

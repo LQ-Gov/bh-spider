@@ -1,25 +1,19 @@
 package com.bh.spider.consistent.raft.role;
 
 import com.bh.spider.consistent.raft.Message;
+import com.bh.spider.consistent.raft.RaftContext;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
 /**
  * @author liuqi19
  * @version : PreCandidate, 2019-04-17 23:31 liuqi19
  */
-public class PreCandidate implements Role {
-
-    private Runnable election;
+public class PreCandidate extends AbstractRole {
 
 
-    private BiConsumer<Message, CompletableFuture<Object>> ch;
-
-
-    public PreCandidate(Runnable election, BiConsumer<Message, CompletableFuture<Object>> commandHandler){
-        this.election = election;
-        this.ch = commandHandler;
+    public PreCandidate(Runnable tick, BiConsumer<RaftContext, Message> messageHandler) {
+        super(tick, messageHandler);
     }
 
     @Override
@@ -27,13 +21,4 @@ public class PreCandidate implements Role {
         return RoleType.PRE_CANDIDATE;
     }
 
-    @Override
-    public void tick() {
-        this.election.run();
-    }
-
-    @Override
-    public void handler(Message message,CompletableFuture<Object> future) {
-        ch.accept(message,future);
-    }
 }

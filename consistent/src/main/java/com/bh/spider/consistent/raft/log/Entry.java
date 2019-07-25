@@ -44,17 +44,20 @@ public class Entry {
 
         private long term;
 
+        private long index;
+
         private long committed;
 
         public Collection(){}
 
 
-        public Collection(Entry[] entries){
-            this(0,0,entries);
+        public Collection(Entry... entries){
+            this(0,0,0,entries);
         }
 
-        public Collection(long term,long committed, Entry[] entries){
+        public Collection(long term,long index, long committed, Entry[] entries){
             this.term = term;
+            this.index = index;
             this.committed = committed;
             this.entries = entries;
         }
@@ -64,6 +67,12 @@ public class Entry {
 
 
         public long committedIndex(){return committed;}
+
+
+        public long index(){return index;}
+
+
+        public long term(){return term;}
 
 
 
@@ -86,6 +95,10 @@ public class Entry {
                 }
             }
 
+        }
+
+        public int size(){
+            return entries==null?0: entries.length;
         }
     }
 }

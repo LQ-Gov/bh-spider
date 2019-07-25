@@ -9,12 +9,15 @@ public class Vote {
 
     private long term;
 
+    private long index;
+
     public Vote(){}
 
 
-    public Vote(int id,long term){
+    public Vote(int id,long term,long index){
         this.id = id;
         this.term = term;
+        this.index = index;
     }
 
 
@@ -22,4 +25,6 @@ public class Vote {
 
 
     public long term(){return term;}
+
+    public long index(){return index;}
 }

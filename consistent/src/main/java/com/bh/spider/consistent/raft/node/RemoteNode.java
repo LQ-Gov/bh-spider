@@ -24,8 +24,6 @@ public class RemoteNode extends RaftNode {
     }
 
 
-
-
 //    public boolean isPaused(){
 //        return paused;
 //    }

@@ -79,7 +79,8 @@ public class Snapshotter {
 
         if (data.length == 0) throw new Exception("failed to read empty snapshot file," + path.toString());
 
-        Snapshot snapshot = Json.get().readValue(data, Snapshot.class);
+
+        Snapshot snapshot = Snapshot.deserialize(data);
 
 
         return snapshot;

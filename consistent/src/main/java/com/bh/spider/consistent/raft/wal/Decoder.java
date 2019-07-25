@@ -1,6 +1,6 @@
 package com.bh.spider.consistent.raft.wal;
 
-import com.bh.common.utils.Json;
+import com.bh.spider.consistent.raft.serialize.ProtoBufUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.EOFException;
@@ -17,37 +17,36 @@ public class Decoder {
     private List<InduceFileChannel> channels;
 
 
-    public Decoder(List<InduceFileChannel> channels){
+    public Decoder(List<InduceFileChannel> channels) {
         this.channels = channels;
 
     }
 
     public Record decode() throws IOException {
-        if(CollectionUtils.isEmpty(channels)) return null;
+        if (CollectionUtils.isEmpty(channels)) return null;
 
         try {
             long l = readInt64(channels.get(0));
 
-            if(l==0) throw new EOFException();
+            if (l == 0) throw new EOFException();
 
             ByteBuffer buffer = readFull((int) l);
 
-            if(buffer==null) return null;
+            if (buffer == null) return null;
 
 
-            return Json.get().readValue(buffer.array(),Record.class);
+            return ProtoBufUtils.deserialize(buffer.array(), Record.class);
 
-        }catch (EOFException e) {
+        } catch (EOFException e) {
 
             this.channels = channels.subList(1, channels.size());
-            if(this.channels.isEmpty())
+            if (this.channels.isEmpty())
                 return null;
 
             return decode();
         }
 
     }
-
 
 
     private ByteBuffer readFull(int capacity) throws IOException {
@@ -57,12 +56,11 @@ public class Decoder {
     }
 
 
-
     private long readInt64(FileChannel channel) throws IOException {
 
         ByteBuffer buffer = ByteBuffer.allocate(8);
 
-        if( channel.read(buffer)==8) {
+        if (channel.read(buffer) == 8) {
 
             buffer.flip();
 

@@ -12,6 +12,7 @@ public class Node {
 
 
 
+    public Node(){}
 
 
     public Node(Node node){
@@ -46,12 +47,7 @@ public class Node {
 
 
 
-    /**
-     * 变为复制者
-     */
-    public void becomeProbe(){
 
-    }
 
 
 
