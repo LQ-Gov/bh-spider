@@ -10,9 +10,7 @@ import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author liuqi19
@@ -24,7 +22,7 @@ public class Log {
 
     private final Raft raft;
 
-    private Unstable unstable;
+//    private Unstable unstable;
 
     // applied is the highest log position that the application has
     // been instructed to apply to its state machine.
@@ -37,7 +35,13 @@ public class Log {
     private long committed;
 
 
-    private List<Entry> entries = new LinkedList<>();
+    private long unstable;
+
+
+    private long offset;
+
+
+    private List<Entry> entries = new ArrayList<>();
 
 
     private final Persistent persistent;
@@ -49,7 +53,13 @@ public class Log {
 
         this.committed = -1;
 
-        this.unstable = new Unstable(0);
+        this.offset = -1;
+
+        this.applied = -1;
+
+        this.unstable = -1;
+
+//        this.unstable = new Unstable(0);
 
         this.persistent = new Persistent(raft, wal, snapshotter, actuator);
 
@@ -58,18 +68,17 @@ public class Log {
 
 
     public void recover(Snapshot.Metadata metadata, List<Entry> entries) {
-        long offset = 0, committed = -1;
+        this.committed = metadata.index();
+        this.offset = metadata.index() + 1;
+
+        this.applied = metadata.index();
+
         if (CollectionUtils.isNotEmpty(entries)) {
-            offset = entries.get(entries.size() - 1).index()+1;
-            committed = entries.get(0).index() - 1;
-            this.entries = new LinkedList<>(entries);
+            this.entries.addAll(entries);
+            this.unstable = entries.get(entries.size() - 1).index() + 1;
+            this.offset = entries.get(0).index();
+
         }
-
-        this.unstable = new Unstable(offset);
-
-        this.committed = committed;
-        this.applied = committed;
-
     }
 
 
@@ -82,12 +91,26 @@ public class Log {
 
         if (entries[0].index() - 1 < this.committed) {
             logger.error("after({}) is out of range [committed({})]", entries[0].index(), this.committed);
+            return -1;
         }
 
+        long after = entries[0].index();
 
-        unstable.append(entries);
+        if (offset + this.entries.size() == after)
+            this.entries.addAll(Arrays.asList(entries));
 
+            // The log is being truncated to before our current offset
+            // portion, so set the offset and replace the entries
+        else {
+            logger.info("truncate the unstable entries before index {}", after);
 
+            List<Entry> newCollection = new ArrayList<>(this.slice(offset, after, Integer.MAX_VALUE));
+            newCollection.addAll(Arrays.asList(entries));
+            this.entries = newCollection;
+
+            if (after < this.unstable)
+                this.unstable = after;
+        }
         synchronized (raft) {
             this.raft.notify();
         }
@@ -185,7 +208,7 @@ public class Log {
      * @return
      */
     private List<Entry> unstableEntries() {
-        return new UnmodifiableList<>(unstable.entries());
+        return new UnmodifiableList<>(this.slice(unstable, lastIndex(), Integer.MAX_VALUE));
     }
 
 
@@ -215,44 +238,21 @@ public class Log {
         if (index < firstIndex() || index > lastIndex())
             return -1;
 
-        //先检查unstable状态的数据
 
-        long t = unstable.term(index);
+        return entries.get((int) (index - offset)).term();
 
-        //检查已
-        if (t == -1) {
-            if (this.entries.isEmpty()) return -1;
-
-            long offset = this.entries.get(0).index();
-
-
-            if (index < offset) return -1;
-
-            if (index - offset >= this.entries.size()) return -1;
-
-            return this.entries.get((int) (index - offset)).term();
-        }
-
-        return t;
     }
 
 
     private long firstIndex() {
-        long fi = this.unstable.firstIndex();
-        if (fi == -1) {
-            fi = CollectionUtils.isEmpty(this.entries) ? -1 : this.entries.get(0).index();
-        }
-
-        return fi;
+        return offset;
     }
 
 
     public long lastIndex() {
-        long li = this.unstable.lastIndex();
-        if (li < 0) {
-            li = CollectionUtils.isEmpty(this.entries) ? -1 : this.entries.get(this.entries.size() - 1).index();
-        }
-        return li;
+        if (!entries.isEmpty()) return entries.get(entries.size() - 1).index();
+
+        return -1;
     }
 
 
@@ -263,29 +263,17 @@ public class Log {
 
     private List<Entry> slice(long lo, long hi, int size) {
 
-        List<Entry> entries = new LinkedList<>();
 
+        hi = Math.min(lastIndex(), Math.min(lo + size, hi));
 
-        if (lo < unstable.offset() && CollectionUtils.isNotEmpty(this.entries)) {
-            long firstIndex = this.entries.get(0).index();
-            List<Entry> sub = this.entries.subList((int) (lo - firstIndex), (int) ((Math.min(hi, unstable.offset()) - firstIndex)));
+        if (lo >= this.offset) {
+            List<Entry> entries = this.entries.subList((int) (lo - this.offset), (int) (hi - offset));
 
-
-            if (sub.size() < Math.min(hi, unstable.offset()) - lo)
-                return entries;
-
-            entries.addAll(sub);
+            return Collections.unmodifiableList(entries);
         }
 
-        if (hi > unstable.offset()) {
-            List<Entry> sub = unstable.slice(Math.max(unstable.offset(), lo), hi);
-            entries.addAll(sub);
-        }
+        return Collections.emptyList();
 
-
-        if (entries.size() > size) entries = entries.subList(0, size);
-
-        return Collections.unmodifiableList(entries);
     }
 
 
@@ -295,10 +283,8 @@ public class Log {
 
 
     public void stableTo(long term, long index) {
-        List<Entry> stabled = this.unstable.stableTo(term, index);
-        if (stabled != null) {
-            this.entries.addAll(stabled);
-        }
+        if (term == this.term(index))
+            this.unstable = index;
     }
 
     public long appliedIndex() {
@@ -382,7 +368,7 @@ public class Log {
                                 this.actuator.apply(entry.data());
 
 
-                                logger.info("applyIndex:{}",appliedIndex);
+                                logger.info("applyIndex:{}", appliedIndex);
 
                                 appliedIndex = entry.index();
                             }
