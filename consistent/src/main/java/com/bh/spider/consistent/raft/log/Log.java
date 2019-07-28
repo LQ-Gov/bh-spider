@@ -35,7 +35,7 @@ public class Log {
     private long committed;
 
 
-    private long unstable;
+    private long stable;
 
 
     private long offset;
@@ -47,17 +47,20 @@ public class Log {
     private final Persistent persistent;
 
 
+    private Snapshot.Metadata snapshot;
+
+
     public Log(Raft raft, Snapshotter snapshotter, WAL wal, Actuator actuator) {
 
         this.raft = raft;
 
         this.committed = -1;
 
-        this.offset = -1;
+        this.offset = 0;
 
         this.applied = -1;
 
-        this.unstable = -1;
+        this.stable = -1;
 
 //        this.unstable = new Unstable(0);
 
@@ -75,7 +78,7 @@ public class Log {
 
         if (CollectionUtils.isNotEmpty(entries)) {
             this.entries.addAll(entries);
-            this.unstable = entries.get(entries.size() - 1).index() + 1;
+            this.stable = entries.get(entries.size() - 1).index();
             this.offset = entries.get(0).index();
 
         }
@@ -108,8 +111,8 @@ public class Log {
             newCollection.addAll(Arrays.asList(entries));
             this.entries = newCollection;
 
-            if (after < this.unstable)
-                this.unstable = after;
+            if (after <= this.stable)
+                this.stable = after - 1;
         }
         synchronized (raft) {
             this.raft.notify();
@@ -191,7 +194,7 @@ public class Log {
     }
 
 
-    public synchronized Entry[] entries(long startIndex, int size) {
+    public Entry[] entries(long startIndex, int size) {
         return this.slice(startIndex, this.lastIndex() + 1, size).toArray(new Entry[0]);
     }
 
@@ -208,7 +211,8 @@ public class Log {
      * @return
      */
     private List<Entry> unstableEntries() {
-        return new UnmodifiableList<>(this.slice(unstable, lastIndex(), Integer.MAX_VALUE));
+        if (stable >= lastIndex()) return Collections.emptyList();
+        return new UnmodifiableList<>(this.slice(stable + 1, lastIndex(), Integer.MAX_VALUE));
     }
 
 
@@ -264,7 +268,7 @@ public class Log {
     private List<Entry> slice(long lo, long hi, int size) {
 
 
-        hi = Math.min(lastIndex(), Math.min(lo + size, hi));
+        hi = Math.min(lastIndex() + 1, Math.min(lo + size, hi));
 
         if (lo >= this.offset) {
             List<Entry> entries = this.entries.subList((int) (lo - this.offset), (int) (hi - offset));
@@ -282,23 +286,32 @@ public class Log {
     }
 
 
-    public void stableTo(long term, long index) {
+    private void stableTo(long term, long index) {
         if (term == this.term(index))
-            this.unstable = index;
+            this.stable = index;
     }
 
-    public long appliedIndex() {
-        return applied;
-    }
-
-
-    public void applyTo(long index) {
+    private void applyTo(long index) {
 
         if (index > committed || applied > index) {
             logger.error("applied({}) is out of range [prevApplied({}), committed({})]", index, applied, committed);
             return;
         }
         this.applied = index;
+    }
+
+    private void snapshotTo(Snapshot.Metadata metadata) {
+        this.snapshot = metadata;
+
+
+        if (stable < metadata.index())
+            stable = metadata.index();
+
+
+        this.entries = new ArrayList<>(this.entries.subList((int) (metadata.index() - offset), this.entries.size()));
+
+        this.offset = metadata.index() + 1;
+
     }
 
 
@@ -368,28 +381,37 @@ public class Log {
                                 this.actuator.apply(entry.data());
 
 
-                                logger.info("applyIndex:{}", appliedIndex);
-
                                 appliedIndex = entry.index();
+
+                                logger.info("applyIndex:{}", appliedIndex);
                             }
                         }
 
-                        //生成快照
-//                        if (appliedIndex - snapshotter.lastIndex() >= Snapshotter.SNAP_COUNT_THRESHOLD) {
-//
-//
-//                            Entry entry = Log.this.entry(appliedIndex);
-//
-//                            byte[] snap = this.actuator.snapshot();
-//
-//                            Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
-//
-//
-//                            snapshotter.save(snapshot);
-//
-//
-//                            this.wal.save(snapshot.metadata());
-//                        }
+                        try {
+                            //生成快照
+                            if (appliedIndex - snapshotter.lastIndex() >= Snapshotter.SNAP_COUNT_THRESHOLD) {
+
+
+                                Entry entry = Log.this.entry(appliedIndex);
+
+                                byte[] snap = this.actuator.snapshot();
+
+                                Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
+
+
+                                snapshotter.save(snapshot);
+
+
+                                this.wal.save(snapshot.metadata());
+
+                                this.wal.release(snapshot.metadata().index());
+
+
+                                Log.this.snapshotTo(snapshot.metadata());
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
                         if (appliedIndex > 0) {
 

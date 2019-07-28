@@ -41,12 +41,12 @@ public abstract class ELContextInterceptor implements Interceptor {
         }
 
 
-        return before(elContext,key,mapping,method,args);
+        return before(elContext,key,mapping,ctx,method,args);
     }
 
 
 
-    public abstract boolean before(ELContext elContext,String key,CommandHandler mapping,Method method,Object[] args);
+    public abstract boolean before(ELContext elContext,String key,CommandHandler mapping,Context ctx,Method method,Object[] args);
 
 
 

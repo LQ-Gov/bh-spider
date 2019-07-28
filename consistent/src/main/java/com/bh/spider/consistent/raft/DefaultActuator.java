@@ -24,4 +24,9 @@ public class DefaultActuator implements Actuator {
 //        logger.info("apply "+ ConvertUtils.toInt(entry));
 
     }
+
+    @Override
+    public Object read(byte[] data, boolean wait) {
+        return null;
+    }
 }

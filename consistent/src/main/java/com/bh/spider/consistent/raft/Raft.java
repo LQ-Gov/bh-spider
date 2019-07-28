@@ -682,6 +682,10 @@ public class Raft {
 
     }
 
+    public Object read(byte[] data,boolean wait) {
+        return actuator.read(data, wait);
+    }
+
 
     public HardState hardState() {
         return new HardState(this.term,

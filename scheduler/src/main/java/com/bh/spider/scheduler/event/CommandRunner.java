@@ -128,6 +128,10 @@ public class CommandRunner {
                 Object returnValue = invoke0(ctx, args, future);
                 after(interceptors,returnValue);
             }
+            else if(mapping.autoComplete()){
+                ctx.commandCompleted(null);
+
+            }
         });
     }
 

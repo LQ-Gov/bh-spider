@@ -13,7 +13,6 @@ import com.bh.spider.scheduler.initialization.*;
 import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.watch.WatchInterceptor;
 import com.bh.spider.store.base.Store;
-import com.google.common.eventbus.EventBus;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -46,9 +45,6 @@ public class BasicScheduler implements Scheduler, Assistant {
     private DomainIndex domainIndex = null;
 
     private Node me;
-
-
-    private final EventBus eventBus = new EventBus();
 
 
     public BasicScheduler(Config config) throws Exception {

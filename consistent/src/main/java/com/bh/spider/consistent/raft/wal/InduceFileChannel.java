@@ -148,6 +148,10 @@ public class InduceFileChannel extends FileChannel {
 
 
 
+    public Path path(){return path;}
+
+
+
 //    public void truncate(long size){
 //
 //    }

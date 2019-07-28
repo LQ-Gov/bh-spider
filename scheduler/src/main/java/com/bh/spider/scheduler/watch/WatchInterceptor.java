@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.watch;
 
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.ELContextInterceptor;
 import org.apache.commons.lang3.ArrayUtils;
@@ -20,7 +21,7 @@ public class WatchInterceptor extends ELContextInterceptor {
 
 
     @Override
-    public boolean before(ELContext elContext, String key, CommandHandler mapping, Method method, Object[] args) {
+    public boolean before(ELContext elContext, String key, CommandHandler mapping, Context ctx, Method method, Object[] args) {
         logger.info(Markers.EVENT_LOOP, "execute command:{},params bytes size:{}", key, 0);
 
 

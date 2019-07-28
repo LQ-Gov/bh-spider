@@ -18,4 +18,7 @@ public interface Actuator {
 
 
     void apply(byte[] entries) throws IOException, Exception;
+
+
+    Object read(byte[] data,boolean wait);
 }

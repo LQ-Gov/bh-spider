@@ -4,7 +4,7 @@ import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.Actuator;
 import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.cluster.context.RaftContext;
+import com.bh.spider.scheduler.cluster.context.ConsistentContext;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.token.JacksonToken;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,7 +25,7 @@ public class ClusterSchedulerActuator implements Actuator {
     private Scheduler scheduler;
 
 
-    public ClusterSchedulerActuator(Scheduler scheduler){
+    public ClusterSchedulerActuator(Scheduler scheduler) {
 
         this.scheduler = scheduler;
 
@@ -45,23 +45,27 @@ public class ClusterSchedulerActuator implements Actuator {
     @Override
     public void apply(byte[] entry) throws Exception {
 
-        RaftContext ctx = new RaftContext();
+
         Iterator<JsonNode> it = mapper.readTree(entry).iterator();
 
         CommandCode key = CommandCode.values()[it.next().asInt()];
 
-        List<Object> params = new LinkedList<>();
-        while (it.hasNext()){
-            JsonNode node = it.next();
-            params.add(new JacksonToken(mapper, node.traverse()));
-        }
+        long consistentId = it.next().asLong();
 
-        Command cmd =new Command(ctx,key,params.toArray());
+        ConsistentContext ctx = new ConsistentContext(consistentId);
+
+        List<Object> params = new LinkedList<>();
+        it.forEachRemaining(node -> params.add(new JacksonToken(mapper, node.traverse())));
+
+
+        Command cmd = new Command(ctx, key, params.toArray());
 
 
         Future<Object> future = this.scheduler.process(cmd);
+    }
 
-        future.get();
-
+    @Override
+    public Object read(byte[] data, boolean wait) {
+        return null;
     }
 }

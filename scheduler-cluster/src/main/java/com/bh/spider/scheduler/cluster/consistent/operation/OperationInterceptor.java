@@ -1,61 +1,77 @@
 package com.bh.spider.scheduler.cluster.consistent.operation;
 
+import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.Raft;
+import com.bh.spider.scheduler.IdGenerator;
+import com.bh.spider.scheduler.cluster.context.ConsistentContext;
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.ELContextInterceptor;
 
 import javax.el.ELContext;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OperationInterceptor extends ELContextInterceptor {
     private Raft raft;
+
+    private final static Map<Long, Context> WAIT_CONSISTENT_CONTEXT = new ConcurrentHashMap<>();
 
     public OperationInterceptor(Raft raft) {
         this.raft = raft;
     }
 
     @Override
-    public boolean before(ELContext elContext, String key, CommandHandler mapping, Method method, Object[] args) {
+    public boolean before(ELContext elContext, String key, CommandHandler mapping, Context ctx, Method method, Object[] args) {
         Operation operation = method.getAnnotation(Operation.class);
 
-//        List<Object> items = Arrays.stream(args).filter(x -> !(x instanceof Context)).collect(Collectors.toList());
+        if (operation == null) return true;
 
 
-        //进行Raft同步
-//            if (!(ctx instanceof RaftContext) && operation.sync()) {
-//                List<Object> items = new LinkedList<>();
-//
-//                String methodName = method.getName();
-//                items.add(StringUtils.isBlank(mapping.value()) ?
-//                        methodName.substring(0, methodName.length() - "_HANDLER".length()) : mapping.value());
-//
-//
-//                Arrays.stream(args).filter(x -> !(x instanceof Context)).forEach(items::add);
-//
-//
-//                try {
-//                    byte[] data = Json.get().writeValueAsBytes(items);
-//                    CompletableFuture future = raft.write(data);
-//
-//                    future.get();
-//
-//                    return false;
-//
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    return false;
-//                }
-//            }
+        if (operation.sync()) {
+            if (ctx instanceof ConsistentContext) {
+                ConsistentContext consistentContext = (ConsistentContext) ctx;
+                Context beforeContext = WAIT_CONSISTENT_CONTEXT.get(consistentContext.consistentId());
 
-        if(operation!=null){
-            String data = (String) expressionFactory().createValueExpression(elContext,operation.data(),String.class).getValue(elContext);
-            Entry entry = new Entry(operation.action(),data.getBytes());
-            return OperationRecorderFactory.get(operation.group()).write(entry);
+                if (beforeContext != null) {
+                    ((ConsistentContext) ctx).transform(beforeContext);
+                }
+                return true;
+
+            }
+
+
+            //进行Raft同步
+
+            long consistentId = IdGenerator.instance.nextId();
+
+            List<Object> items = new LinkedList<>(Arrays.asList(key, consistentId));
+
+            Arrays.stream(args).filter(x -> !(x instanceof Context)).forEach(items::add);
+
+
+            try {
+                byte[] data = Json.get().writeValueAsBytes(items);
+                raft.write(data);
+                WAIT_CONSISTENT_CONTEXT.put(consistentId, ctx);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
         }
 
-        return true;
-    }
 
+        String data = (String) expressionFactory().createValueExpression(elContext, operation.data(), String.class).getValue(elContext);
+        Entry entry = new Entry(operation.action(), data.getBytes());
+        return OperationRecorderFactory.get(operation.group()).write(entry);
+
+    }
 
 
     @Override

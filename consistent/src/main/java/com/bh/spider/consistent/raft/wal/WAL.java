@@ -185,13 +185,12 @@ public class WAL {
                         Entry entry = ProtoBufUtils.deserialize(record.data(), Entry.class);
 
                         if (entry.index() > start.index()) {
-                            int index = (int) (entry.index() - start.index())-1;
+                            int index = (int) (entry.index() - start.index()) - 1;
 
                             if (entries.size() == index) entries.add(entry);
                             else if (index < entries.size()) {
                                 entries.set(index, entry);
-                            }
-                            else throw new Error("日志错误");
+                            } else throw new Error("日志错误");
                         }
                         this.lastIndex = entry.index();
                         break;
@@ -229,7 +228,7 @@ public class WAL {
 
     public synchronized void save(HardState state, List<Entry> entries) throws IOException {
 
-        if (state == null || state==HardState.EMPTY || CollectionUtils.isEmpty(entries)) return;
+        if (state == null || state == HardState.EMPTY || CollectionUtils.isEmpty(entries)) return;
 
 
         //保存Entries
@@ -259,10 +258,36 @@ public class WAL {
         this.cut();
     }
 
+    public void release(long index) throws IOException {
+        List<InduceFileChannel> released = new LinkedList<>();
+        for (InduceFileChannel channel : channels) {
+            Matcher matcher = WAL_NAME_PATTERN.matcher(channel.filename());
+            if (matcher.find()) {
+                long startIndex = Long.valueOf(matcher.group(2));
+                if (startIndex < index)
+                    released.add(channel);
+                else if (startIndex == index) {
+                    released.add(channel);
+                    break;
+                }
+            }
+        }
+
+        if (released.isEmpty()) return;
+
+        released.remove(released.size() - 1);
+
+        if (released.isEmpty()) return;
+
+        for (InduceFileChannel channel : released) {
+            Files.delete(channel.path());
+        }
+    }
+
 
     public void save(Snapshot.Metadata metadata) throws IOException {
 
-        Record record = new Record(RecordType.SNAPSHOT, Json.get().writeValueAsBytes(metadata));
+        Record record = new Record(RecordType.SNAPSHOT, ProtoBufUtils.serialize(metadata));
         encoder.encode(record);
 
         if (metadata.index() > this.lastIndex)
@@ -310,6 +335,4 @@ public class WAL {
     }
 
 
-    public void reply() {
-    }
 }

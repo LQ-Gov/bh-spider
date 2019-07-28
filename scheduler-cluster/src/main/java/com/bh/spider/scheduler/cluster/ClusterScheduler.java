@@ -2,12 +2,14 @@ package com.bh.spider.scheduler.cluster;
 
 import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
+import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
+import com.bh.spider.scheduler.cluster.initialization.RaftInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;
 import com.bh.spider.scheduler.context.Context;
@@ -32,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterScheduler extends BasicScheduler {
@@ -112,10 +115,10 @@ public class ClusterScheduler extends BasicScheduler {
 
         this.loop.addInterceptor(new WatchInterceptor());
 
-//        Raft raft = new RaftInitializer(this.mid,this,null,config().all(Config.INIT_CLUSTER_MASTER_ADDRESS)).exec();
+        Raft raft = new RaftInitializer(this.mid,this,null,config().all(Config.INIT_CLUSTER_MASTER_ADDRESS)).exec();
 
 
-        this.loop.addInterceptor(new OperationInterceptor(null));
+        this.loop.addInterceptor(new OperationInterceptor(raft));
 
         this.loop.listen().join();
     }
@@ -123,6 +126,11 @@ public class ClusterScheduler extends BasicScheduler {
 
     public Workers workers() {
         return workers;
+    }
+
+    @Override
+    public <R> CompletableFuture<R> process(Command cmd) {
+        return null;
     }
 
     @CommandHandler
