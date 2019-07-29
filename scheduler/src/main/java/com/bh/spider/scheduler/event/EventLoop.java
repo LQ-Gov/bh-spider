@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -20,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 import static org.quartz.JobBuilder.newJob;
 
@@ -29,17 +29,16 @@ import static org.quartz.JobBuilder.newJob;
 public class EventLoop extends Thread {
     private final static Logger logger = LoggerFactory.getLogger(EventLoop.class);
 
-    private BlockingQueue<Pair<Command, CompletableFuture>> queue = new LinkedBlockingQueue<>();
+    private BlockingQueue<Chunk> queue = new LinkedBlockingQueue<>();
 
     private List<Interceptor> interceptors = new LinkedList<>();
 
 
-    private EventTimerScheduler timer;
+    private final EventTimerScheduler timer;
 
     private boolean closed = true;
 
     private final Map<String, CommandRunner> runners = new HashMap<>();
-
 
     private EventLoop(EventTimerScheduler timer, Assistant... assists) {
 
@@ -58,34 +57,32 @@ public class EventLoop extends Thread {
     public <R> CompletableFuture<R> execute(Command cmd) {
 
 
-        CompletableFuture<R> future = new CompletableFuture<>();
         CommandRunner runner = runners.get(cmd.key());
-        if (runner != null)
+        if (runner != null) {
+            CompletableFuture<R> future = new CompletableFuture<>();
             runner.eventLoop().execute0(runner, cmd, future);
-        else
-            future.completeExceptionally(new Exception("command runner not found:" + cmd.key()));
+            return future;
+        } else
+            throw new RuntimeException("command runner not found:" + cmd.key());
 
-
-        return future;
     }
 
     private void execute0(CommandRunner runner, Command cmd, CompletableFuture future) {
-        queue.offer(Pair.of(cmd, future));
+        queue.offer(new Chunk(runner, cmd, future));
     }
 
     @Override
     public synchronized void run() {
         while (!closed) {
             try {
-                Pair<Command, CompletableFuture> pair = queue.take();
+                Chunk chunk = queue.take();
 
-                Command cmd = pair.getLeft();
-                CompletableFuture future = pair.getRight();
+                CommandRunner runner = chunk.runner();
+                Command cmd = chunk.command();
+                CompletableFuture future = chunk.future();
 
 
                 try {
-
-                    CommandRunner runner = runners.get(cmd.key());
 
 
                     Object[] args = buildArgs(cmd.context(), runner.parameters(), cmd.params());
@@ -172,39 +169,39 @@ public class EventLoop extends Thread {
         Method[] methods = MethodUtils.getMethodsWithAnnotation(o.getClass(), CommandHandler.class);
 
         if (methods.length > 0) {
-            try {
-                EventLoop el = new EventLoop(o);
+
+            EventLoop el = new EventLoop(this.timer);
 
 
-//                AssistPool pool = new AssistPool(o);
-                for (Method method : methods) {
-                    CommandHandler mapping = method.getAnnotation(CommandHandler.class);
-                    if (mapping.disabled()) continue;
+            for (Method method : methods) {
+                CommandHandler mapping = method.getAnnotation(CommandHandler.class);
+                if (mapping.disabled()) continue;
 
-                    String key = mapping.value();
-                    if (StringUtils.isBlank(key)) {
-                        key = method.getName();
-                        if (key.endsWith("_HANDLER"))
-                            key = key.substring(0, key.length() - "_HANDLER".length());
-                    }
-                    if (StringUtils.isBlank(key))
-                        throw new Error("error method event mapping for " + method.getName());
-
-                    if (runners.containsKey(key))
-                        throw new Error("the " + key + " handler is already exists");
-
-
-                    //如果是定时调度任务
-                    if (StringUtils.isNotBlank(mapping.cron())) {
-                        initCommandTimer(o, method, key, mapping.cron());
-                    }
-
-                    runners.put(key, new CommandRunner(key, el, o, method, mapping));
-
-
+                String key = mapping.value();
+                if (StringUtils.isBlank(key)) {
+                    key = method.getName();
+                    if (key.endsWith("_HANDLER"))
+                        key = key.substring(0, key.length() - "_HANDLER".length());
                 }
-            } catch (Exception e) {
+                if (StringUtils.isBlank(key))
+                    throw new Error("error method event mapping for " + method.getName());
+
+                if (runners.containsKey(key))
+                    throw new Error("the " + key + " handler is already exists");
+
+
+                //如果是定时调度任务
+                if (StringUtils.isNotBlank(mapping.cron())) {
+                    initCommandTimer(o, method, key, mapping.cron());
+                }
+
+                runners.put(key, new CommandRunner(key, el, o, method, mapping));
+
+
             }
+
+            el.start();
+
         }
 
         o.initialized();
@@ -246,14 +243,36 @@ public class EventLoop extends Thread {
         }
     }
 
+    private void startAllRunner() {
+        List<EventLoop> eventLoops = runners.values().stream().map(CommandRunner::eventLoop).collect(Collectors.toList());
 
-    public synchronized EventLoop listen() throws Exception {
+        for (EventLoop el : eventLoops) {
+            el.start();
+        }
+    }
+
+
+    @Override
+    public synchronized void start() {
+        closed = false;
+        super.start();
+    }
+
+    public synchronized EventLoop listen() {
 
         if (closed) {
-            this.start();
-            this.timer.start();
+            startAllRunner();
 
-            closed = false;
+            synchronized (this.timer) {
+                try {
+                    if (!timer.running())
+                        timer.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            this.start();
             logger.info("event loop started...");
         }
         return this;

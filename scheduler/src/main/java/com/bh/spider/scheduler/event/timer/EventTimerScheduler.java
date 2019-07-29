@@ -47,6 +47,12 @@ public class EventTimerScheduler {
         return ctx;
     }
 
+    public boolean running() throws SchedulerException {
+
+            return this.quartz.isStarted();
+
+    }
+
 
     public void start() throws SchedulerException {
         this.quartz.start();
