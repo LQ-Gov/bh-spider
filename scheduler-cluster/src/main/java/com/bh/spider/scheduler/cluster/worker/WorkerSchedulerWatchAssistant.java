@@ -26,7 +26,7 @@ public class WorkerSchedulerWatchAssistant implements Assistant {
         Point point = Points.of("log.stream");
 
         Watcher watcher = new Watcher(context, point,
-                (key, event) -> context.write(new Command(context, CommandCode.LOG_STREAM, event.value()))
+                (key, event) -> context.write(new Command(context, CommandCode.LOG_STREAM.name(), event.value()))
         );
         context.connection().attr("WATCH", watcher);
     }

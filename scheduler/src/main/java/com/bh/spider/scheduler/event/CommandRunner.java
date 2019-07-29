@@ -1,138 +1,107 @@
 package com.bh.spider.scheduler.event;
 
 import com.bh.spider.scheduler.context.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by lq on 17-4-11.
- */
+ * @author liuqi19
+ * @version CommandRunner2, 2019-07-29 10:04 liuqi19
+ **/
 public class CommandRunner {
-    private final static Logger logger = LoggerFactory.getLogger(CommandRunner.class);
-    private String key;
-    private Object bean;
+
+    private String commandCode;
+
+    private EventLoop loop;
+
+    private Assistant assistant;
+
     private Method method;
+
+    private Parameter[] parameters;
+
     private CommandHandler mapping;
-    private AssistPool pool;
-    private boolean returnVoid;
-    private List<Interceptor> interceptors = new LinkedList<>();
 
-    public CommandRunner(String key,Object bean, Method method, CommandHandler mapping, AssistPool pool, List<Interceptor> interceptors) {
-        this.key = key;
-        this.bean = bean;
+
+    public CommandRunner(String commandCode, EventLoop loop, Assistant assistant, Method method, CommandHandler mapping) {
+        this.commandCode = commandCode;
+        this.loop = loop;
+        this.assistant = assistant;
         this.method = method;
+
         this.mapping = mapping;
-        this.pool = pool;
 
-
-
-        this.returnVoid = method.getReturnType().equals(Void.TYPE);
-
-        this.interceptors = interceptors;
+        this.parameters = method.getParameters();
 
         this.method.setAccessible(true);
+
+
     }
 
-    public void arguments() {
 
+    public EventLoop eventLoop() {
+        return loop;
     }
 
 
     public Parameter[] parameters() {
-        return this.method.getParameters();
+        return this.parameters;
+    }
+
+    public boolean autoComplete(){
+        return mapping.autoComplete();
+    }
+
+    public Object invoke(Context ctx, List<Interceptor> interceptors, Object... args) throws CommandTerminationException {
+
+        if (before(interceptors, commandCode, ctx, method, args)) {
+
+            Throwable cause = null;
+
+            Object returnValue = null;
+            try {
+                returnValue = method.invoke(assistant, args);
+            } catch (InvocationTargetException e) {
+                cause = e.getTargetException();
+            } catch (Exception e) {
+                cause = e;
+            }
+
+
+            after(interceptors, returnValue, cause);
+
+            if (cause != null)
+                throw new CommandTerminationException(cause);
+
+            return returnValue;
+
+        }
+
+        throw new CommandTerminationException(null);
+
     }
 
 
-    public CommandHandler mapping() {
-        return this.mapping;
-    }
-
-
-    public Method method() {
-        return method;
-    }
-
-
-    private boolean before(List<Interceptor> interceptors, String key, CommandHandler mapping, Context ctx, Method method, Object[] args) {
+    private boolean before(List<Interceptor> interceptors, String key, Context ctx, Method method, Object[] args) {
         if (interceptors != null && !interceptors.isEmpty()) {
             for (Interceptor interceptor : interceptors) {
-                if (!interceptor.before(key,mapping, ctx, method, args))
+                if (!interceptor.before(key, ctx, method, args))
                     return false;
             }
         }
-
         return true;
 
     }
 
 
-    private Object invoke0(Context ctx, Object[] args,CompletableFuture future){
-        Throwable throwable = null;
-        try {
-            method.setAccessible(true);
-            Object returnValue = method.invoke(bean, args);
 
-            future.complete(returnValue);
+    private void after(List<Interceptor> interceptors, Object returnValue, Throwable throwable) {
 
-            if (ctx != null && mapping.autoComplete())
-                ctx.commandCompleted(returnValue);
-
-
-            return returnValue;
-
-        } catch (InvocationTargetException e) {
-            throwable = e.getTargetException();
-        } catch (Exception e) {
-            throwable = e;
+        for (int i = interceptors.size() - 1; i >= 0; i--) {
+            interceptors.get(i).after(method, returnValue);
         }
-
-        if(throwable!=null){
-            ctx.exception(throwable);
-            future.completeExceptionally(throwable);
-            throwable.printStackTrace();
-
-        }
-
-        return null;
     }
-
-    private void after(List<Interceptor> interceptors, Object returnValue) {
-
-        for(int i=interceptors.size()-1;i>=0;i--){
-            interceptors.get(i).after(method,returnValue);
-        }
-
-
-
-
-
-
-    }
-
-
-
-
-
-    public void invoke(Context ctx, Object[] args,List<Interceptor> interceptors, CompletableFuture future) {
-
-
-        pool.execute(() -> {
-            if (before(interceptors,key, mapping(), ctx, method(), args)) {
-                Object returnValue = invoke0(ctx, args, future);
-                after(interceptors,returnValue);
-            }
-            else if(mapping.autoComplete()){
-                ctx.commandCompleted(null);
-
-            }
-        });
-    }
-
 }

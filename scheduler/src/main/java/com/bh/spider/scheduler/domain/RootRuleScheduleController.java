@@ -56,7 +56,7 @@ public class RootRuleScheduleController implements RuleScheduleController {
             offset = 0;
         }
         else {
-            Command cmd = new Command(new LocalContext(scheduler), CommandCode.SUBMIT_REQUEST_BATCH, requests);
+            Command cmd = new Command(new LocalContext(scheduler), CommandCode.SUBMIT_REQUEST_BATCH.name(), requests);
             scheduler.process(cmd).get();
             offset+=requests.size();
         }

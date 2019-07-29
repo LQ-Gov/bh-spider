@@ -88,7 +88,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
             if (requests.isEmpty()) return;
         }
 
-        Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH, requests, rule);
+        Command cmd = new Command(new LocalContext(scheduler), CommandCode.FETCH_BATCH.name(), requests, rule);
 
         List<Request> allocated = scheduler.<List<Request>>process(cmd).get();
 

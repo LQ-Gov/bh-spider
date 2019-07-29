@@ -7,13 +7,9 @@ public class EventLoopInitializer implements Initializer<EventLoop> {
     private String name;
     private Assistant[] assistants;
 
-    public EventLoopInitializer(String name, Assistant... assistants){
-        this.name = name;
-        this.assistants = assistants;
-    }
+    public EventLoopInitializer(Assistant... assists){
 
-    public EventLoopInitializer(Class cls, Assistant... assists){
-        this(cls.getName(),assists);
+        this.assistants = assistants;
     }
 
 
@@ -22,6 +18,6 @@ public class EventLoopInitializer implements Initializer<EventLoop> {
     @Override
     public EventLoop exec() throws Exception {
 
-        return new EventLoop(name,assistants);
+        return new EventLoop(assistants);
     }
 }

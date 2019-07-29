@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.event.Command;
@@ -17,11 +18,11 @@ public class ClusterCommandOutBoundHandler extends ChannelOutboundHandlerAdapter
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if(msg instanceof Command) {
+        if (msg instanceof Command) {
             Command cmd = (Command) msg;
             long id = IdGenerator.instance.nextId();
 
-            short key = (short) cmd.key().ordinal();
+            short key = (short) CommandCode.valueOf(cmd.key()).ordinal();
 
             byte[] data = Json.get().writeValueAsBytes(cmd.params());
 
@@ -34,7 +35,6 @@ public class ClusterCommandOutBoundHandler extends ChannelOutboundHandlerAdapter
         }
         super.write(ctx, msg, promise);
     }
-
 
 
 }

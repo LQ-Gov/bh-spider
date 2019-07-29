@@ -52,7 +52,7 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
 
                 //如果是JAR包，则立刻进行下载,否则，仅暂时写入一个空文件
                 if (coe.type() == Component.Type.JAR) {
-                    Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT, coe.name());
+                    Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT.name(), coe.name());
                     ctx.write(cmd);
                 }
                 repository.save(new byte[0], coe.name(), null, true, true);
@@ -97,7 +97,7 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
             if (component == null) return null;
 
             if (component.isExpired()) {
-                Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT, name);
+                Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT.name(), name);
                 ctx.write(cmd);
 
                 repository.waitFor(name, loadClassTimeout);

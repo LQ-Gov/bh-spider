@@ -35,7 +35,7 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
     public boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
         Workers workers = scheduler.workers();
 
-        Command cmd = new Command(ctx, CommandCode.FETCH_BATCH, req, rule, FetchCallback.class);
+        Command cmd = new Command(ctx, CommandCode.FETCH_BATCH.name(), req, rule, FetchCallback.class);
         return super.FETCH_HANDLER(ctx, req, rule);
     }
 
@@ -72,7 +72,7 @@ public class ClusterSchedulerFetchAssistant extends BasicSchedulerFetchAssistant
 
             if( allocated.isEmpty()) return;
 
-            Command cmd = new Command(ctx, CommandCode.FETCH_BATCH, allocated, rule);
+            Command cmd = new Command(ctx, CommandCode.FETCH_BATCH.name(), allocated, rule);
             worker.write(cmd);
 
 

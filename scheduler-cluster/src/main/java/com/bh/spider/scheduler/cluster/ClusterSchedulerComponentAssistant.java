@@ -42,7 +42,7 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
         Component component = repository.get(name, true);
 //
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT,component);
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT.name(),component);
 
         ctx.write(cmd);
         logger.info("WORKER_GET_COMPONENT_HANDLER 执行");
@@ -54,7 +54,7 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
         if (localCommittedIndex > committedIndex) {
             List<Entry> entries = componentOperationRecorder.load(committedIndex + 1, localCommittedIndex);
             if(!entries.isEmpty()) {
-                Command cmd = new Command(ctx, CommandCode.WRITE_OPERATION_ENTRIES, entries);
+                Command cmd = new Command(ctx, CommandCode.WRITE_OPERATION_ENTRIES.name(), entries);
                 ctx.write(cmd);
             }
         }

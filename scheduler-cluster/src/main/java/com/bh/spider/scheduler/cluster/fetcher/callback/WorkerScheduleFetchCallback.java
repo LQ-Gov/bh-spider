@@ -23,7 +23,7 @@ public class WorkerScheduleFetchCallback extends ScheduleFetchCallback {
 
     @Override
     protected Class<Extractor> loadComponent(String name) throws Exception {
-        Future<Callable<Class<Extractor>>> future = scheduler().process(new Command(context(), CommandCode.LOAD_COMPONENT_ASYNC,
+        Future<Callable<Class<Extractor>>> future = scheduler().process(new Command(context(), CommandCode.LOAD_COMPONENT_ASYNC.name(),
                 name, Component.Type.GROOVY));
 
         Callable<Class<Extractor>> callable = future.get();

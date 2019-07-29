@@ -5,7 +5,6 @@ import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.scheduler.IdGenerator;
 import com.bh.spider.scheduler.cluster.context.ConsistentContext;
 import com.bh.spider.scheduler.context.Context;
-import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.ELContextInterceptor;
 
 import javax.el.ELContext;
@@ -26,7 +25,7 @@ public class OperationInterceptor extends ELContextInterceptor {
     }
 
     @Override
-    public boolean before(ELContext elContext, String key, CommandHandler mapping, Context ctx, Method method, Object[] args) {
+    public boolean before(ELContext elContext, String key, Context ctx, Method method, Object[] args) {
         Operation operation = method.getAnnotation(Operation.class);
 
         if (operation == null) return true;

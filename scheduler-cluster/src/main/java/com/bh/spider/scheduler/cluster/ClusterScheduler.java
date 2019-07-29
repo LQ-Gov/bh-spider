@@ -106,7 +106,7 @@ public class ClusterScheduler extends BasicScheduler {
 
 
         //初始化事件循环线程
-        this.loop = new EventLoopInitializer(ClusterScheduler.class, this,
+        this.loop = new EventLoopInitializer( this,
                 new BasicSchedulerRuleAssistant(config(), this, this.store, domainIndex),
                 new ClusterSchedulerComponentAssistant(config(), this),
                 new ClusterSchedulerFetchAssistant(this, domainIndex, store),
@@ -142,7 +142,7 @@ public class ClusterScheduler extends BasicScheduler {
 
             worker.update(sync);
 
-            Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, sync.getComponentOperationCommittedIndex());
+            Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), sync.getComponentOperationCommittedIndex());
 
             process(cmd);
         }
@@ -181,7 +181,7 @@ public class ClusterScheduler extends BasicScheduler {
 
 
 //        检查worker的一系列参数
-        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX, node.getComponentOperationCommittedIndex());
+        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), node.getComponentOperationCommittedIndex());
         process(cmd);
     }
 

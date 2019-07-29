@@ -58,7 +58,7 @@ public class ClusterSchedulerActuator implements Actuator {
         it.forEachRemaining(node -> params.add(new JacksonToken(mapper, node.traverse())));
 
 
-        Command cmd = new Command(ctx, key, params.toArray());
+        Command cmd = new Command(ctx, key.name(), params.toArray());
 
 
         Future<Object> future = this.scheduler.process(cmd);

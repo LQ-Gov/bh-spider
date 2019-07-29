@@ -56,7 +56,7 @@ public class WorkerScheduler implements Scheduler, Assistant {
 
         //初始化事件循环线程
 
-        this.loop = new EventLoopInitializer(WorkerScheduler.class,
+        this.loop = new EventLoopInitializer(
                 this,
                 new WorkerSchedulerComponentAssistant(config(), this),
                 new WorkerSchedulerFetchAssistant(this),

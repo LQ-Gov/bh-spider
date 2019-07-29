@@ -46,7 +46,7 @@ public class ClusterSchedulerWatchAssistant extends BasicSchedulerWatchAssistant
 
                 for (Worker worker : workers) {
                     if (!watched.containsKey(worker.id())) {
-                        worker.write(new Command(new LocalContext(scheduler), CommandCode.WATCH));
+                        worker.write(new Command(new LocalContext(scheduler), CommandCode.WATCH.name()));
                         watched.put(worker.id(), 1);
                     } else
                         watched.compute(worker.id(), (k, v) -> (++v));
@@ -55,7 +55,7 @@ public class ClusterSchedulerWatchAssistant extends BasicSchedulerWatchAssistant
                     ctx.whenComplete(x -> {
                         int count = watched.compute(worker.id(), (k, v) -> (--v));
                         if (count <= 0) {
-                            worker.write(new Command(new LocalContext(scheduler), CommandCode.UNWATCH));
+                            worker.write(new Command(new LocalContext(scheduler), CommandCode.UNWATCH.name()));
                             watched.remove(worker.id());
                         }
                     });
@@ -88,7 +88,7 @@ public class ClusterSchedulerWatchAssistant extends BasicSchedulerWatchAssistant
 
                     Integer count = watched.computeIfPresent(worker.id(), (k, v) -> v--);
                     if (count != null && count <= 0) {
-                        worker.write(new Command(new LocalContext(scheduler), CommandCode.UNWATCH));
+                        worker.write(new Command(new LocalContext(scheduler), CommandCode.UNWATCH.name()));
                         watched.remove(worker.id());
                     }
 

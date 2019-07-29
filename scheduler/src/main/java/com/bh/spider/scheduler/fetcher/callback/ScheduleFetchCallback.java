@@ -62,7 +62,7 @@ public class ScheduleFetchCallback implements FetchCallback {
                 }
             }
         }
-        scheduler.process(new Command(commandContext, CommandCode.REPORT, fetchContext.request().id(), code));
+        scheduler.process(new Command(commandContext, CommandCode.REPORT.name(), fetchContext.request().id(), code));
     }
 
 
@@ -86,7 +86,7 @@ public class ScheduleFetchCallback implements FetchCallback {
     }
 
     protected Class<Extractor> loadComponent(String name) throws Exception {
-        Future<Class<Extractor>> future = scheduler.process(new Command(commandContext, CommandCode.LOAD_COMPONENT,
+        Future<Class<Extractor>> future = scheduler.process(new Command(commandContext, CommandCode.LOAD_COMPONENT.name(),
                 name, Component.Type.GROOVY));
 
         return future.get();
@@ -134,7 +134,7 @@ public class ScheduleFetchCallback implements FetchCallback {
 
         public void schedule(com.bh.spider.common.fetch.FetchContext ctx, List<Request> requests, boolean local) {
 
-            this.scheduler.process(new Command(context, CommandCode.SUBMIT_REQUEST_BATCH, requests));
+            this.scheduler.process(new Command(context, CommandCode.SUBMIT_REQUEST_BATCH.name(), requests));
         }
     }
 }

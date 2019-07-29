@@ -16,7 +16,7 @@ public abstract class ELContextInterceptor implements Interceptor {
     private ThreadLocal<ELContext> elContextThreadLocal = new ThreadLocal<>();
 
     @Override
-    public boolean before(String key, CommandHandler mapping, Context ctx, Method method, Object[] args) {
+    public boolean before(String key, Context ctx, Method method, Object[] args) {
 
         ELContext elContext = elContextThreadLocal.get();
 
@@ -41,12 +41,12 @@ public abstract class ELContextInterceptor implements Interceptor {
         }
 
 
-        return before(elContext,key,mapping,ctx,method,args);
+        return before(elContext,key,ctx,method,args);
     }
 
 
 
-    public abstract boolean before(ELContext elContext,String key,CommandHandler mapping,Context ctx,Method method,Object[] args);
+    public abstract boolean before(ELContext elContext,String key,Context ctx,Method method,Object[] args);
 
 
 

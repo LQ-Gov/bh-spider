@@ -51,9 +51,9 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
         Command cmd;
         if (CollectionUtils.isNotEmpty(requests))
 
-            cmd = new Command(new LocalContext(scheduler), CommandCode.SUBMIT_REQUEST, requests);
+            cmd = new Command(new LocalContext(scheduler), CommandCode.SUBMIT_REQUEST.name(), requests);
         else
-            cmd = new Command(new LocalContext(scheduler), CommandCode.TERMINATION_RULE, rule().getId());
+            cmd = new Command(new LocalContext(scheduler), CommandCode.TERMINATION_RULE.name(), rule().getId());
 
         scheduler.process(cmd).get();
 

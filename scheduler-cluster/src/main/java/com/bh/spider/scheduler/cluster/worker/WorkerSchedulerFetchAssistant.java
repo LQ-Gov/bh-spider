@@ -56,7 +56,7 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler
     public void SUBMIT_REQUEST_BATCH_HANDLER(Context ctx, List<Request> requests) throws Exception {
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST_BATCH,requests);
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST_BATCH.name(),requests);
 
         ctx.write(cmd);
     }

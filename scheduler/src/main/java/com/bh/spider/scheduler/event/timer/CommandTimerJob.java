@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler.event.timer;
 
-import com.bh.common.utils.CommandCode;
 import com.bh.spider.scheduler.context.TimerContext;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.EventLoop;
@@ -30,7 +29,7 @@ public class CommandTimerJob implements Job {
         Method method = (Method) map.get("COMMAND_TIMER_METHOD");
 
 
-        Command cmd = new Command(new TimerContext(), CommandCode.valueOf(key));
+        Command cmd = new Command(new TimerContext(), key);
         el.execute(cmd);
 
 

@@ -1,7 +1,6 @@
 package com.bh.spider.scheduler.context;
 
 import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.domain.ExtractFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +33,5 @@ public class LocalContext extends AbstractCloseableContext {
     }
 
 
-    protected ExtractFacade buildExtractFacade(Scheduler scheduler,Context ctx,String name) throws Exception {
-
-        return ExtractFacade.facade(scheduler,ctx,name);
-    }
 
 }

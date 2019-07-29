@@ -7,6 +7,6 @@ package com.bh.spider.scheduler.event.timer;
 public interface Runner {
 
 
-    public void run() throws Exception;
+    void run() throws Exception;
 
 }

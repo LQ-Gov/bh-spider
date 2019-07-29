@@ -30,7 +30,7 @@ public class WorkerCommandInBoundHandler extends CommandReceiveHandler {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        ctx.channel().write(new Command(null, CommandCode.CONNECT, scheduler.self()));
+        ctx.channel().write(new Command(null, CommandCode.CONNECT.name(), scheduler.self()));
         logger.info("连接已建立");
     }
 

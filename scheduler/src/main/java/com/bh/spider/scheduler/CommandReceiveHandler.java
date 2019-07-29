@@ -66,7 +66,7 @@ public class CommandReceiveHandler extends ChannelInboundHandlerAdapter {
                         params.add(new JacksonToken(mapper, node.traverse()));
                     }
                 }
-                Command cmd = new Command(context, key, params.toArray());
+                Command cmd = new Command(context, key.name(), params.toArray());
 
                 if (context instanceof CloseableContext)
                     boundContexts.add((CloseableContext) context);

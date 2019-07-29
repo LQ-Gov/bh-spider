@@ -41,7 +41,7 @@ public class ClusterCommandReceiveHandler extends CommandReceiveHandler {
         Session session = ctx.channel().attr(SESSION_KEY).get();
         session.close();
 
-        scheduler.process(new Command(new LocalContext(scheduler),CommandCode.DISCONNECT,session));
+        scheduler.process(new Command(new LocalContext(scheduler),CommandCode.DISCONNECT.name(),session));
     }
 
     @Override

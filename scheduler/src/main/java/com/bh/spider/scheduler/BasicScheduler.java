@@ -99,7 +99,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
 
         //初始化事件循环线程
-        this.loop = new EventLoopInitializer(BasicScheduler.class, this,
+        this.loop = new EventLoopInitializer(this,
                 new BasicSchedulerComponentAssistant(cfg, this),
                 new BasicSchedulerRuleAssistant(cfg, this, this.store, domainIndex),
                 new BasicSchedulerFetchAssistant(this, domainIndex, store),
@@ -109,18 +109,17 @@ public class BasicScheduler implements Scheduler, Assistant {
         this.loop.addInterceptor(new WatchInterceptor());
 
 
-
         this.loop.listen().join();
     }
 
     public void submit(Context ctx, Request req) {
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST, req);
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST.name(), req);
         this.process(cmd);
     }
 
 
     public void submit(Context ctx, List<Request> requests) {
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST_BATCH, requests);
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST_BATCH.name(), requests);
         this.process(cmd);
     }
 
@@ -147,6 +146,6 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     @Override
     public void initialized() {
-        logger.info(Markers.INIT,"scheduler init completed");
+        logger.info(Markers.INIT, "scheduler init completed");
     }
 }
