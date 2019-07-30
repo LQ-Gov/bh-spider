@@ -47,14 +47,13 @@ public class ClusterScheduler extends BasicScheduler {
     private EventLoop loop;
 
 
-
-
-    private ChannelFuture[] servers =new ChannelFuture[3];
+    private ChannelFuture[] servers = new ChannelFuture[3];
 
     private Workers workers = new Workers();
 
     public ClusterScheduler(Config config) throws Exception {
         super(config);
+        this.mid = Integer.valueOf(config().get(Config.MY_ID));
     }
 
 
@@ -106,7 +105,7 @@ public class ClusterScheduler extends BasicScheduler {
 
 
         //初始化事件循环线程
-        this.loop = new EventLoopInitializer( this,
+        this.loop = new EventLoopInitializer(this,
                 new BasicSchedulerRuleAssistant(config(), this, this.store, domainIndex),
                 new ClusterSchedulerComponentAssistant(config(), this),
                 new ClusterSchedulerFetchAssistant(this, domainIndex, store),
@@ -115,7 +114,7 @@ public class ClusterScheduler extends BasicScheduler {
 
         this.loop.addInterceptor(new WatchInterceptor());
 
-        Raft raft = new RaftInitializer(this.mid,this,null,config().all(Config.INIT_CLUSTER_MASTER_ADDRESS)).exec();
+        Raft raft = new RaftInitializer(this.mid, this, config()).exec();
 
 
         this.loop.addInterceptor(new OperationInterceptor(raft));
@@ -138,7 +137,7 @@ public class ClusterScheduler extends BasicScheduler {
 
 
         Worker worker = workers.get(ctx.sessionId());
-        if(worker!=null) {
+        if (worker != null) {
 
             worker.update(sync);
 
@@ -174,7 +173,7 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     @CommandHandler
-    @Watch(value = "worker.connected",log = "worker connected,node name:{}",params = {"${node.hostname}"})
+    @Watch(value = "worker.connected", log = "worker connected,node name:{}", params = {"${node.hostname}"})
     public void CONNECT_HANDLER(WorkerContext ctx, ClusterNode node) {
         //将worker添加到workers,并分配ID
         long id = workers.bind(new Worker(ctx.session(), node));
@@ -186,7 +185,7 @@ public class ClusterScheduler extends BasicScheduler {
     }
 
     @CommandHandler
-    @Watch(value = "worker.disconnected",log="worker is disconnected,node id:{}",params = {"${session.id()}"})
+    @Watch(value = "worker.disconnected", log = "worker is disconnected,node id:{}", params = {"${session.id()}"})
     public void DISCONNECT_HANDLER(Context ctx, Session session) {
 
         workers.unbind(session.id());

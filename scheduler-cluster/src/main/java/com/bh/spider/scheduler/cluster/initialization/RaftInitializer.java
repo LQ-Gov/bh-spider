@@ -27,11 +27,19 @@ public class RaftInitializer implements Initializer<Raft> {
 
     private Properties nodeProperties;
 
-    public RaftInitializer(int id, Scheduler scheduler, Properties properties, Properties nodeProperties) {
+
+    private String snapshotPath;
+
+    private String walPath;
+
+    public RaftInitializer(int id, Scheduler scheduler, Config config) {
         this.id = id;
         this.scheduler = scheduler;
-        this.properties = properties;
-        this.nodeProperties = nodeProperties;
+
+        this.snapshotPath = config.get(Config.INIT_CLUSTER_RAFT_SNAPSHOT_PATH);
+        this.walPath = config.get(Config.INIT_CLUSTER_RAFT_WAL_PATH);
+
+        this.nodeProperties = config.all(Config.INIT_CLUSTER_MASTER_ADDRESS);
 
     }
 
@@ -46,7 +54,7 @@ public class RaftInitializer implements Initializer<Raft> {
         List<Node> members = new ArrayList<>();
 
         for (Map.Entry<Object, Object> prop : nodeProperties.entrySet()) {
-            int id = Integer.valueOf(prop.getKey().toString().substring(Config.INIT_CLUSTER_MASTER_ADDRESS.length()));
+            int id = Integer.valueOf(prop.getKey().toString());
 
             URI uri = URI.create("addr://" + prop.getValue().toString());
 
@@ -58,7 +66,12 @@ public class RaftInitializer implements Initializer<Raft> {
         }
 
 
-        Raft raft = new Raft(null, actuator, local, members.toArray(new Node[0]));
+        Properties properties = new Properties();
+        properties.setProperty("snapshot.path", this.snapshotPath);
+        properties.setProperty("wal.path", this.walPath);
+
+
+        Raft raft = new Raft(properties, actuator, local, members.toArray(new Node[0]));
 
         raft.exec();
 

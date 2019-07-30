@@ -17,7 +17,7 @@ STDOUT_FILE=$LOGS_DIR/stdout.log
 
 OPTION_ARGS=" /conf/config.properties"
 
-JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dinit.cluster.node.id=3 -Dinit.run.mode=cluster-master -Dlogback.home=conf"
+JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dinit.run.mode=cluster-master -Dlogback.home=conf"
 JAVA_DEBUG_OPTS=""
 if [ "$1" = "debug" ]; then
     JAVA_DEBUG_OPTS=" -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n "

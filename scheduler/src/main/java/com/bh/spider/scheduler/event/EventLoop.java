@@ -44,8 +44,11 @@ public class EventLoop extends Thread {
 
         this.timer = timer;
 
-        for (Assistant assistant : assists) {
-            initAssist(assistant);
+        if(assists!=null) {
+
+            for (Assistant assistant : assists) {
+                initAssist(assistant);
+            }
         }
     }
 
