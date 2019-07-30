@@ -1,7 +1,6 @@
 package com.bh.spider.client;
 
 import com.bh.common.watch.Rank;
-import com.bh.spider.client.sender.Sender;
 import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.common.fetch.Request;
@@ -18,10 +17,10 @@ import java.util.List;
  */
 public class RuleOperation {
 
-    private Sender sender = null;
+    private Communicator communicator = null;
 
-    RuleOperation(Sender sender) {
-        this.sender = sender;
+    RuleOperation(Communicator communicator) {
+        this.communicator = communicator;
     }
 
 
@@ -33,7 +32,7 @@ public class RuleOperation {
 
 
     public void submit(Rule rule) {
-        sender.write(CommandCode.SUBMIT_RULE, null, rule);
+        communicator.write(CommandCode.SUBMIT_RULE, null, rule);
     }
 
     public List<Rule> select() {
@@ -43,7 +42,7 @@ public class RuleOperation {
 
     public List<Rule> select(String host) {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Rule.class}, null);
-        return sender.write(CommandCode.GET_RULE_LIST, type, host);
+        return communicator.write(CommandCode.GET_RULE_LIST, type, host);
     }
 
     /**
@@ -53,25 +52,25 @@ public class RuleOperation {
      */
     public List<String> hosts() {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
-        return sender.write(CommandCode.GET_HOST_LIST, type);
+        return communicator.write(CommandCode.GET_HOST_LIST, type);
     }
 
     public void delete(long id) {
-        sender.write(CommandCode.DELETE_RULE, null, id);
+        communicator.write(CommandCode.DELETE_RULE, null, id);
     }
 
 
     public void run(String host, String id) {
-        sender.write(CommandCode.SCHEDULER_RULE_EXECUTOR, null, host, id, true);
+        communicator.write(CommandCode.SCHEDULER_RULE_EXECUTOR, null, host, id, true);
     }
 
     public void pause(String host, String id) {
-        sender.write(CommandCode.SCHEDULER_RULE_EXECUTOR, null, host, id, false);
+        communicator.write(CommandCode.SCHEDULER_RULE_EXECUTOR, null, host, id, false);
     }
 
 
-    public Rank rank(Request.State state,int size){
-        return sender.write(CommandCode.GET_RULE_RANK,Rank.class,state,size);
+    public Rank rank(Request.State state, int size) {
+        return communicator.write(CommandCode.GET_RULE_RANK, Rank.class, state, size);
     }
 
 

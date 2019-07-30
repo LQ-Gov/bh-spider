@@ -5,8 +5,6 @@ import com.bh.common.utils.Json;
 import com.bh.common.watch.WatchEvent;
 import com.bh.spider.client.context.ClientFetchContext;
 import com.bh.spider.client.converter.TypeConverter;
-import com.bh.spider.client.receiver.Receiver;
-import com.bh.spider.client.sender.Sender;
 import com.bh.spider.client.watch.WatchOperation;
 import com.bh.spider.common.fetch.*;
 import com.bh.spider.common.fetch.impl.FetchResponse;
@@ -17,14 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
-import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.channels.SocketChannel;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -46,12 +42,12 @@ public class Client {
 
     private WatchOperation watchOperation = null;
 
-    private Receiver receiver = null;
-    private Sender sender = null;
 
-    private SocketChannel channel;
     private Properties properties = null;
 
+    private List<InetSocketAddress> addresses;
+
+    private Communicator communicator = new Communicator();
 
     public Client(String server) {
         this(server, null);
@@ -62,33 +58,52 @@ public class Client {
         this.properties = properties == null ? new Properties() : properties;
         this.server = server;
 
+        this.addresses = convertToSocketAddress(server);
+
+        this.ruleOperation = new RuleOperation(this.communicator);
+        this.componentOperation = new ComponentOperation(this.communicator, this.properties);
+        this.requestOperation = new RequestOperation(this.communicator);
+        this.watchOperation = new WatchOperation(this.communicator);
 
     }
 
 
-    public boolean open() throws URISyntaxException, IOException {
-        URI uri = new URI("tcp://" + server);
+    public void connect() {
 
-        this.channel = SocketChannel.open(new InetSocketAddress(uri.getHost(), uri.getPort()));
+        communicator.connect(this.addresses,true);
 
 
-        receiver = new Receiver(this.channel.socket());
-        receiver.start();
+        try {
 
-        this.sender = new Sender(channel, receiver);
-
-        this.ruleOperation = new RuleOperation(this.sender);
-        this.componentOperation = new ComponentOperation(this.sender, this.properties);
-        this.requestOperation = new RequestOperation(this.sender);
-        this.watchOperation = new WatchOperation(this.sender);
-        return true;
-    }
-
-    public void close() throws IOException, InterruptedException {
-        if (channel != null && channel.isConnected()) channel.close();
-        if (receiver.isAlive()) receiver.join();
+            String addrs = communicator.write(CommandCode.SYNC_SERVER_LIST, String.class);
+             convertToSocketAddress(addrs);
+        }catch (Exception e){}
 
     }
+
+
+
+    private List<InetSocketAddress> convertToSocketAddress(String str) {
+
+        List<InetSocketAddress> addresses = new LinkedList<>();
+
+        String[] servers = str.split(",");
+
+        for (String server : servers) {
+            try {
+                URI uri = new URI("tcp://" + server);
+                InetSocketAddress address = new InetSocketAddress(uri.getHost(), uri.getPort());
+                addresses.add(address);
+            } catch (Exception e) {
+                logger.info(null, e);
+            }
+        }
+
+        return addresses;
+
+
+    }
+
 
     public ComponentOperation component() {
         return componentOperation;
@@ -103,10 +118,12 @@ public class Client {
     }
 
 
+
+
     @SafeVarargs
     public final Future<FetchResponse> crawler(Request req, Rule rule, Class<? extends Extractor>... extractors) throws MalformedURLException {
 
-        return sender.stream(CommandCode.FETCH, response -> {
+        return communicator.stream(CommandCode.FETCH, response -> {
 
 
             FetchContext ctx = new ClientFetchContext(req, response);
@@ -150,7 +167,7 @@ public class Client {
 
     public <T> void watch(String point, Consumer<T> consumer, Class<T> valueClass) {
 
-        sender.stream(CommandCode.WATCH, consumer, new TypeConverter<>(valueClass), point);
+        communicator.stream(CommandCode.WATCH, consumer, new TypeConverter<>(valueClass), point);
     }
 
     public boolean watch(String point, Consumer<WatchEvent> consumer) throws Exception {
@@ -171,14 +188,16 @@ public class Client {
 
     public Map<String, String> profile() {
         Type returnType = Json.mapType(String.class, String.class);
-        return sender.write(CommandCode.PROFILE, returnType);
+        return communicator.write(CommandCode.PROFILE, returnType);
     }
 
 
     public List<Node> nodes() {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{Node.class}, null);
-        return sender.write(CommandCode.GET_NODE_LIST, returnType);
+        return communicator.write(CommandCode.GET_NODE_LIST, returnType);
     }
+
+
 
 
 }

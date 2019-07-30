@@ -23,8 +23,6 @@ public class RaftInitializer implements Initializer<Raft> {
 
     private Scheduler scheduler;
 
-    private Properties properties;
-
     private Properties nodeProperties;
 
 
@@ -60,7 +58,7 @@ public class RaftInitializer implements Initializer<Raft> {
 
             Node node = new Node(id, uri.getHost(), uri.getPort());
 
-            if (node.id() == id)
+            if (node.id() == this.id)
                 local = node;
             else members.add(node);
         }

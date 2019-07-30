@@ -2,9 +2,9 @@ package com.bh.spider.client.watch;
 
 import com.bh.common.utils.CommandCode;
 import com.bh.common.watch.WatchEvent;
+import com.bh.spider.client.Communicator;
 import com.bh.spider.client.converter.DefaultConverter;
 import com.bh.spider.client.converter.TypeConverter;
-import com.bh.spider.client.sender.Sender;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.ParameterizedType;
@@ -21,15 +21,15 @@ public class WatchOperation {
 
     private Map<String, Set<Consumer>> watched = new ConcurrentHashMap<>();
 
-    private final Sender sender;
+    private final Communicator communicator;
 
     private final Set<String> points;
 
 
-    public WatchOperation(Sender sender) {
+    public WatchOperation(Communicator communicator) {
 
 
-        this.sender = sender;
+        this.communicator =  communicator;
 
         this.points = watchedPoints();
     }
@@ -37,7 +37,7 @@ public class WatchOperation {
 
     private Set<String> watchedPoints() {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
-        List<String> list = sender.write(CommandCode.GET_WATCH_POINT_LIST, returnType);
+        List<String> list = communicator.write(CommandCode.GET_WATCH_POINT_LIST, returnType);
 
         return new HashSet<>(list);
 
@@ -66,7 +66,7 @@ public class WatchOperation {
             consumers.add(consumer);
 
             if (!initialized) {
-                sender.stream(CommandCode.WATCH, bytes -> {
+                communicator.stream(CommandCode.WATCH, bytes -> {
                     try {
                         WatchEvent event = new TypeConverter<WatchEvent>(WatchEvent.class).convert(bytes);
 
@@ -112,7 +112,7 @@ public class WatchOperation {
         if (watched.containsKey(point)) {
             watched.remove(point);
 
-            sender.write(CommandCode.UNWATCH, null, point);
+            communicator.write(CommandCode.UNWATCH, null, point);
         }
     }
 

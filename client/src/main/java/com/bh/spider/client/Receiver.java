@@ -1,63 +1,35 @@
-package com.bh.spider.client.receiver;
+package com.bh.spider.client;
 
 
 import com.bh.spider.client.converter.Converter;
 import com.bh.spider.client.converter.DefaultConverter;
+import com.bh.spider.client.receiver.Callback;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-public class Receiver extends Thread {
+public class Receiver {
     private Map<Long, Callback> callbacks = new ConcurrentHashMap<>();
-    private Socket socket = null;
 
+    public void accept(long id, byte flag, byte[] data) {
+        Callback callback = callbacks.get(id);
 
-    public Receiver(Socket socket) {
-        this.socket = socket;
-        this.setDaemon(true);
-    }
+        if (callback != null) {
 
-    @Override
-    public void run() {
-        try {
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            while (!this.socket.isClosed()) {
+            boolean complete = (flag & 0x01) == 0;
 
-                long id = in.readLong();
-                byte flag = in.readByte();
+            boolean exception = (flag & 0x02) > 0;
 
-                byte[] data = new byte[in.readInt()];
-                in.readFully(data);
+            boolean remove = exception;
+            if (exception)
+                callback.exception(new Exception(new String(data)));
 
+            else remove = !callback.accept(data, complete);
 
-                Callback callback = callbacks.get(id);
-
-                if(callback!=null) {
-
-                    boolean complete = (flag & 0x01) == 0;
-
-                    boolean exception = (flag & 0x02) > 0;
-
-                    boolean remove = exception;
-                    if (exception)
-                        callback.exception(new Exception(new String(data)));
-
-                    else remove = !callback.accept(data, complete);
-
-                    if (remove) callbacks.remove(id);
-                }
-            }
+            if (remove) callbacks.remove(id);
         }
-        catch (IOException e) {
-            callbacks.forEach((k, v) -> v.exception(e));
-            callbacks.clear();
-        }
-
     }
 
     public Future<byte[]> watch(long id) {

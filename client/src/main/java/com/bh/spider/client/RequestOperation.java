@@ -1,7 +1,6 @@
 package com.bh.spider.client;
 
 import com.bh.common.utils.CommandCode;
-import com.bh.spider.client.sender.Sender;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.fetch.impl.RequestBuilder;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
@@ -16,15 +15,15 @@ import java.util.Map;
  */
 public class RequestOperation {
 
-    private Sender sender = null;
+    private Communicator communicator = null;
 
-    RequestOperation(Sender sender) {
-        this.sender = sender;
+    RequestOperation(Communicator communicator) {
+        this.communicator = communicator;
     }
 
 
     public void submit(Request req) {
-        sender.write(CommandCode.SUBMIT_REQUEST, null, req);
+        communicator.write(CommandCode.SUBMIT_REQUEST, null, req);
     }
 
 
@@ -35,7 +34,7 @@ public class RequestOperation {
 
     public Map<Request.State,Long> distributeCount(){
         ParameterizedType type = ParameterizedTypeImpl.make(Map.class, new Type[]{Request.State.class,Long.class}, null);
-        return sender.write(CommandCode.UNWATCH,type);
+        return communicator.write(CommandCode.UNWATCH,type);
     }
 
 

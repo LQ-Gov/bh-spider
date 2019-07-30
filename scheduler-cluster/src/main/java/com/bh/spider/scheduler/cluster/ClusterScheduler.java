@@ -54,6 +54,8 @@ public class ClusterScheduler extends BasicScheduler {
     public ClusterScheduler(Config config) throws Exception {
         super(config);
         this.mid = Integer.valueOf(config().get(Config.MY_ID));
+
+        logger.info("node id:{}", mid);
     }
 
 

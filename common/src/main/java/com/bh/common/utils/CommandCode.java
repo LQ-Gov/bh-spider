@@ -81,7 +81,10 @@ public enum CommandCode {
     HEART_BEAT,
     TASK,
     PROCESS,
-    CLOSE;
+    CLOSE,
+
+
+    SYNC_SERVER_LIST;
 
 
 

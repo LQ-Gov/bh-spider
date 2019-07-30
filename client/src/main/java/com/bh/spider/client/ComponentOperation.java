@@ -1,7 +1,6 @@
 package com.bh.spider.client;
 
 import com.bh.common.utils.CommandCode;
-import com.bh.spider.client.sender.Sender;
 import com.bh.spider.common.component.Component;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
@@ -25,13 +24,13 @@ import java.util.stream.Collectors;
  * Created by lq on 7/9/17.
  */
 public class ComponentOperation {
-    private Sender sender = null;
+    private Communicator communicator = null;
 
     private String classBasePath;
 
 
-    ComponentOperation(Sender sender, Properties properties) {
-        this.sender = sender;
+    ComponentOperation(Communicator communicator, Properties properties) {
+        this.communicator = communicator;
         classBasePath = properties.getProperty("class.file.base.path");
     }
 
@@ -127,13 +126,13 @@ public class ComponentOperation {
     public void submit(String name, InputStream in,Component.Type type,String desc) throws IOException {
         byte[] data = IOUtils.toByteArray(in);
 
-        sender.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
+        communicator.write(CommandCode.SUBMIT_COMPONENT, null, data, name, type, desc);
     }
 
 
     public List<Component> select(Component.Type type) {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{Component.class}, null);
-        return sender.write(CommandCode.GET_COMPONENT_LIST, returnType,type);
+        return communicator.write(CommandCode.GET_COMPONENT_LIST, returnType,type);
     }
 
     public List<Component> select(){
@@ -142,11 +141,11 @@ public class ComponentOperation {
 
     public Component get(String name) {
 
-        return sender.write(CommandCode.GET_COMPONENT, Component.class, name);
+        return communicator.write(CommandCode.GET_COMPONENT, Component.class, name);
     }
 
     public void delete(String name) {
-        sender.write(CommandCode.DELETE_COMPONENT, null, name);
+        communicator.write(CommandCode.DELETE_COMPONENT, null, name);
     }
 
 
