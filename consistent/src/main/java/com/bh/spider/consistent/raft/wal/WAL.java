@@ -183,7 +183,7 @@ public class WAL {
                     case ENTRY:
                         Entry entry = ProtoBufUtils.deserialize(record.data(), Entry.class);
 
-                        if (entry.index() >= start.index()) {
+                        if (entry.index() > start.index()) {
                             int index = (int) (entry.index() - start.index()) - 1;
 
                             if (entries.size() == index) entries.add(entry);

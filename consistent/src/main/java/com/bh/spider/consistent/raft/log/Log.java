@@ -81,7 +81,7 @@ public class Log {
         }
 
         if (entries != null) {
-            entries = entries.stream().filter(x -> x.index() >= this.offset).collect(Collectors.toList());
+            entries = entries.stream().filter(x -> x.index() > this.offset).collect(Collectors.toList());
             if (entries.isEmpty()) return;
 
             Entry first = entries.get(0);

@@ -27,7 +27,7 @@ public class Snapshotter {
 
     public static final String SNAP_SUFFIX = ".snap";
 
-    public static final int SNAP_COUNT_THRESHOLD = 50;
+    public static final int SNAP_COUNT_THRESHOLD = 2000;
     private final int SNAP_FILE_MAX_SIZE;
     private Path dir;
 

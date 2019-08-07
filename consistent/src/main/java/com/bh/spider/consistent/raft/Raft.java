@@ -460,7 +460,7 @@ public class Raft {
 
         //如果entries为空，并且next-1对应的term也为-1,则目标节点日志落后过多，已产生快照,此时要同步快照
         //判断lastIndex>-1是为了在leader节点无日志时不进行snap同步
-        if (term == -1 && this.log.lastIndex() > -1) {
+        if (term == -1 && this.log.lastIndex() > -1 && empty) {
             Snapshot snapshot = this.log.snapshot();
 
             if (snapshot != null) {
