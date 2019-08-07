@@ -1,12 +1,12 @@
 package com.bh.spider.scheduler.watch.handler;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.bh.spider.scheduler.watch.point.Points;
+import org.slf4j.Marker;
 
 @Support({"event.loop"})
 public class EventLoopMarkerHandler implements MarkerHandler {
     @Override
-    public void handle(ILoggingEvent event, Object[] args) {
+    public void handle(Marker marker, Object[] args) {
 
 
         Points.<Long>of("event.loop.total.count").set(value -> value == null ? 1 : value + 1);

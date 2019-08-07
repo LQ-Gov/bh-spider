@@ -34,8 +34,6 @@ public class Client {
     private final static Logger logger = LoggerFactory.getLogger(Client.class);
 
 
-    private String server = null;
-
     private RuleOperation ruleOperation = null;
     private ComponentOperation componentOperation = null;
     private RequestOperation requestOperation = null;
@@ -55,15 +53,12 @@ public class Client {
 
 
     public Client(String server, Properties properties) {
-        this.properties = properties == null ? new Properties() : properties;
-        this.server = server;
+
+        this.properties = properties==null?new Properties():properties;
 
         this.addresses = convertToSocketAddress(server);
 
-        this.ruleOperation = new RuleOperation(this.communicator);
-        this.componentOperation = new ComponentOperation(this.communicator, this.properties);
-        this.requestOperation = new RequestOperation(this.communicator);
-        this.watchOperation = new WatchOperation(this.communicator);
+
 
     }
 
@@ -72,12 +67,11 @@ public class Client {
 
         communicator.connect(this.addresses,true);
 
+        this.ruleOperation = new RuleOperation(this.communicator);
+        this.componentOperation = new ComponentOperation(this.communicator, this.properties);
+        this.requestOperation = new RequestOperation(this.communicator);
+        this.watchOperation = new WatchOperation(this.communicator);
 
-        try {
-
-            String addrs = communicator.write(CommandCode.SYNC_SERVER_LIST, String.class);
-             convertToSocketAddress(addrs);
-        }catch (Exception e){}
 
     }
 
@@ -186,8 +180,8 @@ public class Client {
     }
 
 
-    public Map<String, String> profile() {
-        Type returnType = Json.mapType(String.class, String.class);
+    public Map<String, Object> profile() {
+        Type returnType = Json.mapType(String.class, Object.class);
         return communicator.write(CommandCode.PROFILE, returnType);
     }
 

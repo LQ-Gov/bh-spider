@@ -1,6 +1,5 @@
 package com.bh.spider.consistent.raft.wal;
 
-import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.HardState;
 import com.bh.spider.consistent.raft.log.Entry;
 import com.bh.spider.consistent.raft.log.Snapshot;
@@ -33,7 +32,7 @@ public class WAL {
     private final static long SEGMENT_SIZE_BYTES = 64 * 1000 * 1000; // 64MB
 
 
-    private final static Pattern WAL_NAME_PATTERN = Pattern.compile("(\\d+)-(\\d+)\\.wal");
+    private final static Pattern WAL_NAME_PATTERN = Pattern.compile("([a-fA-F0-9]+)-([a-fA-F0-9]+)\\.wal");
 
 
     /**
@@ -184,7 +183,7 @@ public class WAL {
                     case ENTRY:
                         Entry entry = ProtoBufUtils.deserialize(record.data(), Entry.class);
 
-                        if (entry.index() > start.index()) {
+                        if (entry.index() >= start.index()) {
                             int index = (int) (entry.index() - start.index()) - 1;
 
                             if (entries.size() == index) entries.add(entry);
@@ -201,7 +200,7 @@ public class WAL {
 
 
                     case SNAPSHOT:
-                        metadata = Json.get().readValue(record.data(), Snapshot.Metadata.class);
+                        metadata = ProtoBufUtils.deserialize(record.data(), Snapshot.Metadata.class);
                         if (metadata.index() == this.start.index() && metadata.term() != this.start.term()) {
                             return new Stashed(HardState.EMPTY, null, null);
                         }
@@ -263,7 +262,7 @@ public class WAL {
         for (InduceFileChannel channel : channels) {
             Matcher matcher = WAL_NAME_PATTERN.matcher(channel.filename());
             if (matcher.find()) {
-                long startIndex = Long.valueOf(matcher.group(2));
+                long startIndex = Long.parseLong(matcher.group(2));
                 if (startIndex < index)
                     released.add(channel);
                 else if (startIndex == index) {
@@ -323,7 +322,7 @@ public class WAL {
         Matcher matcher = WAL_NAME_PATTERN.matcher(channel.filename());
 
         if (matcher.find()) {
-            return Long.valueOf(matcher.group(1));
+            return Long.parseLong(matcher.group(1));
         }
 
         return 0;

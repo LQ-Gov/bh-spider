@@ -21,9 +21,15 @@ public class Node {
 
 
     public static Node self(String type) throws UnknownHostException {
+        return self(0,type);
+    }
+
+
+    public static Node self(long id,String type) throws UnknownHostException {
         InetAddress local = Inet4Address.getLocalHost();
 
         Node node = new Node();
+        node.setId(id);
         node.setIp(local.getHostAddress());
         node.setHostname(local.getHostName());
         node.setOs(System.getProperty("os.name"));

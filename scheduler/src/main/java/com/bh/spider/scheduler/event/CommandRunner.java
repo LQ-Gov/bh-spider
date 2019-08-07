@@ -51,6 +51,8 @@ public class CommandRunner {
         return this.parameters;
     }
 
+    public Assistant assistant(){return assistant;}
+
     public boolean autoComplete(){
         return mapping.autoComplete();
     }

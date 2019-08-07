@@ -39,6 +39,8 @@ public class WatchOperation {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
         List<String> list = communicator.write(CommandCode.GET_WATCH_POINT_LIST, returnType);
 
+        if(list==null) list = Collections.emptyList();
+
         return new HashSet<>(list);
 
     }

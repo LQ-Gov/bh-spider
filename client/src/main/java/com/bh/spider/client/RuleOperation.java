@@ -10,6 +10,7 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,7 +43,9 @@ public class RuleOperation {
 
     public List<Rule> select(String host) {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{Rule.class}, null);
-        return communicator.write(CommandCode.GET_RULE_LIST, type, host);
+        List<Rule> rules = communicator.write(CommandCode.GET_RULE_LIST, type, host);
+
+        return rules == null ? Collections.emptyList() : rules;
     }
 
     /**

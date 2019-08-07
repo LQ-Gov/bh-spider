@@ -19,7 +19,6 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 import static org.quartz.JobBuilder.newJob;
 
@@ -44,7 +43,7 @@ public class EventLoop extends Thread {
 
         this.timer = timer;
 
-        if(assists!=null) {
+        if (assists != null) {
 
             for (Assistant assistant : assists) {
                 initAssist(assistant);
@@ -199,15 +198,8 @@ public class EventLoop extends Thread {
                 }
 
                 runners.put(key, new CommandRunner(key, el, o, method, mapping));
-
-
             }
-
-            el.start();
-
         }
-
-        o.initialized();
     }
 
 
@@ -246,12 +238,10 @@ public class EventLoop extends Thread {
         }
     }
 
-    private void startAllRunner() {
-        List<EventLoop> eventLoops = runners.values().stream().map(CommandRunner::eventLoop).collect(Collectors.toList());
+    private void initAllRunner() {
+        runners.values().stream().map(CommandRunner::eventLoop).distinct().forEach(EventLoop::start);
 
-        for (EventLoop el : eventLoops) {
-            el.start();
-        }
+        runners.values().stream().map(CommandRunner::assistant).distinct().forEach(Assistant::initialized);
     }
 
 
@@ -264,7 +254,7 @@ public class EventLoop extends Thread {
     public synchronized EventLoop listen() {
 
         if (closed) {
-            startAllRunner();
+            initAllRunner();
 
             synchronized (this.timer) {
                 try {

@@ -13,7 +13,8 @@ public class Snapshot {
     private byte[] data;
 
 
-    public Snapshot(){}
+    public Snapshot() {
+    }
 
     public Snapshot(Metadata metadata, byte[] data) {
         this.metadata = metadata;
@@ -21,38 +22,58 @@ public class Snapshot {
     }
 
 
-    public Metadata metadata(){return metadata;}
+    public Metadata metadata() {
+        return metadata;
+    }
 
 
-    public byte[] data(){return data;}
-
+    public byte[] data() {
+        return data;
+    }
 
 
     public static Snapshot deserialize(byte[] data) {
         return ProtoBufUtils.deserialize(data, Snapshot.class);
     }
 
+    public byte[] serialize() {
+        return ProtoBufUtils.serialize(this);
+    }
 
 
-
-    public static class Metadata{
-        public final static Metadata EMPTY=new Metadata(-1,-1);
+    public static class Metadata {
+        public final static Metadata EMPTY = new Metadata(-1, -1);
 
         private long term;
         private long index;
 
 
-        public Metadata(){}
+        public Metadata() {
+        }
 
-        public Metadata(long term,long index){
+        public Metadata(long term, long index) {
             this.term = term;
             this.index = index;
         }
 
 
-        public long term(){return term;}
+        public long term() {
+            return term;
+        }
 
-        public long index(){return index;}
+        public long index() {
+            return index;
+        }
 
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Metadata)) return false;
+
+            Metadata meta = (Metadata) obj;
+
+            return meta.term == this.term && meta.index == this.index;
+
+        }
     }
 }

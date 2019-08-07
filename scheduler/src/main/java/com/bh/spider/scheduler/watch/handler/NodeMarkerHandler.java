@@ -1,9 +1,9 @@
 package com.bh.spider.scheduler.watch.handler;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.bh.common.WatchPointKeys;
 import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.watch.point.Points;
+import org.slf4j.Marker;
 
 /**
  * @author liuqi19
@@ -12,11 +12,11 @@ import com.bh.spider.scheduler.watch.point.Points;
 @Support({"init"})
 public class NodeMarkerHandler implements MarkerHandler {
     @Override
-    public void handle(ILoggingEvent event, Object[] args) {
+    public void handle(Marker marker, Object[] args) {
 
-        if (Markers.INIT.equals(event.getMarker())) {
-            Points.<Integer>of(WatchPointKeys.NODE_COUNT).set(x->x==null?1:x+1);
-            Points.<Integer>of(WatchPointKeys.SURVIVAL_NODE_COUNT).set(x->x==null?1:x+1);
+        if (Markers.INIT == marker) {
+            Points.<Integer>of(WatchPointKeys.NODE_COUNT).set(x -> x == null ? 1 : x + 1);
+            Points.<Integer>of(WatchPointKeys.SURVIVAL_NODE_COUNT).set(x -> x == null ? 1 : x + 1);
         }
 
     }

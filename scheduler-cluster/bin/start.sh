@@ -3,6 +3,9 @@
 JAR_NAME='scheduler-cluster-1.0-SNAPSHOT.jar'
 STARTED_FLAG='event loop started'
 PID_FILE='PID'
+
+RUN_MODE='debug'
+
 cd `dirname $0`
 BIN_DIR=`pwd`
 cd ..
@@ -17,10 +20,10 @@ STDOUT_FILE=$LOGS_DIR/stdout.log
 
 OPTION_ARGS=" /conf/config.properties"
 
-JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dinit.run.mode=cluster-master -Dlogback.home=conf"
+JAVA_OPTS=" -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dinit.run.mode=cluster-master"
 JAVA_DEBUG_OPTS=""
-if [ "$1" = "debug" ]; then
-    JAVA_DEBUG_OPTS=" -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n "
+if [ "$RUN_MODE" = "debug" ]; then
+    JAVA_DEBUG_OPTS=" -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 "
 fi
 
 JAVA_JMX_OPTS=""

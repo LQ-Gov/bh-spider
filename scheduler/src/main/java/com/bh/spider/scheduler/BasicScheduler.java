@@ -49,7 +49,8 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     public BasicScheduler(Config config) throws Exception {
         this.cfg = config;
-        this.me = Node.self("DEFAULT");
+        int id = Integer.valueOf(config().get(Config.MY_ID));
+        this.me = Node.self(id,"DEFAULT");
     }
 
     public BasicScheduler(Config config, Node node) {
@@ -125,8 +126,8 @@ public class BasicScheduler implements Scheduler, Assistant {
 
 
     @CommandHandler
-    public Map<String, String> PROFILE_HANDLER() {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> PROFILE_HANDLER() {
+        Map<String, Object> map = new HashMap<>();
         map.put("mode", RunModeClassFactory.STAND_ALONE);
         map.put("store", store.name());
         return map;

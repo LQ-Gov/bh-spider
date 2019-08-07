@@ -29,6 +29,9 @@ public class RemoteConnectHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
+
+        logger.info("连接建立成功,remote:{}",remote.id());
+
         ByteBuf buffer = ctx.alloc().buffer(4).writeInt(local.id());
 
         ctx.channel().writeAndFlush(buffer);

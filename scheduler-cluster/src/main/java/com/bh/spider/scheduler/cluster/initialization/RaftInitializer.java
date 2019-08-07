@@ -4,7 +4,6 @@ import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.consistent.raft.node.Node;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
-import com.bh.spider.scheduler.cluster.ClusterSchedulerActuator;
 import com.bh.spider.scheduler.initialization.Initializer;
 
 import java.net.URI;
@@ -30,9 +29,10 @@ public class RaftInitializer implements Initializer<Raft> {
 
     private String walPath;
 
-    public RaftInitializer(int id, Scheduler scheduler, Config config) {
+
+    public RaftInitializer(int id, Config config) {
         this.id = id;
-        this.scheduler = scheduler;
+
 
         this.snapshotPath = config.get(Config.INIT_CLUSTER_RAFT_SNAPSHOT_PATH);
         this.walPath = config.get(Config.INIT_CLUSTER_RAFT_WAL_PATH);
@@ -45,7 +45,7 @@ public class RaftInitializer implements Initializer<Raft> {
     @Override
     public Raft exec() throws Exception {
 
-        ClusterSchedulerActuator actuator = new ClusterSchedulerActuator(this.scheduler);
+//        ClusterSchedulerActuator actuator = new ClusterSchedulerActuator(this.scheduler);
 
         Node local = null;
 
@@ -69,9 +69,9 @@ public class RaftInitializer implements Initializer<Raft> {
         properties.setProperty("wal.path", this.walPath);
 
 
-        Raft raft = new Raft(properties, actuator, local, members.toArray(new Node[0]));
+        Raft raft = new Raft(properties, null, local, members.toArray(new Node[0]));
 
-        raft.exec();
+
 
 
         return raft;

@@ -10,7 +10,11 @@ import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author liuqi19
@@ -21,8 +25,6 @@ public class Log {
     private final static Logger logger = LoggerFactory.getLogger(Log.class);
 
     private final Raft raft;
-
-//    private Unstable unstable;
 
     // applied is the highest log position that the application has
     // been instructed to apply to its state machine.
@@ -43,11 +45,11 @@ public class Log {
 
     private List<Entry> entries = new ArrayList<>();
 
+    private Snapshotter snapshotter;
 
     private final Persistent persistent;
 
-
-    private Snapshot.Metadata snapshot;
+    private Snapshot snapshot;
 
 
     public Log(Raft raft, Snapshotter snapshotter, WAL wal, Actuator actuator) {
@@ -56,31 +58,39 @@ public class Log {
 
         this.committed = -1;
 
-        this.offset = 0;
+        this.offset = -1;
 
         this.applied = -1;
 
         this.stable = -1;
 
-//        this.unstable = new Unstable(0);
-
+        this.snapshotter = snapshotter;
         this.persistent = new Persistent(raft, wal, snapshotter, actuator);
 
         this.persistent.start();
     }
 
 
-    public void recover(Snapshot.Metadata metadata, List<Entry> entries) {
-        this.committed = metadata.index();
-        this.offset = metadata.index() + 1;
+    public void recover(Snapshot.Metadata metadata, List<Entry> entries) throws Exception {
 
-        this.applied = metadata.index();
+        if(metadata!=null) {
+            this.committed = metadata.index();
+            this.offset = metadata.index();
+            this.stable = metadata.index();
+            this.applied = metadata.index();
+        }
 
-        if (CollectionUtils.isNotEmpty(entries)) {
+        if (entries != null) {
+            entries = entries.stream().filter(x -> x.index() >= this.offset).collect(Collectors.toList());
+            if (entries.isEmpty()) return;
+
+            Entry first = entries.get(0);
+
+            if (first.index() != offset+1) throw new Exception("非连续的entries");
+
             this.entries.addAll(entries);
-            this.stable = entries.get(entries.size() - 1).index();
-            this.offset = entries.get(0).index();
 
+            this.stable = entries.get(entries.size() - 1).index();
         }
     }
 
@@ -99,7 +109,7 @@ public class Log {
 
         long after = entries[0].index();
 
-        if (offset + this.entries.size() == after)
+        if (offset + this.entries.size() + 1 == after)
             this.entries.addAll(Arrays.asList(entries));
 
             // The log is being truncated to before our current offset
@@ -107,7 +117,7 @@ public class Log {
         else {
             logger.info("truncate the unstable entries before index {}", after);
 
-            List<Entry> newCollection = new ArrayList<>(this.slice(offset, after, Integer.MAX_VALUE));
+            List<Entry> newCollection = new ArrayList<>(this.slice(offset + 1, after, Integer.MAX_VALUE));
             newCollection.addAll(Arrays.asList(entries));
             this.entries = newCollection;
 
@@ -130,10 +140,22 @@ public class Log {
             return -1;
         }
 
+
         long conflictIndex = findConflict(collection.entries());
 
+        if (conflictIndex == -1) return collection.lastIndex();
 
-        Entry[] entries = ArrayUtils.subarray(collection.entries(), (int) (conflictIndex - collection.firstIndex()), collection.size());
+        if (conflictIndex <= this.committed) {
+            logger.error("entry {} conflict with committed entry [committed({})]", conflictIndex, this.committed);
+            return -1;
+        }
+
+        Entry[] entries = collection.entries();
+
+        if (conflictIndex > collection.firstIndex()) {
+            entries = ArrayUtils.subarray(entries, (int) (conflictIndex - collection.firstIndex()), collection.size());
+        }
+
 
         this.append(entries);
 
@@ -152,7 +174,7 @@ public class Log {
         for (Entry entry : entries) {
             long index = entry.index();
 
-            if (this.term(index) != entry.index()) {
+            if (this.term(index) != entry.term()) {
 
                 if (index < this.lastIndex()) {
                     logger.error("found conflict at index {} [existing term: {}, conflicting term: {}]",
@@ -163,7 +185,7 @@ public class Log {
             }
         }
 
-        return 0;
+        return -1;
     }
 
 
@@ -171,14 +193,16 @@ public class Log {
         // never decrease commit
         if (this.committed < index) {
             if (this.lastIndex() < index) {
-                logger.error("index {} is out of range [lastIndex{}]. Was the raft log corrupted, truncated, or lost?", index, this.lastIndex());
-            } else
+                logger.error("index {} is out of range [lastIndex:{}]. Was the raft log corrupted, truncated, or lost?", index, this.lastIndex());
+            } else {
                 this.committed = index;
+                synchronized (raft) {
+                    this.raft.notify();
+                }
+            }
         }
 
-        synchronized (this.persistent) {
-            this.persistent.notify();
-        }
+
     }
 
 
@@ -200,8 +224,30 @@ public class Log {
 
 
     public Entry entry(long index) {
-        Entry[] ents = entries(index, 1);
-        return ents != null && ents.length > 0 ? ents[0] : null;
+        if (index <= offset || index > lastIndex()) return null;
+
+        return this.entries.get((int) (index - offset - 1));
+    }
+
+    public void restore(Snapshot snapshot) {
+        if (snapshot.metadata().index() <= committedIndex()) {
+            logger.error("snapshot index:{} lte than committed index:{}", snapshot.metadata().index(), committedIndex());
+            return;
+        }
+        this.snapshot = snapshot;
+
+        this.committed = snapshot.metadata().index();
+
+        this.offset = snapshot.metadata().index();
+
+        this.stable = snapshot.metadata().index();
+
+        this.entries = new ArrayList<>();
+
+        synchronized (raft) {
+            this.raft.notify();
+        }
+
     }
 
 
@@ -212,7 +258,7 @@ public class Log {
      */
     private List<Entry> unstableEntries() {
         if (stable >= lastIndex()) return Collections.emptyList();
-        return new UnmodifiableList<>(this.slice(stable + 1, lastIndex(), Integer.MAX_VALUE));
+        return new UnmodifiableList<>(this.slice(stable + 1, lastIndex()+1, Integer.MAX_VALUE));
     }
 
 
@@ -223,9 +269,9 @@ public class Log {
      */
 
     private List<Entry> nextEntries() {
-        long off = Math.max(this.applied, this.firstIndex());
+        long off = Math.max(this.applied + 1, this.firstIndex()+1);
 
-        if (committed > off) {
+        if (committed + 1 > off) {
             return this.slice(off, committed + 1, Integer.MAX_VALUE);
         }
         return null;
@@ -239,39 +285,50 @@ public class Log {
      */
     public long term(long index) {
 
-        if (index < firstIndex() || index > lastIndex())
+        if (index < 0 || index < firstIndex() || index > lastIndex())
             return -1;
 
+        if (this.snapshot != null && this.snapshot.metadata().index() == index)
+            return this.snapshot.metadata().term();
 
-        return entries.get((int) (index - offset)).term();
+        Snapshot.Metadata metadata = snapshotter.lastMetadata();
+        if (metadata != null && metadata.index() == index)
+            return metadata.term();
 
+        return entries.get((int) (index - offset - 1)).term();
     }
 
 
-    private long firstIndex() {
+    public long firstIndex() {
+
         return offset;
+
     }
 
 
     public long lastIndex() {
-        if (!entries.isEmpty()) return entries.get(entries.size() - 1).index();
-
-        return -1;
+        return offset + entries.size();
     }
 
 
     public long lastTerm() {
-        return 0;
+        if (CollectionUtils.isEmpty(entries)) {
+            if (snapshot != null && snapshot.metadata().index() == offset)
+                return snapshot.metadata().term();
+            if (snapshotter.lastMetadata() != null && snapshotter.lastIndex() == offset)
+                return snapshotter.lastMetadata().term();
+
+            return 0;
+        }
+
+        return entries.get(entries.size() - 1).term();
     }
 
 
     private List<Entry> slice(long lo, long hi, int size) {
 
-
-        hi = Math.min(lastIndex() + 1, Math.min(lo + size, hi));
-
-        if (lo >= this.offset) {
-            List<Entry> entries = this.entries.subList((int) (lo - this.offset), (int) (hi - offset));
+        if (lo > this.offset) {
+            List<Entry> entries = this.entries.subList((int) (lo - this.offset - 1), (int) (hi - offset - 1));
 
             return Collections.unmodifiableList(entries);
         }
@@ -281,8 +338,15 @@ public class Log {
     }
 
 
-    public boolean compare(long term, long index) {
-        return true;
+    public int compare(long term, long index) {
+
+        if (term > lastTerm()) return -1;
+
+        if (term == lastTerm() && index > lastIndex()) return -1;
+
+        if (term == lastTerm() && index == lastIndex()) return 0;
+
+        return 1;
     }
 
 
@@ -301,17 +365,25 @@ public class Log {
     }
 
     private void snapshotTo(Snapshot.Metadata metadata) {
-        this.snapshot = metadata;
-
+        if (snapshot != null && snapshot.metadata().equals(metadata))
+            this.snapshot = null;
 
         if (stable < metadata.index())
             stable = metadata.index();
 
+        this.entries = new ArrayList<>(this.slice(metadata.index()+1, lastIndex() + 1, Integer.MAX_VALUE));
 
-        this.entries = new ArrayList<>(this.entries.subList((int) (metadata.index() - offset), this.entries.size()));
 
-        this.offset = metadata.index() + 1;
+        this.offset = metadata.index();
 
+        if(metadata.index()>applied)
+            this.applied = metadata.index();
+
+    }
+
+
+    public Snapshot snapshot() {
+        return snapshotter.lastSnapshot();
     }
 
 
@@ -353,7 +425,10 @@ public class Log {
 
                         List<Entry> committedEntries = Log.this.nextEntries();
 
-                        if (CollectionUtils.isEmpty(entries) && CollectionUtils.isEmpty(committedEntries)) {
+                        Snapshot snapshot = Log.this.snapshot;
+
+
+                        if (CollectionUtils.isEmpty(entries) && CollectionUtils.isEmpty(committedEntries) && snapshot == null) {
                             raft.wait(1000 * 60 * 10);
                             continue;
 
@@ -362,6 +437,7 @@ public class Log {
 
                         HardState state = raft.hardState();
 
+                        //检查是否有未持久化的entries，进行持久化
                         if (CollectionUtils.isNotEmpty(entries)) {
 
                             this.wal.save(state, entries);
@@ -371,7 +447,16 @@ public class Log {
 
                         }
 
-                        //应用到状态机
+                        //检查是否有未持久化的snap(由leader同步过来的),进行持久化并recover到状态机
+                        if (snapshot != null) {
+                            snapshotter.save(snapshot);
+                            this.wal.save(snapshot.metadata());
+                            this.wal.release(snapshot.metadata().index());
+                            Log.this.snapshotTo(snapshot.metadata());
+                            this.actuator.recover(snapshot.data());
+                        }
+
+                        //将已经commit的日志应用到状态机
                         if (CollectionUtils.isNotEmpty(committedEntries)) {
 
                             for (Entry entry : committedEntries) {
@@ -379,11 +464,7 @@ public class Log {
                                     continue;
 
                                 this.actuator.apply(entry.data());
-
-
                                 appliedIndex = entry.index();
-
-                                logger.info("applyIndex:{}", appliedIndex);
                             }
                         }
 
@@ -396,11 +477,10 @@ public class Log {
 
                                 byte[] snap = this.actuator.snapshot();
 
-                                Snapshot snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
+                                snapshot = new Snapshot(new Snapshot.Metadata(entry.term(), entry.index()), snap);
 
 
                                 snapshotter.save(snapshot);
-
 
                                 this.wal.save(snapshot.metadata());
 
@@ -413,7 +493,7 @@ public class Log {
                             e.printStackTrace();
                         }
 
-                        if (appliedIndex > 0) {
+                        if (appliedIndex >= 0) {
 
                             Log.this.applyTo(appliedIndex);
                         }

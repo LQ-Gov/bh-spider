@@ -21,7 +21,7 @@ public class ComponentOperationTest {
         Properties properties = new Properties();
         properties.setProperty("class.file.base.path",System.getProperty("user.dir")+"/src/test/java");
         client = new Client("127.0.0.1:8033",properties);
-        client.open();
+        client.connect();
     }
 
 

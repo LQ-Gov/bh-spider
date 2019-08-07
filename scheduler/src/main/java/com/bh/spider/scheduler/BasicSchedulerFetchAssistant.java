@@ -177,7 +177,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     /**
      * 暂时是比较粗暴的完成方式，
      */
-    @CommandHandler(cron = "*/5 * * * * ?")
+//    @CommandHandler(cron = "*/5 * * * * ?")
     public void CLEAR_EXPIRED_FETCH_HANDLER() {
 
         Long[] keys = fetchContextCache().keySet().toArray(new Long[0]);

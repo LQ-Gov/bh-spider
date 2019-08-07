@@ -1,10 +1,11 @@
 package com.bh.spider.scheduler.cluster.watch.handler;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.bh.common.WatchPointKeys;
 import com.bh.spider.scheduler.watch.handler.MarkerHandler;
 import com.bh.spider.scheduler.watch.handler.Support;
 import com.bh.spider.scheduler.watch.point.Points;
+import org.slf4j.Marker;
+
 
 /**
  * @author liuqi19
@@ -13,15 +14,15 @@ import com.bh.spider.scheduler.watch.point.Points;
 @Support("log.stream")
 public class StreamMarkerHandler implements MarkerHandler {
     @Override
-    public void handle(ILoggingEvent event, Object[] args) {
+    public void handle(Marker marker, Object[] args) {
         long nodeId = (long) args[0];
         String IP = (String) args[1];
         String text = (String) args[2];
 
 
-        Points.<String>of(WatchPointKeys.LOG_STREAM+":"+nodeId).set(text);
+        Points.<String>of(WatchPointKeys.LOG_STREAM + ":" + nodeId).set(text);
 
-        Points.of(WatchPointKeys.LOG_STREAM+":"+IP).set(text);
+        Points.of(WatchPointKeys.LOG_STREAM + ":" + IP).set(text);
 
     }
 }

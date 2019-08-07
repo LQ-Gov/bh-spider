@@ -1,18 +1,18 @@
 package com.bh.spider.client;
 
 import com.bh.common.utils.CommandCode;
-import com.bh.common.utils.Json;
 import com.bh.spider.client.converter.Converter;
 import com.bh.spider.client.converter.TypeConverter;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -21,8 +21,6 @@ import java.util.function.Consumer;
  * @version Communicator, 2019-07-30 18:29 liuqi19
  **/
 public class Communicator {
-
-    private final static ObjectMapper mapper = Json.get();
 
     private final AtomicLong ID = new AtomicLong(0);
 
@@ -52,11 +50,14 @@ public class Communicator {
             }
 
             if (connection == null) {
-                connect0(address, this.receiver);
+                connection = connect0(address, this.receiver);
             }
             connections[pos++] = connection;
         }
         this.connections = connections;
+        sync();
+
+
 
     }
 
@@ -76,6 +77,26 @@ public class Communicator {
 
     }
 
+
+    private void sync() {
+
+        long time = 0;
+        while (true) {
+            boolean connected = Arrays.stream(connections).anyMatch(ClientConnection::isConnected);
+            if (connected || time > 1000 * 10) {
+                return;
+            }
+            try {
+                time += 100;
+                Thread.sleep(100);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+
+    }
+
     private ClientConnection searchInConnections(InetSocketAddress address) {
         for (ClientConnection connection : connections) {
             if (connection.remoteAddress().equals(address))
@@ -88,7 +109,7 @@ public class Communicator {
     private ClientConnection nextConnection() {
         ClientConnection[] connections = this.connections;
 
-        int index = (++connectionIndex) % connections.length;
+        int index = (connectionIndex + 1) % connections.length;
 
         int firstIndex = index;
 
@@ -116,8 +137,9 @@ public class Communicator {
         try {
             Future<T> future = stream(cmd, null, new TypeConverter<>(t), params);
 
-            return future.get();
-        }catch (Exception e){
+            return future.get(10,TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
 

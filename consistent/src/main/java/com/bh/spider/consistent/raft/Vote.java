@@ -11,20 +11,41 @@ public class Vote {
 
     private long index;
 
-    public Vote(){}
+    private boolean pre;
 
-
-    public Vote(int id,long term,long index){
-        this.id = id;
-        this.term = term;
-        this.index = index;
+    public Vote() {
     }
 
 
-    public int id(){return id;}
+    public Vote(int id, long term, long index, boolean pre) {
+        this.id = id;
+        this.term = term;
+        this.index = index;
+        this.pre = pre;
+    }
 
 
-    public long term(){return term;}
+    public int id() {
+        return id;
+    }
 
-    public long index(){return index;}
+
+    public long term() {
+        return term;
+    }
+
+    public long index() {
+        return index;
+    }
+
+    public boolean pre() {
+        return pre;
+    }
+
+
+    @Override
+    public String toString() {
+        return "id:" + id + ",term:" + term + ",index:" + index + ",pre:" + pre;
+    }
 }
+

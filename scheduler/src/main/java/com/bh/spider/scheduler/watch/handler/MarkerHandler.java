@@ -1,9 +1,9 @@
 package com.bh.spider.scheduler.watch.handler;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import org.slf4j.Marker;
 
 public interface MarkerHandler {
 
 
-    void handle(ILoggingEvent event,Object[] args);
+    void handle(Marker marker, Object[] args);
 }

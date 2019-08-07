@@ -4,6 +4,7 @@ import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.scheduler.*;
+import com.bh.spider.scheduler.cluster.actuator.NodeCollection;
 import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
@@ -34,7 +35,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterScheduler extends BasicScheduler {
@@ -47,7 +47,11 @@ public class ClusterScheduler extends BasicScheduler {
     private EventLoop loop;
 
 
-    private ChannelFuture[] servers = new ChannelFuture[3];
+    private ChannelFuture[] servers = new ChannelFuture[2];
+
+    private Raft raft;
+
+    private NodeCollection masters;
 
     private Workers workers = new Workers();
 
@@ -116,8 +120,12 @@ public class ClusterScheduler extends BasicScheduler {
 
         this.loop.addInterceptor(new WatchInterceptor());
 
-        Raft raft = new RaftInitializer(this.mid, this, config()).exec();
 
+        this.raft = new RaftInitializer(this.mid, config()).exec();
+        this.masters = new NodeCollection(this.raft);
+        this.raft.bind(masters.actuator());
+
+        this.raft.exec();
 
         this.loop.addInterceptor(new OperationInterceptor(raft));
 
@@ -127,11 +135,6 @@ public class ClusterScheduler extends BasicScheduler {
 
     public Workers workers() {
         return workers;
-    }
-
-    @Override
-    public <R> CompletableFuture<R> process(Command cmd) {
-        return null;
     }
 
     @CommandHandler
@@ -152,18 +155,20 @@ public class ClusterScheduler extends BasicScheduler {
 
     @Override
     @CommandHandler
-    public Map<String, String> PROFILE_HANDLER() {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, Object> PROFILE_HANDLER() {
+        Map<String, Object> map = new HashMap<>();
         map.put("mode", RunModeClassFactory.CLUSTER_MASTER);
         map.put("store", store.name());
+        map.put("consistent.protocol", "raft");
+        map.put("master.node.count", this.masters.size());
         return map;
     }
 
     @Override
     @CommandHandler
     public List<Node> GET_NODE_LIST_HANDLER() {
-        List<Node> nodes = new LinkedList<>();
-        nodes.add(self());
+
+        List<Node> nodes = new LinkedList<>(masters.values());
 
         for (Worker worker : workers) {
             nodes.add(worker.node());
@@ -193,4 +198,14 @@ public class ClusterScheduler extends BasicScheduler {
         workers.unbind(session.id());
 
     }
+
+
+    @CommandHandler(cron = "*/20 * * * * ?")
+    public void UPDATE_NODE_INFO_HANDLER(){
+        self().update();
+        masters.update(self());
+    }
+
+
+
 }

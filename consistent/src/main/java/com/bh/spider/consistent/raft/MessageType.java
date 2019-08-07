@@ -5,14 +5,6 @@ package com.bh.spider.consistent.raft;
  * @version : MessageType, 2019-04-08 14:16 liuqi19
  */
 public enum  MessageType {
-    /**
-     * 当Follower节点的选举计时器超时，会发送MsgHup消息
-     */
-    HUP,
-    /**
-     * Leader发送心跳，主要作用是探活，Follower接收到MsgBeat会重置选举计时器，防止Follower发起新一轮选举
-     */
-    BEAT,
 
     //region 几个基本常用消息类型
     /**
@@ -67,16 +59,6 @@ public enum  MessageType {
     UNREACHABLE,
 
     /**
-     * 如果Leader发送MsgSnap消息时出现异常，则会调用Raft接口发送MsgUnreachable和MsgSnapStatus消息
-     */
-    SNAP_STATUS,
-
-    /**
-     * Leader检测是否保持半数以上的连接
-     */
-    CHECK_QUORUM,
-
-    /**
      * Leader节点转移时使用，本地消息
      */
     TRANSFER_LEADER,
@@ -93,14 +75,4 @@ public enum  MessageType {
      * MsgReadIndex消息的响应消息
      */
     READ_INDEX_RESP,
-
-    /**
-     * PreCandidate状态下的节点发送的消息
-     */
-    PRE_VOTE,
-
-    /**
-     * 预选节点收到的响应消息
-     */
-    PRE_VOTE_RESP,
 }

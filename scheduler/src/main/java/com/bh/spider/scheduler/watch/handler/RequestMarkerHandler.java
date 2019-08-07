@@ -1,8 +1,8 @@
 package com.bh.spider.scheduler.watch.handler;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.bh.common.WatchPointKeys;
 import com.bh.spider.scheduler.watch.point.Points;
+import org.slf4j.Marker;
 
 /**
  * @author liuqi19
@@ -12,7 +12,7 @@ import com.bh.spider.scheduler.watch.point.Points;
 public class RequestMarkerHandler implements MarkerHandler {
 
     @Override
-    public void handle(ILoggingEvent event, Object[] args) {
+    public void handle(Marker marker, Object[] args) {
         int iCount = ((Number) args[args.length-1]).intValue();
 
         Points.<Long>of(WatchPointKeys.URL_TOTAL_COUNT).set(x ->x==null?1: x+iCount);

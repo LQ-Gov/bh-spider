@@ -9,7 +9,7 @@ public class EventLoopInitializer implements Initializer<EventLoop> {
 
     public EventLoopInitializer(Assistant... assists){
 
-        this.assistants = assistants;
+        this.assistants = assists;
     }
 
 

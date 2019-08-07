@@ -22,7 +22,7 @@ import java.util.List;
 public class WebConfig implements WebMvcConfigurer {
 
     @Value("${spider.server.address}")
-    private String spiderServer;
+    private String server;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -46,8 +46,8 @@ public class WebConfig implements WebMvcConfigurer {
         return resolver;
     }
 
-    @Bean(value = "bh-client", initMethod = "open")
+    @Bean(value = "bh-client", initMethod = "connect")
     public Client client() {
-        return new Client(spiderServer);
+        return new Client(server);
     }
 }

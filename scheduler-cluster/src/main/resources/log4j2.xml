@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" packages="com.bh.spider.scheduler.watch">
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <Watch name="WATCH">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+
+            <handler class="com.bh.spider.scheduler.watch.handler.EventLoopMarkerHandler"/>
+            <handler class="com.bh.spider.scheduler.watch.handler.RuleMarkerHandler"/>
+            <handler class="com.bh.spider.scheduler.watch.handler.ComponentMarkerHandler"/>
+            <handler class="com.bh.spider.scheduler.watch.handler.RequestMarkerHandler"/>
+            <handler class="com.bh.spider.scheduler.watch.handler.NodeMarkerHandler"/>
+            <handler class="com.bh.spider.scheduler.cluster.watch.handler.NodeMarkerHandler"/>
+            <handler class="com.bh.spider.scheduler.cluster.watch.handler.StreamMarkerHandler"/>
+        </Watch>
+
+        <Async name="WATCH_ASYNC">
+            <AppenderRef ref="WATCH"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="WATCH_ASYNC"/>
+        </Root>
+    </Loggers>
+</Configuration>

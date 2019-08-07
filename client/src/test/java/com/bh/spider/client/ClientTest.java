@@ -3,8 +3,6 @@ package com.bh.spider.client;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 
 /**
@@ -15,9 +13,9 @@ public class ClientTest {
     private Client client = null;
 
     @Before
-    public void before() throws IOException, URISyntaxException {
+    public void before() {
         client = new Client("127.0.0.1:8033");
-        client.open();
+        client.connect();
     }
 
 

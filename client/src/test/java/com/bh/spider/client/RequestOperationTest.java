@@ -13,7 +13,7 @@ public class RequestOperationTest {
     @Before
     public void before() throws IOException, URISyntaxException {
         client = new Client("127.0.0.1:8033");
-        client.open();
+        client.connect();
     }
 
     @Test

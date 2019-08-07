@@ -37,7 +37,7 @@ public class ClientConnection {
 
     public ChannelFuture connect(ChannelHandler... channelHandlers) {
         final ClientConnection me = this;
-        logger.info("try to connect remote server:{}:{}", address.getHostName(), address.getPort());
+        logger.info("connecting remote server:{}:{}", address.getHostName(), address.getPort());
         Bootstrap bootstrap = new Bootstrap()
                 .group(loop)
                 .channel(NioSocketChannel.class)
@@ -68,11 +68,12 @@ public class ClientConnection {
             if (!f.isSuccess()) {
                 EventLoop loop = f.channel().eventLoop();
                 loop.schedule(() -> connect(channelHandlers), 1L, TimeUnit.SECONDS);
-            } else{
+            } else {
                 this.channel = f.channel();
                 connected = true;
             }
         });
+
         return future;
     }
 

@@ -30,6 +30,8 @@ public class CommandCallbackHandler extends ChannelInboundHandlerAdapter {
 
         buffer.readBytes(data);
 
+        receiver.accept(id,flag,data);
+
         super.channelRead(ctx, msg);
     }
 }

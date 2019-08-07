@@ -27,7 +27,7 @@ public class CommandOutBoundHandler extends ChannelOutboundHandlerAdapter {
 
             ByteBuf buffer = ctx.alloc().buffer(8+2+4+data.length);
 
-            buffer.writeLong(chunk.id()).writeShort(chunk.code()).writeBytes(data);
+            buffer.writeLong(chunk.id()).writeShort(chunk.code()).writeInt(data.length).writeBytes(data);
 
             msg =buffer;
         }

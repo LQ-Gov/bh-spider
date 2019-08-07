@@ -105,6 +105,11 @@ public class Raft {
 
     }
 
+
+    protected Raft() {
+
+    }
+
     /**
      * 进行选举
      */
@@ -121,7 +126,7 @@ public class Raft {
 
         long term = this.term + (me.role2().name() == RoleType.PRE_CANDIDATE ? 1 : 0);
 
-        Vote vote = new Vote(me.id(), this.log.lastTerm(), this.log.lastIndex());
+        Vote vote = new Vote(me.id(), this.log.lastTerm(), this.log.lastIndex(), preCandidate);
 
         logger.info("发起投票,role:{},id:{},term:{}", me.role2().name(), me.id(), term);
 
@@ -139,6 +144,7 @@ public class Raft {
      */
 
     private synchronized void commandReceiverListener(RaftNode from, Message message) {
+
         RaftContext raftContext = new RaftContext(from, MESSAGE_FUTURE_MAP.remove(message));
 
         //如果消息小于当前term
@@ -181,7 +187,7 @@ public class Raft {
                     boolean inLease = leader != null && ticker.resting();
                     if (inLease) {
                         logger.info("[id:{},term:{},index:{},vote:{}] at term is not expired,remaining ticks:{}"
-                                , me.id(), this.term, this.log.lastIndex(), this.voted.id(), ticker.remain());
+                                , me.id(), this.term, this.log.lastIndex(), this.voted == null ? null : this.voted.id(), ticker.remain());
                         return;
                     }
                     break;
@@ -210,9 +216,13 @@ public class Raft {
                 if (leader != null) return;
 
                 //如果已投票的节点等于msg.from()(重复接收投票信息),或者voted为空，且leader不存在
-                boolean canVote = vote.id() == 1 && ((voted == from) || (voted == null && leader == null) || (vote.term() > this.term()));
-//&& !this.log.compare(vote.term(), vote.index())
-                if (canVote) {
+                boolean canVote = (voted == from) || (voted == null) || (vote.pre() && message.term() > this.term());
+//
+
+//                logger.info("投票判断:canVote:{},current term:{},current index:{}, vote term:{},vote index:{},compare:{}",
+//                        canVote,this.log.lastTerm(),this.log.lastIndex(),vote.term(),vote.index(),this.log.compare(vote.term(), vote.index()));
+//                canVote = vote.id() == 3 && canVote;
+                if (canVote && this.log.compare(vote.term(), vote.index()) <= 0) {
                     this.send(from, Message.create(MessageType.VOTE_RESP, message.term(), true));
                     this.voted = from;
                     this.ticker.reset(true);
@@ -280,6 +290,7 @@ public class Raft {
 
             //对投票结果的处理
             case VOTE_RESP: {
+
                 votes.put(context.from(), message.data(Boolean.class));
                 long agree = votes.values().stream().filter(x -> x).count();
 
@@ -328,20 +339,22 @@ public class Raft {
 
                     //当from的日志index和leader有冲突，并且无法自动修正时，会拒绝，那么此时就要从上一次match的位置重新修正
                     if (reject.value()) {
-                        from.becomeProbe();
+                        from.decrease(reject.index(), reject.lastIndex());
                     } else {
-                        boolean ok = from.update(message.index());
+                        boolean ok = from.update(reject.lastIndex());
                         if (this.commit())
-                            this.broadcast(this::sync);
-
-                        if (from.match() < this.log.lastIndex())
-                            sync(from);
-
+                            this.broadcast((Consumer<RaftNode>) this::sync);
+                        else if (from.next() - 1 < this.log.lastIndex())
+                            sync(from, true);
                     }
                     break;
 
 
                 case HEARTBEAT_RESP:
+                    long li = message.data(Long.class);
+                    if (li < from.next()) {
+                        from.decrease(from.next() - 1, li + 1);
+                    }
                     if (from.match() < this.log.lastIndex())
                         this.sync(from);
             }
@@ -359,8 +372,9 @@ public class Raft {
                 Entry.Collection ec = message.data(Entry.Collection.class);
                 if (ec == null) return;
 
+
                 if (this.log.committedIndex() > ec.index()) {
-                    this.send(context.from(), Message.create(MessageType.APP_RESP, this.term(), new Reject(false, this.log.committedIndex())));
+                    this.send(context.from(), Message.create(MessageType.APP_RESP, this.term(), new Reject(false, ec.index(), this.log.committedIndex())));
                     return;
                 }
 
@@ -370,20 +384,36 @@ public class Raft {
 
 
                 this.send(context.from(), Message.create(MessageType.APP_RESP, this.term(),
-                        new Reject(reject, reject ? this.log.lastIndex() : lastIndex)));
+                        new Reject(reject, ec.index(), reject ? this.log.lastIndex() : lastIndex)));
             }
 
             break;
 
 
             case HEARTBEAT:
+
                 long committed = message.data(Long.class);
                 this.log.commitTo(committed);
-                this.send(context.from(), Message.create(MessageType.HEARTBEAT_RESP, this.term));
+                this.send(context.from(), Message.create(MessageType.HEARTBEAT_RESP, this.term, this.log.lastIndex()));
                 break;
 
 
             case SNAP:
+
+                Snapshot snapshot = message.data(Snapshot.class);
+                if (this.log.term(snapshot.metadata().index()) == snapshot.metadata().term()) {
+                    this.log.commitTo(snapshot.metadata().index());
+                } else if (snapshot.metadata().index() <= this.log.committedIndex()) {
+                    logger.info("{} [commit: {}] ignored snapshot [index: {}, term: {}]",
+                            me.id(), this.log.committedIndex(), snapshot.metadata().index(), snapshot.metadata().term());
+                } else {
+                    this.log.restore(snapshot);
+                    logger.info("{} [commit: {}] restored snapshot [index: {}, term: {}]",
+                            me.id(), this.log.committedIndex(), snapshot.metadata().index(), snapshot.metadata().term());
+                }
+
+                this.send(context.from(), Message.create(MessageType.APP_RESP, this.term(),
+                        new Reject(false, snapshot.metadata().index(), this.log.committedIndex())));
                 break;
 
         }
@@ -413,35 +443,57 @@ public class Raft {
         return this.log.commit(this.term, mci);
     }
 
-
     private void sync(RaftNode to) {
+        sync(to, true);
+    }
 
-//        synchronized (to) {
-//            if (to.isPaused()) return;
-//            to.pause();
-//        }
+    private void sync(RaftNode to, boolean sendIfEmpty) {
+
         long term = this.log.term(to.next() - 1);
         //TODO 第二个参数要可配置
         Entry[] entries = this.log.entries(to.next(), Integer.MAX_VALUE);
 
-        if (entries == null || entries.length == 0) return;
+        boolean empty = entries == null || entries.length == 0;
 
-        //TODO 此处要判断如果异常，则要发送快照，此时暂不处理
+        if (empty && !sendIfEmpty) return;
 
-        Entry.Collection ec = new Entry.Collection(term, to.next() - 1, this.log.committedIndex(), entries);
 
-        //TODO 此处还有一系列处理逻辑，暂未看懂
+        //如果entries为空，并且next-1对应的term也为-1,则目标节点日志落后过多，已产生快照,此时要同步快照
+        //判断lastIndex>-1是为了在leader节点无日志时不进行snap同步
+        if (term == -1 && this.log.lastIndex() > -1) {
+            Snapshot snapshot = this.log.snapshot();
 
-        logger.info("sync entries from {} to {}", ec.firstIndex(), ec.lastIndex());
+            if (snapshot != null) {
+                Snapshot.Metadata metadata = snapshot.metadata();
+                Message message = Message.create(MessageType.SNAP, this.term(), snapshot);
+                me.sendTo(to, message);
 
-        Message message = Message.create(MessageType.APP, this.term(), ec);
+                logger.info("{} [first index: {}, commit: {}] sent snapshot[index: {}, term: {}] to {}",
+                        me.id(), this.log.firstIndex(), this.log.committedIndex(), metadata.index(), metadata.term(), to.id());
+            } else
+                logger.error("from next:({}) error,the next-1 term can't found,but no snapshot match", to.next());
+        } else {
+            Entry.Collection ec = new Entry.Collection(term, to.next() - 1, this.log.committedIndex(), entries);
 
-        me.sendTo(to, message);
+            //TODO 此处还有一系列处理逻辑，暂未看懂
+
+            logger.info("sync entries from {} to {}", ec.firstIndex(), ec.lastIndex());
+
+            Message message = Message.create(MessageType.APP, this.term(), ec);
+
+        /*
+            此处进行乐观更新，防止下次心跳时,本次sync操作还没有返回，而再次进行重复发送entries
+         */
+            to.optimisticUpdate(ec.lastIndex());
+
+            me.sendTo(to, message);
+        }
     }
 
-    private void recover(Snapshot snapshot, Stashed stashed) {
-        this.log.recover(snapshot==null?Snapshot.Metadata.EMPTY: snapshot.metadata(),stashed.entries());
+    private void recover(Snapshot snapshot, Stashed stashed) throws Exception {
+        this.log.recover(snapshot == null ? Snapshot.Metadata.EMPTY : snapshot.metadata(), stashed.entries());
 
+        me.update(this.log.lastIndex());
         //还原hard state
         HardState state = stashed.state();
         if (state != null && state != HardState.EMPTY) {
@@ -682,7 +734,7 @@ public class Raft {
 
     }
 
-    public Object read(byte[] data,boolean wait) {
+    public Object read(byte[] data, boolean wait) {
         return actuator.read(data, wait);
     }
 
@@ -694,33 +746,44 @@ public class Raft {
     }
 
 
-    public void broadcast(Message message, boolean toSelf) {
+    protected void broadcast(Message message, boolean toSelf) {
 
         if (toSelf)
             me.sendTo(me, message);
 
         for (RaftNode node : remotes.values()) {
-            me.sendTo(node, message);
-
+            if (node.isActive()) {
+                me.sendTo(node, message);
+            }
         }
     }
 
 
-    public void broadcast(Function<RaftNode, Message> function) {
+    protected void broadcast(Function<RaftNode, Message> function) {
         for (RaftNode node : remotes.values()) {
+            if (!node.isActive()) continue;
+
             me.sendTo(node, function.apply(node));
         }
     }
 
 
-    public void broadcast(Consumer<RaftNode> consumer) {
+    protected void broadcast(Consumer<RaftNode> consumer) {
         for (RaftNode node : remotes.values()) {
+            if (!node.isActive()) continue;
+
             consumer.accept(node);
+
         }
     }
 
-    public void send(RaftNode to, Message msg) {
+    protected void send(RaftNode to, Message msg) {
         me.sendTo(to, msg);
+    }
+
+
+    public void bind(Actuator actuator) {
+        this.actuator = actuator;
     }
 
 }

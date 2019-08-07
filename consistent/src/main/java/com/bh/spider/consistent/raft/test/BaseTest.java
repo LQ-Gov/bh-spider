@@ -1,20 +1,19 @@
-package com.bh.spider.consistent.raft;
+package com.bh.spider.consistent.raft.test;
 
-import com.bh.common.utils.ConvertUtils;
+import com.bh.spider.consistent.raft.DefaultActuator;
+import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.consistent.raft.node.Node;
 
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author liuqi19
- * @version $Id: App, 2019-04-02 13:40 liuqi19
- */
-public class App {
+ * @version BaseTest, 2019-08-04 19:09 liuqi19
+ **/
+public class BaseTest {
 
-    public static void main(String[] args) throws Exception {
-        //建立raftNode
 
+    public static Raft initRaft(String[] args) throws Exception {
         Node[] nodes = new Node[3];
         nodes[0] = new Node(1,"127.0.0.1",9930);
         nodes[1] = new Node(2,"127.0.0.1",9931);
@@ -54,22 +53,8 @@ public class App {
 
         Raft raft =new Raft(properties,new DefaultActuator(),local,members);
 
-        CompletableFuture<Void> future = raft.exec();
+        return raft;
 
-
-        while (!raft.isLeader()&&raft.leader()==null){
-            Thread.sleep(100);
-        }
-//
-//
-        if(raft.isLeader()){
-
-            for(int i=0;i<5;i++) {
-                raft.write(ConvertUtils.toBytes(i));
-            }
-        }
-
-        future.join();
 
     }
 }
