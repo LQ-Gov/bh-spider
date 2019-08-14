@@ -104,6 +104,15 @@ public class MYSQLStoreAccessor implements StoreAccessor {
     }
 
     @Override
+    public void reset(long ruleId) {
+        try {
+            int res = runner.update("UPDATE bh_spider_url SET rule_id=0,state=? WHERE rule_id=?", Request.State.ASSIGNING.name(), ruleId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public List<Request> find(long ruleId, Request.State state, long size) {
 
         try {

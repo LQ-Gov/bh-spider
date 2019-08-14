@@ -38,8 +38,10 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void close() throws Exception {
-        this.jobContext.close();
+    public void close() {
+        try {
+            this.jobContext.close();
+        }catch (Exception e){e.printStackTrace();}
     }
 
     @Override
@@ -53,6 +55,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
 
 
+        logger.info("正常运行controller blast");
 
         boolean unfinished = unfinishedIndex < unfinishedCount;
 
@@ -114,6 +117,16 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
         return returnValue;
 
+    }
+
+    @Override
+    public boolean running() {
+        try {
+            return this.jobContext != null && jobContext.state() == JobContext.State.RUNNING;
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
     }
 
 

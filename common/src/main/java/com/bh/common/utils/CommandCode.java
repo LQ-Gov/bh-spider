@@ -40,7 +40,6 @@ public enum CommandCode {
     WRITE_OPERATION_ENTRIES,
 
 
-    RULE_FACADE,
 
 
 
@@ -84,7 +83,9 @@ public enum CommandCode {
     CLOSE,
 
 
-    SYNC_SERVER_LIST;
+    SYNC_SERVER_LIST,
+
+    TEST;
 
 
 

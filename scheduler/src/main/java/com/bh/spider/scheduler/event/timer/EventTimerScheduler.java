@@ -24,7 +24,7 @@ public class EventTimerScheduler {
     }
 
 
-    public JobContext schedule(JobDetail detail,String cron){
+    public JobContext schedule(JobDetail detail, String cron) {
 
 
         String tid = UUID.randomUUID().toString();
@@ -33,15 +33,14 @@ public class EventTimerScheduler {
                 .withSchedule(cronSchedule(cron).withMisfireHandlingInstructionFireAndProceed())
                 .build();
 
-
-        JobContext ctx = new QuartzJobContext(null, quartz,detail.getKey(),trigger.getKey());
-
+        JobContext ctx = new QuartzJobContext(quartz, detail.getKey(), trigger.getKey());
 
 
-
-        try{
-            quartz.scheduleJob(detail,trigger);
-        }catch (Exception e){e.printStackTrace();}
+        try {
+            quartz.scheduleJob(detail, trigger);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
         return ctx;
@@ -49,7 +48,7 @@ public class EventTimerScheduler {
 
     public boolean running() throws SchedulerException {
 
-            return this.quartz.isStarted();
+        return this.quartz.isStarted();
 
     }
 

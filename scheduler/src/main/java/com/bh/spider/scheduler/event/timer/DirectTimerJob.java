@@ -6,7 +6,7 @@ import org.quartz.*;
  * @author liuqi19
  * @version : DirectTimerJob, 2019-05-28 15:30 liuqi19
  */
-public class DirectTimerJob implements InterruptableJob {
+public class DirectTimerJob implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         JobDetail detail = jobExecutionContext.getJobDetail();
@@ -22,10 +22,5 @@ public class DirectTimerJob implements InterruptableJob {
         }catch (Exception e){
             throw new JobExecutionException(e);
         }
-    }
-
-    @Override
-    public void interrupt() throws UnableToInterruptJobException {
-
     }
 }

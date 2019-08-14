@@ -52,7 +52,7 @@ public class RaftInitializer implements Initializer<Raft> {
         List<Node> members = new ArrayList<>();
 
         for (Map.Entry<Object, Object> prop : nodeProperties.entrySet()) {
-            int id = Integer.valueOf(prop.getKey().toString());
+            int id = Integer.parseInt(prop.getKey().toString());
 
             URI uri = URI.create("addr://" + prop.getValue().toString());
 

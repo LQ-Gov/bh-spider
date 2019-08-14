@@ -9,7 +9,7 @@ public interface RuleScheduleController {
 
     void execute();
 
-    void close() throws Exception;
+    void close();
 
 
     Rule rule();
@@ -21,6 +21,8 @@ public interface RuleScheduleController {
 
 
     boolean joinQueue(Request request);
+
+    boolean running();
 
 
     static RuleScheduleController build(Rule rule, BasicScheduler scheduler, Store store) {

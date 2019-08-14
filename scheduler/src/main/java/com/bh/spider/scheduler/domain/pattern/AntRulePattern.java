@@ -178,4 +178,7 @@ public class AntRulePattern implements RulePattern {
     }
 
 
+    public String value(){return pattern;}
+
+
 }

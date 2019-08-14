@@ -9,7 +9,7 @@ public class QuartzJobContext implements JobContext {
     private TriggerKey triggerKey;
 
 
-    public QuartzJobContext(String id, Scheduler scheduler, JobKey jobKey,TriggerKey triggerKey){
+    public QuartzJobContext(Scheduler scheduler, JobKey jobKey,TriggerKey triggerKey){
         this.scheduler = scheduler;
         this.jobKey = jobKey;
         this.triggerKey = triggerKey;
@@ -18,12 +18,15 @@ public class QuartzJobContext implements JobContext {
 
     @Override
     public State state() throws SchedulerException {
-//        Trigger.TriggerState ts = scheduler.getTriggerState(trigger.getKey());
+        Trigger.TriggerState ts = scheduler.getTriggerState(triggerKey);
 
-
-
-
-        return null;
+        switch (ts){
+            case BLOCKED:return State.BLOCK;
+            case PAUSED:return State.STOP;
+            case NORMAL:return State.RUNNING;
+            default:
+                return State.NONE;
+        }
     }
 
     @Override

@@ -152,7 +152,7 @@ public class Communicator {
 
         Future<T> future = receiver.watch(id, consumer, converter);
 
-        nextConnection().write(new Chunk(id, (short) cmd.ordinal(), null));
+        nextConnection().write(new Chunk(id, (short) cmd.ordinal(), params));
 
         return future;
 

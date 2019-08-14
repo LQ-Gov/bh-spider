@@ -92,7 +92,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.bh.spider.consistent.raft.test.Test1</mainClass>
+                            <mainClass>com.bh.spider.consistent.raft.App</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

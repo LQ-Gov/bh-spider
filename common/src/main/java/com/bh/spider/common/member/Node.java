@@ -6,8 +6,12 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Properties;
 
 public class Node {
     private long id;
@@ -21,11 +25,11 @@ public class Node {
 
 
     public static Node self(String type) throws UnknownHostException {
-        return self(0,type);
+        return self(0, type);
     }
 
 
-    public static Node self(long id,String type) throws UnknownHostException {
+    public static Node self(long id, String type) throws UnknownHostException {
         InetAddress local = Inet4Address.getLocalHost();
 
         Node node = new Node();
@@ -39,6 +43,23 @@ public class Node {
         node.update();
 
         return node;
+    }
+
+
+    public static List<Node> collectionOf(Properties properties) {
+        List<Node> list = new LinkedList<>();
+
+        properties.forEach((k, v) -> {
+            int id = Integer.parseInt(k.toString());
+
+            URI uri = URI.create("addr://" + v.toString());
+            Node node = new Node();
+            node.setId(id);
+            node.setIp(uri.getHost());
+            list.add(node);
+        });
+
+        return list;
     }
 
 
@@ -109,7 +130,7 @@ public class Node {
     }
 
 
-    public void update(){
+    public void update() {
         OperatingSystemMXBean osmxb = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         this.setCPUUtilization(osmxb.getSystemCpuLoad());
         this.setMemoryOccupancy((1 - (osmxb.getFreePhysicalMemorySize() * 1.0) / osmxb.getTotalPhysicalMemorySize()));
@@ -119,10 +140,10 @@ public class Node {
         long totalSpace = Arrays.stream(rootFiles).map(File::getTotalSpace).reduce(0L, Long::sum);
         long usedSpace = Arrays.stream(rootFiles).map(File::getUsableSpace).reduce(0L, Long::sum);
 
-        this.setDiskOccupancy(usedSpace*1.0/totalSpace);
+        this.setDiskOccupancy(usedSpace * 1.0 / totalSpace);
     }
 
-    public void update(Node node){
+    public void update(Node node) {
 
     }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class DaemonRuleScheduleController implements RuleScheduleController {
+    private final static String DAEMON_CONTROLLER_CRON = "*/1 * * * * ?";
     private Scheduler scheduler;
     private Rule rule;
 
@@ -21,7 +22,6 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
 
 
     private JobContext jobContext;
-
 
 
     public DaemonRuleScheduleController(Scheduler scheduler, Rule rule, Store store) {
@@ -32,8 +32,12 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
 
 
     @Override
-    public void close() throws Exception {
-        jobContext.close();
+    public void close() {
+        try {
+            jobContext.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -52,8 +56,10 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
         if (CollectionUtils.isNotEmpty(requests))
 
             cmd = new Command(new LocalContext(scheduler), CommandCode.SUBMIT_REQUEST.name(), requests);
-        else
+        else {
             cmd = new Command(new LocalContext(scheduler), CommandCode.TERMINATION_RULE.name(), rule().getId());
+
+        }
 
         scheduler.process(cmd).get();
 
@@ -65,9 +71,19 @@ public class DaemonRuleScheduleController implements RuleScheduleController {
         return false;
     }
 
+    @Override
+    public boolean running() {
+        try {
+            return this.jobContext != null && jobContext.state() == JobContext.State.RUNNING;
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 
     @Override
     public void execute() {
-        this.jobContext = scheduler.eventLoop().schedule(this::blast,this.rule.getCron());
+        this.jobContext = scheduler.eventLoop().schedule(this::blast, DAEMON_CONTROLLER_CRON);
     }
 }

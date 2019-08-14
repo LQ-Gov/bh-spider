@@ -42,7 +42,7 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
         Component component = repository.get(name, true);
 //
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT.name(),component);
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT.name(), component);
 
         ctx.write(cmd);
         logger.info("WORKER_GET_COMPONENT_HANDLER 执行");
@@ -53,7 +53,7 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
         long localCommittedIndex = componentOperationRecorder.committedIndex();
         if (localCommittedIndex > committedIndex) {
             List<Entry> entries = componentOperationRecorder.load(committedIndex + 1, localCommittedIndex);
-            if(!entries.isEmpty()) {
+            if (!entries.isEmpty()) {
                 Command cmd = new Command(ctx, CommandCode.WRITE_OPERATION_ENTRIES.name(), entries);
                 ctx.write(cmd);
             }
@@ -62,20 +62,21 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
 
     @Override
-    @CommandHandler
-    @Operation(group ="component",action = Operation.WRITE,data = "ADD ${name} ${type}")
+    @CommandHandler(autoComplete = false)
+    @Operation(group = "component", data = "ADD ${name} ${type}")
     public void SUBMIT_COMPONENT_HANDLER(Context ctx, byte[] data, String name, Component.Type type, String description) throws Exception {
         super.SUBMIT_COMPONENT_HANDLER(ctx, data, name, type, description);
+        ctx.commandCompleted(null);
+
     }
 
     @Override
-    @CommandHandler
-    @Operation(group ="component",action = Operation.WRITE,data = "DELETE ${name}")
+    @CommandHandler(autoComplete = false)
+    @Operation(group = "component", data = "DELETE ${name}")
     public void DELETE_COMPONENT_HANDLER(Context ctx, String name) throws IOException {
         super.DELETE_COMPONENT_HANDLER(ctx, name);
+        ctx.commandCompleted(null);
     }
-
-
 
 
 }

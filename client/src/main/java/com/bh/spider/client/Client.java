@@ -192,6 +192,11 @@ public class Client {
     }
 
 
+    public void test(int value){
+        communicator.write(CommandCode.TEST,null,value);
+    }
+
+
 
 
 }

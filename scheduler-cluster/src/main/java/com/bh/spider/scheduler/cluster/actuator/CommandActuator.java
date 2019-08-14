@@ -1,6 +1,5 @@
-package com.bh.spider.scheduler.cluster;
+package com.bh.spider.scheduler.cluster.actuator;
 
-import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.Actuator;
 import com.bh.spider.scheduler.Scheduler;
@@ -17,20 +16,22 @@ import java.util.concurrent.Future;
 
 /**
  * @author liuqi19
- * @version : ClusterSchedulerAc, 2019-05-24 19:20 liuqi19
- */
-public class ClusterSchedulerActuator implements Actuator {
+ * @version CommandActuator, 2019-08-08 17:37 liuqi19
+ **/
+public class CommandActuator implements Actuator {
     private final static ObjectMapper mapper = Json.get();
 
     private Scheduler scheduler;
 
-
-    public ClusterSchedulerActuator(Scheduler scheduler) {
-
+    public CommandActuator(Scheduler scheduler) {
         this.scheduler = scheduler;
 
     }
 
+    @Override
+    public String name() {
+        return "COMMAND_ACTUATOR";
+    }
 
     @Override
     public byte[] snapshot() {
@@ -38,17 +39,16 @@ public class ClusterSchedulerActuator implements Actuator {
     }
 
     @Override
-    public void recover(byte[] data) {
+    public void recover(byte[] data) throws Exception {
 
     }
 
     @Override
     public void apply(byte[] entry) throws Exception {
-
-
         Iterator<JsonNode> it = mapper.readTree(entry).iterator();
 
-        CommandCode key = CommandCode.values()[it.next().asInt()];
+
+        String key = it.next().asText();
 
         long consistentId = it.next().asLong();
 
@@ -58,7 +58,7 @@ public class ClusterSchedulerActuator implements Actuator {
         it.forEachRemaining(node -> params.add(new JacksonToken(mapper, node.traverse())));
 
 
-        Command cmd = new Command(ctx, key.name(), params.toArray());
+        Command cmd = new Command(ctx, key, params.toArray());
 
 
         Future<Object> future = this.scheduler.process(cmd);

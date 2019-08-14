@@ -75,6 +75,7 @@ public class Config {
 
 
         //集群默认配置
+        config.GLOBAL.put(MY_ID,0);
         config.GLOBAL.put(INIT_CLUSTER_MASTER_LISTEN_PORT, "8070");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX + "1", "127.0.0.1:30051");
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX + "2", "127.0.0.1:30052");

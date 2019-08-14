@@ -7,6 +7,7 @@ package com.bh.spider.consistent.raft;
 public interface Actuator {
 
 
+    String name();
 
 
     byte[] snapshot();

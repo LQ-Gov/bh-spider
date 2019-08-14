@@ -9,4 +9,9 @@ public class CommandTerminationException extends Exception {
     public CommandTerminationException(Throwable cause){
         super(cause);
     }
+
+
+    public CommandTerminationException(String msg){
+        super(msg);
+    }
 }

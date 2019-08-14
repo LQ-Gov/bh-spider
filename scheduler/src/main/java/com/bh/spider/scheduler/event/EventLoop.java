@@ -51,6 +51,12 @@ public class EventLoop extends Thread {
         }
     }
 
+
+    private EventLoop(EventLoop parent){
+        this.timer = parent.timer;
+        this.interceptors = parent.interceptors;
+    }
+
     public EventLoop(Assistant... assistants) throws SchedulerException {
         this(new EventTimerScheduler(), assistants);
     }
@@ -98,8 +104,10 @@ public class EventLoop extends Thread {
                         cmd.context().commandCompleted(returnValue);
 
                 } catch (CommandTerminationException e) {
-                    cmd.context().exception(e);
-                    future.completeExceptionally(e);
+                    if(runner.autoComplete()) {
+                        cmd.context().exception(e);
+                        future.completeExceptionally(e);
+                    }
                 }
 
 
@@ -172,7 +180,7 @@ public class EventLoop extends Thread {
 
         if (methods.length > 0) {
 
-            EventLoop el = new EventLoop(this.timer);
+            EventLoop el = new EventLoop(this);
 
 
             for (Method method : methods) {

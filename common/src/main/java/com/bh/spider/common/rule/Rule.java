@@ -57,6 +57,8 @@ public class Rule implements Serializable {
 
     private boolean valid;
 
+    private boolean running;
+
     public Rule() {
         this(0);
     }
@@ -84,6 +86,13 @@ public class Rule implements Serializable {
         this.pattern = rule.pattern;
         this.parallelCount = rule.parallelCount;
         this.description = rule.description;
+        this.policy = rule.policy;
+        this.proxies = rule.proxies;
+        this.timeout = rule.timeout;
+        this.repeat = rule.repeat;
+        this.nodes = rule.nodes;
+        this.valid = rule.valid;
+        this.running = rule.running;
     }
 
     public void setId(long id) {
@@ -188,5 +197,14 @@ public class Rule implements Serializable {
 
     public void setRepeat(boolean repeat) {
         this.repeat = repeat;
+    }
+
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
     }
 }

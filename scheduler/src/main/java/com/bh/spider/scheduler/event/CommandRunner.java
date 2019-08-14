@@ -82,7 +82,7 @@ public class CommandRunner {
 
         }
 
-        throw new CommandTerminationException(null);
+        throw new CommandTerminationException("被before拦截");
 
     }
 

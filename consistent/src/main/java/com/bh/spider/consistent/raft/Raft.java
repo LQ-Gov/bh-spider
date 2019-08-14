@@ -221,7 +221,7 @@ public class Raft {
 
 //                logger.info("投票判断:canVote:{},current term:{},current index:{}, vote term:{},vote index:{},compare:{}",
 //                        canVote,this.log.lastTerm(),this.log.lastIndex(),vote.term(),vote.index(),this.log.compare(vote.term(), vote.index()));
-//                canVote = vote.id() == 3 && canVote;
+//                canVote = vote.id() == 2 && canVote;
                 if (canVote && this.log.compare(vote.term(), vote.index()) <= 0) {
                     this.send(from, Message.create(MessageType.VOTE_RESP, message.term(), true));
                     this.voted = from;
@@ -345,7 +345,7 @@ public class Raft {
                         if (this.commit())
                             this.broadcast((Consumer<RaftNode>) this::sync);
                         else if (from.next() - 1 < this.log.lastIndex())
-                            sync(from, true);
+                            sync(from, false);
                     }
                     break;
 
@@ -477,14 +477,16 @@ public class Raft {
 
             //TODO 此处还有一系列处理逻辑，暂未看懂
 
-            logger.info("sync entries from {} to {}", ec.firstIndex(), ec.lastIndex());
+            logger.info("sync entries to node:{},index:[{}--{}],committed index:{}", to.id(), ec.firstIndex(), ec.lastIndex(), ec.committedIndex());
 
             Message message = Message.create(MessageType.APP, this.term(), ec);
 
         /*
             此处进行乐观更新，防止下次心跳时,本次sync操作还没有返回，而再次进行重复发送entries
          */
-            to.optimisticUpdate(ec.lastIndex());
+            if (ec.size() > 0) {
+                to.optimisticUpdate(ec.lastIndex());
+            }
 
             me.sendTo(to, message);
         }

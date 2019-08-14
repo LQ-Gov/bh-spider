@@ -129,7 +129,7 @@ public class WAL {
 
     public static WAL open(Path dir, Snapshot.Metadata metadata) throws IOException {
 
-        WAL wal = openAtIndex(dir, metadata == null ? new Snapshot.Metadata(0, 0) : metadata, true);
+        WAL wal = openAtIndex(dir, metadata == null ? new Snapshot.Metadata(-1, -1) : metadata, true);
 
         return wal;
 

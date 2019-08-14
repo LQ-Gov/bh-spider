@@ -38,6 +38,11 @@ public class Test1 extends BaseTest {
     private static class TestActuator implements Actuator{
 
         @Override
+        public String name() {
+            return null;
+        }
+
+        @Override
         public byte[] snapshot() {
             return new byte[0];
         }

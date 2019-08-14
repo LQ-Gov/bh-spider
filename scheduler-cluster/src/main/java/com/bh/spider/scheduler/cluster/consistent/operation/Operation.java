@@ -12,10 +12,10 @@ public @interface Operation {
     String group() default "operation";
 
 
-    byte action();
+    byte action() default WRITE;
 
 
-    String data();
+    String data() default "";
 
 
     boolean sync() default true;

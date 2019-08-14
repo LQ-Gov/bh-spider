@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author liuqi19
@@ -22,18 +22,65 @@ public class NodeCollection extends HashMap<Long, Node> {
     private Raft raft;
 
 
-    public NodeCollection(Raft raft) {
+    private TreeMap<Integer, Node> map = new TreeMap<>();
+
+
+    public NodeCollection(Raft raft, List<Node> nodes) {
         this.actuator = new NodeCollectionActuator(this);
         this.raft = raft;
+
+        nodes.sort((o1, o2) -> {
+            if (o1.getId() == o2.getId()) return 0;
+
+            return o1.getId() > o2.getId() ? 1 : -1;
+        });
+
+
+
+
+        for (Node node:nodes) {
+
+            for(int i=10;i>0;i--) {
+
+                String key = (Integer.MAX_VALUE - i) + "#" + node.getId();
+                int hashCode = fnvHash(key);
+                map.put(hashCode,node);
+            }
+        }
+
+
+    }
+
+
+    private static int fnvHash(String key) {
+        final int p = 16777619;
+        long hash = (int) 2166136261L;
+        for (int i = 0, n = key.length(); i < n; i++) {
+            hash = (hash ^ key.charAt(i)) * p;
+        }
+        hash += hash << 13;
+        hash ^= hash >> 7;
+        hash += hash << 3;
+        hash ^= hash >> 17;
+        hash += hash << 5;
+        return ((int) hash & 0x7FFFFFFF);
     }
 
 
     public void update(Node node) {
         try {
-            raft.write(mapper.writeValueAsBytes(node));
+            CombineActuator.CombineEntry entry = new CombineActuator.CombineEntry(actuator.name(), mapper.writeValueAsBytes(node));
+            raft.write(Json.get().writeValueAsBytes(entry));
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Node consistentHash(int value) {
+         Entry<Integer,Node> entry = map.ceilingEntry(value);
+         if(entry==null) entry = map.firstEntry();
+
+         return entry==null?null:entry.getValue();
     }
 
 
@@ -52,6 +99,11 @@ public class NodeCollection extends HashMap<Long, Node> {
 
         }
 
+
+        @Override
+        public String name() {
+            return "NODE_COLLECTION_ACTUATOR";
+        }
 
         @Override
         public byte[] snapshot() {

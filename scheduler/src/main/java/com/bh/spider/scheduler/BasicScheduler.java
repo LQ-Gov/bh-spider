@@ -49,7 +49,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
     public BasicScheduler(Config config) throws Exception {
         this.cfg = config;
-        int id = Integer.valueOf(config().get(Config.MY_ID));
+        int id = Integer.parseInt(config().get(Config.MY_ID));
         this.me = Node.self(id,"DEFAULT");
     }
 

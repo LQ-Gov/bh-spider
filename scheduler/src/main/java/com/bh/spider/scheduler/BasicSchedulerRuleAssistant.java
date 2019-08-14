@@ -8,7 +8,6 @@ import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.*;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.CommandHandler;
-import com.bh.spider.scheduler.watch.Watch;
 import com.bh.spider.store.base.Store;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,32 +20,36 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class BasicSchedulerRuleAssistant implements Assistant {
-    private final Map<Long, RuleFacade> FACADE_CACHE = new HashMap<>();
+    private final Map<Long, RuleConcrete> CONCRETE_CACHE = new HashMap<>();
     private Scheduler scheduler;
     private DomainIndex domainIndex;
-
 
     private Store store;
 
     private Config cfg;
 
 
-    public BasicSchedulerRuleAssistant(Config config, Scheduler scheduler, Store store, DomainIndex domainIndex) throws Exception {
+    public BasicSchedulerRuleAssistant(Config config, Scheduler scheduler, Store store, DomainIndex domainIndex) {
         this.scheduler = scheduler;
         this.domainIndex = domainIndex;
         this.cfg = config;
         this.store = store;
-
-        initLocalRuleController();
-
     }
 
 
     protected void initLocalRuleController() throws Exception {
         Path dir = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH));
 
-        Rule defaultRule = new Rule(0,"**",cfg.get(Config.INIT_DEFAULT_RULE_CRON));
-        FACADE_CACHE.put(defaultRule.getId(), root(defaultRule));
+
+        /**
+         * 初始化默认的规则列表
+         */
+        Rule defaultRule = new Rule(0, "**", cfg.get(Config.INIT_DEFAULT_RULE_CRON));
+        RuleConcrete defaultConcrete = new RuleConcrete(0, defaultRule, new RootRuleScheduleController(scheduler, defaultRule, store), false);
+
+        domainIndex.root().bind(defaultConcrete);
+
+        CONCRETE_CACHE.put(0L, defaultConcrete);
 
 
         //对自定义规则初始化
@@ -55,98 +58,70 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         for (Path filePath : filePaths) {
             List<Rule> rules = Json.get().readValue(filePath.toFile(), Json.constructCollectionType(ArrayList.class, Rule.class));
 
+
             for (Rule rule : rules) {
-                RuleFacade facade = rule.isValid() ? facade(rule) : daemon(rule);
-                FACADE_CACHE.put(facade.id(), facade);
+                RuleScheduleController controller = rule.isValid() ?
+                        new DefaultRuleScheduleController(this.scheduler, rule, this.store)
+                        : new DaemonRuleScheduleController(this.scheduler, rule, this.store);
+                RuleConcrete concrete = new RuleConcrete(rule.getId(), rule, controller);
+
+                domainIndex.matchOrCreate(concrete.host()).bind(concrete);
+                CONCRETE_CACHE.put(concrete.id(), concrete);
             }
+
         }
 
+        for (RuleConcrete concrete : CONCRETE_CACHE.values())
+            concrete.execute();
     }
 
 
-    private RuleFacade facade(Rule rule) throws Exception {
-        return facade(rule, new DefaultRuleScheduleController(this.scheduler, rule, store));
-    }
-
-    /**
-     * 将Rule组装为rule控制器,
-     *
-     * @param rule
-     * @param ruleScheduleController
-     * @return
-     * @throws Exception
-     */
-    private RuleFacade facade(Rule rule, RuleScheduleController ruleScheduleController) throws Exception {
-        if (rule.getId() <= 0) rule.setId(IdGenerator.instance.nextId());
-        DefaultRuleFacade facade = new DefaultRuleFacade(this.scheduler, rule, ruleScheduleController);
-        facade.link(this.domainIndex);
-
-        if (facade.controller() != null && scheduler.running()) {
-            facade.controller().execute();
-        }
-
-        return facade;
-    }
-
-
-    private RuleFacade daemon(Rule rule) throws Exception {
-        rule.setCron("*/1 * * * * ?");
-        RuleFacade facade = new DaemonRuleFacade(this.scheduler, rule, new DaemonRuleScheduleController(this.scheduler, rule, store));
-        facade.link(domainIndex);
-        if (facade.controller() != null && scheduler.running())
-            facade.controller().execute();
-        return facade;
-
-    }
-
-    private RuleFacade root(Rule rule){
-        RuleFacade facade = new RootRuleFacade(scheduler,rule,new RootRuleScheduleController(scheduler,rule,store));
-        facade.link(domainIndex);
-
-
-        return facade;
-    }
-
-
-    private void backup(DomainIndex.Node node) throws IOException {
+    protected void backup(DomainIndex.Node node) throws IOException {
         String host = node.host();
         host = host == null ? "__ROOT__" : host;
         Path path = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH), host + ".rule");
 
 
-        List<Rule> rules = node.rules().stream().map(RuleFacade::original).collect(Collectors.toList());
+        List<Rule> rules = node.rules().stream().map(RuleConcrete::base).collect(Collectors.toList());
 
         Files.write(path, Json.get().writeValueAsBytes(rules));
+    }
+
+    protected boolean runnable(RuleConcrete concrete) {
+        return true;
     }
 
 
     @CommandHandler
     public void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (validate(rule)) {
-            RuleFacade facade = facade(rule);
-            backup(facade.domainNode());
-            FACADE_CACHE.put(facade.id(), facade);
+
+            RuleConcrete concrete = new RuleConcrete(IdGenerator.instance.nextId(), rule,
+                    new DefaultRuleScheduleController(this.scheduler, rule, this.store));
+
+            DomainIndex.Node node = domainIndex.matchOrCreate(concrete.host()).bind(concrete);
+
+            backup(node);
+
+            if (runnable(concrete)) {
+                CONCRETE_CACHE.put(concrete.id(), concrete);
+                concrete.execute();
+            }
         }
     }
 
     @CommandHandler
     public List<Rule> GET_RULE_LIST_HANDLER(Context ctx, String host) {
 
-        Iterator<RuleFacade> iterator = FACADE_CACHE.values().iterator();
+        Collection<RuleConcrete> concretes = CONCRETE_CACHE.values();
 
-        List<Rule> result = new LinkedList<>();
-
-        while (iterator.hasNext()) {
-            result.add(iterator.next().original());
-        }
-
-        return result;
+        return concretes.stream().map((RuleConcrete::base)).collect(Collectors.toList());
     }
 
 
     @CommandHandler
-    public Rank GET_RULE_RANK(Context ctx, Request.State state,int size) throws SQLException {
-        Rank rank = store.accessor().rank(state,size);
+    public Rank GET_RULE_RANK(Context ctx, Request.State state, int size) throws SQLException {
+        Rank rank = store.accessor().rank(state, size);
 
         return rank;
 
@@ -154,69 +129,78 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
 
     @CommandHandler
+    public void EDIT_RULE_HANDLER(Context ctx, Rule rule) {
+
+        RuleConcrete concrete = CONCRETE_CACHE.get(rule.getId());
+
+        if (concrete == null || !concrete.modifiable()) return;
+
+        Rule old = concrete.base();
+
+        boolean bind = true;
+        if (!old.getPattern().equals(rule.getPattern())) {
+            domainIndex.match(concrete.host()).unbind(concrete);
+            if (runnable(concrete)) {
+                store.accessor().reset(concrete.id());
+            }
+            bind = false;
+        }
+
+        concrete.update(rule);
+
+        if (!old.getCron().equals(concrete.cron())) {
+            concrete.update(new DefaultRuleScheduleController(scheduler, concrete.base(), store));
+        }
+
+        if (!bind) {
+            domainIndex.matchOrCreate(concrete.host()).bind(concrete);
+        }
+    }
+
+    @CommandHandler
     public void DELETE_RULE_HANDLER(Context ctx, long id) throws Exception {
-        RuleFacade facade = FACADE_CACHE.get(id);
-        if (facade == null || !facade.modifiable()) return;
 
-        facade.controller().close();
-
-        facade.original().setValid(false);
-
-        facade.domainNode().unbind(facade);
-
-        backup(facade.domainNode());
-
-        facade = daemon(facade.original());
+        RuleConcrete concrete = CONCRETE_CACHE.get(id);
+        if (concrete == null || !concrete.modifiable()) return;
 
 
+        concrete.update(new DaemonRuleScheduleController(scheduler, concrete.base(), store), true);
 
-        FACADE_CACHE.put(facade.id(),facade);
+        concrete.freeze();
 
+        DomainIndex.Node node = domainIndex.match(concrete.host());
 
+        backup(node);
     }
 
 
     @CommandHandler
     public void TERMINATION_RULE_HANDLER(Context ctx, long id) throws Exception {
-        RuleFacade facade = FACADE_CACHE.get(id);
-        if (facade == null) return;
+        RuleConcrete concrete = CONCRETE_CACHE.get(id);
+        if (concrete == null || !concrete.frozen()) return;
 
-        Rule rule = facade.original();
+        DomainIndex.Node node = domainIndex.match(concrete.host()).unbind(concrete);
 
-        if (!rule.isValid()) {
+        backup(node);
 
-            facade.controller().close();
-            facade.domainNode().unbind(facade);
+        concrete.controller().close();
 
-            //之所以守护规则还需要关联domain node,就是为了backup domainNode
-            backup(facade.domainNode());
-
-            FACADE_CACHE.remove(facade.id());
-        }
+        CONCRETE_CACHE.remove(id);
     }
 
-    @CommandHandler
-    @Watch
-    public RuleFacade RULE_FACADE_HANDLER(Context ctx, Rule rule) throws Exception {
-        if (rule == null || rule.getId() <= 0) return null;
-
-        RuleFacade facade = FACADE_CACHE.get(rule.getId());
-
-        if (facade == null) {
-            facade = facade(rule, null);
-        }
-
-        return facade;
-    }
 
     @CommandHandler
-    public void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean valid) throws Exception {
-        RuleFacade decorator = FACADE_CACHE.get(id);
-        if (decorator == null) return;
-        if (valid)
-            decorator.controller().execute();
-        else
-            decorator.controller().close();
+    public void SCHEDULER_RULE_EXECUTOR_HANDLER(Context ctx, long id, boolean runnable) throws Exception {
+        RuleConcrete concrete = CONCRETE_CACHE.get(id);
+
+        if (concrete == null || concrete.frozen() || !runnable(concrete)) return;
+
+        RuleScheduleController controller = concrete.controller();
+
+        if (runnable && !controller.running())
+            controller.running();
+        else if (!runnable && controller.running())
+            controller.close();
     }
 
     private boolean validate(Rule rule) {
@@ -229,10 +213,10 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
     @Override
     public void initialized() {
-        for (RuleFacade facade : FACADE_CACHE.values()) {
-            if (facade.controller() != null)
-                facade.controller().execute();
+        try {
+            initLocalRuleController();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
     }
 }

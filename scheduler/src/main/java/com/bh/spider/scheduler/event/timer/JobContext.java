@@ -2,7 +2,7 @@ package com.bh.spider.scheduler.event.timer;
 
 public interface JobContext {
     enum State {
-        RUNNING, STOP, BLOCK, ERROR
+        RUNNING, STOP, BLOCK, ERROR,NONE
     }
 
     State state() throws Exception;

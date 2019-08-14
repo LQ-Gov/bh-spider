@@ -1,5 +1,6 @@
 package com.bh.spider.consistent.raft;
 
+import com.bh.common.utils.ConvertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +10,12 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultActuator implements Actuator {
     private final static Logger logger = LoggerFactory.getLogger(DefaultActuator.class);
+
+    @Override
+    public String name() {
+        return null;
+    }
+
     @Override
     public byte[] snapshot() {
         return new byte[0];
@@ -21,7 +28,7 @@ public class DefaultActuator implements Actuator {
 
     @Override
     public void apply(byte[] entry) {
-//        logger.info("apply "+ ConvertUtils.toInt(entry));
+        logger.info("apply "+ ConvertUtils.toInt(entry));
 
     }
 

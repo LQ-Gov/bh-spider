@@ -9,6 +9,11 @@ import com.bh.spider.consistent.raft.Actuator;
  **/
 public class TestActuator implements Actuator {
     @Override
+    public String name() {
+        return null;
+    }
+
+    @Override
     public byte[] snapshot() {
         return new byte[0];
     }

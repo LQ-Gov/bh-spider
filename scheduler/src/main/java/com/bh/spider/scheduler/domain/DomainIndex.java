@@ -17,7 +17,7 @@ public interface DomainIndex {
         private Node parent;
         private Map<String, Node> children;
 
-        private List<RuleFacade> rules;
+        private List<RuleConcrete> rules;
 
 
         public Node(String name, Node parent) {
@@ -36,16 +36,19 @@ public interface DomainIndex {
             return parent;
         }
 
-        public void bind(RuleFacade rule) {
-            rules.add(rule);
+        public Node bind(RuleConcrete concrete){
+            rules.add(concrete);
+            return this;
+
+        }
+
+        public Node unbind(RuleConcrete concrete){
+            rules.removeIf(x->x==concrete);
+            return this;
         }
 
 
-        public void unbind(RuleFacade rule) {
-            rules.removeIf(x->x==rule);
-        }
-
-        public Collection<RuleFacade> rules() {
+        public Collection<RuleConcrete> rules() {
             return rules;
         }
 

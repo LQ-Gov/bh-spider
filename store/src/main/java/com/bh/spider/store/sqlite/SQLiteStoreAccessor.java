@@ -125,6 +125,19 @@ public class SQLiteStoreAccessor implements StoreAccessor {
     }
 
     @Override
+    public void reset(long ruleId) {
+        String sql = String.format("UPDATE %s SET rule_id=0, state=? WHERE rule_id=?",TABLE_NAME);
+        try {
+            PreparedStatement statement = store.connection().prepareStatement(sql);
+            statement.setString(1, Request.State.ASSIGNING.name());
+            statement.setLong(2, ruleId);
+            statement.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public List<Request> find(long ruleId, Request.State state, long offset, long size) {
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE rule_id=? AND state=? LIMIT ?,?";
 

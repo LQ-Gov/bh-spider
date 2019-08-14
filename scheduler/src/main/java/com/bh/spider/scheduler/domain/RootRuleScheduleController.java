@@ -39,7 +39,7 @@ public class RootRuleScheduleController implements RuleScheduleController {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
 
     }
 
@@ -73,6 +73,11 @@ public class RootRuleScheduleController implements RuleScheduleController {
             return store.accessor().save(request, rule.getId());
         }
 
+        return false;
+    }
+
+    @Override
+    public boolean running() {
         return false;
     }
 }

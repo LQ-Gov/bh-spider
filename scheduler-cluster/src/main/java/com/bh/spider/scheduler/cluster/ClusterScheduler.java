@@ -4,9 +4,12 @@ import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.scheduler.*;
+import com.bh.spider.scheduler.cluster.actuator.CombineActuator;
+import com.bh.spider.scheduler.cluster.actuator.CommandActuator;
 import com.bh.spider.scheduler.cluster.actuator.NodeCollection;
 import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
+import com.bh.spider.scheduler.cluster.consistent.operation.Operation;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
@@ -31,15 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterScheduler extends BasicScheduler {
     private final static Logger logger = LoggerFactory.getLogger(ClusterScheduler.class);
-    private int mid;
 
     private Store store;
     private DomainIndex domainIndex;
@@ -57,9 +56,7 @@ public class ClusterScheduler extends BasicScheduler {
 
     public ClusterScheduler(Config config) throws Exception {
         super(config);
-        this.mid = Integer.valueOf(config().get(Config.MY_ID));
-
-        logger.info("node id:{}", mid);
+        logger.info("node id:{}", self().getId());
     }
 
 
@@ -88,7 +85,7 @@ public class ClusterScheduler extends BasicScheduler {
 
         //初始化本地端口监听
         ClusterScheduler me = this;
-        servers[0] = new ServerInitializer(Integer.valueOf(config().get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
+        servers[0] = new ServerInitializer(Integer.parseInt(config().get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
             @Override
             public void initChannel(SocketChannel ch) {
                 ch.pipeline().addLast("ping", new IdleStateHandler(60, 20, 60 * 10, TimeUnit.SECONDS));
@@ -99,7 +96,7 @@ public class ClusterScheduler extends BasicScheduler {
         }).exec();
 
 
-        servers[1] = new ServerInitializer(Integer.valueOf(config().get(Config.INIT_CLUSTER_MASTER_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
+        servers[1] = new ServerInitializer(Integer.parseInt(config().get(Config.INIT_CLUSTER_MASTER_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
             @Override
             public void initChannel(SocketChannel ch) {
                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 2 + 8, 4));
@@ -112,7 +109,7 @@ public class ClusterScheduler extends BasicScheduler {
 
         //初始化事件循环线程
         this.loop = new EventLoopInitializer(this,
-                new BasicSchedulerRuleAssistant(config(), this, this.store, domainIndex),
+                new ClusterSchedulerRuleAssistant(config(), this, this.store, domainIndex),
                 new ClusterSchedulerComponentAssistant(config(), this),
                 new ClusterSchedulerFetchAssistant(this, domainIndex, store),
                 new ClusterSchedulerWatchAssistant(this),
@@ -120,10 +117,12 @@ public class ClusterScheduler extends BasicScheduler {
 
         this.loop.addInterceptor(new WatchInterceptor());
 
+        List<Node> nodes = Node.collectionOf(config().all(Config.INIT_CLUSTER_MASTER_ADDRESS));
 
-        this.raft = new RaftInitializer(this.mid, config()).exec();
-        this.masters = new NodeCollection(this.raft);
-        this.raft.bind(masters.actuator());
+        this.raft = new RaftInitializer((int)this.self().getId(), config()).exec();
+        this.masters = new NodeCollection(this.raft,nodes);
+        CombineActuator combineActuator = new CombineActuator(new CommandActuator(this), this.masters.actuator());
+        this.raft.bind(combineActuator);
 
         this.raft.exec();
 
@@ -136,6 +135,9 @@ public class ClusterScheduler extends BasicScheduler {
     public Workers workers() {
         return workers;
     }
+
+
+    public NodeCollection masters(){ return masters;}
 
     @CommandHandler
     public void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
@@ -201,11 +203,18 @@ public class ClusterScheduler extends BasicScheduler {
 
 
     @CommandHandler(cron = "*/20 * * * * ?")
-    public void UPDATE_NODE_INFO_HANDLER(){
+    public void UPDATE_NODE_INFO_HANDLER() {
         self().update();
         masters.update(self());
     }
 
+
+    @CommandHandler(autoComplete = false)
+    @Operation
+    public void TEST_HANDLER(Context ctx, int value) {
+        System.out.println("context type:" + ctx.getClass() + ",value:" + value);
+        ctx.commandCompleted(null);
+    }
 
 
 }

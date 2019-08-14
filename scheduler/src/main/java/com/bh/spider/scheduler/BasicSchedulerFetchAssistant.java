@@ -5,7 +5,7 @@ import com.bh.spider.common.fetch.impl.RequestImpl;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.DomainIndex;
-import com.bh.spider.scheduler.domain.RuleFacade;
+import com.bh.spider.scheduler.domain.RuleConcrete;
 import com.bh.spider.scheduler.domain.RulePattern;
 import com.bh.spider.scheduler.domain.pattern.AntPatternComparator;
 import com.bh.spider.scheduler.event.Assistant;
@@ -89,19 +89,19 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
 
         while (node != null && node != domainIndex.root()) {
-            Collection<RuleFacade> rules = node.rules();
+            Collection<RuleConcrete> rules = node.rules();
             if (rules != null) {
-                Map<RulePattern, RuleFacade> matches = new HashMap<>();
-                for (RuleFacade rule : rules) {
-                    if (rule.original().isValid() && rule.match(req)) {
+                Map<RulePattern, RuleConcrete> matches = new HashMap<>();
+                for (RuleConcrete rule : rules) {
+                    if (!rule.frozen() && rule.match(req)) {
                         matches.put(rule.pattern(), rule);
                     }
                 }
                 if (!matches.isEmpty()) {
                     List<RulePattern> patterns = new ArrayList<>(matches.keySet());
                     patterns.sort(new AntPatternComparator(req));
-                    RuleFacade facade = matches.get(patterns.get(0));
-                    return facade.controller().joinQueue(new FetchContent(req, Request.State.QUEUE));
+                    RuleConcrete concrete = matches.get(patterns.get(0));
+                    return concrete.controller().joinQueue(new FetchContent(req, Request.State.QUEUE));
 
                 }
             }
@@ -109,7 +109,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
         }
 
         if (CollectionUtils.isNotEmpty(domainIndex.root().rules())) {
-            Iterator<RuleFacade> it = domainIndex.root().rules().iterator();
+            Iterator<RuleConcrete> it = domainIndex.root().rules().iterator();
             return it.next().controller().joinQueue(new FetchContent(req));
         }
 
