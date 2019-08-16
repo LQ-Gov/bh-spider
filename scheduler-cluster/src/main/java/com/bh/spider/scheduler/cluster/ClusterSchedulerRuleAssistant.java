@@ -12,6 +12,8 @@ import com.bh.spider.scheduler.domain.RuleConcrete;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.store.base.Store;
 
+import java.io.IOException;
+
 /**
  * @author liuqi19
  * @version ClusterSchedulerRuleAssistant, 2019-08-09 16:00 liuqi19
@@ -41,7 +43,6 @@ public class ClusterSchedulerRuleAssistant extends BasicSchedulerRuleAssistant {
     }
 
 
-
     @Override
     @CommandHandler(autoComplete = false)
     @Operation
@@ -49,7 +50,6 @@ public class ClusterSchedulerRuleAssistant extends BasicSchedulerRuleAssistant {
         super.DELETE_RULE_HANDLER(ctx, id);
         ctx.commandCompleted(null);
     }
-
 
 
     @Override
@@ -64,13 +64,14 @@ public class ClusterSchedulerRuleAssistant extends BasicSchedulerRuleAssistant {
 
     @Override
     @CommandHandler(autoComplete = false)
-    public void EDIT_RULE_HANDLER(Context ctx, Rule rule) {
+    public void EDIT_RULE_HANDLER(Context ctx, Rule rule) throws IOException {
         super.EDIT_RULE_HANDLER(ctx, rule);
         ctx.commandCompleted(null);
     }
 
     @Override
     protected boolean runnable(RuleConcrete concrete) {
+        if (concrete.id() == 0) return true;
         NodeCollection collection = scheduler.masters();
         Node node = collection.consistentHash((int) (concrete.id() % Integer.MAX_VALUE));
         //进行一致性hash，如果判断等于自身，则开始执行

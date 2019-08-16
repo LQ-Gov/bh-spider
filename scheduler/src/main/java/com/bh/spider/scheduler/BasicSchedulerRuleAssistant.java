@@ -72,7 +72,8 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         }
 
         for (RuleConcrete concrete : CONCRETE_CACHE.values())
-            concrete.execute();
+            if (runnable(concrete))
+                concrete.execute();
     }
 
 
@@ -118,6 +119,13 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         return concretes.stream().map((RuleConcrete::base)).collect(Collectors.toList());
     }
 
+    @CommandHandler
+    public Rule GET_RULE_HANDLER(long id) {
+        RuleConcrete concrete = CONCRETE_CACHE.get(id);
+
+        return concrete == null ? null : concrete.base();
+    }
+
 
     @CommandHandler
     public Rank GET_RULE_RANK(Context ctx, Request.State state, int size) throws SQLException {
@@ -129,13 +137,14 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
 
     @CommandHandler
-    public void EDIT_RULE_HANDLER(Context ctx, Rule rule) {
+    public void EDIT_RULE_HANDLER(Context ctx, Rule rule) throws IOException {
 
         RuleConcrete concrete = CONCRETE_CACHE.get(rule.getId());
 
         if (concrete == null || !concrete.modifiable()) return;
 
         Rule old = concrete.base();
+
 
         boolean bind = true;
         if (!old.getPattern().equals(rule.getPattern())) {
@@ -152,9 +161,13 @@ public class BasicSchedulerRuleAssistant implements Assistant {
             concrete.update(new DefaultRuleScheduleController(scheduler, concrete.base(), store));
         }
 
+        DomainIndex.Node node = null;
         if (!bind) {
-            domainIndex.matchOrCreate(concrete.host()).bind(concrete);
+            node = domainIndex.matchOrCreate(concrete.host()).bind(concrete);
         }
+        if (node == null) node = domainIndex.match(concrete.host());
+
+        backup(node);
     }
 
     @CommandHandler

@@ -11,7 +11,9 @@ public enum CommandCode {
     //RULE 相关操作
     SUBMIT_RULE,
     GET_RULE_LIST,//获取RULE列表
+    GET_RULE,
     GET_HOST_LIST,///获取所有规则的host
+    EDIT_RULE,
     DELETE_RULE,//删除rule(此删除并未真正删除，会进入一个清理阶段)
     TERMINATION_RULE,//真正删除rule的阶段
 

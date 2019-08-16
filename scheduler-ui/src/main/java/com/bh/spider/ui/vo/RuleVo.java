@@ -11,6 +11,9 @@ public class RuleVo  {
     private String id;
 
 
+    private Class<?> _class;
+
+
     private List<Chain> chains = new LinkedList<>();
     /**
      * 定时器
@@ -30,6 +33,10 @@ public class RuleVo  {
 
     private String[] policy;
 
+    private String[] nodes;
+
+    private boolean repeat;
+
     private boolean valid;
 
 
@@ -42,6 +49,10 @@ public class RuleVo  {
         this.setPattern(rule.getPattern());
         this.setPolicy(rule.getPolicy());
         this.setValid(rule.isValid());
+        this.setNodes(rule.getNodes());
+        this.setRepeat(rule.isRepeat());
+
+        this._class = rule.getClass();
 
     }
 
@@ -108,5 +119,21 @@ public class RuleVo  {
 
     public void setValid(boolean valid) {
         this.valid = valid;
+    }
+
+    public String[] getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(String[] nodes) {
+        this.nodes = nodes;
+    }
+
+    public boolean isRepeat() {
+        return repeat;
+    }
+
+    public void setRepeat(boolean repeat) {
+        this.repeat = repeat;
     }
 }

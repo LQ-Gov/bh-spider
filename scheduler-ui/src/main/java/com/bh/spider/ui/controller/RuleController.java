@@ -33,6 +33,13 @@ public class RuleController {
         return rules.stream().map(RuleVo::new).collect(Collectors.toList());
     }
 
+    @GetMapping("/{id}")
+    public RuleVo findOne(@PathVariable("id") long id) {
+        Rule rule = client.rule().select(id);
+
+        return rule == null ? null : new RuleVo(rule);
+    }
+
 
     @RequestMapping(value = "/rules/hosts", method = RequestMethod.GET)
     public List<String> hosts() {
@@ -41,15 +48,20 @@ public class RuleController {
     }
 
 
-
     @DeleteMapping(value = "/{id}")
-    public void delete( @PathVariable("id") long id) {
+    public void delete(@PathVariable("id") long id) {
         client.rule().delete(id);
     }
 
     @PostMapping
     public void create(@RequestBody Rule rule) {
         client.rule().submit(rule);
+    }
+
+
+    @PatchMapping
+    public void edit(@RequestBody Rule rule) {
+        client.rule().edit(rule);
     }
 
 

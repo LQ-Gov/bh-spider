@@ -48,6 +48,11 @@ public class RuleOperation {
         return rules == null ? Collections.emptyList() : rules;
     }
 
+
+    public Rule select(long id){
+        return communicator.write(CommandCode.GET_RULE,Rule.class,id);
+    }
+
     /**
      * 获取HOST集合
      *
@@ -56,6 +61,10 @@ public class RuleOperation {
     public List<String> hosts() {
         ParameterizedType type = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
         return communicator.write(CommandCode.GET_HOST_LIST, type);
+    }
+
+    public void edit(Rule rule) {
+        communicator.write(CommandCode.EDIT_RULE, null, rule);
     }
 
     public void delete(long id) {
