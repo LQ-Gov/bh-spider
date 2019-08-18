@@ -6,6 +6,7 @@ import com.bh.spider.common.component.Component;
 public class ComponentOperationEntry {
     public final static String ADD = "ADD";
     public final static String DELETE = "DELETE";
+    public final static String RESET = "RESET";
 
     private long index;
 
@@ -43,4 +44,8 @@ public class ComponentOperationEntry {
 
 
     public Component.Type type(){return type;}
+
+    public byte[] data(){
+        return null;
+    }
 }

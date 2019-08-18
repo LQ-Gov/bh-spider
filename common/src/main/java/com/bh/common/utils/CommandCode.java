@@ -5,6 +5,7 @@ public enum CommandCode {
     SUBMIT_COMPONENT,//提交component
     GET_COMPONENT_LIST,//获取所有的component
     GET_COMPONENT,//获取单个component
+    GET_COMPONENT_OPERATION_INDEX,
     DELETE_COMPONENT,
 
 

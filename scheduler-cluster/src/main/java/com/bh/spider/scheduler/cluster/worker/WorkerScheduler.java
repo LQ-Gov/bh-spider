@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster.worker;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
@@ -7,16 +8,14 @@ import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.cluster.communication.Communicator;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.initialization.CommunicatorInitializer;
-import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Assistant;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.DirectoriesInitializer;
 import com.bh.spider.scheduler.initialization.EventLoopInitializer;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-
-import java.nio.file.Paths;
 
 public class WorkerScheduler implements Scheduler, Assistant {
 
@@ -49,10 +48,11 @@ public class WorkerScheduler implements Scheduler, Assistant {
     @Override
     public synchronized void exec() throws Exception {
         //初始化存储文件夹
-        new DirectoriesInitializer(config().get(Config.INIT_OPERATION_LOG_PATH), config().get(Config.INIT_COMPONENT_PATH)).exec();
+//        new DirectoriesInitializer(config().get(Config.INIT_OPERATION_LOG_PATH), config().get(Config.INIT_COMPONENT_PATH)).exec();
+//
+//        new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "component").exec();
 
-        new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "component").exec();
-
+        new DirectoriesInitializer(config().get(Config.INIT_COMPONENT_PATH)).exec();
 
         //初始化事件循环线程
 
@@ -91,8 +91,14 @@ public class WorkerScheduler implements Scheduler, Assistant {
         this.communicator.ping(sync);
     }
 
+
+
     @CommandHandler
     public void HEARTBEAT_HANDLER(Context ctx, Sync sync) {
+
+        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), sync.getComponentOperationCommittedIndex());
+
+        process(cmd);
 
     }
 

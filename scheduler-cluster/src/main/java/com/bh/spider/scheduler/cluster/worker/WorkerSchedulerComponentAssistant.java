@@ -1,13 +1,12 @@
 package com.bh.spider.scheduler.cluster.worker;
 
 import com.bh.common.utils.CommandCode;
+import com.bh.common.utils.ConvertUtils;
 import com.bh.spider.common.component.Component;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.cluster.component.ComponentOperationEntry;
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
 import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
@@ -18,35 +17,63 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.watch.Watch;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 public class WorkerSchedulerComponentAssistant implements Assistant {
 
     private WorkerScheduler scheduler;
-    private OperationRecorder componentOperationRecorder;
     private int loadClassTimeout;
     private final ClusterNode node;
 
     private ComponentCoreFactory factory;
 
+
+    private final Path committedIndexPath;
+
+    private long localCommittedIndex;
+
+
     public WorkerSchedulerComponentAssistant(Config cfg, WorkerScheduler scheduler) throws IOException {
 
         this.scheduler = scheduler;
         this.factory = new ComponentCoreFactory(cfg);
-        this.componentOperationRecorder = OperationRecorderFactory.get("component");
 
-        this.loadClassTimeout = Integer.valueOf(cfg.get(Config.INIT_LOAD_CLASS_TIMEOUT));
+        this.loadClassTimeout = Integer.parseInt(cfg.get(Config.INIT_LOAD_CLASS_TIMEOUT));
         this.node = (ClusterNode) scheduler.self();
-        this.node.setComponentOperationCommittedIndex(this.componentOperationRecorder.committedIndex());
+
+        this.committedIndexPath = Paths.get(cfg.get(Config.INIT_OPERATION_LOG_PATH), "component.index");
+
+        this.localCommittedIndex = readIndex(committedIndexPath, 0);
+
+        this.node.setComponentOperationCommittedIndex(this.localCommittedIndex);
     }
+
+    private long readIndex(Path path, long defaultValue) throws IOException {
+        if (!Files.exists(path)) return defaultValue;
+
+        byte[] data = Files.readAllBytes(path);
+
+        return ConvertUtils.toLong(data);
+    }
+
+    private long writeIndex(Path path, long value) throws IOException {
+        Files.write(path, ConvertUtils.toBytes(value));
+        return value;
+    }
+
 
     @CommandHandler
     public void WRITE_OPERATION_ENTRIES(Context ctx, @CollectionParams(collectionType = List.class, argumentTypes = {Entry.class}) List<Entry> entries) throws IOException {
 
+
         //更新component metadata
         for (Entry entry : entries) {
             ComponentOperationEntry coe = new ComponentOperationEntry(entry);
+
             if (ComponentOperationEntry.ADD.equals(coe.operation())) {
                 ComponentRepository repository = factory.proxy(coe.type());
 
@@ -66,8 +93,16 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
 
 
         //写入数据
-        componentOperationRecorder.writeAll(entries);
-        node.setComponentOperationCommittedIndex(componentOperationRecorder.committedIndex());
+
+        this.localCommittedIndex = writeIndex(committedIndexPath,0);
+    }
+
+    @CommandHandler
+    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(Context ctx, long committedIndex) {
+        if (localCommittedIndex < committedIndex) {
+            Command cmd = new Command(ctx, CommandCode.GET_COMPONENT_OPERATION_INDEX.name(), localCommittedIndex);
+            ctx.write(cmd);
+        }
     }
 
 

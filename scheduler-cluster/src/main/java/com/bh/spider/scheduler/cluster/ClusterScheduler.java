@@ -3,13 +3,15 @@ package com.bh.spider.scheduler.cluster;
 import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.consistent.raft.Raft;
-import com.bh.spider.scheduler.*;
+import com.bh.spider.scheduler.BasicScheduler;
+import com.bh.spider.scheduler.CommandReceiveHandler;
+import com.bh.spider.scheduler.Config;
+import com.bh.spider.scheduler.RunModeClassFactory;
 import com.bh.spider.scheduler.cluster.actuator.CombineActuator;
 import com.bh.spider.scheduler.cluster.actuator.CommandActuator;
 import com.bh.spider.scheduler.cluster.actuator.NodeCollection;
 import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
-import com.bh.spider.scheduler.cluster.consistent.operation.Operation;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
@@ -34,7 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterScheduler extends BasicScheduler {
@@ -206,14 +211,6 @@ public class ClusterScheduler extends BasicScheduler {
     public void UPDATE_NODE_INFO_HANDLER() {
         self().update();
         masters.update(self());
-    }
-
-
-    @CommandHandler(autoComplete = false)
-    @Operation
-    public void TEST_HANDLER(Context ctx, int value) {
-        System.out.println("context type:" + ctx.getClass() + ",value:" + value);
-        ctx.commandCompleted(null);
     }
 
 

@@ -105,9 +105,9 @@ public class BasicSchedulerRuleAssistant implements Assistant {
             backup(node);
 
             if (runnable(concrete)) {
-                CONCRETE_CACHE.put(concrete.id(), concrete);
                 concrete.execute();
             }
+            CONCRETE_CACHE.put(concrete.id(), concrete);
         }
     }
 
@@ -146,9 +146,10 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         Rule old = concrete.base();
 
 
+        DomainIndex.Node node = domainIndex.match(concrete.host());
         boolean bind = true;
         if (!old.getPattern().equals(rule.getPattern())) {
-            domainIndex.match(concrete.host()).unbind(concrete);
+            node.unbind(concrete);
             if (runnable(concrete)) {
                 store.accessor().reset(concrete.id());
             }
@@ -157,17 +158,16 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
         concrete.update(rule);
 
+        backup(node);
+
         if (!old.getCron().equals(concrete.cron())) {
             concrete.update(new DefaultRuleScheduleController(scheduler, concrete.base(), store));
         }
 
-        DomainIndex.Node node = null;
         if (!bind) {
             node = domainIndex.matchOrCreate(concrete.host()).bind(concrete);
+            backup(node);
         }
-        if (node == null) node = domainIndex.match(concrete.host());
-
-        backup(node);
     }
 
     @CommandHandler

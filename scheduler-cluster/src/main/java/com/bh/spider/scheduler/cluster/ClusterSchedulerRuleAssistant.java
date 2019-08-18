@@ -64,6 +64,7 @@ public class ClusterSchedulerRuleAssistant extends BasicSchedulerRuleAssistant {
 
     @Override
     @CommandHandler(autoComplete = false)
+    @Operation
     public void EDIT_RULE_HANDLER(Context ctx, Rule rule) throws IOException {
         super.EDIT_RULE_HANDLER(ctx, rule);
         ctx.commandCompleted(null);
