@@ -6,6 +6,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 public @interface Operation {
+    byte SNAP=2;
     byte WRITE=1;
     byte READ=0;
 

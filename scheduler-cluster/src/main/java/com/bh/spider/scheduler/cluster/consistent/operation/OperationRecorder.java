@@ -1,75 +1,113 @@
 package com.bh.spider.scheduler.cluster.consistent.operation;
 
-import com.google.common.collect.EvictingQueue;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class OperationRecorder {
     private final static Logger logger = LoggerFactory.getLogger(OperationRecorder.class);
 
+    /*
+     *文件名称，由三部分组成,dir,name,index
+     */
+    private Path dir;
+
     private String name;
 
+    private int index;
 
+
+    private Entry snapshot;
     private Queue<Entry> cacheQueue;
 
-
-    private FileChannel reader;
-
-
-    private FileChannel writer;
+    private int limit;
 
 
-    private RecorderIndex recorderIndex;
+    private FileChannel channel;
 
-    public OperationRecorder(Path path,int cacheSize) throws IOException {
-        this("default",path,cacheSize);
+    private Supplier<byte[]> snapshotCreator;
+
+
+    public OperationRecorder(Path dir, int cacheSize) throws IOException {
+        this("default", dir, cacheSize, null);
     }
 
 
-    public OperationRecorder(String name, Path path, int cacheSize) throws IOException {
+    public OperationRecorder(String name, Path dir, int cacheSize, Supplier<byte[]> snapshotCreator) throws IOException {
         this.name = name;
-        this.cacheQueue = EvictingQueue.create(cacheSize);
+        this.dir = dir;
+        this.limit = cacheSize;
+        this.cacheQueue = new CircularFifoQueue<>(cacheSize);
+        this.snapshotCreator = snapshotCreator;
+        init();
+    }
 
-        Path filePath = Paths.get(path.toString(), name);
 
-        writer = FileChannel.open(filePath, StandardOpenOption.WRITE,StandardOpenOption.READ, StandardOpenOption.CREATE);
+    private void init() throws IOException {
+        List<Path> files = Files.list(dir)
+                .filter(x -> x.getFileName().toString().startsWith(name + "."))
+                .sorted((o1, o2) -> {
+                    int i1 = extractIndex(o1);
 
-        reader = FileChannel.open(filePath, StandardOpenOption.READ);
+                    int i2 = extractIndex(o2);
 
-        Path indexPath = Paths.get(path.toString(), name + ".index");
+                    if (i1 == i2) return 0;
 
-        recorderIndex = new RecorderIndex(indexPath);
+                    return i1 > i2 ? 1 : -1;
+                })
+                .collect(Collectors.toList());
 
-        long committedIndex =recorderIndex.committedIndex();
-        if (committedIndex != -1) {
 
-            long pos = recorderIndex.position(committedIndex);
-            skip(writer, pos, 1);
+        Collections.reverse(files);
 
+        for (Path file : files) {
+            FileChannel channel = FileChannel.open(file);
+
+            Entry entry;
+
+            while ((entry = read0(channel)) != null) {
+                if (entry.action() == Operation.SNAP) snapshot = entry;
+                else {
+                    cacheQueue.add(entry);
+                }
+            }
+            if (!cacheQueue.isEmpty() || snapshot != null) {
+                String name = file.getFileName().toString();
+                this.index = Integer.parseInt(name.substring(this.name.length() + 1));
+                this.channel = channel;
+                return;
+            } else
+                Files.delete(file);
+        }
+
+        if (channel == null) {
+            this.cut();
         }
     }
 
+    private int extractIndex(Path path) {
+        return Integer.parseInt(path.getFileName().toString().substring(name.length() + 1));
+    }
 
 
-
-
-
-
-    public String name(){
+    public String name() {
         return name;
     }
 
 
-    public long committedIndex(){
-        return recorderIndex.committedIndex();
+    public long committedIndex() {
+        return cacheQueue.isEmpty() ? 0 : cacheQueue.peek().index();
     }
 
     public synchronized boolean write(Entry entry) {
@@ -87,16 +125,41 @@ public class OperationRecorder {
     }
 
     private synchronized boolean write0(Entry entry) throws IOException {
-        if (committedIndex() + 1 != entry.index()) return false;
-        long pos = writer.position();
+        if (committedIndex() + 1 != entry.index()) {
+            logger.error("不连续的操作索引,当前索引:{},entry索引:{}", committedIndex(), entry.index());
+            return false;
+        }
 
-        writer.write(ByteBuffer.wrap(entry.serialize()));
+        channel.write(ByteBuffer.wrap(entry.serialize()));
 
-        recorderIndex.write(entry.index(), pos);
         cacheQueue.add(entry);
+
+        if (limit == cacheQueue.size())
+            this.cut();
+
 
         return true;
     }
+
+
+    private void cut() throws IOException {
+
+
+        FileChannel nextChannel = FileChannel.open(Paths.get(dir.toString(), name + "." + String.valueOf(index + 1)),
+                StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+
+        Entry snap = new Entry(committedIndex(), Operation.SNAP, snapshotCreator.get());
+        nextChannel.write(ByteBuffer.wrap(snap.serialize()));
+
+
+        this.channel = nextChannel;
+
+        this.index++;
+
+        this.cacheQueue.add(snap);
+
+    }
+
 
     public synchronized void writeAll(List<Entry> entries) {
         try {
@@ -108,95 +171,84 @@ public class OperationRecorder {
         }
     }
 
-
-    private void skip(FileChannel channel,long pos,int len) throws IOException {
-
-        long end = channel.size();
-
-
-        ByteBuffer buffer = ByteBuffer.allocate(4);
-
-        channel.position(pos);
-        for (int i = 0; i < len && pos < end; i++) {
-            buffer.clear();
-            if (channel.read(buffer) == buffer.capacity()) {
-                buffer.flip();
-
-                pos += buffer.getInt();
-                channel.position(pos);
-
-            } else break;
-        }
-
-
-        logger.info("当前writer position:{}", channel.position());
+    private Entry read() throws IOException {
+        return read0(channel);
     }
 
-    private Entry read() throws IOException {
+    private Entry read0(FileChannel channel) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(4);
-        if( reader.read(buffer)==4) {
+        if (channel.read(buffer) == 4) {
             buffer.flip();
 
-            int len = buffer.getInt()-4;
+            int len = buffer.getInt() - 4;
             ByteBuffer data = ByteBuffer.allocate(len);
 
-            if(reader.read(data)==len) {
+            if (channel.read(data) == len) {
                 return Entry.deserialize(data.array(), 0, data.capacity() - 1);
             }
         }
 
         return null;
-
     }
 
+    public List<Entry> load(long startCommittedIndex, long endCommittedIndex) {
+        List<Entry> list = new LinkedList<>();
+        if (startCommittedIndex < this.committedIndex() - cacheQueue.size()) {
+            list.add(snapshot);
 
-    private List<Entry> readEntries(long startCommittedIndex,long endCommittedIndex) throws IOException {
-
-
-        startCommittedIndex = Math.max(startCommittedIndex, 0);
-        endCommittedIndex = Math.min(committedIndex(), endCommittedIndex);
-
-        List<Entry> result = new LinkedList<>();
-
-        if (endCommittedIndex >= startCommittedIndex) {
-
-            reader.position(recorderIndex.position(startCommittedIndex));
-
-            for (; startCommittedIndex <= endCommittedIndex; startCommittedIndex++) {
-                result.add(read());
-            }
+            startCommittedIndex = snapshot.index();
         }
-
-        return result;
-    }
-
-    public List<Entry> load(long startCommittedIndex,long endCommittedIndex) throws IOException {
-        startCommittedIndex = Math.max(startCommittedIndex,0);
-
-        endCommittedIndex = Math.min(committedIndex(),endCommittedIndex);
-
-        if (endCommittedIndex < 0 || startCommittedIndex > endCommittedIndex) return Collections.emptyList();
 
         List<Entry> entries = new ArrayList<>(cacheQueue);
 
-        Entry first = entries.isEmpty() ? null : entries.get(0);
+        if (!entries.isEmpty()) {
+            int i = (int) (entries.size() - committedIndex() + startCommittedIndex);
 
-        if (first == null || first.index() > endCommittedIndex)
-            return readEntries(startCommittedIndex, endCommittedIndex);
+            if (endCommittedIndex > committedIndex())
+                endCommittedIndex = committedIndex();
 
+            list.addAll(entries.subList(i, (int) (entries.size() - endCommittedIndex + committedIndex())));
 
-        if(startCommittedIndex>first.index()) {
-            return entries.subList((int) (startCommittedIndex - first.index()), (int) (endCommittedIndex - first.index() + 1));
         }
 
-        List<Entry> head = readEntries(startCommittedIndex,first.index()-1);
-
-        List<Entry> tail = entries.subList(0,(int)(endCommittedIndex-first.index())+1);
-
-
-        head.addAll(tail);
+        return list;
+    }
 
 
-        return head;
+    public static Builder builder(String name) {
+        return new Builder(name);
+    }
+
+
+    public static class Builder {
+        private String name;
+        private Path dir;
+
+        private int limit;
+        private Supplier<byte[]> snapshotCreator;
+
+        private Builder(String name) {
+            this.name = name;
+        }
+
+
+        public Builder snapshot(Supplier<byte[]> snapshotCreator, int limit) {
+
+            this.snapshotCreator = snapshotCreator;
+            this.limit = limit;
+            return this;
+        }
+
+
+        public Builder dir(Path path) {
+            this.dir = path;
+            return this;
+        }
+
+
+        public OperationRecorder build() throws IOException {
+            return new OperationRecorder(name, dir, limit, snapshotCreator);
+        }
+
     }
 }

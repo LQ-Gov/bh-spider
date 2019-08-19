@@ -30,6 +30,8 @@ public class Entry {
 
     public byte[] data(){return data;}
 
+    public byte action(){return action;}
+
 
     void setIndex(long value) {
         this.index = value;

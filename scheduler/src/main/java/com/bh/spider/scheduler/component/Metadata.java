@@ -6,9 +6,11 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,27 +21,23 @@ public class Metadata {
 
     private Map<String, Position<Component>> components = new LinkedHashMap<>();
 
-    private RandomAccessFile accessor;
-
-    private long lastPositionIndex;
+    private FileChannel channel;
 
 
     public Metadata(Path path) throws IOException {
-        this.accessor = new RandomAccessFile(path.toFile(), "rws");
-        this.lastPositionIndex =0;
+        this.channel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
 
-        long len = this.accessor.length();
+        long len = this.channel.size();
         if (Files.exists(path) && len > 0) {
             long pos = 0;
-            while(len-pos>=FIXED_ROW_SIZE) {
-                Position<Component> position = read0(pos,null);
+            while (len - pos >= FIXED_ROW_SIZE) {
+                Position<Component> position = read0(pos, null);
                 if (position != null)
                     components.put(position.data().getName(), position);
                 pos += FIXED_ROW_SIZE;
             }
 
-            lastPositionIndex = pos;
-
+            if (len - pos > 0) this.channel.truncate(this.channel.position());
         }
     }
 
@@ -48,47 +46,53 @@ public class Metadata {
         return components.values().stream().map(Position::data).collect(Collectors.toList());
     }
 
-    private long write0(Component component,long pos) throws IOException {
-        Preconditions.checkArgument(pos <= accessor.length(), "error metadata position");
+    private long write0(Component component, long pos) throws IOException {
+        Preconditions.checkArgument(pos <= channel.size(), "error metadata position");
         Preconditions.checkNotNull(component, "component can't null");
         Preconditions.checkArgument(StringUtils.isNotBlank(component.getName()), "component.name can't null");
         Preconditions.checkArgument(component.getName().length() <= 100, "component.name max length is 100");
         Preconditions.checkArgument(component.getDescription() == null || component.getDescription().length() < 200, "component.description max length is 200");
 
-        if (pos >= 0 && pos != accessor.getFilePointer())
-            accessor.seek(pos);
+        long cur = channel.position();
 
-        accessor.writeBoolean(true);//先设置此行无效
-        accessor.writeBoolean(component.isExpired());//设置没有过期
+        if (cur != pos) channel.position(pos);
+
         byte[] data = Json.get().writeValueAsBytes(component);
-        accessor.writeInt(data.length);//设置组件数据长度
-        accessor.write(data);
-        byte[] surplus = new byte[FIXED_ROW_SIZE - 1 - 1 - data.length - 4];//1:valid,1:expired,4:data.length
-        accessor.write(surplus);
+        /*1:有效/无效 2:过期 3:data size 4:data 5:padding */
+        ByteBuffer buffer = ByteBuffer.allocate(FIXED_ROW_SIZE)
+                .put((byte) 1).put((byte) (component.isExpired() ? 1 : 0))
+                .putInt(data.length).put(data)
+                .put(new byte[FIXED_ROW_SIZE - 1 - 1 - 4 - data.length]);
 
+        buffer.flip();
 
-        if (pos + FIXED_ROW_SIZE >= accessor.length()) lastPositionIndex = pos + FIXED_ROW_SIZE;
+        channel.write(buffer);
 
-        return pos;
+        return channel.position();
     }
 
-    private Position<Component> read0(long pos,Position<Component> position) throws IOException {
-        if (accessor.length() - pos < FIXED_ROW_SIZE) return null;
-        accessor.seek(pos);
+    private Position<Component> read0(long pos, Position<Component> position) throws IOException {
+        if (channel.size() - pos < FIXED_ROW_SIZE) return null;
 
-        if (!accessor.readBoolean())
-            return null;
-        boolean expired = accessor.readBoolean();
+        channel.position(pos);
 
-        int size = accessor.readInt();
+        ByteBuffer buffer = ByteBuffer.allocate(FIXED_ROW_SIZE);
 
-        byte[] data = new byte[size];
-        accessor.read(data);
+        channel.read(buffer);
+
+        buffer.flip();
+
+        if (buffer.get() == 0) return null;
+
+        boolean expired = buffer.get() == 1;
+
+        byte[] data = new byte[buffer.getInt()];
+
 
 
         Component component = Json.get().readValue(data, Component.class);
         component.setExpired(expired);
-        return position == null ? new Position<>(component, pos) : position.cover(component, pos,false);
+        return position == null ? new Position<>(component, pos) : position.cover(component, pos, false);
     }
 
 
@@ -100,10 +104,10 @@ public class Metadata {
             pos = write0(component, position.pos());
         } else {
             position = new Position<>();
-            pos = write0(component, lastPositionIndex);
+            pos = write0(component, channel.size());
         }
 
-        components.put(component.getName(), position.cover(component, pos,true));
+        components.put(component.getName(), position.cover(component, pos, true));
     }
 
     public Component get(String name) {
@@ -114,11 +118,12 @@ public class Metadata {
     public boolean delete(String name) throws IOException {
         Position<Component> position = components.get(name);
         if (position != null) {
-            long end = accessor.getFilePointer();
-            accessor.seek(position.pos());
+            long old = channel.position();
 
-            accessor.writeBoolean(false);
-            accessor.seek(end);
+            channel.position(position.pos);
+            channel.write(ByteBuffer.wrap(new byte[]{0}));
+
+            channel.position(old);
 
             components.remove(name);
 
@@ -128,15 +133,25 @@ public class Metadata {
         return false;
     }
 
+    public void reset(List<Component> components, boolean all) {
+        this.components.clear();
+        Map<String, Component> map = components.stream().collect(Collectors.toMap(Component::getName, x -> x));
+
+        List<Position<Component>> contains = this.components.values().stream().filter(x -> map.containsKey(x.data.getName())).collect(Collectors.toList());
+
+
+    }
+
     /**
      * 对指定的name 进行wait
+     *
      * @param name
      */
     public boolean waitFor(String name) throws InterruptedException {
         final Position<Component> position = components.get(name);
-        if(position==null) return false;
+        if (position == null) return false;
 
-        synchronized (position){
+        synchronized (position) {
             position.wait();
         }
 
@@ -144,11 +159,11 @@ public class Metadata {
     }
 
 
-    public boolean waitFor(String name,long timeout) throws InterruptedException {
+    public boolean waitFor(String name, long timeout) throws InterruptedException {
         final Position<Component> position = components.get(name);
-        if(position==null) return false;
+        if (position == null) return false;
 
-        synchronized (position){
+        synchronized (position) {
             position.wait(timeout);
         }
 
@@ -161,7 +176,8 @@ public class Metadata {
         private long pos;
 
 
-        public Position(){}
+        public Position() {
+        }
 
 
         public Position(T data, long pos) {
@@ -178,11 +194,11 @@ public class Metadata {
         }
 
 
-        public Position<T> cover(T data,long pos,boolean notify) {
+        public Position<T> cover(T data, long pos, boolean notify) {
             this.data = data;
             this.pos = pos;
 
-            if(notify) {
+            if (notify) {
                 synchronized (this) {
                     this.notifyAll();
                 }
@@ -191,7 +207,6 @@ public class Metadata {
 
             return this;
         }
-
 
 
     }

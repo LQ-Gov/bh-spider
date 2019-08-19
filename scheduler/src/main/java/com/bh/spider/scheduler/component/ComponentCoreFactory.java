@@ -1,7 +1,9 @@
 package com.bh.spider.scheduler.component;
 
+import com.bh.common.utils.Json;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.common.component.Component;
+import com.fasterxml.jackson.databind.type.MapType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +17,7 @@ import java.util.*;
 public class ComponentCoreFactory {
     private static final Logger logger = LoggerFactory.getLogger(ComponentCoreFactory.class);
 
-    private Map<Component.Type,ComponentRepository> componentRepositories = new HashMap<>();
+    private Map<Component.Type, ComponentRepository> componentRepositories = new HashMap<>();
 
     public ComponentCoreFactory(Config cfg) throws IOException {
         String dataPath = cfg.get(Config.INIT_COMPONENT_PATH);
@@ -46,7 +48,7 @@ public class ComponentCoreFactory {
     }
 
 
-    public List<Component> all(){
+    public List<Component> all() {
         Collection<ComponentRepository> repositories = componentRepositories.values();
         List<Component> components = new LinkedList<>();
 
@@ -56,4 +58,37 @@ public class ComponentCoreFactory {
 
         return components;
     }
+
+    public byte[] snapshot() {
+        Collection<ComponentRepository> repositories = componentRepositories.values();
+        Map<Component.Type, List<Component>> map = new HashMap<>();
+        for (ComponentRepository repository : repositories) {
+            map.put(repository.componentType(), repository.all());
+        }
+
+        try {
+            return Json.get().writeValueAsBytes(map);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void apply(byte[] snap) {
+        MapType type = Json.mapType(Json.constructType(Component.Type.class), Json.constructCollectionType(List.class, Component.class));
+        try {
+            Map<Component.Type, List<Component>> map = Json.get().readValue(snap, type);
+
+            map.forEach(this::reset);
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void reset(Component.Type type, List<Component> components) {
+        componentRepositories.get(type);
+    }
+
+
 }

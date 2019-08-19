@@ -49,7 +49,7 @@ public abstract class ComponentRepository {
         if (component != null && loadContent) {
             Component o = component.clone();
 
-            Path path = Paths.get(base.toString(),join(component.getName(),componentType()));
+            Path path = Paths.get(base.toString(), join(component.getName(), componentType()));
             byte[] bytes = Files.readAllBytes(path);
             o.setData(bytes);
 
@@ -65,7 +65,7 @@ public abstract class ComponentRepository {
 
 
     public Component save(byte[] data, String name, String description, boolean override, boolean expired) throws IOException {
-        Path old = Paths.get(base.toString(), join(name,componentType));
+        Path old = Paths.get(base.toString(), join(name, componentType));
         Path tmp = Paths.get(base.toString(), name + ".tmp");
 
         Files.write(tmp, data);
@@ -119,4 +119,8 @@ public abstract class ComponentRepository {
 
 
     public abstract Class<?> loadClass(String name) throws IOException, ClassNotFoundException;
+
+    public void reset(List<Component> components) {
+        metadata.reset(components, true);
+    }
 }

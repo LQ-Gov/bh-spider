@@ -52,7 +52,7 @@ public class EventLoop extends Thread {
     }
 
 
-    private EventLoop(EventLoop parent){
+    private EventLoop(EventLoop parent) {
         this.timer = parent.timer;
         this.interceptors = parent.interceptors;
     }
@@ -86,6 +86,9 @@ public class EventLoop extends Thread {
                 Chunk chunk = queue.take();
 
                 CommandRunner runner = chunk.runner();
+
+                if (!runner.runnable()) continue;
+
                 Command cmd = chunk.command();
                 CompletableFuture future = chunk.future();
 
@@ -104,7 +107,7 @@ public class EventLoop extends Thread {
                         cmd.context().commandCompleted(returnValue);
 
                 } catch (CommandTerminationException e) {
-                    if(runner.autoComplete()) {
+                    if (runner.autoComplete()) {
                         cmd.context().exception(e);
                         future.completeExceptionally(e);
                     }

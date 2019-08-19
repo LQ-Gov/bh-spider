@@ -17,5 +17,11 @@ public @interface CommandHandler {
 
     String cron() default "";
 
+    /**
+     * 命令最小执行间隔,单位毫秒
+     * @return
+     */
+    long minInterval() default 0;
+
 
 }

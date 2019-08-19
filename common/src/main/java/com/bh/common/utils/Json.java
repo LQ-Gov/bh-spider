@@ -7,6 +7,7 @@ import com.bh.spider.common.rule.SeleniumRule;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleAbstractTypeResolver;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.MapType;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -45,6 +47,13 @@ public class Json {
         return mapper;
     }
 
+    public static JavaType constructType(Type type){
+        return mapper.getTypeFactory().constructType(type);
+    }
+
+    public static MapType mapType(JavaType keyClass,JavaType valueClass){
+        return mapper.getTypeFactory().constructMapType(HashMap.class, keyClass, valueClass);
+    }
 
     public static MapType mapType(Class<?> keyClass, Class<?> valueClass) {
         return mapper.getTypeFactory().constructMapType(HashMap.class, keyClass, valueClass);

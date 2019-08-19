@@ -14,11 +14,11 @@ import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
-import com.bh.spider.scheduler.cluster.initialization.OperationRecorderInitializer;
 import com.bh.spider.scheduler.cluster.initialization.RaftInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.cluster.worker.Workers;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.domain.DomainIndex;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
@@ -35,7 +35,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -79,7 +78,8 @@ public class ClusterScheduler extends BasicScheduler {
                 config().get(Config.INIT_COMPONENT_PATH),
                 config().get(Config.INIT_OPERATION_LOG_PATH)).exec();
 
-        new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_OPERATION_LOG_PATH)), Integer.valueOf(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "default", "component").exec();
+//        new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_OPERATION_LOG_PATH)),
+//                Integer.parseInt(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "default", "component").exec();
 
         //初始化存储引擎
         this.store = new StoreInitializer(config().get(Config.INIT_STORE_BUILDER), config().all(Config.INIT_STORE_PROPERTIES)).exec();
@@ -124,8 +124,8 @@ public class ClusterScheduler extends BasicScheduler {
 
         List<Node> nodes = Node.collectionOf(config().all(Config.INIT_CLUSTER_MASTER_ADDRESS));
 
-        this.raft = new RaftInitializer((int)this.self().getId(), config()).exec();
-        this.masters = new NodeCollection(this.raft,nodes);
+        this.raft = new RaftInitializer((int) this.self().getId(), config()).exec();
+        this.masters = new NodeCollection(this.raft, nodes);
         CombineActuator combineActuator = new CombineActuator(new CommandActuator(this), this.masters.actuator());
         this.raft.bind(combineActuator);
 
@@ -142,7 +142,9 @@ public class ClusterScheduler extends BasicScheduler {
     }
 
 
-    public NodeCollection masters(){ return masters;}
+    public NodeCollection masters() {
+        return masters;
+    }
 
     @CommandHandler
     public void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
@@ -192,10 +194,6 @@ public class ClusterScheduler extends BasicScheduler {
         //将worker添加到workers,并分配ID
         long id = workers.bind(new Worker(ctx.session(), node));
 
-
-//        检查worker的一系列参数
-        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), node.getComponentOperationCommittedIndex());
-        process(cmd);
     }
 
     @CommandHandler
@@ -211,6 +209,19 @@ public class ClusterScheduler extends BasicScheduler {
     public void UPDATE_NODE_INFO_HANDLER() {
         self().update();
         masters.update(self());
+    }
+
+
+    @CommandHandler(cron = "*/10 * * * * ?")
+    public void CHECK_WORKERS_SURVIVAL_HANDLER() {
+
+//        Sync sync = new Sync();
+//        sync.setComponentOperationCommittedIndex(OperationRecorderFactory.get("component").committedIndex());
+
+        Command command = new Command(new LocalContext(this), CommandCode.HEARTBEAT.name());
+        for (Worker worker : workers) {
+            worker.write(command);
+        }
     }
 
 

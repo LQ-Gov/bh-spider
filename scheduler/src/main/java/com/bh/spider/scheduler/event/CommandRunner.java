@@ -25,6 +25,8 @@ public class CommandRunner {
 
     private CommandHandler mapping;
 
+    private long lastRunTime;
+
 
     public CommandRunner(String commandCode, EventLoop loop, Assistant assistant, Method method, CommandHandler mapping) {
         this.commandCode = commandCode;
@@ -51,13 +53,22 @@ public class CommandRunner {
         return this.parameters;
     }
 
-    public Assistant assistant(){return assistant;}
+    public Assistant assistant() {
+        return assistant;
+    }
 
-    public boolean autoComplete(){
+
+    public boolean runnable() {
+        return (System.currentTimeMillis() - lastRunTime) >= mapping.minInterval();
+    }
+
+    public boolean autoComplete() {
         return mapping.autoComplete();
     }
 
     public Object invoke(Context ctx, List<Interceptor> interceptors, Object... args) throws CommandTerminationException {
+
+        this.lastRunTime = System.currentTimeMillis();
 
         if (before(interceptors, commandCode, ctx, method, args)) {
 
@@ -97,7 +108,6 @@ public class CommandRunner {
         return true;
 
     }
-
 
 
     private void after(List<Interceptor> interceptors, Object returnValue, Throwable throwable) {

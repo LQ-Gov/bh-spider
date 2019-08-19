@@ -7,7 +7,6 @@ import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
 import com.bh.spider.scheduler.cluster.consistent.operation.Operation;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
@@ -16,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentAssistant {
@@ -30,7 +30,13 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
         super(cfg, scheduler);
         this.scheduler = scheduler;
 
-        this.componentOperationRecorder = OperationRecorderFactory.get("component");
+        this.componentOperationRecorder = OperationRecorder
+                .builder("component")
+                .snapshot(() -> componentCoreFactory().snapshot(), 2000)
+                .dir(Paths.get(cfg.get(Config.INIT_OPERATION_LOG_PATH)))
+                .build();
+
+//        this.componentOperationRecorder = OperationRecorderFactory.get("component");
 
     }
 
