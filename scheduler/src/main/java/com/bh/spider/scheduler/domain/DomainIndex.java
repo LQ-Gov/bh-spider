@@ -36,14 +36,14 @@ public interface DomainIndex {
             return parent;
         }
 
-        public Node bind(RuleConcrete concrete){
+        public Node bind(RuleConcrete concrete) {
             rules.add(concrete);
             return this;
 
         }
 
-        public Node unbind(RuleConcrete concrete){
-            rules.removeIf(x->x==concrete);
+        public Node unbind(RuleConcrete concrete) {
+            rules.removeIf(x -> x == concrete);
             return this;
         }
 
@@ -62,7 +62,7 @@ public interface DomainIndex {
         }
 
         public Node children(String name) {
-            return children(name,false);
+            return children(name, false);
         }
 
         public Node children(String name, boolean force) {
@@ -72,7 +72,25 @@ public interface DomainIndex {
                 return children.get(name);
         }
 
-        public void removeListener() {
+
+        public void remove(boolean removeSelf) {
+            if (!children.isEmpty()) {
+                for (Node child : children.values())
+                    child.remove(true);
+            }
+
+            if (removeSelf) {
+
+                this.rules.forEach(x -> x.controller().close());
+
+                if (this.parent != null) {
+                    this.parent.children.remove(this.name);
+                }
+            }
+
+
         }
+
+
     }
 }

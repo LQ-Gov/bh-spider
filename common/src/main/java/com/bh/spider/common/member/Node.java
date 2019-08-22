@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Properties;
 
 public class Node {
+
     private long id;
     private String ip;
     private String hostname;

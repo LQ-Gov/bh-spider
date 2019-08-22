@@ -117,7 +117,9 @@ public class NodeCollection extends HashMap<Long, Node> {
         @Override
         public void recover(byte[] data) throws Exception {
             collection.clear();
-            collection.putAll(mapper.readValue(data, Json.mapType(Long.class, Node.class)));
+            if(data!=null) {
+                collection.putAll(mapper.readValue(data, Json.mapType(Long.class, Node.class)));
+            }
         }
 
         @Override

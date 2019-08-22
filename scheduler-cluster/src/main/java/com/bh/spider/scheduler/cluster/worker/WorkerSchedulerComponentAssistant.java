@@ -1,13 +1,12 @@
 package com.bh.spider.scheduler.cluster.worker;
 
+import com.bh.common.utils.ArrayUtils;
 import com.bh.common.utils.CommandCode;
-import com.bh.common.utils.ConvertUtils;
+import com.bh.common.utils.Json;
 import com.bh.spider.common.component.Component;
 import com.bh.spider.scheduler.Config;
-import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.cluster.component.ComponentOperationEntry;
 import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
-import com.bh.spider.scheduler.cluster.consistent.operation.Operation;
 import com.bh.spider.scheduler.component.ComponentCoreFactory;
 import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
@@ -23,8 +22,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 public class WorkerSchedulerComponentAssistant implements Assistant {
     private final static Logger logger = LoggerFactory.getLogger(WorkerSchedulerComponentAssistant.class);
@@ -34,16 +34,13 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
 
     private int loadClassTimeout;
 
-    private final ClusterNode node;
-
     private ComponentCoreFactory factory;
 
+    private Config config;
 
-    private final Path committedIndexPath;
+    private Committed committed;
 
-    private long localCommittedIndex;
-
-    private long version;
+    private long finalCommittedTime;
 
 
     public WorkerSchedulerComponentAssistant(Config cfg, WorkerScheduler scheduler) throws IOException {
@@ -51,85 +48,121 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
 
         this.factory = new ComponentCoreFactory(cfg);
 
+        this.config = cfg;
+
+        readCommitted();
+
         this.loadClassTimeout = Integer.parseInt(cfg.get(Config.INIT_LOAD_CLASS_TIMEOUT));
-        this.node = (ClusterNode) scheduler.self();
 
-        this.committedIndexPath = Paths.get(cfg.get(Config.INIT_OPERATION_LOG_PATH), "component.index");
-
-        this.localCommittedIndex = readIndex(committedIndexPath, 0);
-
-        this.node.setComponentOperationCommittedIndex(this.localCommittedIndex);
     }
 
-    private long readIndex(Path path, long defaultValue) throws IOException {
-        if (!Files.exists(path)) return defaultValue;
+    private void readCommitted() throws IOException {
+        Path committedPath = Paths.get(config.get(Config.INIT_COMPONENT_PATH), "committed");
+        byte[] data = Files.readAllBytes(committedPath);
+        if (ArrayUtils.isEmpty(data))
+            this.committed = new Committed(0, Collections.emptyList());
+        else
+            this.committed = Json.get().readValue(Files.readAllBytes(committedPath), Committed.class);
 
-        byte[] data = Files.readAllBytes(path);
-
-        return ConvertUtils.toLong(data);
     }
 
-    private long writeIndex(Path path, long value) throws IOException {
-        Files.write(path, ConvertUtils.toBytes(value));
-        return value;
+    private void writeCommitted() throws IOException {
+
+        Path committedPath = Paths.get(config.get(Config.INIT_COMPONENT_PATH), "committed");
+        Files.write(committedPath, Json.get().writeValueAsBytes(committed));
     }
 
+
+    private void download(Context ctx, Collection<String> components) {
+        Command cmd = new Command(null, CommandCode.WORKER_GET_COMPONENTS.name(), this.committed.index, components);
+        ctx.write(cmd);
+    }
+
+    @CommandHandler(cron = "*/10 * * * * ?")
+    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER() {
+
+        Command cmd = new Command(null, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), committed.index);
+
+        scheduler.communicator().random().write(cmd);
+    }
+
+    @CommandHandler(cron = "0 */1 * * * ?")
+    public void CHECK_DOWNLOAD_COMPONENTS() {
+        //3分钟
+        if (System.currentTimeMillis() - finalCommittedTime >= 3 * 60 * 1000 && !committed.components.isEmpty()) {
+            Command cmd = new Command(null, CommandCode.WORKER_GET_COMPONENTS.name(), this.committed.index, committed.components);
+            scheduler.communicator().random().write(cmd);
+        }
+    }
 
     @CommandHandler
-    public void WRITE_OPERATION_ENTRIES(Context ctx, @CollectionParams(collectionType = List.class, argumentTypes = {Entry.class}) List<Entry> entries, long version) throws IOException {
+    public void SYNC_COMPONENT_METADATA_HANDLER(Context ctx, long remoteCommittedIndex, @CollectionParams(collectionType = List.class, argumentTypes = {Component.class}) List<Component> remoteComponents) throws IOException {
+        List<Component> localComponents = factory.all();
+        Map<String, Component> local = localComponents.stream().collect(Collectors.toMap(Component::getName, x -> x));
 
-        if (version != this.version) return;
+        Map<String, Component> remote = remoteComponents.stream().collect(Collectors.toMap(Component::getName, x -> x));
 
-        long committedIndex = localCommittedIndex;
-        //更新component metadata
-        for (Entry entry : entries) {
-            if (entry.index() < committedIndex) {
-                logger.error("过时的日志条目:{},当前commitIndex:{}", entry.index(), committedIndex);
-                continue;
+
+        //删除远程不存在的组件
+        for (Component component : localComponents) {
+            if (remote.containsKey(component.getName())) {
+                factory.proxy(component.getType()).delete(component.getName());
             }
-            if (entry.action() == Operation.SNAP) {
-                this.factory.apply(entry.data());
-                committedIndex = entry.index();
-            } else {
-                if (committedIndex != entry.index() - 1) continue;
+        }
+        //找出有差异的组件
+        remoteComponents.removeIf(x -> {
+            Component component = local.get(x.getName());
+            return component == null || !component.getHash().equals(x.getHash());
+        });
 
-                ComponentOperationEntry coe = new ComponentOperationEntry(entry);
 
-                if (ComponentOperationEntry.ADD.equals(coe.operation())) {
-                    ComponentRepository repository = factory.proxy(coe.type());
+        List<String> components = remoteComponents.stream().map(Component::getName).collect(Collectors.toList());
 
-                    //如果是JAR包，则立刻进行下载,否则，仅暂时写入一个空文件
-                    if (coe.type() == Component.Type.JAR) {
-                        Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT.name(), coe.name());
-                        ctx.write(cmd);
-                    }
-                    repository.save(new byte[0], coe.name(), null, true, true);
-                } else if (ComponentOperationEntry.DELETE.equals(coe.operation())) {
-                    ComponentRepository repository = factory.proxy(coe.name());
-                    if (repository != null) {
-                        repository.delete(coe.name());
-                    }
+
+        this.committed = new Committed(remoteCommittedIndex, components);
+
+
+        download(ctx, components);
+
+        writeCommitted();
+    }
+
+    @CommandHandler
+    public void SYNC_COMPONENT_OPERATION_ENTRIES_HANDLER(Context ctx, @CollectionParams(collectionType = List.class, argumentTypes = {Entry.class}) List<Entry> entries) throws IOException {
+        Entry first = entries.get(0);
+
+        if (first.index() != this.committed.index + 1) return;
+
+        Set<String> update = new HashSet<>();
+        for (Entry entry : entries) {
+            if (entry.index() != this.committed.index + 1) break;
+            this.committed.index++;
+
+            ComponentOperationEntry coe = new ComponentOperationEntry(entry);
+            if (ComponentOperationEntry.ADD.equals(coe.operation())) {
+                if (!committed.components.contains(coe.name())) {
+                    update.add(coe.name());
+                    committed.components.add(coe.name());
+                }
+            } else if (ComponentOperationEntry.DELETE.equals(coe.operation())) {
+                committed.components.remove(coe.name());
+                ComponentRepository repository = factory.proxy(coe.name());
+                if (repository != null) {
+                    repository.delete(coe.name());
                 }
             }
         }
 
+        download(ctx, update);
 
-        //写入数据
-
-        this.localCommittedIndex = writeIndex(committedIndexPath, committedIndex);
-    }
-
-
-    @CommandHandler(cron = "*/10 * * * * ?")
-    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER() {
-        Command cmd = new Command(null, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), localCommittedIndex);
-        scheduler.communicator().random().write(cmd);
+        writeCommitted();
     }
 
 
     @CommandHandler
     @Watch(value = "component.submit", log = "${name}")
-    public void SUBMIT_COMPONENT_HANDLER(Context ctx, Component component) throws Exception {
+    public void SUBMIT_COMPONENT_HANDLER(Context ctx, Component component, long remoteCommittedIndex) throws Exception {
+        if (remoteCommittedIndex != this.committed.index) return;
 
         ComponentRepository repository = factory.proxy(component.getName());
         if (repository != null && repository != factory.proxy(component.getType()))
@@ -140,6 +173,12 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
         if (repository == null)
             throw new Exception("unknown component type");
         repository.save(component.getData(), component.getName(), component.getDescription(), true);
+
+        if (this.committed.components.remove(component.getName())) {
+            writeCommitted();
+        }
+
+        this.finalCommittedTime = System.currentTimeMillis();
     }
 
 
@@ -153,7 +192,7 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
             if (component == null) return null;
 
             if (component.isExpired()) {
-                Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENT.name(), name);
+                Command cmd = new Command(ctx, CommandCode.WORKER_GET_COMPONENTS.name(), name);
                 ctx.write(cmd);
 
                 repository.waitFor(name, loadClassTimeout);
@@ -162,5 +201,22 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
 
             return repository.loadClass(name);
         };
+    }
+
+
+    private static class Committed {
+        public long index;
+
+        public Set<String> components;
+
+        public Committed() {
+        }
+
+        public Committed(long committedIndex, List<String> components) {
+            this.index = committedIndex;
+            this.components = new HashSet<>(components);
+        }
+
+
     }
 }

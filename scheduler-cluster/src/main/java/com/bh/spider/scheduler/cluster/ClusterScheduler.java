@@ -73,13 +73,7 @@ public class ClusterScheduler extends BasicScheduler {
     public synchronized void exec() throws Exception {
 
         //初始化存储文件夹
-        new DirectoriesInitializer(
-                config().get(Config.INIT_DATA_RULE_PATH),
-                config().get(Config.INIT_COMPONENT_PATH),
-                config().get(Config.INIT_OPERATION_LOG_PATH)).exec();
-
-//        new OperationRecorderInitializer(Paths.get(config().get(Config.INIT_OPERATION_LOG_PATH)),
-//                Integer.parseInt(config().get(Config.INIT_OPERATION_CACHE_SIZE)), "default", "component").exec();
+        new DirectoriesInitializer(true, config().get(Config.INIT_COMPONENT_PATH)).exec();
 
         //初始化存储引擎
         this.store = new StoreInitializer(config().get(Config.INIT_STORE_BUILDER), config().all(Config.INIT_STORE_PROPERTIES)).exec();
@@ -129,6 +123,7 @@ public class ClusterScheduler extends BasicScheduler {
         CombineActuator combineActuator = new CombineActuator(new CommandActuator(this), this.masters.actuator());
         this.raft.bind(combineActuator);
 
+        //必须是raft先启动,然后loop再启动，因为需要先应用
         this.raft.exec();
 
         this.loop.addInterceptor(new OperationInterceptor(raft));

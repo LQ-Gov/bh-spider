@@ -1,12 +1,11 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.common.utils.CommandCode;
+import com.bh.common.utils.Json;
 import com.bh.spider.common.component.Component;
 import com.bh.spider.scheduler.BasicSchedulerComponentAssistant;
 import com.bh.spider.scheduler.Config;
-import com.bh.spider.scheduler.cluster.consistent.operation.Entry;
-import com.bh.spider.scheduler.cluster.consistent.operation.Operation;
-import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorder;
+import com.bh.spider.scheduler.cluster.consistent.operation.*;
 import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Command;
@@ -15,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentAssistant {
@@ -26,44 +24,53 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
     private OperationRecorder componentOperationRecorder;
 
-    public ClusterSchedulerComponentAssistant(Config cfg, ClusterScheduler scheduler) throws IOException {
+    public ClusterSchedulerComponentAssistant(Config cfg, ClusterScheduler scheduler) throws Exception {
         super(cfg, scheduler);
         this.scheduler = scheduler;
 
         this.componentOperationRecorder = OperationRecorder
                 .builder("component")
-                .snapshot(() -> componentCoreFactory().snapshot(), 2000)
-                .dir(Paths.get(cfg.get(Config.INIT_OPERATION_LOG_PATH)))
+                .limit(2000)
+                .persistent(new DiscardPersistent())
                 .build();
 
-//        this.componentOperationRecorder = OperationRecorderFactory.get("component");
+
+        OperationRecorderFactory.register(this.componentOperationRecorder);
 
     }
 
 
     @CommandHandler
-    public void WORKER_GET_COMPONENT_HANDLER(Context ctx, String name) throws IOException, CloneNotSupportedException {
+    public void WORKER_GET_COMPONENTS_HANDLER(Context ctx, List<String> names) throws IOException, CloneNotSupportedException {
+        for (String name : names) {
+            ComponentRepository repository = componentCoreFactory().proxy(name);
 
-        ComponentRepository repository = componentCoreFactory().proxy(name);
-
-        Component component = repository.get(name, true);
+            Component component = repository.get(name, true);
 //
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT.name(), component);
+            Command cmd = new Command(ctx, CommandCode.SUBMIT_COMPONENT.name(), component, this.componentOperationRecorder.committedIndex());
+            ctx.write(cmd);
+        }
 
-        ctx.write(cmd);
+
         logger.info("WORKER_GET_COMPONENT_HANDLER 执行");
     }
 
     @CommandHandler
-    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(Context ctx, long committedIndex) throws IOException {
+    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(Context ctx, long remoteCommittedIndex) throws IOException {
         long localCommittedIndex = componentOperationRecorder.committedIndex();
-        if (localCommittedIndex > committedIndex) {
-            List<Entry> entries = componentOperationRecorder.load(committedIndex + 1, localCommittedIndex);
-            if (!entries.isEmpty()) {
-                Command cmd = new Command(ctx, CommandCode.WRITE_OPERATION_ENTRIES.name(), entries);
-                ctx.write(cmd);
-            }
+
+        Command cmd;
+        //如果remoteIndex<firstIndex,则说明worker落后太多,则重新同步快照
+        if (remoteCommittedIndex < componentOperationRecorder.firstIndex()) {
+            cmd = new Command(ctx, CommandCode.SYNC_COMPONENT_METADATA_HANDLER.name(), componentCoreFactory().all());
+        } else if (remoteCommittedIndex >= localCommittedIndex) return;
+
+        else {
+            List<Entry> entries = componentOperationRecorder.load(remoteCommittedIndex + 1, localCommittedIndex + 1);
+            cmd = new Command(ctx, CommandCode.SYNC_COMPONENT_OPERATION_ENTRIES_HANDLER.name(), entries);
         }
+
+        ctx.write(cmd);
     }
 
 
@@ -82,6 +89,38 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
     public void DELETE_COMPONENT_HANDLER(Context ctx, String name) throws IOException {
         super.DELETE_COMPONENT_HANDLER(ctx, name);
         ctx.commandCompleted(null);
+    }
+
+    @CommandHandler
+    public byte[] COMPONENT_SNAPSHOT_HANDLER() throws Exception {
+        byte[] componentSnap = componentCoreFactory().snapshot(true);
+        byte[] operationSnap = Json.get().writeValueAsBytes(componentOperationRecorder.snapshot());
+
+
+        byte[][] snap = new byte[][]{componentSnap, operationSnap};
+
+
+        return Json.get().writeValueAsBytes(snap);
+
+
+    }
+
+
+    @CommandHandler
+    public void APPLY_COMPONENT_SNAPSHOT_HANDLER(byte[] data) throws IOException {
+        if (data != null) {
+            byte[][] snap = Json.get().readValue(data, byte[][].class);
+
+
+            componentCoreFactory().apply(snap[0]);
+
+            List<Entry> entries = Json.get().readValue(snap[1],Json.constructCollectionType(List.class, Entry.class));
+
+            componentOperationRecorder.writeAll(entries);
+
+        }
+
+
     }
 
 

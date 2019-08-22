@@ -102,6 +102,10 @@ public class JarComponentRepository extends ComponentRepository {
         deleteComponentFromClassLoader(component);
     }
 
+    @Override
+    public void rebuild(List<Component> components) {
+        classLoader.clear();
+    }
 
     private Collection<Class<?>> scanClassesFromClassLoader(Path path, ClassLoader cl, Class<? extends Annotation>... annotations) throws IOException {
         JarFile jf = new JarFile(path.toFile());

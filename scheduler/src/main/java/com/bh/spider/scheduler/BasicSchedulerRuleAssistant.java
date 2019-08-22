@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class BasicSchedulerRuleAssistant implements Assistant {
-    private final Map<Long, RuleConcrete> CONCRETE_CACHE = new HashMap<>();
+    protected final Map<Long, RuleConcrete> CONCRETE_CACHE = new HashMap<>();
     private Scheduler scheduler;
     private DomainIndex domainIndex;
 
@@ -41,39 +41,45 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         Path dir = Paths.get(cfg.get(Config.INIT_DATA_RULE_PATH));
 
 
-        /**
-         * 初始化默认的规则列表
-         */
-        Rule defaultRule = new Rule(0, "**", cfg.get(Config.INIT_DEFAULT_RULE_CRON));
-        RuleConcrete defaultConcrete = new RuleConcrete(0, defaultRule, new RootRuleScheduleController(scheduler, defaultRule, store), false);
-
-        domainIndex.root().bind(defaultConcrete);
-
-        CONCRETE_CACHE.put(0L, defaultConcrete);
-
-
         //对自定义规则初始化
         List<Path> filePaths = Files.list(dir).filter(x -> x.toString().endsWith(".rule")).collect(Collectors.toList());
 
+        List<Rule> rules = new LinkedList<>();
         for (Path filePath : filePaths) {
-            List<Rule> rules = Json.get().readValue(filePath.toFile(), Json.constructCollectionType(ArrayList.class, Rule.class));
-
-
-            for (Rule rule : rules) {
-                RuleScheduleController controller = rule.isValid() ?
-                        new DefaultRuleScheduleController(this.scheduler, rule, this.store)
-                        : new DaemonRuleScheduleController(this.scheduler, rule, this.store);
-                RuleConcrete concrete = new RuleConcrete(rule.getId(), rule, controller);
-
-                domainIndex.matchOrCreate(concrete.host()).bind(concrete);
-                CONCRETE_CACHE.put(concrete.id(), concrete);
-            }
-
+            rules.add(Json.get().readValue(filePath.toFile(), Json.constructCollectionType(ArrayList.class, Rule.class)));
         }
 
-        for (RuleConcrete concrete : CONCRETE_CACHE.values())
+        initLocalRuleController(rules);
+    }
+
+
+    protected void initLocalRuleController(List<Rule> rules) {
+        if (!CONCRETE_CACHE.containsKey(0L)) {
+
+            /**
+             * 初始化默认的规则列表
+             */
+            Rule defaultRule = new Rule(0, "**", cfg.get(Config.INIT_DEFAULT_RULE_CRON));
+            RuleConcrete defaultConcrete = new RuleConcrete(0, defaultRule, new RootRuleScheduleController(scheduler, defaultRule, store), false);
+
+            domainIndex.root().bind(defaultConcrete);
+
+            CONCRETE_CACHE.put(0L, defaultConcrete);
+        }
+
+        for (Rule rule : rules) {
+            RuleScheduleController controller = rule.isValid() ?
+                    new DefaultRuleScheduleController(this.scheduler, rule, this.store)
+                    : new DaemonRuleScheduleController(this.scheduler, rule, this.store);
+            RuleConcrete concrete = new RuleConcrete(rule.getId(), rule, controller);
+
+            domainIndex.matchOrCreate(concrete.host()).bind(concrete);
+            CONCRETE_CACHE.put(concrete.id(), concrete);
+        }
+        for (RuleConcrete concrete : CONCRETE_CACHE.values()) {
             if (runnable(concrete))
                 concrete.execute();
+        }
     }
 
 
@@ -216,11 +222,17 @@ public class BasicSchedulerRuleAssistant implements Assistant {
             controller.close();
     }
 
+
     private boolean validate(Rule rule) {
         if (rule == null) throw new IllegalArgumentException("input is null");
         if (StringUtils.isBlank(rule.getCron())) throw new IllegalArgumentException("cron can't empty");
 
         return true;
+    }
+
+
+    protected DomainIndex domainIndex() {
+        return domainIndex;
     }
 
 

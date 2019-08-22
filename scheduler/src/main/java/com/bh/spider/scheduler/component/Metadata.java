@@ -88,7 +88,7 @@ public class Metadata {
 
         byte[] data = new byte[buffer.getInt()];
 
-
+        buffer.get(data);
 
         Component component = Json.get().readValue(data, Component.class);
         component.setExpired(expired);
@@ -133,13 +133,9 @@ public class Metadata {
         return false;
     }
 
-    public void reset(List<Component> components, boolean all) {
+    public void reset() throws IOException {
+        this.channel.truncate(0);
         this.components.clear();
-        Map<String, Component> map = components.stream().collect(Collectors.toMap(Component::getName, x -> x));
-
-        List<Position<Component>> contains = this.components.values().stream().filter(x -> map.containsKey(x.data.getName())).collect(Collectors.toList());
-
-
     }
 
     /**

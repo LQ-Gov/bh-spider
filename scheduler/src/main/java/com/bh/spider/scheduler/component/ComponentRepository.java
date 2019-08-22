@@ -84,7 +84,20 @@ public abstract class ComponentRepository {
     }
 
     public List<Component> all() {
-        return metadata.components();
+        return this.all(false);
+    }
+
+    public List<Component> all(boolean full) {
+        List<Component> components = metadata.components();
+
+        if (full) {
+            for (Component component : components) {
+                component.setData(data(component));
+            }
+
+        }
+
+        return components;
     }
 
 
@@ -95,6 +108,13 @@ public abstract class ComponentRepository {
             if (Files.exists(old)) Files.delete(old);
             if (Files.exists(tmp)) Files.delete(tmp);
         }
+    }
+
+    public void delete(List<String> names) throws IOException{
+        for(String name:names){
+            delete(name);
+        }
+
     }
 
     public boolean waitFor(String name) throws InterruptedException {
@@ -120,7 +140,39 @@ public abstract class ComponentRepository {
 
     public abstract Class<?> loadClass(String name) throws IOException, ClassNotFoundException;
 
-    public void reset(List<Component> components) {
-        metadata.reset(components, true);
+    public void rebuild(List<Component> components) {
+        try {
+            List<Component> oldComponents = metadata.components();
+            metadata.reset();
+            for (Component component : oldComponents) {
+                Path path = absolutePath(component);
+                Files.delete(path);
+            }
+
+            if(components!=null) {
+                for (Component component : components) {
+                    save(component.getData(), component.getName(), component.getDescription(), true);
+                }
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    protected Path absolutePath(Component component){
+        return Paths.get(base.toString(), join(component.getName(), componentType()));
+    }
+
+    protected byte[] data(Component component) {
+        Path path = absolutePath(component);
+        try {
+            return Files.readAllBytes(path);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

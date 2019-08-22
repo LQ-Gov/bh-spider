@@ -77,4 +77,11 @@ public class JarComponentClassLoader extends URLClassLoader {
         String p = path.toFile().getCanonicalPath();
         classLoaders.remove(p);
     }
+
+
+    public void clear(){
+        classLoaders.clear();
+        classCache.clear();
+
+    }
 }

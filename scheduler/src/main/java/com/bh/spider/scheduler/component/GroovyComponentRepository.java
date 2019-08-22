@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -80,7 +81,13 @@ public class GroovyComponentRepository extends ComponentRepository {
     }
 
 
-    private class Proxy {
+    @Override
+    public void rebuild(List<Component> components) {
+        super.rebuild(components);
+        classCache.clear();
+    }
+
+    private static class Proxy {
         private GroovyClassLoader classLoader;
         private Class<?> cls;
         private Component component;

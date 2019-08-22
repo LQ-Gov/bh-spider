@@ -60,12 +60,18 @@ public class ComponentCoreFactory {
     }
 
     public byte[] snapshot() {
+        return snapshot(false);
+    }
+
+    public byte[] snapshot(boolean full) {
         Collection<ComponentRepository> repositories = componentRepositories.values();
+
         Map<Component.Type, List<Component>> map = new HashMap<>();
         for (ComponentRepository repository : repositories) {
-            map.put(repository.componentType(), repository.all());
-        }
 
+            map.put(repository.componentType(), repository.all(full));
+
+        }
         try {
             return Json.get().writeValueAsBytes(map);
         } catch (Exception e) {
@@ -75,20 +81,20 @@ public class ComponentCoreFactory {
     }
 
     public void apply(byte[] snap) {
-        MapType type = Json.mapType(Json.constructType(Component.Type.class), Json.constructCollectionType(List.class, Component.class));
         try {
-            Map<Component.Type, List<Component>> map = Json.get().readValue(snap, type);
+            if (snap != null) {
+                MapType type = Json.mapType(Json.constructType(Component.Type.class), Json.constructCollectionType(List.class, Component.class));
+                Map<Component.Type, List<Component>> map = Json.get().readValue(snap, type);
+                componentRepositories.values().forEach(x -> x.rebuild(map.get(x.componentType())));
+            }
 
-            map.forEach(this::reset);
-
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void reset(Component.Type type, List<Component> components) {
-        componentRepositories.get(type);
+
+    public void rebuid(){
+        componentRepositories.values().forEach(x->x.rebuild(null));
     }
-
-
 }

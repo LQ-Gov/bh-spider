@@ -530,9 +530,9 @@ public class Raft {
 //
         this.log = new Log(this, snapshotter, wal, actuator);
 
-        if (snapshot != null) {
-            actuator.recover(snapshot.data());
-        }
+
+        actuator.recover(snapshot == null ? null : snapshot.data());
+
 
         //如果本地有日志记录，则恢复，否则继续执行
         if (stashed != null && stashed.validate())

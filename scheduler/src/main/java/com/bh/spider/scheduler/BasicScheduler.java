@@ -88,7 +88,7 @@ public class BasicScheduler implements Scheduler, Assistant {
         //初始化本地端口监听
         Scheduler me = this;
 
-        this.server = new ServerInitializer(Integer.valueOf(cfg.get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
+        this.server = new ServerInitializer(Integer.parseInt(cfg.get(Config.INIT_LISTEN_PORT)), new ChannelInitializer<SocketChannel>() { // (4)
             @Override
             public void initChannel(SocketChannel ch) {
                 ch.pipeline().addLast("ping", new IdleStateHandler(60, 20, 60 * 10, TimeUnit.SECONDS));

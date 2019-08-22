@@ -45,13 +45,21 @@ public class CombineActuator implements Actuator {
 
     @Override
     public void recover(byte[] data) throws Exception {
-        Map<String, byte[]> map = Json.get().readValue(data, Json.mapType(String.class, byte[].class));
 
-        for (Map.Entry<String, byte[]> entry : map.entrySet()) {
-            if (entry.getValue() == null) continue;
+        if(data==null){
+            for(Actuator actuator:actuators.values()){
+                actuator.recover(null);
+            }
+        }
+        else {
+            Map<String, byte[]> map = Json.get().readValue(data, Json.mapType(String.class, byte[].class));
 
-            actuators.get(entry.getKey()).recover(entry.getValue());
+            for (Map.Entry<String, byte[]> entry : map.entrySet()) {
+                if (entry.getValue() == null) continue;
 
+                actuators.get(entry.getKey()).recover(entry.getValue());
+
+            }
         }
 
     }

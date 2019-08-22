@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster;
 
+import com.bh.common.utils.Json;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.BasicSchedulerRuleAssistant;
@@ -13,6 +14,7 @@ import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.store.base.Store;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author liuqi19
@@ -77,5 +79,39 @@ public class ClusterSchedulerRuleAssistant extends BasicSchedulerRuleAssistant {
         Node node = collection.consistentHash((int) (concrete.id() % Integer.MAX_VALUE));
         //进行一致性hash，如果判断等于自身，则开始执行
         return (node != null && node.getId() == scheduler.self().getId());
+    }
+
+    @CommandHandler
+    public byte[] RULE_SNAPSHOT_HANDLER() throws Exception {
+        byte[] snap = Json.get().writeValueAsBytes(CONCRETE_CACHE.values());
+
+        return snap;
+    }
+
+
+    @CommandHandler
+    public void APPLY_RULE_SNAPSHOT_HANDLER(byte[] snap) throws Exception {
+
+        if (snap != null) {
+            CONCRETE_CACHE.clear();
+
+            domainIndex().root().remove(false);
+
+            List<Rule> rules = Json.get().readValue(snap, Json.constructCollectionType(List.class, Rule.class));
+
+
+            initLocalRuleController(rules);
+        }
+    }
+
+
+    @Override
+    protected void backup(DomainIndex.Node node) {
+
+    }
+
+    @Override
+    public void initialized() {
+
     }
 }
