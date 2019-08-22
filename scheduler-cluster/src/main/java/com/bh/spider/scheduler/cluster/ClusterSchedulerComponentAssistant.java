@@ -8,6 +8,7 @@ import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.cluster.consistent.operation.*;
 import com.bh.spider.scheduler.component.ComponentRepository;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.event.CollectionParams;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import org.slf4j.Logger;
@@ -41,7 +42,11 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
 
     @CommandHandler
-    public void WORKER_GET_COMPONENTS_HANDLER(Context ctx, List<String> names) throws IOException, CloneNotSupportedException {
+    public void WORKER_GET_COMPONENTS_HANDLER(Context ctx,long remoteCommittedIndex, @CollectionParams(collectionType = List.class, argumentTypes = {String.class}) List<String> names) throws IOException, CloneNotSupportedException {
+        if(remoteCommittedIndex!=componentOperationRecorder.committedIndex()){
+            this.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(ctx,remoteCommittedIndex);
+            return;
+        }
         for (String name : names) {
             ComponentRepository repository = componentCoreFactory().proxy(name);
 
@@ -62,12 +67,12 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
         Command cmd;
         //如果remoteIndex<firstIndex,则说明worker落后太多,则重新同步快照
         if (remoteCommittedIndex < componentOperationRecorder.firstIndex()) {
-            cmd = new Command(ctx, CommandCode.SYNC_COMPONENT_METADATA_HANDLER.name(), componentCoreFactory().all());
+            cmd = new Command(ctx, CommandCode.SYNC_COMPONENT_METADATA.name(), localCommittedIndex, componentCoreFactory().all());
         } else if (remoteCommittedIndex >= localCommittedIndex) return;
 
         else {
             List<Entry> entries = componentOperationRecorder.load(remoteCommittedIndex + 1, localCommittedIndex + 1);
-            cmd = new Command(ctx, CommandCode.SYNC_COMPONENT_OPERATION_ENTRIES_HANDLER.name(), entries);
+            cmd = new Command(ctx, CommandCode.SYNC_COMPONENT_OPERATION_ENTRIES.name(), entries);
         }
 
         ctx.write(cmd);
@@ -114,7 +119,7 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
 
             componentCoreFactory().apply(snap[0]);
 
-            List<Entry> entries = Json.get().readValue(snap[1],Json.constructCollectionType(List.class, Entry.class));
+            List<Entry> entries = Json.get().readValue(snap[1], Json.constructCollectionType(List.class, Entry.class));
 
             componentOperationRecorder.writeAll(entries);
 

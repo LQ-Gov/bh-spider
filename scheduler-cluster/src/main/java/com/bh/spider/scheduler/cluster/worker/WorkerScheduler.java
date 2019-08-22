@@ -1,5 +1,6 @@
 package com.bh.spider.scheduler.cluster.worker;
 
+import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
@@ -7,7 +8,9 @@ import com.bh.spider.scheduler.cluster.ClusterNode;
 import com.bh.spider.scheduler.cluster.communication.Communicator;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.initialization.CommunicatorInitializer;
+import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Assistant;
+import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.event.EventLoop;
 import com.bh.spider.scheduler.initialization.DirectoriesInitializer;
@@ -77,7 +80,7 @@ public class WorkerScheduler implements Scheduler, Assistant {
 
 
     @CommandHandler(cron = "*/20 * * * * ?")
-    public void WORKER_HEART_BEAT_HANDLER() {
+    public void WORKER_HEARTBEAT_HANDLER() {
 
         this.node.update();
 
@@ -96,7 +99,10 @@ public class WorkerScheduler implements Scheduler, Assistant {
 
 
     @CommandHandler
-    public void HEARTBEAT_HANDLER() {
+    public void HEARTBEAT_HANDLER(Context ctx, long componentCommittedIndex) {
+
+        Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(),componentCommittedIndex);
+        process(cmd);
 
     }
 

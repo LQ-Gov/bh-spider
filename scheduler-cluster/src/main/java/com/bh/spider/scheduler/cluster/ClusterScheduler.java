@@ -13,6 +13,7 @@ import com.bh.spider.scheduler.cluster.actuator.NodeCollection;
 import com.bh.spider.scheduler.cluster.communication.Session;
 import com.bh.spider.scheduler.cluster.communication.Sync;
 import com.bh.spider.scheduler.cluster.consistent.operation.OperationInterceptor;
+import com.bh.spider.scheduler.cluster.consistent.operation.OperationRecorderFactory;
 import com.bh.spider.scheduler.cluster.context.WorkerContext;
 import com.bh.spider.scheduler.cluster.initialization.RaftInitializer;
 import com.bh.spider.scheduler.cluster.worker.Worker;
@@ -142,17 +143,13 @@ public class ClusterScheduler extends BasicScheduler {
     }
 
     @CommandHandler
-    public void WORKER_HEART_BEAT_HANDLER(WorkerContext ctx, Sync sync) {
+    public void WORKER_HEARTBEAT_HANDLER(WorkerContext ctx, Sync sync) {
 
 
         Worker worker = workers.get(ctx.sessionId());
         if (worker != null) {
 
             worker.update(sync);
-
-            Command cmd = new Command(ctx, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), sync.getComponentOperationCommittedIndex());
-
-            process(cmd);
         }
     }
 
@@ -210,10 +207,10 @@ public class ClusterScheduler extends BasicScheduler {
     @CommandHandler(cron = "*/10 * * * * ?")
     public void CHECK_WORKERS_SURVIVAL_HANDLER() {
 
-//        Sync sync = new Sync();
-//        sync.setComponentOperationCommittedIndex(OperationRecorderFactory.get("component").committedIndex());
+        long componentOperationCommittedIndex = OperationRecorderFactory.get("component").committedIndex();
 
-        Command command = new Command(new LocalContext(this), CommandCode.HEARTBEAT.name());
+
+        Command command = new Command(new LocalContext(this), CommandCode.HEARTBEAT.name(), componentOperationCommittedIndex);
         for (Worker worker : workers) {
             worker.write(command);
         }

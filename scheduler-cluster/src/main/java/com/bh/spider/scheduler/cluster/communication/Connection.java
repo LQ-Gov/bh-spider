@@ -95,7 +95,7 @@ public class Connection implements Closeable {
 
     public void ping(Sync sync) {
 
-        Command cmd = new Command(null, CommandCode.WORKER_HEART_BEAT.name(), sync);
+        Command cmd = new Command(null, CommandCode.WORKER_HEARTBEAT.name(), sync);
 
         write(cmd);
 

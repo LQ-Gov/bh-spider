@@ -1,6 +1,5 @@
 package com.bh.spider.scheduler.cluster.worker;
 
-import com.bh.common.utils.ArrayUtils;
 import com.bh.common.utils.CommandCode;
 import com.bh.common.utils.Json;
 import com.bh.spider.common.component.Component;
@@ -58,11 +57,11 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
 
     private void readCommitted() throws IOException {
         Path committedPath = Paths.get(config.get(Config.INIT_COMPONENT_PATH), "committed");
-        byte[] data = Files.readAllBytes(committedPath);
-        if (ArrayUtils.isEmpty(data))
-            this.committed = new Committed(0, Collections.emptyList());
-        else
+        if (Files.exists(committedPath)) {
             this.committed = Json.get().readValue(Files.readAllBytes(committedPath), Committed.class);
+        } else
+            this.committed = new Committed(0, Collections.emptyList());
+
 
     }
 
@@ -78,16 +77,18 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
         ctx.write(cmd);
     }
 
-    @CommandHandler(cron = "*/10 * * * * ?")
-    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER() {
+    @CommandHandler(minInterval = 5 * 1000)
+    public void CHECK_COMPONENT_OPERATION_COMMITTED_INDEX_HANDLER(long componentCommittedIndex) {
+        if (componentCommittedIndex > this.committed.index) {
 
-        Command cmd = new Command(null, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), committed.index);
+            Command cmd = new Command(null, CommandCode.CHECK_COMPONENT_OPERATION_COMMITTED_INDEX.name(), committed.index);
 
-        scheduler.communicator().random().write(cmd);
+            scheduler.communicator().random().write(cmd);
+        }
     }
 
     @CommandHandler(cron = "0 */1 * * * ?")
-    public void CHECK_DOWNLOAD_COMPONENTS() {
+    public void CHECK_DOWNLOAD_COMPONENTS_HANDLER() {
         //3分钟
         if (System.currentTimeMillis() - finalCommittedTime >= 3 * 60 * 1000 && !committed.components.isEmpty()) {
             Command cmd = new Command(null, CommandCode.WORKER_GET_COMPONENTS.name(), this.committed.index, committed.components);
@@ -97,6 +98,7 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
 
     @CommandHandler
     public void SYNC_COMPONENT_METADATA_HANDLER(Context ctx, long remoteCommittedIndex, @CollectionParams(collectionType = List.class, argumentTypes = {Component.class}) List<Component> remoteComponents) throws IOException {
+        if (remoteCommittedIndex <= this.committed.index) return;
         List<Component> localComponents = factory.all();
         Map<String, Component> local = localComponents.stream().collect(Collectors.toMap(Component::getName, x -> x));
 
@@ -112,7 +114,7 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
         //找出有差异的组件
         remoteComponents.removeIf(x -> {
             Component component = local.get(x.getName());
-            return component == null || !component.getHash().equals(x.getHash());
+            return component != null && component.getHash().equals(x.getHash());
         });
 
 
