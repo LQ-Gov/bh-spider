@@ -6,7 +6,6 @@ import com.bh.spider.common.fetch.impl.RequestImpl;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.cluster.ClusterNode;
-import com.bh.spider.scheduler.cluster.fetcher.callback.WorkerScheduleFetchCallback;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.Assistant;
 import com.bh.spider.scheduler.event.CollectionParams;
@@ -14,6 +13,7 @@ import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.CommandHandler;
 import com.bh.spider.scheduler.fetcher.Fetcher;
 import com.bh.spider.scheduler.fetcher.callback.ClientFetchCallback;
+import com.bh.spider.scheduler.fetcher.callback.ScheduleFetchCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +27,7 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
     private final ClusterNode node;
     private Fetcher fetcher;
     private Scheduler scheduler;
+
     public WorkerSchedulerFetchAssistant(Scheduler scheduler) {
         this.scheduler = scheduler;
         this.fetcher = new Fetcher(scheduler);
@@ -38,16 +39,16 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler
     public boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
-        fetcher.fetch(ctx, req, rule,new ClientFetchCallback(ctx));
+        fetcher.fetch(ctx, req, rule, new ClientFetchCallback(ctx));
         node.setCapacity(fetcher.capacity());
         return true;
     }
 
     @CommandHandler(autoComplete = false)
-    public List<Request> FETCH_BATCH_HANDLER(Context ctx, @CollectionParams(collectionType = List.class,argumentTypes = {RequestImpl.class}) Collection<Request> requests, Rule rule) {
+    public List<Request> FETCH_BATCH_HANDLER(Context ctx, @CollectionParams(collectionType = List.class, argumentTypes = {RequestImpl.class}) Collection<Request> requests, Rule rule) {
         List<Request> returnValue = new LinkedList<>(requests);
 
-        fetcher.fetch(ctx, requests, rule,new WorkerScheduleFetchCallback(this.scheduler,ctx));
+        fetcher.fetch(ctx, requests, rule, new ScheduleFetchCallback(this.scheduler, ctx));
 
         node.setCapacity(fetcher.capacity());
 
@@ -56,7 +57,7 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler
     public void SUBMIT_REQUEST_BATCH_HANDLER(Context ctx, List<Request> requests) throws Exception {
-        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST_BATCH.name(),requests);
+        Command cmd = new Command(ctx, CommandCode.SUBMIT_REQUEST_BATCH.name(), requests);
 
         ctx.write(cmd);
     }
@@ -64,7 +65,7 @@ public class WorkerSchedulerFetchAssistant implements Assistant {
     @CommandHandler
     public void REPORT_HANDLER(Context ctx, long id, int code) {
 
-        logger.info("正常报告:{},code:{}",id,code);
+        logger.info("正常报告:{},code:{}", id, code);
 //        Command cmd = new Command(ctx,CommandCode.REPORT, id,code);
 //
 //        ctx.write(cmd);

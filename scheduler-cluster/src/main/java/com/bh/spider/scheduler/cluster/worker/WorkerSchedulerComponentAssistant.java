@@ -183,6 +183,10 @@ public class WorkerSchedulerComponentAssistant implements Assistant {
         this.finalCommittedTime = System.currentTimeMillis();
     }
 
+    @CommandHandler
+    public Class<?> LOAD_COMPONENT_HANDLER(String name,Component.Type type) throws IOException, ClassNotFoundException {
+        return factory.proxy(type).loadClass(name);
+    }
 
     @CommandHandler
     public Callable<Class<?>> LOAD_COMPONENT_ASYNC_HANDLER(Context ctx, String name, Component.Type type) throws IOException, ClassNotFoundException {

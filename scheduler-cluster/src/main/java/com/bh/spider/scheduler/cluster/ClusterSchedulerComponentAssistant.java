@@ -124,8 +124,6 @@ public class ClusterSchedulerComponentAssistant extends BasicSchedulerComponentA
             componentOperationRecorder.writeAll(entries);
 
         }
-
-
     }
 
 
