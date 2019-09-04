@@ -110,6 +110,9 @@ public class Points {
 
         register(new ValuePoint<String>(WatchPointKeys.LOG_STREAM));
 
+        register(new ValuePoint<String>(WatchPointKeys.RULE_TEXT_STREAM));
+
+
     }
 
 }

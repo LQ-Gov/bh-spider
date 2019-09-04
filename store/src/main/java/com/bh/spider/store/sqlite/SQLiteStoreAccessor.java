@@ -1,7 +1,6 @@
 package com.bh.spider.store.sqlite;
 
 import com.bh.common.utils.Json;
-import com.bh.common.watch.Rank;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.store.common.ConvertUtils;
@@ -157,17 +156,12 @@ public class SQLiteStoreAccessor implements StoreAccessor {
     }
 
     @Override
-    public Rank rank(Request.State state, int size) throws SQLException {
-        return null;
-    }
-
-    @Override
     public List<Request> find(long ruleId, Request.State state, long size) {
         return find(ruleId, state, 0, size);
     }
 
     @Override
-    public long count(long ruleId, Request.State state) {
+    public long count(Long ruleId, Request.State state) {
         String sql = "SELECT COUNT(id) FROM "+TABLE_NAME+" WHERE rule_id=? AND state=?";
         try {
             PreparedStatement statement = store.connection().prepareStatement(sql);

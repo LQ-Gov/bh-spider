@@ -141,7 +141,12 @@ public class ComponentOperation {
 
     public Component get(String name) {
 
-        return communicator.write(CommandCode.GET_COMPONENT, Component.class, name);
+        return get(name,false);
+    }
+
+
+    public Component get(String name,boolean data){
+        return communicator.write(CommandCode.GET_COMPONENT,Component.class,name,data);
     }
 
     public void delete(String name) {

@@ -19,6 +19,6 @@ public class TypeConverter<T> implements Converter<byte[], T> {
     public T convert(byte[] data) throws IOException {
         ObjectMapper mapper = Json.get();
 
-        return type==null?null: mapper.readValue(data, mapper.constructType(type));
+        return type == null || data == null || data.length == 0 ? null : mapper.readValue(data, mapper.constructType(type));
     }
 }

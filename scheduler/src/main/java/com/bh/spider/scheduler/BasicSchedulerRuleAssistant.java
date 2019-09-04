@@ -1,8 +1,6 @@
 package com.bh.spider.scheduler;
 
 import com.bh.common.utils.Json;
-import com.bh.common.watch.Rank;
-import com.bh.spider.common.fetch.Request;
 import com.bh.spider.common.rule.Rule;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.domain.*;
@@ -15,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,7 +43,7 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
         List<Rule> rules = new LinkedList<>();
         for (Path filePath : filePaths) {
-            rules.add(Json.get().readValue(filePath.toFile(), Json.constructCollectionType(ArrayList.class, Rule.class)));
+            rules.addAll(Json.get().readValue(filePath.toFile(), Json.constructCollectionType(ArrayList.class, Rule.class)));
         }
 
         initLocalRuleController(rules);
@@ -131,16 +128,6 @@ public class BasicSchedulerRuleAssistant implements Assistant {
 
         return concrete == null ? null : concrete.base();
     }
-
-
-    @CommandHandler
-    public Rank GET_RULE_RANK(Context ctx, Request.State state, int size) throws SQLException {
-        Rank rank = store.accessor().rank(state, size);
-
-        return rank;
-
-    }
-
 
     @CommandHandler
     public void EDIT_RULE_HANDLER(Context ctx, Rule rule) throws IOException {

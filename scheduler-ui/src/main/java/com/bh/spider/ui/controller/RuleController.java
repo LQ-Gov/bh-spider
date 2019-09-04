@@ -40,14 +40,6 @@ public class RuleController {
         return rule == null ? null : new RuleVo(rule);
     }
 
-
-    @RequestMapping(value = "/rules/hosts", method = RequestMethod.GET)
-    public List<String> hosts() {
-        return client.rule().hosts();
-        //return new ArrayList<>();
-    }
-
-
     @DeleteMapping(value = "/{id}")
     public void delete(@PathVariable("id") long id) {
         client.rule().delete(id);

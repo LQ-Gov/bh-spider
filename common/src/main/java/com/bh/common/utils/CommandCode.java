@@ -1,34 +1,38 @@
 package com.bh.common.utils;
 
 public enum CommandCode {
-    //COMPONENT相关操作
+    //region COMPONENT相关操作
+
     SUBMIT_COMPONENT,//提交component
     GET_COMPONENT_LIST,//获取所有的component
     GET_COMPONENT,//获取单个component
-    GET_COMPONENT_OPERATION_INDEX,
-    DELETE_COMPONENT,
-    COMPONENT_SNAPSHOT,
-    APPLY_COMPONENT_SNAPSHOT,
-    SYNC_COMPONENT_METADATA,
-    SYNC_COMPONENT_OPERATION_ENTRIES,
+    DELETE_COMPONENT,//删除组件
+    COMPONENT_SNAPSHOT,//生成COMPONENT快照
+    APPLY_COMPONENT_SNAPSHOT,//应用COMPONENT SNAP
+    SYNC_COMPONENT_METADATA,//向worker同步METADATA
+    SYNC_COMPONENT_OPERATION_ENTRIES,//向worker同步操作日志
+
+    //endregion
 
 
-    //RULE 相关操作
-    SUBMIT_RULE,
+    //region RULE 相关操作
+    SUBMIT_RULE,//提交新的Rule
     GET_RULE_LIST,//获取RULE列表
-    GET_RULE,
-    GET_HOST_LIST,///获取所有规则的host
-    EDIT_RULE,
+    GET_RULE,//获取Rule内容
+    EDIT_RULE,//编辑rule
     DELETE_RULE,//删除rule(此删除并未真正删除，会进入一个清理阶段)
-    TERMINATION_RULE,//真正删除rule的阶段
+    TERMINATION_RULE,//执行DELETE后进入的下一个动作,终止真正删除rule
+
+    RULE_SNAPSHOT, //生成Rule快照
+    APPLY_RULE_SNAPSHOT,//应用快照
+
+    URL_COUNT,//统计URL的数量
 
     SCHEDULER_RULE_EXECUTOR,//启动或暂停
 
     GET_RULE_RANK,
 
-    RULE_SNAPSHOT,
-    APPLY_RULE_SNAPSHOT,
-
+    //endregion
 
 
     PROFILE,
@@ -37,24 +41,13 @@ public enum CommandCode {
     DISCONNECT,
 
 
-
-
-
     WORKER_GET_COMPONENTS,
     WORKER_HEARTBEAT,
 
     HEARTBEAT,
 
     CHECK_COMPONENT_OPERATION_COMMITTED_INDEX,
-    LOAD_OPERATION_ENTRY,
     WRITE_OPERATION_ENTRIES,
-
-
-
-
-
-
-
 
 
     //request operation
@@ -87,7 +80,6 @@ public enum CommandCode {
 
 
     ALIVE,
-    HEART_BEAT,
     TASK,
     PROCESS,
     CLOSE,
@@ -96,25 +88,5 @@ public enum CommandCode {
     SYNC_SERVER_LIST,
 
     TEST;
-
-
-
-
-    private boolean needConsistent;
-
-
-    CommandCode(){
-        this.needConsistent=false;
-    }
-
-    CommandCode(boolean needConsistent){
-        this.needConsistent = needConsistent;
-    }
-
-
-
-    public boolean needConsistent(){
-        return needConsistent;
-    }
 
 }

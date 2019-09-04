@@ -5,5 +5,5 @@ import org.slf4j.Marker;
 public interface MarkerHandler {
 
 
-    void handle(Marker marker, Object[] args);
+    void handle(Marker marker,String text, Object[] args);
 }

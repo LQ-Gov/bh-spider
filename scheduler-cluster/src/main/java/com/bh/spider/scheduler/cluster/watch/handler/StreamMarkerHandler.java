@@ -14,7 +14,7 @@ import org.slf4j.Marker;
 @Support("log.stream")
 public class StreamMarkerHandler implements MarkerHandler {
     @Override
-    public void handle(Marker marker, Object[] args) {
+    public void handle(Marker marker,String text2, Object[] args) {
         long nodeId = (long) args[0];
         String IP = (String) args[1];
         String text = (String) args[2];

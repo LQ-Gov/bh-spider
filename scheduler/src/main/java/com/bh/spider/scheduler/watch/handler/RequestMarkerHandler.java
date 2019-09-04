@@ -12,7 +12,7 @@ import org.slf4j.Marker;
 public class RequestMarkerHandler implements MarkerHandler {
 
     @Override
-    public void handle(Marker marker, Object[] args) {
+    public void handle(Marker marker,String text, Object[] args) {
         int iCount = ((Number) args[args.length-1]).intValue();
 
         Points.<Long>of(WatchPointKeys.URL_TOTAL_COUNT).set(x ->x==null?1: x+iCount);

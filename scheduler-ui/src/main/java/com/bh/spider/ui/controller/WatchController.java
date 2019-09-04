@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,31 +32,29 @@ public class WatchController {
 
     @GetMapping(value = "/watch", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public synchronized SseEmitter watch(HttpServletRequest request, @RequestParam("point") String[] points) throws Exception {
-        final HttpSession session = request.getSession();
 
         SseEmitter emitter = new SseEmitter(0L);
 
-        System.out.println("建立了sse连接");
-
-
         Map<String, WatchConsumer> map = new HashMap<>();
         for (String point : points) {
+            String[] block = point.split(":");
+            String key = block[0];
+            String params = block.length == 2 ? block[1] : null;
 
-            switch (point) {
-                case "crawl.count.rank":
-                    map.put(point, new TimerWatchConsumer<>(client, emitter, point, () -> client.rule().rank(Request.State.FINISHED, 10)));
-                    break;
-
-                case "error.count.rank":
-                    map.put(point, new TimerWatchConsumer<>(client, emitter, point, () -> client.rule().rank(Request.State.EXCEPTION, 10)));
-                    break;
-
-                case "waiting.count.rank":
-                    map.put(point, new TimerWatchConsumer<>(client, emitter, point, () -> client.rule().rank(Request.State.QUEUE, 10)));
-                    break;
-
-
+            switch (key) {
                 case "url.distribute":
+                    break;
+
+                //rule 对应的url数量统计
+                case "rule.url.count":
+                    final Long id = params == null ? null : Long.parseLong(params);
+                    map.put(point, new TimerWatchConsumer<>(client, emitter, point, () -> {
+                        Map<String, Long> urls = new HashMap<>();
+                        urls.put("queue", client.request().count(id, Request.State.QUEUE));
+                        urls.put("error", client.request().count(id, Request.State.EXCEPTION));
+                        urls.put("going", client.request().count(id, Request.State.GOING));
+                        return urls;
+                    }));
                     break;
 
 
@@ -76,7 +73,10 @@ public class WatchController {
 
         Runnable runnable = () -> {
 
-            map.forEach((k, v) ->{v.close(); client.unwatch(k, v);});
+            map.forEach((k, v) -> {
+                v.close();
+                client.unwatch(k, v);
+            });
             System.out.println("终止");
         };
 

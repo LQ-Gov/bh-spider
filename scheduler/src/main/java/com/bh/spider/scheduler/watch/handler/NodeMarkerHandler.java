@@ -12,7 +12,7 @@ import org.slf4j.Marker;
 @Support({"init"})
 public class NodeMarkerHandler implements MarkerHandler {
     @Override
-    public void handle(Marker marker, Object[] args) {
+    public void handle(Marker marker, String text, Object[] args) {
 
         if (Markers.INIT == marker) {
             Points.<Integer>of(WatchPointKeys.NODE_COUNT).set(x -> x == null ? 1 : x + 1);

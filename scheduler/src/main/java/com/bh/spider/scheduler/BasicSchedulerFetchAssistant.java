@@ -15,6 +15,7 @@ import com.bh.spider.scheduler.fetcher.FetchContent;
 import com.bh.spider.scheduler.fetcher.Fetcher;
 import com.bh.spider.scheduler.fetcher.callback.ClientFetchCallback;
 import com.bh.spider.scheduler.fetcher.callback.ScheduleFetchCallback;
+import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.scheduler.watch.Watch;
 import com.bh.spider.store.base.Store;
 import org.apache.commons.collections4.CollectionUtils;
@@ -119,7 +120,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
     @CommandHandler
     @Watch(value = "submit.request.batch", log = "submit requests batch,submit count:{},final insert count:{}", params = {"${requests.size()}", "${returnValue}"})
-    public int SUBMIT_REQUEST_BATCH_HANDLER(Context ctx,@CollectionParams(collectionType = List.class,argumentTypes = {Request.class}) List<Request> requests) throws Exception {
+    public int SUBMIT_REQUEST_BATCH_HANDLER(Context ctx, @CollectionParams(collectionType = List.class, argumentTypes = {Request.class}) List<Request> requests) throws Exception {
         int count = 0;
         for (Request request : requests) {
             count += SUBMIT_REQUEST_HANDLER(ctx, (RequestImpl) request) ? 1 : 0;
@@ -138,7 +139,7 @@ public class BasicSchedulerFetchAssistant implements Assistant {
     @CommandHandler(autoComplete = false)
     public boolean FETCH_HANDLER(Context ctx, RequestImpl req, Rule rule) {
 
-        fetcher.fetch(ctx, req, rule,new ClientFetchCallback(ctx));
+        fetcher.fetch(ctx, req, rule, new ClientFetchCallback(ctx));
         return true;
     }
 
@@ -147,8 +148,9 @@ public class BasicSchedulerFetchAssistant implements Assistant {
 
         List<Request> returnValue = new LinkedList<>(requests);
 
+        logger.info(Markers.RULE_TEXT_STREAM, "rule:{} batch fetch urls,count:{},", rule == null ? null : rule.getId(), requests.size());
 
-        fetcher.fetch(ctx, requests, rule,new ScheduleFetchCallback(scheduler,ctx));
+        fetcher.fetch(ctx, requests, rule, new ScheduleFetchCallback(scheduler, ctx));
         cacheFetchContext(ctx, returnValue, rule);
         return returnValue;
     }
@@ -171,6 +173,11 @@ public class BasicSchedulerFetchAssistant implements Assistant {
             store.accessor().update(id, null, Request.State.EXCEPTION, message);
             fetchContextCache().remove(id);
         }
+    }
+
+    @CommandHandler
+    public long URL_COUNT_HANDLER(Context ctx, Long id, Request.State state) {
+        return store.accessor().count(id, state);
     }
 
 

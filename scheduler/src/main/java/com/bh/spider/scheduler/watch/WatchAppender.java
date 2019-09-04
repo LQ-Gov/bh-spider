@@ -68,9 +68,10 @@ public class WatchAppender extends AbstractAppender {
 
         org.slf4j.Marker slf4jMarker = marker == null ? null : MarkerFactory.getMarker(marker.getName());
 
-
+        String text = null;
         if (slf4jMarker != Markers.LOG_STREAM) {
-            Points.<String>of(WatchPointKeys.LOG_STREAM).set(new String(getLayout().toByteArray(event)));
+            text = new String(getLayout().toByteArray(event));
+            Points.<String>of(WatchPointKeys.LOG_STREAM).set(text);
 
         }
 
@@ -80,7 +81,7 @@ public class WatchAppender extends AbstractAppender {
 
         Message message = event.getMessage();
 
-        handler.handle(slf4jMarker, message.getParameters());
+        handler.handle(slf4jMarker,text, message.getParameters());
 
     }
 

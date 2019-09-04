@@ -7,6 +7,7 @@ import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.LocalContext;
 import com.bh.spider.scheduler.event.Command;
 import com.bh.spider.scheduler.event.timer.JobContext;
+import com.bh.spider.scheduler.watch.Markers;
 import com.bh.spider.store.base.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class DefaultRuleScheduleController implements RuleScheduleController {
 
 
 
-        logger.info("正常运行controller blast");
+        logger.info(Markers.RULE_TEXT_STREAM,"rule:{},execute scheduler blast",rule.getId());
 
         boolean unfinished = unfinishedIndex < unfinishedCount;
 

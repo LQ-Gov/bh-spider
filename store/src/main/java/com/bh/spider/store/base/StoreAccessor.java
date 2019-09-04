@@ -1,9 +1,7 @@
 package com.bh.spider.store.base;
 
-import com.bh.common.watch.Rank;
 import com.bh.spider.common.fetch.Request;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public interface StoreAccessor {
@@ -24,9 +22,8 @@ public interface StoreAccessor {
 
     List<Request> find(long ruleId,Request.State state,long offset, long size);
 
-    Rank rank(Request.State state, int size) throws SQLException;
 
-    long count(long ruleId, Request.State state);
+    long count(Long ruleId, Request.State state);
 
 
 

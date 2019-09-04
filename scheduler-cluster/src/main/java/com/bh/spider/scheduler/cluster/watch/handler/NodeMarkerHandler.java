@@ -14,7 +14,7 @@ import org.slf4j.Marker;
 @Support({"worker.connected", "worker.disconnected"})
 public class NodeMarkerHandler implements MarkerHandler {
     @Override
-    public void handle(Marker marker, Object[] args) {
+    public void handle(Marker marker,String text, Object[] args) {
 
 
         if (marker.contains("worker.connected")) {

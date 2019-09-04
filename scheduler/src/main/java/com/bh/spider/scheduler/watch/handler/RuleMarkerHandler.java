@@ -8,7 +8,7 @@ public class RuleMarkerHandler implements MarkerHandler {
 
 
     @Override
-    public void handle(Marker marker, Object[] args) {
+    public void handle(Marker marker,String text, Object[] args) {
 
     }
 }

@@ -1,7 +1,6 @@
 package com.bh.spider.store.mysql;
 
 import com.bh.common.utils.Json;
-import com.bh.common.watch.Rank;
 import com.bh.spider.common.fetch.Request;
 import com.bh.spider.store.base.StoreAccessor;
 import com.bh.spider.store.common.ConvertUtils;
@@ -136,30 +135,23 @@ public class MYSQLStoreAccessor implements StoreAccessor {
     }
 
     @Override
-    public Rank rank(Request.State state, final int size) throws SQLException {
-
-        String sql = "SELECT rule_id, COUNT(0) as cnt FROM bh_spider_url WHERE state=? GROUP BY rule_id ORDER BY cnt DESC LIMIT ?";
-
-        return runner.query(sql, rs -> {
-            Rank rank = new Rank(size);
-            while (rs.next()) {
-                Rank.Item it = new Rank.Item(String.valueOf(rs.getLong("rule_id")), rs.getLong("cnt"));
-                rank.add(it);
-            }
-            return rank;
-        }, state.name(), size);
-    }
-
-    @Override
-    public long count(long ruleId, Request.State state) {
-        try {
-            long count = runner.query("SELECT COUNT(1) FROM bh_spider_url WHERE rule_id=? AND state=?"
-                    , new ScalarHandler<>(), ruleId, state.name());
-            return count;
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public long count(Long ruleId, Request.State state) {
+        String sql = "SELECT COUNT(0) FROM bh_spider_url";
+        if (state != null || ruleId != null)
+            sql += " WHERE ";
+        if (ruleId != null) {
+            sql += " rule_id=" + ruleId;
         }
 
-        return -1;
+        if (state != null) {
+            if (ruleId != null) sql += " AND ";
+            sql += " state='" + state.name() + "'";
+        }
+
+        try {
+            return runner.query(sql, new ScalarHandler<>());
+        } catch (Exception e) {
+            return -1;
+        }
     }
 }

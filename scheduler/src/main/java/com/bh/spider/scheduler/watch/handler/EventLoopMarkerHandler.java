@@ -6,7 +6,7 @@ import org.slf4j.Marker;
 @Support({"event.loop"})
 public class EventLoopMarkerHandler implements MarkerHandler {
     @Override
-    public void handle(Marker marker, Object[] args) {
+    public void handle(Marker marker,String text, Object[] args) {
 
 
         Points.<Long>of("event.loop.total.count").set(value -> value == null ? 1 : value + 1);

@@ -50,4 +50,19 @@ public class ComponentController {
         client.component().delete(name);
         return true;
     }
+
+    @GetMapping(value = "/code/{name}")
+    public String code(@PathVariable String name) {
+        if (name == null) return null;
+
+        Component component = client.component().get(name);
+        if (component != null && component.getType() == Component.Type.GROOVY) {
+            component = client.component().get(name, true);
+
+            return new String(component.getData());
+        }
+
+        return null;
+
+    }
 }

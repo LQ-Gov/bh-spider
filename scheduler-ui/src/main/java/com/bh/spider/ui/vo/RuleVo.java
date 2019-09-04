@@ -30,6 +30,7 @@ public class RuleVo  {
      */
     private String description;
 
+    private String[] proxies;
 
     private String[] policy;
 
@@ -51,6 +52,7 @@ public class RuleVo  {
         this.setValid(rule.isValid());
         this.setNodes(rule.getNodes());
         this.setRepeat(rule.isRepeat());
+        this.setProxies( rule.getProxies());
 
         this._class = rule.getClass();
 
@@ -135,5 +137,13 @@ public class RuleVo  {
 
     public void setRepeat(boolean repeat) {
         this.repeat = repeat;
+    }
+
+    public String[] getProxies() {
+        return proxies;
+    }
+
+    public void setProxies(String[] proxies) {
+        this.proxies = proxies;
     }
 }

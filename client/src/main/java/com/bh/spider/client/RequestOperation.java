@@ -32,10 +32,13 @@ public class RequestOperation {
         submit(req);
     }
 
-    public Map<Request.State,Long> distributeCount(){
-        ParameterizedType type = ParameterizedTypeImpl.make(Map.class, new Type[]{Request.State.class,Long.class}, null);
-        return communicator.write(CommandCode.UNWATCH,type);
+    public Map<Request.State, Long> distributeCount() {
+        ParameterizedType type = ParameterizedTypeImpl.make(Map.class, new Type[]{Request.State.class, Long.class}, null);
+        return communicator.write(CommandCode.UNWATCH, type);
     }
 
 
+    public long count(Long ruleId, Request.State state) {
+        return communicator.write(CommandCode.URL_COUNT, Long.class, ruleId, state);
+    }
 }

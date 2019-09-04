@@ -23,13 +23,6 @@ public class RuleOperationTest {
     }
 
     @Test
-    public void hosts() throws Exception {
-        List<String> hosts = client.rule().hosts();
-
-        System.out.println(hosts);
-    }
-
-    @Test
     public void select() throws Exception {
 
         List<Rule> rules = client.rule().select();

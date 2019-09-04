@@ -51,9 +51,9 @@ public class BasicSchedulerComponentAssistant implements Assistant {
     }
 
     @CommandHandler
-    public Component GET_COMPONENT_HANDLER(String name) {
+    public Component GET_COMPONENT_HANDLER(String name,boolean loadContent) throws IOException, CloneNotSupportedException {
         ComponentRepository repository = factory.proxy(name);
-        return repository == null ? null : repository.get(name);
+        return repository == null ? null : repository.get(name,loadContent);
     }
 
     @CommandHandler

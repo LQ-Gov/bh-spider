@@ -10,4 +10,6 @@ import java.lang.annotation.Target;
 public @interface Support {
 
     String[] value();
+
+    boolean fillText() default false;
 }

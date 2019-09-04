@@ -7,6 +7,9 @@ import com.bh.spider.common.rule.Rule;
 import com.bh.spider.common.rule.SeleniumRule;
 import com.bh.spider.scheduler.Scheduler;
 import com.bh.spider.scheduler.context.Context;
+import com.bh.spider.scheduler.watch.Markers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Set;
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
  * Created by lq on 17-3-17.
  */
 public class Fetcher {
+    private final static Logger logger = LoggerFactory.getLogger(Fetcher.class);
     private Scheduler scheduler = null;
 
 
@@ -52,6 +56,8 @@ public class Fetcher {
 
         FetchClient client = builder.build(scheduler.config());
 
+        logger.info(Markers.RULE_TEXT_STREAM, "rule id:{}, fetch url:{}", rule.getId(), req.url());
+
         //对url进行预处理
         initHeaders(req);
 
@@ -59,9 +65,7 @@ public class Fetcher {
         final FetchContext context = new BasicFetchContext(req, rule);
         //这里还需执行component yeah!!!
 
-
         execute(client, context).whenComplete((response, e) -> executeCallback(context, response, e, callback));
-
 
     }
 
@@ -100,26 +104,6 @@ public class Fetcher {
 
 
     //此方法由CompletableFuture回调调用
-//    private void executeCallback(Context ctx, FetchContext fetchContext, FetchResponse response, Throwable e,FetchCallback callback) {
-//        if (e != null) {
-//            e.printStackTrace();
-//            ctx.exception(e);
-//            return;
-//        }
-//
-//        try {
-//            //进行到此处则抓取完成,接下来则由跟踪过来的context进行处理进行处理
-//            fetchContext = new FinalFetchContext(fetchContext, response);
-//
-//
-//            ctx.crawled(fetchContext);
-//        } catch (Exception ex) {
-//            ctx.exception(ex);
-//        }
-//
-//    }
-
-    //此方法由CompletableFuture回调调用
     private void executeCallback(FetchContext fetchContext, FetchResponse response, Throwable e, FetchCallback callback) {
         if (e != null) {
             callback.exception(e);
@@ -137,11 +121,15 @@ public class Fetcher {
 
     private CompletableFuture<FetchResponse> execute(FetchClient client, FetchContext ctx) {
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
+
+        final Long ruleId = ctx.rule() == null ? null : ctx.rule().getId();
         this.workers.execute(() -> {
             try {
                 future.complete(client.execute(ctx));
+                logger.info(Markers.RULE_TEXT_STREAM, "rule:{},url:{},fetch complete", ruleId, ctx.url());
             } catch (FetchExecuteException e) {
                 future.completeExceptionally(e);
+                logger.info(Markers.RULE_TEXT_STREAM, "rule:{},url:{},fetch exception:{}", ruleId, ctx.url(), e);
             }
         });
         return future;
