@@ -2,6 +2,7 @@ package com.bh.spider.consistent.raft.transport;
 
 
 import com.bh.spider.consistent.raft.container.MarkMessage;
+import com.bh.spider.consistent.raft.node.EventNode;
 import com.bh.spider.consistent.raft.node.Node;
 
 import java.util.*;
@@ -24,11 +25,12 @@ public class Communicator {
     private Map<String, List<CommandReceiveListener>> commandReceiveListeners = new HashMap<>();
 
 
+    private List<NodeEventListener> nodeEventListeners = new LinkedList<>();
+
     public Communicator(Node me, Collection<Node> remotes) {
         this.me = me;
 
-        this.remotes = remotes.stream().collect(Collectors.toMap(Node::id, x -> x));
-
+        this.remotes = remotes.stream().map(x -> new EventNode(x, this::event)).collect(Collectors.toMap(Node::id, x -> x));
     }
 
 
@@ -65,9 +67,15 @@ public class Communicator {
             listener.receive(from, message.data());
     }
 
-    public synchronized <M> Communicator marked(String mark, CommandReceiveListener<M> listener) {
-        commandReceiveListeners.computeIfAbsent(mark, x -> new LinkedList<>()).add(listener);
+    private void event(Node from,Node.Event event){
+        for(NodeEventListener listener:nodeEventListeners){
+            listener.handle(from,event);
+        }
+    }
 
+    public synchronized <M> Communicator marked(String mark, CommandReceiveListener<M> listener,NodeEventListener nodeEventListener) {
+        commandReceiveListeners.computeIfAbsent(mark, x -> new LinkedList<>()).add(listener);
+        nodeEventListeners.add(nodeEventListener);
         return new MarkedCommunicator(mark, this);
     }
 

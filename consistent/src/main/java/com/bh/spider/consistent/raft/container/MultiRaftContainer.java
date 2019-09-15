@@ -44,13 +44,16 @@ public class MultiRaftContainer implements RaftContainer {
     private void foreach(Raft[] rafts, Consumer<Raft> consumer) {
         for (Raft raft : rafts)
             consumer.accept(raft);
+
     }
 
-    public void connect(Node me, Node[] remotes) {
+    public void connect(Node me, Node[] remotes) throws Exception {
 
         this.communicator = new Communicator(me, Arrays.asList(remotes));
 
-        foreach(rafts, x -> x.connect(communicator, this.ticker));
+        for (Raft raft : rafts) {
+            raft.connect(this.communicator, this.ticker);
+        }
 
         Server server = new Server();
 

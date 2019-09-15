@@ -60,6 +60,11 @@ public class Node {
 
 
 
+    public static enum Event{
+        ACTIVE,
+        INACTIVE
+    }
+
 
 
 

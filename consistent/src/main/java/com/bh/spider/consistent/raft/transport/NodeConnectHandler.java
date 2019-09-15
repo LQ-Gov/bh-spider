@@ -33,7 +33,7 @@ public class NodeConnectHandler extends ChannelInboundHandlerAdapter {
             int nodeId = buffer.readInt();
 
 
-            final Node node = communicator.remote(nodeId);
+            Node node = communicator.remote(nodeId);
 
             if (node != null && !node.isActive()) {
 
@@ -46,7 +46,7 @@ public class NodeConnectHandler extends ChannelInboundHandlerAdapter {
 
                         this.connectionInitializer.init(node, conn);
 
-                        this. communicator.bind(node, new Connection(ctx.channel()));
+                        this.communicator.bind(node, new Connection(ctx.channel()));
 
                         node.active(true);
                     }

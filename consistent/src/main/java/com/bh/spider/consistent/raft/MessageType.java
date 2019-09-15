@@ -6,6 +6,17 @@ package com.bh.spider.consistent.raft;
  */
 public enum  MessageType {
 
+
+    /**
+     * 节点连接
+     */
+    ACTIVE,
+
+    /**
+     * 节点断开连接
+     */
+    INACTIVE,
+
     //region 几个基本常用消息类型
     /**
      * 客户端发往到集群的写请求是通过MsgProp消息表示的

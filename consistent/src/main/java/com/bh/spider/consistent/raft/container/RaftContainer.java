@@ -9,7 +9,7 @@ import com.bh.spider.consistent.raft.node.Node;
 public interface RaftContainer {
 
 
-    void connect(Node me, Node[] members);
+    void connect(Node me, Node[] members) throws Exception;
 
 
     void join(Node node);

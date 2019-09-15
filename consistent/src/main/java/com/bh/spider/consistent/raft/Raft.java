@@ -155,6 +155,13 @@ public class Raft {
 
     }
 
+    private void nodeEventListener(Node node,Node.Event event){
+        logger.info("node:{},trigger event:{}",node.id(),event);
+        node = node.id() == me.id() ? me : remotes.get(node.id());
+        if(event== Node.Event.ACTIVE) node.active(true);
+        else if(event== Node.Event.INACTIVE) node.active(false);
+    }
+
     /**
      * 此方法多线程调用,需保证线程的安全
      *
@@ -526,9 +533,7 @@ public class Raft {
         }
     }
 
-    public synchronized void exec(Communicator communicator) throws Exception {
-
-        this.communicator = communicator;
+    protected synchronized void exec() throws Exception {
 
         Snapshotter snapshotter = Snapshotter.create(Paths.get(dataPath.toString(), "snap"));
 
@@ -546,7 +551,7 @@ public class Raft {
         if (stashed != null && stashed.validate())
             recover(snapshot, stashed);
 
-        this.becomeFollower(this.term(), null);
+        this.becomeFollower(this.term(), this.leader);
 
     }
 
@@ -762,7 +767,7 @@ public class Raft {
      * @param communicator
      * @return
      */
-    public void connect(Communicator communicator, Ticker ticker) {
+    public void connect(Communicator communicator, Ticker ticker) throws Exception {
 
 
         this.me = new LocalNode(communicator.local(),
@@ -773,9 +778,13 @@ public class Raft {
 
         this.remotes = communicator.remotes().stream().map(RemoteNode::new).collect(Collectors.toMap(Node::id, x -> x));
 
-        this.communicator = communicator.marked(name(), Async.create(this::commandReceiverListener)::accept);
+        this.communicator = communicator.marked(name(), Async.create(this::commandReceiverListener)::accept,this::nodeEventListener);
+
 
         ticker.connect(this.tick);
+
+
+        this.exec();
 
     }
 
