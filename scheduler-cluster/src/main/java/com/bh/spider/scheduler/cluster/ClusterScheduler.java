@@ -3,11 +3,12 @@ package com.bh.spider.scheduler.cluster;
 import com.bh.common.utils.CommandCode;
 import com.bh.spider.common.member.Node;
 import com.bh.spider.consistent.raft.Raft;
+import com.bh.spider.consistent.raft.UnstableRaft;
+import com.bh.spider.consistent.raft.container.RaftContainer;
 import com.bh.spider.scheduler.BasicScheduler;
 import com.bh.spider.scheduler.CommandReceiveHandler;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.RunModeClassFactory;
-import com.bh.spider.scheduler.cluster.actuator.CombineActuator;
 import com.bh.spider.scheduler.cluster.actuator.CommandActuator;
 import com.bh.spider.scheduler.cluster.actuator.NodeCollection;
 import com.bh.spider.scheduler.cluster.communication.Session;
@@ -36,6 +37,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,7 +55,7 @@ public class ClusterScheduler extends BasicScheduler {
 
     private ChannelFuture[] servers = new ChannelFuture[2];
 
-    private Raft raft;
+    private RaftContainer raftContainer;
 
     private NodeCollection masters;
 
@@ -119,13 +121,18 @@ public class ClusterScheduler extends BasicScheduler {
 
         List<Node> nodes = Node.collectionOf(config().all(Config.INIT_CLUSTER_MASTER_ADDRESS));
 
-        this.raft = new RaftInitializer((int) this.self().getId(), config()).exec();
-        this.masters = new NodeCollection(this.raft, nodes);
-        CombineActuator combineActuator = new CombineActuator(new CommandActuator(this), this.masters.actuator());
-        this.raft.bind(combineActuator);
+        /**
+         * raft绑定，后续代码需简化
+         */
+        Raft raft = new Raft(Paths.get(config().get(Config.INIT_CLUSTER_CONSISTENT_DATA_PATH)), new CommandActuator(this));
+
+        this.masters = new NodeCollection(nodes);
+
+        Raft unstableRaft = new UnstableRaft(this.masters.actuator());
+
 
         //必须是raft先启动,然后loop再启动，因为需要先应用
-        this.raft.exec();
+        this.raftContainer = new RaftInitializer((int) this.self().getId(), config(), raft, unstableRaft).exec();
 
         this.loop.addInterceptor(new OperationInterceptor(raft));
 

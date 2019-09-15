@@ -12,6 +12,8 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 连接Client，带有自动重连功能
+ *
  * @author liuqi19
  * @version : ClientConnection, 2019-04-16 16:10 liuqi19
  */
@@ -37,6 +39,7 @@ public class ClientConnection extends Connection {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) {
+                        ClientConnection.this.setChannel(ch);
                         //增加重连机制
                         ch.pipeline().addFirst(new ChannelInboundHandlerAdapter() {
                             @Override
@@ -45,6 +48,8 @@ public class ClientConnection extends Connection {
                                 ctx.channel().eventLoop().schedule(() -> connect(channelHandlers), 1, TimeUnit.SECONDS);
                             }
                         });
+
+
 
                         ch.pipeline().addLast(channelHandlers);
                     }

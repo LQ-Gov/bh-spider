@@ -9,6 +9,8 @@ public class Node {
     private String hostname;
     private int port;
 
+    private boolean active;
+
 
 
 
@@ -19,6 +21,7 @@ public class Node {
         this.id = node.id();
         this.hostname = node.hostname();
         this.port = node.port();
+        this.active = node.active;
     }
 
 
@@ -39,6 +42,14 @@ public class Node {
 
     public int port(){
         return port;
+    }
+
+    public void active(boolean value) {
+        this.active = value;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
 

@@ -52,6 +52,7 @@ public class Config {
     public static final String INIT_CLUSTER_MASTER_LISTEN_PORT = "init.cluster.master.listen.port";
 
 
+    public static final String INIT_CLUSTER_CONSISTENT_DATA_PATH="init.cluster.raft.consistent.data.path";
     public static final String INIT_CLUSTER_RAFT_SNAPSHOT_PATH = "init.cluster.raft.snapshot.path";
     public static final String INIT_CLUSTER_RAFT_WAL_PATH = "init.cluster.raft.wal.path";
 
@@ -85,6 +86,8 @@ public class Config {
         config.GLOBAL.put(INIT_OPERATION_LOG_PATH, "data/operation");
 
         config.GLOBAL.put(INIT_CLUSTER_MASTER_ADDRESS + "1", "127.0.0.1:8070");
+
+        config.GLOBAL.put(INIT_CLUSTER_CONSISTENT_DATA_PATH,"data/consistent");
         config.GLOBAL.put(INIT_CLUSTER_RAFT_SNAPSHOT_PATH,"data/snapshot");
         config.GLOBAL.put(INIT_CLUSTER_RAFT_WAL_PATH,"data/wal");
 

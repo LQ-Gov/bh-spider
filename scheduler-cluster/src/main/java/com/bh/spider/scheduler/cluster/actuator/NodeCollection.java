@@ -19,15 +19,13 @@ public class NodeCollection extends HashMap<Long, Node> {
     private final static ObjectMapper mapper = Json.get();
     private Actuator actuator;
 
-    private Raft raft;
-
-
     private TreeMap<Integer, Node> map = new TreeMap<>();
 
+    private Raft raft;
 
-    public NodeCollection(Raft raft, List<Node> nodes) {
+    public NodeCollection(List<Node> nodes) {
         this.actuator = new NodeCollectionActuator(this);
-        this.raft = raft;
+
 
         nodes.sort((o1, o2) -> {
             if (o1.getId() == o2.getId()) return 0;

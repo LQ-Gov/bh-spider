@@ -1,6 +1,6 @@
 package com.bh.spider.consistent.raft.transport;
 
-import com.bh.spider.consistent.raft.Message;
+import com.bh.spider.consistent.raft.serialize.ProtoBufUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -17,18 +17,23 @@ public class CommandOutBoundHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if(msg instanceof Message) {
-            Message message = (Message) msg;
+//        if(msg instanceof Message) {
+//            Message message = (Message) msg;
+//
+//            byte[] data = message.serialize();
+//
+//            ByteBuf buffer = ctx.alloc().buffer(4+data.length);
+//
+//            buffer.writeInt(data.length).writeBytes(data);
+//
+//            msg = buffer;
+//
+//        }
 
-            byte[] data = message.serialize();
+        byte[] data = ProtoBufUtils.serialize(msg);
 
-            ByteBuf buffer = ctx.alloc().buffer(4+data.length);
+        ByteBuf buffer = ctx.alloc().buffer(4+data.length);
 
-            buffer.writeInt(data.length).writeBytes(data);
-
-            msg = buffer;
-
-        }
         super.write(ctx, msg, promise);
     }
 }

@@ -11,6 +11,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpHost;
+import org.apache.http.client.cache.HttpCacheContext;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.GzipDecompressingEntity;
@@ -23,7 +24,8 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.cache.CacheConfig;
+import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
@@ -49,7 +51,7 @@ public class HttpFetchClient implements FetchClient {
 
     public HttpFetchClient(Config config) {
 
-        maxConnection = Integer.valueOf(config.get(Config.INIT_PROCESSOR_THREADS_COUNT));
+        maxConnection = Integer.parseInt(config.get(Config.INIT_PROCESSOR_THREADS_COUNT));
 
     }
 
@@ -73,7 +75,10 @@ public class HttpFetchClient implements FetchClient {
                     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
                     connectionManager.setMaxTotal(maxConnection);
 
-                    client = HttpClientBuilder.create()
+                    CacheConfig cacheConfig = CacheConfig.custom().build();
+
+                    client = CachingHttpClientBuilder.create()
+                            .setCacheConfig(cacheConfig)
                             .setSSLSocketFactory(ssl)
                             .setConnectionManager(connectionManager)
                             .setDefaultCookieStore(new HttpClientCookieStoreAdapter(CookieStoreFactory.get()))
@@ -99,7 +104,8 @@ public class HttpFetchClient implements FetchClient {
             config(base, ctx.rule());
 
 
-            try(CloseableHttpResponse response = clientInstance().execute(base)) {
+            HttpCacheContext cacheContext = HttpCacheContext.create();
+            try(CloseableHttpResponse response = clientInstance().execute(base,cacheContext)) {
                 int code = response.getStatusLine().getStatusCode();
 
                 Header contentEncoding = response.getEntity().getContentEncoding();

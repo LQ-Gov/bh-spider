@@ -16,6 +16,10 @@ public class ProtoBufUtils {
         return ProtostuffIOUtil.toByteArray(o, schema, LinkedBuffer.allocate(256));
     }
 
+    public static <T> byte[] serialize(Schema<T> schema, T o) {
+        return ProtostuffIOUtil.toByteArray(o, schema, LinkedBuffer.allocate());
+    }
+
     public static <T> T deserialize(byte[] bytes, Class<T> clazz) {
 
         T obj = null;
@@ -23,12 +27,21 @@ public class ProtoBufUtils {
             obj = clazz.newInstance();
             Schema schema = RuntimeSchema.getSchema(obj.getClass());
             ProtostuffIOUtil.mergeFrom(bytes, obj, schema);
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
 
         return obj;
+    }
+
+    public static <T> T deserialize(Schema<T> schema, byte[] bytes) {
+
+        T obj = schema.newMessage();
+
+        ProtostuffIOUtil.mergeFrom(bytes, obj, schema);
+
+
+        return obj;
+
     }
 }

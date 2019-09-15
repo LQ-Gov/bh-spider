@@ -66,7 +66,7 @@ public class Async<T, U> {
     public synchronized static <T,U> Async<T,U> create(BiConsumer<T,U> consumer) {
 
 
-        Async<T, U> async = INSTANCE.computeIfAbsent(consumer, Async<T, U>::new);
+        Async async = INSTANCE.computeIfAbsent(consumer, Async<T, U>::new);
 
         if (!async.thread.isAlive())
             async.thread.start();

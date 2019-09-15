@@ -1,6 +1,8 @@
 package com.bh.spider.scheduler.cluster.initialization;
 
 import com.bh.spider.consistent.raft.Raft;
+import com.bh.spider.consistent.raft.container.MultiRaftContainer;
+import com.bh.spider.consistent.raft.container.RaftContainer;
 import com.bh.spider.consistent.raft.node.Node;
 import com.bh.spider.scheduler.Config;
 import com.bh.spider.scheduler.Scheduler;
@@ -16,7 +18,7 @@ import java.util.Properties;
  * @author liuqi19
  * @version : RaftInitializer, 2019-05-27 10:31 liuqi19
  */
-public class RaftInitializer implements Initializer<Raft> {
+public class RaftInitializer implements Initializer<RaftContainer> {
 
     private int id;
 
@@ -24,18 +26,14 @@ public class RaftInitializer implements Initializer<Raft> {
 
     private Properties nodeProperties;
 
-
-    private String snapshotPath;
-
-    private String walPath;
+    private Raft[] rafts;
 
 
-    public RaftInitializer(int id, Config config) {
+    public RaftInitializer(int id, Config config,Raft...rafts) {
         this.id = id;
 
 
-        this.snapshotPath = config.get(Config.INIT_CLUSTER_RAFT_SNAPSHOT_PATH);
-        this.walPath = config.get(Config.INIT_CLUSTER_RAFT_WAL_PATH);
+        this.rafts = rafts;
 
         this.nodeProperties = config.all(Config.INIT_CLUSTER_MASTER_ADDRESS);
 
@@ -43,13 +41,11 @@ public class RaftInitializer implements Initializer<Raft> {
 
 
     @Override
-    public Raft exec() throws Exception {
-
-//        ClusterSchedulerActuator actuator = new ClusterSchedulerActuator(this.scheduler);
+    public RaftContainer exec() throws Exception {
 
         Node local = null;
 
-        List<Node> members = new ArrayList<>();
+        List<Node> remotes = new ArrayList<>();
 
         for (Map.Entry<Object, Object> prop : nodeProperties.entrySet()) {
             int id = Integer.parseInt(prop.getKey().toString());
@@ -60,20 +56,16 @@ public class RaftInitializer implements Initializer<Raft> {
 
             if (node.id() == this.id)
                 local = node;
-            else members.add(node);
+            else remotes.add(node);
         }
 
 
-        Properties properties = new Properties();
-        properties.setProperty("snapshot.path", this.snapshotPath);
-        properties.setProperty("wal.path", this.walPath);
 
 
-        Raft raft = new Raft(properties, null, local, members.toArray(new Node[0]));
+        RaftContainer container = new MultiRaftContainer(id,rafts);
 
+        container.connect(local,remotes.toArray(new Node[0]));
 
-
-
-        return raft;
+        return container;
     }
 }

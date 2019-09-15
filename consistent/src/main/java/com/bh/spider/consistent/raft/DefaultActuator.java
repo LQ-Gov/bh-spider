@@ -13,7 +13,7 @@ public class DefaultActuator implements Actuator {
 
     @Override
     public String name() {
-        return null;
+        return "default";
     }
 
     @Override

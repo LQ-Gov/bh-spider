@@ -1,13 +1,8 @@
 package com.bh.spider.consistent.raft.node;
 
-import com.bh.spider.consistent.raft.Message;
 import com.bh.spider.consistent.raft.role.*;
-import com.bh.spider.consistent.raft.transport.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author liuqi19
@@ -18,7 +13,7 @@ public class LocalNode extends RaftNode {
 
     private final Role[] ROLE_CACHE;
 
-    private Map<Integer, Connection> connections = new HashMap<>();
+//    private Map<Integer, Connection> connections = new HashMap<>();
 
 
     private Role role;
@@ -68,12 +63,12 @@ public class LocalNode extends RaftNode {
         role = ROLE_CACHE[3];
     }
 
-    public void sendTo(RaftNode node, Message message){
-        Connection conn = connections.get(node.id());
-        if(conn!=null){
-            conn.write(message);
-        }
-    }
+//    public void sendTo(RaftNode node, Message message){
+//        Connection conn = connections.get(node.id());
+//        if(conn!=null){
+//            conn.write(message);
+//        }
+//    }
 
     @Override
     public String hostname() {
@@ -86,8 +81,8 @@ public class LocalNode extends RaftNode {
     }
 
 
-    public void bindConnection(Node node, Connection connection) {
-        connections.put(node.id(), connection);
-
-    }
+//    public void bindConnection(Node node, Connection connection) {
+//        connections.put(node.id(), connection);
+//
+//    }
 }

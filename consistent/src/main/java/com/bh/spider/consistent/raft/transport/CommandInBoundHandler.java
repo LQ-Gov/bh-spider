@@ -1,23 +1,22 @@
 package com.bh.spider.consistent.raft.transport;
 
-import com.bh.spider.consistent.raft.Message;
 import com.bh.spider.consistent.raft.node.Node;
-import com.bh.spider.consistent.raft.node.RaftNode;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 /**
  * @author liuqi19
- * @version : CommandInBoundHandler, 2019-04-10 19:28 liuqi19
- */
-public class CommandInBoundHandler extends ChannelInboundHandlerAdapter {
+ * @version CommandInBoundHandler, 2019/9/12 2:25 下午 liuqi19
+ **/
+public abstract class CommandInBoundHandler<M> extends ChannelInboundHandlerAdapter {
 
     private Node remote;
 
-    private CommandReceiveListener listener;
+    private CommandReceiveListener<M> listener;
 
-    public CommandInBoundHandler(Node remote, CommandReceiveListener listener) {
+
+    public CommandInBoundHandler(Node remote, CommandReceiveListener<M> listener){
         this.remote = remote;
         this.listener = listener;
     }
@@ -34,14 +33,12 @@ public class CommandInBoundHandler extends ChannelInboundHandlerAdapter {
 
             buffer.readBytes(data);
 
-
-            Message message = Message.deserialize(data);
-
-            listener.receive((RaftNode) remote,message);
-
+            listener.receive(remote,deserialize(data));
         }
 
 
         super.channelRead(ctx, msg);
     }
+
+    protected abstract M deserialize(byte[] data);
 }

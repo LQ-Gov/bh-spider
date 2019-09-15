@@ -35,4 +35,9 @@ public class Connection {
             channel.writeAndFlush(object);
     }
 
+
+    public Channel channel(){
+        return channel;
+    }
+
 }

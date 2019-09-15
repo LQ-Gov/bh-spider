@@ -1,7 +1,6 @@
 package com.bh.spider.consistent.raft.transport;
 
 import com.bh.spider.consistent.raft.node.Node;
-import com.bh.spider.consistent.raft.node.RaftNode;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -19,18 +18,22 @@ public class RemoteConnectHandler extends ChannelInboundHandlerAdapter {
 
     private Node local;
 
-    private RaftNode remote;
+    private Node remote;
 
-    public RemoteConnectHandler(Node local, RaftNode remote) {
+    public RemoteConnectHandler(Node local, Node remote) {
         this.local = local;
         this.remote = remote;
+    }
+
+    public RemoteConnectHandler(Node remote) {
+        this(null, remote);
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
 
-        logger.info("连接建立成功,remote:{}",remote.id());
+        logger.info("连接建立成功,remote:{}", remote.id());
 
         ByteBuf buffer = ctx.alloc().buffer(4).writeInt(local.id());
 

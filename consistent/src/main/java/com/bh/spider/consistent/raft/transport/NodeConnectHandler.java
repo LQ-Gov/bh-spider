@@ -1,14 +1,10 @@
 package com.bh.spider.consistent.raft.transport;
 
-import com.bh.spider.consistent.raft.node.LocalNode;
-import com.bh.spider.consistent.raft.node.RemoteNode;
+import com.bh.spider.consistent.raft.node.Node;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-
-import java.util.Map;
 
 /**
  * @author liuqi19
@@ -17,15 +13,13 @@ import java.util.Map;
 @ChannelHandler.Sharable
 public class NodeConnectHandler extends ChannelInboundHandlerAdapter {
 
-    private LocalNode me;
-    private Map<Integer, RemoteNode> remotes;
+    private Communicator communicator;
 
-    private CommandReceiveListener listener;
+    private ConnectionInitializer connectionInitializer;
 
-    public NodeConnectHandler(LocalNode me, Map<Integer, RemoteNode> remotes, CommandReceiveListener listener) {
-        this.me = me;
-        this.remotes = remotes;
-        this.listener = listener;
+    public NodeConnectHandler(Communicator communicator, ConnectionInitializer connectionInitializer) {
+        this.communicator = communicator;
+        this.connectionInitializer = connectionInitializer;
     }
 
     @Override
@@ -39,20 +33,21 @@ public class NodeConnectHandler extends ChannelInboundHandlerAdapter {
             int nodeId = buffer.readInt();
 
 
-            final RemoteNode node = remotes.get(nodeId);
+            final Node node = communicator.remote(nodeId);
 
             if (node != null && !node.isActive()) {
 
                 synchronized (node) {
                     if (!node.isActive()) {
-                        ctx.channel().pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
-                        ctx.channel().pipeline().addLast(new CommandInBoundHandler(node, this.listener));
-                        ctx.channel().pipeline().addLast(new CommandOutBoundHandler());
-                        ctx.channel().pipeline().addLast(new RemoteConnectHandler(me,node));
 
                         ctx.channel().pipeline().remove(this);
 
-                        me.bindConnection(node, new Connection(ctx.channel()));
+                        Connection conn = new Connection(ctx.channel());
+
+                        this.connectionInitializer.init(node, conn);
+
+                        this. communicator.bind(node, new Connection(ctx.channel()));
+
                         node.active(true);
                     }
                 }
