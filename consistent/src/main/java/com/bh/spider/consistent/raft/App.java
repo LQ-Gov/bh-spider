@@ -5,8 +5,6 @@ import com.bh.spider.consistent.raft.container.MultiRaftContainer;
 import com.bh.spider.consistent.raft.container.RaftContainer;
 import com.bh.spider.consistent.raft.node.Node;
 
-import java.nio.file.Paths;
-
 /**
  * @author liuqi19
  * @version $Id: App, 2019-04-02 13:40 liuqi19
@@ -45,8 +43,9 @@ public class App {
 
         //启动Raft
 
-        Raft raft = new Raft(Paths.get("data"), new DefaultActuator());
+//        Raft raft = new Raft(Paths.get("data"), new DefaultActuator());
 
+        Raft raft = new UnstableRaft(new DefaultActuator());
         RaftContainer container = new MultiRaftContainer(local.id(), raft);
 
         container.connect(local, members);

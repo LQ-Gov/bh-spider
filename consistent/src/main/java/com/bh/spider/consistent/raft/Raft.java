@@ -128,6 +128,11 @@ public class Raft {
     }
 
 
+    protected void initLog(Log log){
+        this.log = log;
+    }
+
+
     /**
      * 进行选举
      */
@@ -579,7 +584,7 @@ public class Raft {
     }
 
 
-    private long term() {
+    protected long term() {
         return term;
     }
 
@@ -604,7 +609,7 @@ public class Raft {
      * @param term
      * @param leader
      */
-    private void becomeFollower(long term, RaftNode leader) {
+    protected void becomeFollower(long term, RaftNode leader) {
 
 
         this.reset(term, this.tick.randomLease());
@@ -788,6 +793,10 @@ public class Raft {
 
     }
 
+
+    public Actuator actuator() {
+        return actuator;
+    }
 
     public void create(String name, Class<? extends Actuator> actuatorClass) {
 

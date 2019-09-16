@@ -74,7 +74,7 @@ public class WAL {
     private HardState state;
 
 
-    private WAL() {
+    protected WAL() {
     }
 
 //    private WAL(Path dir, byte[] metadata, Encoder encoder) {
@@ -106,7 +106,7 @@ public class WAL {
     }
 
 
-    public InduceFileChannel tail() {
+    private InduceFileChannel tail() {
         if (!this.channels.isEmpty())
             return this.channels.get(this.channels.size() - 1);
 
