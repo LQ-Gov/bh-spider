@@ -1,5 +1,6 @@
 package com.bh.spider.ui.controller;
 
+import com.bh.common.utils.Json;
 import com.bh.spider.ui.entity.Result;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -11,6 +12,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 @RestControllerAdvice
 public class ControllerAdvice implements ResponseBodyAdvice<Object> {
+
+
     @Override
     public boolean supports(MethodParameter methodParameter, Class<? extends HttpMessageConverter<?>> aClass) {
         return true;
@@ -19,6 +22,14 @@ public class ControllerAdvice implements ResponseBodyAdvice<Object> {
     @Override
     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class<? extends HttpMessageConverter<?>> aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
 
+        if (o instanceof String) {
+            try {
+                return Json.get().writeValueAsString(new Result(200, o));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
 
         if (o instanceof Result)
             return o;

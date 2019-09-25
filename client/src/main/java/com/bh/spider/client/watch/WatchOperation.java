@@ -2,6 +2,7 @@ package com.bh.spider.client.watch;
 
 import com.bh.common.utils.CommandCode;
 import com.bh.common.watch.WatchEvent;
+import com.bh.spider.client.ClientConnection;
 import com.bh.spider.client.Communicator;
 import com.bh.spider.client.converter.DefaultConverter;
 import com.bh.spider.client.converter.TypeConverter;
@@ -29,7 +30,7 @@ public class WatchOperation {
     public WatchOperation(Communicator communicator) {
 
 
-        this.communicator =  communicator;
+        this.communicator = communicator;
 
         this.points = watchedPoints();
     }
@@ -39,7 +40,7 @@ public class WatchOperation {
         ParameterizedType returnType = ParameterizedTypeImpl.make(List.class, new Type[]{String.class}, null);
         List<String> list = communicator.write(CommandCode.GET_WATCH_POINT_LIST, returnType);
 
-        if(list==null) list = Collections.emptyList();
+        if (list == null) list = Collections.emptyList();
 
         return new HashSet<>(list);
 
@@ -57,6 +58,12 @@ public class WatchOperation {
         return points.contains(point.substring(0, colonIndex));
     }
 
+
+    private boolean fastidious(String point) {
+        if (point.startsWith("rule.text.stream")) return true;
+        return false;
+    }
+
     public synchronized <T> void watch(String point, Consumer<T> consumer, Class<T> cls) throws Exception {
 
         if (validate(point)) {
@@ -68,11 +75,32 @@ public class WatchOperation {
             consumers.add(consumer);
 
             if (!initialized) {
-                communicator.stream(CommandCode.WATCH, bytes -> {
+
+                ClientConnection connection = null;
+
+                /**
+                 * 对于需要指定机器的节点
+                 */
+                if (fastidious(point)) {
+                    Map<ClientConnection, Boolean> map = communicator.writeAll(CommandCode.CHECK_SUPPORT_WATCH_POINT, Boolean.class, point);
+
+                    for (Map.Entry<ClientConnection, Boolean> entry : map.entrySet()) {
+                        if (entry.getValue()) {
+                            connection = entry.getKey();
+                            break;
+                        }
+                    }
+
+                    if (connection == null) throw new Exception("未查询到支持该点的server");
+
+                }
+
+
+                communicator.stream(connection, CommandCode.WATCH, bytes -> {
                     try {
                         WatchEvent event = new TypeConverter<WatchEvent>(WatchEvent.class).convert(bytes);
 
-                        Object value = cls==WatchEvent.class?event:event.value();
+                        Object value = cls == WatchEvent.class ? event : event.value();
 
                         List<Consumer> list = new LinkedList<>(consumers);
 
@@ -84,8 +112,6 @@ public class WatchOperation {
                     }
 
 
-
-
                 }, new DefaultConverter(), point);
             }
 
@@ -93,7 +119,7 @@ public class WatchOperation {
 
         }
 
-        throw new Exception("不存在的监控点"+point);
+        throw new Exception("不存在的监控点" + point);
     }
 
 

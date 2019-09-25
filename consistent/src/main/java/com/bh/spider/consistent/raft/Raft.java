@@ -17,6 +17,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.*;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -150,9 +151,6 @@ public class Raft {
         long term = this.term + (me.role2().name() == RoleType.PRE_CANDIDATE ? 1 : 0);
 
         Vote vote = new Vote(me.id(), this.log.lastTerm(), this.log.lastIndex(), preCandidate);
-
-        logger.info("发起投票,role:{},id:{},term:{}", me.role2().name(), me.id(), term);
-
 
         Message message = Message.create(MessageType.VOTE, term, vote);
 
@@ -324,8 +322,6 @@ public class Raft {
 
                 votes.put(context.from(), message.data(Boolean.class));
                 long agree = votes.values().stream().filter(x -> x).count();
-
-                logger.info("投票总数:{},同意数:{},quorum:{}", votes.size(), agree, this.quorum());
 
                 if (agree == this.quorum()) {
                     if (me.role2().name() == RoleType.PRE_CANDIDATE)
@@ -804,6 +800,9 @@ public class Raft {
     }
 
 
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
     public @interface Bind {
 
     }

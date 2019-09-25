@@ -31,6 +31,8 @@ public class RuleOperation {
 
 
     public void submit(Rule rule) {
+        long id = communicator.write(CommandCode.ID_GENERATOR, Long.class);
+        rule.setId(id);
         communicator.write(CommandCode.SUBMIT_RULE, null, rule);
     }
 

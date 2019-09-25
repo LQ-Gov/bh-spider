@@ -14,38 +14,29 @@ import java.util.*;
  * @author liuqi19
  * @version NodeCollection, 2019-08-01 11:02 liuqi19
  **/
-public class NodeCollection extends HashMap<Long, Node> {
+public class NodeCollection extends HashMap<Long, Node> implements Actuator {
     private final static Logger logger = LoggerFactory.getLogger(NodeCollection.class);
     private final static ObjectMapper mapper = Json.get();
-    private Actuator actuator;
 
-    private TreeMap<Integer, Node> map = new TreeMap<>();
+    private transient TreeMap<Integer, Node> map = new TreeMap<>();
 
-    private Raft raft;
+    @Raft.Bind
+    private transient Raft raft;
 
     public NodeCollection(List<Node> nodes) {
-        this.actuator = new NodeCollectionActuator(this);
 
+        Collections.sort(nodes);
 
-        nodes.sort((o1, o2) -> {
-            if (o1.getId() == o2.getId()) return 0;
+        for (Node node : nodes) {
 
-            return o1.getId() > o2.getId() ? 1 : -1;
-        });
-
-
-
-
-        for (Node node:nodes) {
-
-            for(int i=10;i>0;i--) {
+            for (int i = 10; i > 0; i--) {
 
                 String key = (Integer.MAX_VALUE - i) + "#" + node.getId();
                 int hashCode = fnvHash(key);
-                map.put(hashCode,node);
+                map.put(hashCode, node);
             }
+            this.put(node.getId(),node);
         }
-
 
     }
 
@@ -67,72 +58,51 @@ public class NodeCollection extends HashMap<Long, Node> {
 
     public void update(Node node) {
         try {
-            CombineActuator.CombineEntry entry = new CombineActuator.CombineEntry(actuator.name(), mapper.writeValueAsBytes(node));
-            raft.write(Json.get().writeValueAsBytes(entry));
+            raft.write(Json.get().writeValueAsBytes(node));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public Node consistentHash(int value) {
-         Entry<Integer,Node> entry = map.ceilingEntry(value);
-         if(entry==null) entry = map.firstEntry();
+        Entry<Integer, Node> entry = map.ceilingEntry(value);
+        if (entry == null) entry = map.firstEntry();
 
-         return entry==null?null:entry.getValue();
+        return entry == null ? null : entry.getValue();
     }
 
-
-    public Actuator actuator() {
-        return actuator;
+    @Override
+    public String name() {
+        return "NODE_COLLECTION_ACTUATOR";
     }
 
-
-    private static class NodeCollectionActuator implements Actuator {
-
-
-        private NodeCollection collection;
-
-        public NodeCollectionActuator(NodeCollection collection) {
-            this.collection = collection;
-
+    @Override
+    public byte[] snapshot() {
+        try {
+            return mapper.writeValueAsBytes(this);
+        } catch (Exception e) {
+            return new byte[0];
         }
+    }
 
-
-        @Override
-        public String name() {
-            return "NODE_COLLECTION_ACTUATOR";
+    @Override
+    public void recover(byte[] data) throws Exception {
+        this.clear();
+        if (data != null) {
+            this.putAll(mapper.readValue(data, Json.mapType(Long.class, Node.class)));
         }
+    }
 
-        @Override
-        public byte[] snapshot() {
-            try {
-                return mapper.writeValueAsBytes(this);
-            } catch (Exception e) {
-                return new byte[0];
-            }
+    @Override
+    public void apply(byte[] entry) throws Exception {
+        Node node = mapper.readValue(entry, Node.class);
+        if (node != null) {
+            this.put(node.getId(), node);
         }
+    }
 
-        @Override
-        public void recover(byte[] data) throws Exception {
-            collection.clear();
-            if(data!=null) {
-                collection.putAll(mapper.readValue(data, Json.mapType(Long.class, Node.class)));
-            }
-        }
-
-        @Override
-        public void apply(byte[] entry) throws Exception {
-            logger.info("apply entry NodeCollection");
-            Node node = mapper.readValue(entry, Node.class);
-            if (node != null) {
-                collection.put(node.getId(), node);
-            }
-        }
-
-        @Override
-        public Object read(byte[] data, boolean wait) {
-            return null;
-        }
-
+    @Override
+    public Object read(byte[] data, boolean wait) {
+        return null;
     }
 }

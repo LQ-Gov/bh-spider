@@ -101,6 +101,7 @@ public class BasicScheduler implements Scheduler, Assistant {
 
         //初始化事件循环线程
         this.loop = new EventLoopInitializer(this,
+                new BasicSchedulerCommonAssistant(),
                 new BasicSchedulerComponentAssistant(cfg, this),
                 new BasicSchedulerRuleAssistant(cfg, this, this.store, domainIndex),
                 new BasicSchedulerFetchAssistant(this, domainIndex, store),

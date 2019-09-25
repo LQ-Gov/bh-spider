@@ -5,10 +5,7 @@ import com.bh.spider.common.member.Node;
 import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.consistent.raft.UnstableRaft;
 import com.bh.spider.consistent.raft.container.RaftContainer;
-import com.bh.spider.scheduler.BasicScheduler;
-import com.bh.spider.scheduler.CommandReceiveHandler;
-import com.bh.spider.scheduler.Config;
-import com.bh.spider.scheduler.RunModeClassFactory;
+import com.bh.spider.scheduler.*;
 import com.bh.spider.scheduler.cluster.actuator.CommandActuator;
 import com.bh.spider.scheduler.cluster.actuator.NodeCollection;
 import com.bh.spider.scheduler.cluster.communication.Session;
@@ -111,6 +108,7 @@ public class ClusterScheduler extends BasicScheduler {
 
         //初始化事件循环线程
         this.loop = new EventLoopInitializer(this,
+                new BasicSchedulerCommonAssistant(),
                 new ClusterSchedulerRuleAssistant(config(), this, this.store, domainIndex),
                 new ClusterSchedulerComponentAssistant(config(), this),
                 new ClusterSchedulerFetchAssistant(this, domainIndex, store),
@@ -121,14 +119,15 @@ public class ClusterScheduler extends BasicScheduler {
 
         List<Node> nodes = Node.collectionOf(config().all(Config.INIT_CLUSTER_MASTER_ADDRESS));
 
+
+        this.masters = new NodeCollection(nodes);
+
         /**
          * raft绑定，后续代码需简化
          */
         Raft raft = new Raft(Paths.get(config().get(Config.INIT_CLUSTER_CONSISTENT_DATA_PATH)), new CommandActuator(this));
 
-        this.masters = new NodeCollection(nodes);
-
-        Raft unstableRaft = new UnstableRaft(this.masters.actuator());
+        Raft unstableRaft = new UnstableRaft(this.masters);
 
 
         //必须是raft先启动,然后loop再启动，因为需要先应用

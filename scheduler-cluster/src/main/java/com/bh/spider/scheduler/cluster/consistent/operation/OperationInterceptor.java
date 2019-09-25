@@ -3,7 +3,6 @@ package com.bh.spider.scheduler.cluster.consistent.operation;
 import com.bh.common.utils.Json;
 import com.bh.spider.consistent.raft.Raft;
 import com.bh.spider.scheduler.IdGenerator;
-import com.bh.spider.scheduler.cluster.actuator.CombineActuator;
 import com.bh.spider.scheduler.cluster.context.ConsistentContext;
 import com.bh.spider.scheduler.context.Context;
 import com.bh.spider.scheduler.event.ELContextInterceptor;
@@ -52,9 +51,7 @@ public class OperationInterceptor extends ELContextInterceptor {
 
 
                 try {
-                    byte[] data = Json.get().writeValueAsBytes(items);
-                    CombineActuator.CombineEntry combineEntry = new CombineActuator.CombineEntry("COMMAND_ACTUATOR", data);
-                    data = Json.get().writeValueAsBytes(combineEntry);
+                    byte[] data = Json.get().writeValueAsBytes(items);;
                     raft.write(data);
                     WAIT_CONSISTENT_CONTEXT.put(consistentId, ctx);
                     return false;

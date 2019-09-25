@@ -13,6 +13,7 @@
             <handler class="com.bh.spider.scheduler.watch.handler.ComponentMarkerHandler"/>
             <handler class="com.bh.spider.scheduler.watch.handler.RequestMarkerHandler"/>
             <handler class="com.bh.spider.scheduler.watch.handler.NodeMarkerHandler"/>
+            <handler class="com.bh.spider.scheduler.watch.handler.RuleTextStreamMarkerHandler"/>
             <handler class="com.bh.spider.scheduler.cluster.watch.handler.NodeMarkerHandler"/>
             <handler class="com.bh.spider.scheduler.cluster.watch.handler.StreamMarkerHandler"/>
         </Watch>

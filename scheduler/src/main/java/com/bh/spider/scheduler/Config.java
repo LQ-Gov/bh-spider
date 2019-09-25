@@ -28,7 +28,6 @@ public class Config {
     public static final String INIT_DATA_RULE_PATH = "init.data.rule.path";//规则存储路径
     public static final String INIT_COMPONENT_PATH = "init.data.component.path";//组件存储路径
     public static final String INIT_PHANTOMJS_PATH = "init.phantomjs.path";
-    public static final String INIT_OPERATION_LOG_PATH = "init.data.operation.log.path";//操作日志存储路径
 
     //数据库存储配置
     public static final String INIT_STORE_BUILDER = "init.store.builder"; //存储引擎类型
@@ -83,7 +82,6 @@ public class Config {
         config.GLOBAL.put(SPIDER_CLUSTER_PREFIX + "3", "127.0.0.1:30053");
 
         config.GLOBAL.put(INIT_OPERATION_CACHE_SIZE, "10");
-        config.GLOBAL.put(INIT_OPERATION_LOG_PATH, "data/operation");
 
         config.GLOBAL.put(INIT_CLUSTER_MASTER_ADDRESS + "1", "127.0.0.1:8070");
 

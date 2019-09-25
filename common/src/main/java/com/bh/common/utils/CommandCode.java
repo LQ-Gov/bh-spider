@@ -1,6 +1,9 @@
 package com.bh.common.utils;
 
 public enum CommandCode {
+    ID_GENERATOR,
+
+
     //region COMPONENT相关操作
 
     SUBMIT_COMPONENT,//提交component
@@ -31,6 +34,8 @@ public enum CommandCode {
     SCHEDULER_RULE_EXECUTOR,//启动或暂停
 
     GET_RULE_RANK,
+
+
 
     //endregion
 
@@ -87,6 +92,10 @@ public enum CommandCode {
 
     SYNC_SERVER_LIST,
 
-    TEST;
+    TEST,
+
+
+    //查询是否支持指定的点
+    CHECK_SUPPORT_WATCH_POINT,
 
 }

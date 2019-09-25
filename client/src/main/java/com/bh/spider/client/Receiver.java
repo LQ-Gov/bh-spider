@@ -22,13 +22,12 @@ public class Receiver {
 
             boolean exception = (flag & 0x02) > 0;
 
-            boolean remove = exception;
             if (exception)
                 callback.exception(new Exception(new String(data)));
 
-            else remove = !callback.accept(data, complete);
+            else complete = callback.accept(data, complete);
 
-            if (remove) callbacks.remove(id);
+            if (exception || complete) callbacks.remove(id);
         }
     }
 

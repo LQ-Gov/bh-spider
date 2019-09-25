@@ -2,8 +2,6 @@ package com.bh.spider.ui.controller;
 
 import com.bh.common.watch.WatchEvent;
 import com.bh.spider.client.Client;
-import com.bh.spider.common.fetch.Request;
-import com.bh.spider.ui.watch.TimerWatchConsumer;
 import com.bh.spider.ui.watch.WatchConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -47,14 +45,14 @@ public class WatchController {
 
                 //rule 对应的url数量统计
                 case "rule.url.count":
-                    final Long id = params == null ? null : Long.parseLong(params);
-                    map.put(point, new TimerWatchConsumer<>(client, emitter, point, () -> {
-                        Map<String, Long> urls = new HashMap<>();
-                        urls.put("queue", client.request().count(id, Request.State.QUEUE));
-                        urls.put("error", client.request().count(id, Request.State.EXCEPTION));
-                        urls.put("going", client.request().count(id, Request.State.GOING));
-                        return urls;
-                    }));
+//                    final Long id = params == null ? null : Long.parseLong(params);
+//                    map.put(point, new TimerWatchConsumer<>(client, emitter, point, () -> {
+//                        Map<String, Long> urls = new HashMap<>();
+//                        urls.put("queue", client.request().count(id, Request.State.QUEUE));
+//                        urls.put("error", client.request().count(id, Request.State.EXCEPTION));
+//                        urls.put("going", client.request().count(id, Request.State.GOING));
+//                        return urls;
+//                    }));
                     break;
 
 

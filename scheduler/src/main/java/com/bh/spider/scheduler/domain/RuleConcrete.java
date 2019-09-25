@@ -66,20 +66,15 @@ public class RuleConcrete {
     private boolean modifiable;
 
 
-    public RuleConcrete(long id, Rule rule, RuleScheduleController controller,boolean modifiable) {
-        this.id = id;
-
+    public RuleConcrete(Rule rule, boolean modifiable) {
         this.update(rule);
 
         this.modifiable = modifiable;
-
-        this.controller = controller;
-
     }
 
 
-    public RuleConcrete(long id,Rule rule,RuleScheduleController controller){
-        this(id,rule,controller,true);
+    public RuleConcrete(Rule rule) {
+        this(rule, true);
     }
 
 
@@ -114,7 +109,7 @@ public class RuleConcrete {
 
 
     public void update(RuleScheduleController controller, boolean foreExecute) {
-        if(frozen()) return;
+        if (frozen()) return;
         update(controller);
         if (foreExecute && !this.controller.running())
             this.controller.execute();
@@ -132,8 +127,9 @@ public class RuleConcrete {
         this.timeout = rule.getTimeout();
         this.repeat = rule.isRepeat();
         this.nodes = rule.getNodes();
+        this.id = rule.getId();
 
-        this.rule = new Rule(id, rule);
+        this.rule = rule;
     }
 
 
@@ -165,7 +161,7 @@ public class RuleConcrete {
     }
 
 
-    public RulePattern pattern(){
+    public RulePattern pattern() {
         return pattern;
     }
 

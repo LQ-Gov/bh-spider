@@ -13,7 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-public class Node {
+public class Node implements Comparable<Node> {
 
     private long id;
     private String ip;
@@ -146,5 +146,14 @@ public class Node {
 
     public void update(Node node) {
 
+    }
+
+    @Override
+    public int compareTo(Node o) {
+        if (o == null) return 1;
+
+        if (this.getId() == o.getId()) return 0;
+
+        return this.getId() > o.getId() ? 1 : -1;
     }
 }

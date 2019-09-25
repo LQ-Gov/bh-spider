@@ -5,8 +5,6 @@ import com.bh.spider.client.converter.Converter;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
 
 public class Callback<T> {
@@ -30,7 +28,7 @@ public class Callback<T> {
             if (this.consumer != null)
                 this.consumer.accept(o);
             if (complete || this.consumer == null) this.future.complete(o);
-            return !complete;
+            return complete;
 
         } catch (IOException e) {
             future.completeExceptionally(e);

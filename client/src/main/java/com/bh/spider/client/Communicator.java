@@ -9,12 +9,12 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * @author liuqi19
@@ -56,7 +56,6 @@ public class Communicator {
         }
         this.connections = connections;
         sync();
-
 
 
     }
@@ -131,14 +130,24 @@ public class Communicator {
         throw new RuntimeException("hhhhhssxxsddds");
     }
 
+    private List<ClientConnection> activeConnections() {
+        return Arrays.stream(connections).filter(ClientConnection::isConnected).collect(Collectors.toList());
+
+    }
+
     public <T> T write(CommandCode cmd, Type t, Object... params) {
 
 
         try {
             Future<T> future = stream(cmd, null, new TypeConverter<>(t), params);
 
-            return future.get(10,TimeUnit.SECONDS);
-        } catch (Exception e) {
+            return future.get(10, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException ignored){
+            return null;
+        }
+
+        catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -147,14 +156,42 @@ public class Communicator {
     }
 
 
+    public <T> Map<ClientConnection,T> writeAll(CommandCode cmd, Type t, Object... params) {
+
+
+        Map<ClientConnection, T> map = new HashMap<>();
+        try {
+
+            List<Future<T>> futures = new LinkedList<>();
+            for (ClientConnection conn : activeConnections()) {
+                Future<T> future = stream(cmd, null, new TypeConverter<>(t), params);
+
+                map.put(conn, future.get());
+            }
+
+            return map;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+
     public <T> Future<T> stream(CommandCode cmd, Consumer<T> consumer, Converter<byte[], T> converter, Object... params) {
+        return stream(nextConnection(), cmd, consumer, converter, params);
+
+    }
+
+
+    public <T> Future<T> stream(ClientConnection connection, CommandCode cmd, Consumer<T> consumer, Converter<byte[], T> converter, Object... params) {
+        if(connection==null) connection = nextConnection();
         long id = ID.incrementAndGet();
 
         Future<T> future = receiver.watch(id, consumer, converter);
 
-        nextConnection().write(new Chunk(id, (short) cmd.ordinal(), params));
+        connection.write(new Chunk(id, (short) cmd.ordinal(), params));
 
         return future;
-
     }
 }

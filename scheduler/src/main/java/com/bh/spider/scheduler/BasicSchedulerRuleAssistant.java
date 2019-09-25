@@ -57,7 +57,9 @@ public class BasicSchedulerRuleAssistant implements Assistant {
              * 初始化默认的规则列表
              */
             Rule defaultRule = new Rule(0, "**", cfg.get(Config.INIT_DEFAULT_RULE_CRON));
-            RuleConcrete defaultConcrete = new RuleConcrete(0, defaultRule, new RootRuleScheduleController(scheduler, defaultRule, store), false);
+            RuleConcrete defaultConcrete = new RuleConcrete(defaultRule, false);
+
+            defaultConcrete.update(new RootRuleScheduleController(scheduler, defaultRule, store));
 
             domainIndex.root().bind(defaultConcrete);
 
@@ -65,17 +67,22 @@ public class BasicSchedulerRuleAssistant implements Assistant {
         }
 
         for (Rule rule : rules) {
-            RuleScheduleController controller = rule.isValid() ?
-                    new DefaultRuleScheduleController(this.scheduler, rule, this.store)
-                    : new DaemonRuleScheduleController(this.scheduler, rule, this.store);
-            RuleConcrete concrete = new RuleConcrete(rule.getId(), rule, controller);
+
+            RuleConcrete concrete = new RuleConcrete(rule);
 
             domainIndex.matchOrCreate(concrete.host()).bind(concrete);
             CONCRETE_CACHE.put(concrete.id(), concrete);
         }
         for (RuleConcrete concrete : CONCRETE_CACHE.values()) {
-            if (runnable(concrete))
+            if (runnable(concrete)) {
+                Rule rule = concrete.base();
+                RuleScheduleController controller = rule.isValid() ?
+                        new DefaultRuleScheduleController(this.scheduler, rule, this.store)
+                        : new DaemonRuleScheduleController(this.scheduler, rule, this.store);
+
+                concrete.update(controller);
                 concrete.execute();
+            }
         }
     }
 
@@ -100,14 +107,14 @@ public class BasicSchedulerRuleAssistant implements Assistant {
     public void SUBMIT_RULE_HANDLER(Context ctx, Rule rule) throws Exception {
         if (validate(rule)) {
 
-            RuleConcrete concrete = new RuleConcrete(IdGenerator.instance.nextId(), rule,
-                    new DefaultRuleScheduleController(this.scheduler, rule, this.store));
+            RuleConcrete concrete = new RuleConcrete(rule);
 
             DomainIndex.Node node = domainIndex.matchOrCreate(concrete.host()).bind(concrete);
 
             backup(node);
 
             if (runnable(concrete)) {
+                concrete.update(new DefaultRuleScheduleController(this.scheduler, concrete.base(), this.store));
                 concrete.execute();
             }
             CONCRETE_CACHE.put(concrete.id(), concrete);

@@ -23,13 +23,10 @@ public class BasicSchedulerWatchAssistant implements Assistant {
     private final static AttributeKey<Map<String, Watcher>> CHANNEL_WATCH_ATTR_KEY = AttributeKey.valueOf("WATCH-POINTS");
 
 
-
-
-
     @CommandHandler(autoComplete = false)
     public void WATCH_HANDLER(ClientContext ctx, String key) throws Exception {
 
-        Attribute<Map<String,Watcher>> attribute = ctx.channel().attr(CHANNEL_WATCH_ATTR_KEY);
+        Attribute<Map<String, Watcher>> attribute = ctx.channel().attr(CHANNEL_WATCH_ATTR_KEY);
 
         attribute.setIfAbsent(new HashMap<>());
 
@@ -51,7 +48,6 @@ public class BasicSchedulerWatchAssistant implements Assistant {
 
 
     }
-
 
 
     /**
@@ -78,6 +74,13 @@ public class BasicSchedulerWatchAssistant implements Assistant {
     public List<String> GET_WATCH_POINT_LIST_HANDLER() {
 
         return Points.allKeys();
+
+    }
+
+
+    @CommandHandler
+    public boolean CHECK_SUPPORT_WATCH_POINT_HANDLER(String key) {
+        return true;
 
     }
 }

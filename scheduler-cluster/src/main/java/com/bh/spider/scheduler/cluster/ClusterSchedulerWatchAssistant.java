@@ -1,6 +1,7 @@
 package com.bh.spider.scheduler.cluster;
 
 import com.bh.common.utils.CommandCode;
+import com.bh.spider.common.member.Node;
 import com.bh.spider.scheduler.BasicSchedulerWatchAssistant;
 import com.bh.spider.scheduler.cluster.worker.Worker;
 import com.bh.spider.scheduler.context.ClientContext;
@@ -11,12 +12,16 @@ import com.bh.spider.scheduler.watch.point.Point;
 import com.bh.spider.scheduler.watch.point.Points;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ClusterSchedulerWatchAssistant extends BasicSchedulerWatchAssistant {
+    private final static Logger logger = LoggerFactory.getLogger(ClusterSchedulerWatchAssistant.class);
 
     private Map<Long, Integer> watched = new HashMap<>();
 
@@ -100,6 +105,28 @@ public class ClusterSchedulerWatchAssistant extends BasicSchedulerWatchAssistant
 
     private void unwatch(Worker worker) {
 
+
+    }
+
+
+    @CommandHandler
+    public boolean CHECK_SUPPORT_WATCH_POINT_HANDLER(String key) {
+        Point point = Points.of(key);
+
+        if (point == null) return false;
+
+        if (StringUtils.isNotBlank(point.extendKey())) {
+            long id = Long.parseLong(point.extendKey());
+
+
+            Node node = scheduler.masters().consistentHash((int) (id % Integer.MAX_VALUE));
+
+            logger.info("self id{},node id:{},point extend key:{}",scheduler.self().getId(),node.getId(),point.extendKey());
+
+            return node != null && node.getId() == scheduler.self().getId();
+        }
+
+        return true;
 
     }
 
