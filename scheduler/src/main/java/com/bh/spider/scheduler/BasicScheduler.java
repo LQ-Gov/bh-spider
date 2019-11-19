@@ -21,10 +21,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -98,7 +95,6 @@ public class BasicScheduler implements Scheduler, Assistant {
             }
         }).exec();
 
-
         //初始化事件循环线程
         this.loop = new EventLoopInitializer(this,
                 new BasicSchedulerCommonAssistant(),
@@ -112,6 +108,8 @@ public class BasicScheduler implements Scheduler, Assistant {
 
 
         this.loop.listen().join();
+
+
     }
 
     public void submit(Context ctx, Request req) {
