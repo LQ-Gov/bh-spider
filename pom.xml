@@ -32,7 +32,7 @@
         <commons-collections4.version>4.2</commons-collections4.version>
         <junit.version>5.3.2</junit.version>
         <google.guava.version>27.0.1-jre</google.guava.version>
-        <jackson.version>2.9.10</jackson.version>
+        <jackson.version>2.11.0</jackson.version>
         <spring.boot.version>2.1.2.RELEASE</spring.boot.version>
         <netty.version>4.1.32.Final</netty.version>
     </properties>
